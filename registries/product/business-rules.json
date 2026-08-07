@@ -1,0 +1,121 @@
+{
+  "$schema": "./_schemas/business-rules.schema.json",
+  "version": "1.0.0",
+  "note": "Normative product behavior. Each rule is enterprise-default and changeable via a PDR. 'ui' notes the UX the rule implies.",
+  "rules": [
+    {
+      "id": "BR-APPROVAL-001", "area": "approval", "title": "Approval routing by risk & ownership",
+      "statement": "A request routes to approvers determined by the matching approval policy: the beneficiary's manager first, then the owner(s) of each requested entitlement/role/app. High/critical-risk items add an extra owner or admin step.",
+      "appliesTo": ["access-request", "approval-task"],
+      "ui": "Show the full approval chain and current step on request/approval detail."
+    },
+    {
+      "id": "BR-APPROVAL-002", "area": "approval", "title": "Escalation on timeout",
+      "statement": "A pending approval that exceeds its SLA (default 3 business days) auto-escalates to the approver's manager and is flagged overdue. It never auto-approves.",
+      "appliesTo": ["approval-task"],
+      "ui": "Overdue tasks are warning-intent; show due/overdue time and escalation state."
+    },
+    {
+      "id": "BR-APPROVAL-003", "area": "approval", "title": "Self-approval prohibited",
+      "statement": "A requester cannot approve their own request. If they are the only eligible approver, the task escalates to the next level.",
+      "appliesTo": ["approval-task"],
+      "ui": "Hide approve/reject on one's own request; explain if it would otherwise appear."
+    },
+    {
+      "id": "BR-RISK-001", "area": "risk", "title": "Risk score computation",
+      "statement": "Risk score (0-100) is the weighted sum of active risk factors, bucketed to a level: 0-24 low, 25-49 medium, 50-74 high, 75-100 critical. Factors include privileged access, SoD exposure, dormant usage, and access breadth.",
+      "appliesTo": ["identity", "entitlement", "role", "access-request"], "inputs": ["risk-factor weights"],
+      "ui": "One badge component, one level→color mapping, used everywhere risk appears."
+    },
+    {
+      "id": "BR-RISK-002", "area": "risk", "title": "Request risk surfacing",
+      "statement": "A request's risk = the max risk of its items, raised one level if it introduces an SoD conflict. Approvers always see request risk before deciding.",
+      "appliesTo": ["access-request"],
+      "ui": "Risk badge + SoD flag prominent on approval cards and detail."
+    },
+    {
+      "id": "BR-OWNERSHIP-001", "area": "ownership", "title": "Every governed object has an owner",
+      "statement": "Applications, entitlements, and roles must have an assigned owner (an active identity). Objects lacking a valid owner are flagged 'ownerless' and routed to an administrator.",
+      "appliesTo": ["application", "entitlement", "role"],
+      "ui": "Ownerless objects are warning-intent and filterable; require owner on create."
+    },
+    {
+      "id": "BR-OWNERSHIP-002", "area": "ownership", "title": "Ownership transfer preserves history",
+      "statement": "Reassigning ownership records who/when and retains prior owner in history. In-flight approvals assigned to the prior owner reassign to the new owner.",
+      "appliesTo": ["application", "entitlement", "role", "approval-task"],
+      "ui": "Show ownership history; confirm reassignment impact on open tasks."
+    },
+    {
+      "id": "BR-CERT-001", "area": "certification", "title": "Campaign scope & reviewer assignment",
+      "statement": "Each certification item is assigned to the most specific responsible reviewer: manager for user-access reviews, owner for app/role/entitlement reviews. Unassignable items go to an administrator.",
+      "appliesTo": ["certification-campaign", "certification-item"],
+      "ui": "Reviewer inbox scoped to assigned items; show why an item is assigned to you."
+    },
+    {
+      "id": "BR-CERT-002", "area": "certification", "title": "Revocation triggers deprovisioning",
+      "statement": "Revoking a certification item creates a deprovisioning action for that access (simulated). Certified items are recorded as evidence with reviewer, timestamp, and comment.",
+      "appliesTo": ["certification-item"],
+      "ui": "Revoke shows consequence ('user loses access'); require comment on revoke."
+    },
+    {
+      "id": "BR-CERT-003", "area": "certification", "title": "No self-certification",
+      "statement": "A reviewer cannot certify their own access. Such items reassign to the reviewer's manager.",
+      "appliesTo": ["certification-item"],
+      "ui": "Filter out / reassign self items; explain the reassignment."
+    },
+    {
+      "id": "BR-DURATION-001", "area": "duration", "title": "Time-bound access & expiry",
+      "statement": "Access may be permanent or time-bound (30/90/custom days). Time-bound grants auto-expire and notify the holder before expiry (default 7 days prior). High-risk access defaults to time-bound.",
+      "appliesTo": ["access-request", "entitlement"],
+      "ui": "Duration selector on request; expiry countdown on granted access; renewal prompt."
+    },
+    {
+      "id": "BR-EMERGENCY-001", "area": "emergency", "title": "Emergency access auto-expiry",
+      "statement": "Emergency (break-glass) access is always time-bound (default 4 hours) and auto-expires. It cannot be made permanent.",
+      "appliesTo": ["emergency-access-request"],
+      "ui": "Prominent countdown; no 'make permanent' option."
+    },
+    {
+      "id": "BR-EMERGENCY-002", "area": "emergency", "title": "Mandatory post-use review",
+      "statement": "Every emergency grant requires a post-expiry review of actions taken, completed by an administrator. Unreviewed grants are flagged until reviewed.",
+      "appliesTo": ["emergency-access-request"],
+      "ui": "Review queue; unreviewed grants surface on admin/audit dashboards."
+    },
+    {
+      "id": "BR-SOD-001", "area": "sod", "title": "Preventive SoD blocks at request time",
+      "statement": "If a requested item would create a violation of a 'preventive' SoD policy, the request is blocked (or requires a justified exception) before submission.",
+      "appliesTo": ["access-request", "sod-policy"],
+      "ui": "Inline SoD warning in the cart showing both conflicting sides; block or require exception."
+    },
+    {
+      "id": "BR-SOD-002", "area": "sod", "title": "Detective SoD flags after the fact",
+      "statement": "'Detective' SoD policies do not block but generate an open violation when a conflicting combination exists (e.g. from lifecycle changes), for remediation.",
+      "appliesTo": ["sod-violation", "sod-policy"],
+      "ui": "Open violations on dashboards; violation detail shows both sides + severity."
+    },
+    {
+      "id": "BR-SOD-003", "area": "sod", "title": "Exceptions are time-bound & justified",
+      "statement": "An SoD exception requires a justification and an expiry; on expiry the violation reopens for re-remediation.",
+      "appliesTo": ["sod-violation"],
+      "ui": "Exception form: justification (required) + expiry; show exception status & expiry."
+    },
+    {
+      "id": "BR-LIFECYCLE-001", "area": "lifecycle", "title": "Joiner birthright provisioning",
+      "statement": "On a joiner event, the identity receives birthright roles derived from department/title. Exceptions (no policy match, high-risk) are flagged for the manager.",
+      "appliesTo": ["lifecycle-event", "identity"],
+      "ui": "Birthright preview; exception queue."
+    },
+    {
+      "id": "BR-LIFECYCLE-002", "area": "lifecycle", "title": "Mover access recalculation",
+      "statement": "On a mover event, the system computes the access delta (grant new birthright, revoke access tied to the prior role/dept). Risky removals require manager confirmation.",
+      "appliesTo": ["lifecycle-event", "identity"],
+      "ui": "Before/after access diff; confirm risky removals."
+    },
+    {
+      "id": "BR-LIFECYCLE-003", "area": "lifecycle", "title": "Leaver full deprovisioning",
+      "statement": "On a leaver event, all access is revoked and accounts disabled by the effective date. Any remaining access after completion is an exception and flagged.",
+      "appliesTo": ["lifecycle-event", "identity", "account"],
+      "ui": "Deprovisioning checklist/progress; residual-access flag."
+    }
+  ]
+}

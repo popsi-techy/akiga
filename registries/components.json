@@ -1,0 +1,132 @@
+{
+  "version": "1.0.0",
+  "note": "Normative inventory of Design System components. Prefer extending an entry over inventing a parallel control.",
+  "components": [
+    {
+      "name": "AppIcon",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/AppIcon/AppIcon.tsx",
+      "extends": null,
+      "variants": [
+        "subtle",
+        "surface"
+      ],
+      "states": [
+        "logo",
+        "letter-fallback"
+      ],
+      "docs": null,
+      "notes": "Brand logos via Simple Icons (CC0) when the app name matches the catalog (SAP, Salesforce, AWS, Google); otherwise first-letter tile. Product AppBadge appearance=\"logo\" consumes this. Used first on SoD Resolution V3."
+    },
+    {
+      "name": "Avatar",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Avatar/Avatar.tsx",
+      "extends": null,
+      "variants": [
+        "soft",
+        "circle",
+        "xs",
+        "sm",
+        "md",
+        "lg"
+      ],
+      "states": [
+        "initials",
+        "image"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/avatar/page.tsx",
+      "notes": "soft = rounded-square for lists; circle = profile cards with grey outline + 2px surface gap. See ADR-0009."
+    },
+    {
+      "name": "Callout",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Callout/Callout.tsx",
+      "extends": null,
+      "variants": [
+        "info",
+        "success",
+        "warning",
+        "danger"
+      ],
+      "states": [
+        "with-title",
+        "with-action",
+        "icon-less"
+      ],
+      "docs": null,
+      "notes": "Persistent inline explanatory message, tinted from status.subtle/border/fg. Not for transient events - use Toast."
+    },
+    {
+      "name": "Card",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Card/Card.tsx",
+      "extends": null,
+      "variants": [
+        "framed",
+        "flat",
+        "none",
+        "sm",
+        "md",
+        "lg"
+      ],
+      "states": [
+        "default",
+        "raised",
+        "hoverElevate"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/card/page.tsx",
+      "notes": "Header uses 15px regular title + 15px filled icon. padding=none keeps a horizontal content gutter so flush-list dividers stay inset. See ADR-0009."
+    },
+    {
+      "name": "ColumnBrowser",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/ColumnBrowser/ColumnBrowser.tsx",
+      "extends": null,
+      "variants": [
+        "n-column"
+      ],
+      "states": [
+        "awaiting-upstream",
+        "empty",
+        "selected",
+        "paged"
+      ],
+      "docs": null,
+      "notes": "Miller-columns drill-down for a fixed hierarchy. Owns per-column search and paging; resets both when an upstream selection changes. Callers own selections only."
+    },
+    {
+      "name": "InfoRow",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/InfoRow/InfoRow.tsx",
+      "extends": null,
+      "variants": [
+        "plain",
+        "with-icon"
+      ],
+      "states": [
+        "default"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/info-row/page.tsx",
+      "notes": "Table-like label/value rows via InfoRowGroup \u2014 values share one left edge. Do not right-align or hug the label."
+    },
+    {
+      "name": "Switch",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Switch/Switch.tsx",
+      "extends": "@mui/material/Switch",
+      "variants": [
+        "sm",
+        "md"
+      ],
+      "states": [
+        "off",
+        "on",
+        "disabled",
+        "focus-visible"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/switch/page.tsx",
+      "notes": "Contained thumb inside pill track; brand fill when on. Do not use raw MUI Switch in product code."
+    }
+  ]
+}

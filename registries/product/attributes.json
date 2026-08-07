@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "note": "Identity/request attribute vocabulary used by condition builders (Conditional Branch, User Filter, Assignment Criteria) and Multisplit split-attributes. Source of truth for selectable attributes and their enum options.",
+  "attributes": [
+    { "id": "department", "label": "Department", "type": "enum", "options": ["Engineering", "Finance", "Sales", "Marketing", "HR", "IT", "Legal", "Operations"] },
+    { "id": "jobTitle", "label": "Job Title", "type": "string" },
+    { "id": "employmentType", "label": "Employment Type", "type": "enum", "options": ["Full-time", "Part-time", "Contractor", "Intern"] },
+    { "id": "riskScore", "label": "Risk Score", "type": "number" },
+    { "id": "location", "label": "Location", "type": "enum", "options": ["New York", "London", "Bangalore", "Berlin", "Remote"] }
+  ],
+  "splitAttributes": ["department", "riskScore", "employmentType"]
+}

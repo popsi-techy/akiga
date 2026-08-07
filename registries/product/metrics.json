@@ -1,0 +1,20 @@
+{
+  "$schema": "./_schemas/metrics.schema.json",
+  "version": "1.0.0",
+  "note": "KPI/metric definitions for dashboards and reports. 'format' guides display; 'goodDirection' colors trend. Never surface a metric on a dashboard without a definition here.",
+  "metrics": [
+    { "id": "time-to-access", "name": "Time to Access", "definition": "Median time from request submission to fulfillment.", "format": "duration", "goodDirection": "down", "surfaces": ["dashboard", "reports"] },
+    { "id": "approval-turnaround", "name": "Approval Turnaround", "definition": "Median time a request spends in pending-approval.", "format": "duration", "goodDirection": "down", "surfaces": ["dashboard"] },
+    { "id": "pending-approvals", "name": "Pending Approvals", "definition": "Count of open approval tasks for the current persona.", "format": "count", "goodDirection": "down", "surfaces": ["dashboard", "nav-badge"] },
+    { "id": "overdue-approvals", "name": "Overdue Approvals", "definition": "Approval tasks past SLA.", "format": "count", "goodDirection": "down", "surfaces": ["dashboard"] },
+    { "id": "cert-completion", "name": "Certification Completion", "definition": "% of certification items decided in active campaigns.", "format": "percent", "goodDirection": "up", "surfaces": ["dashboard", "reports"] },
+    { "id": "cert-on-time", "name": "On-Time Certification Rate", "definition": "% of campaigns completed by due date.", "format": "percent", "goodDirection": "up", "surfaces": ["reports"] },
+    { "id": "open-sod", "name": "Open SoD Violations", "definition": "Count of unresolved SoD violations.", "format": "count", "goodDirection": "down", "surfaces": ["dashboard", "reports"] },
+    { "id": "sod-mean-age", "name": "Mean SoD Violation Age", "definition": "Average age of open violations.", "format": "duration", "goodDirection": "down", "surfaces": ["reports"] },
+    { "id": "orphan-accounts", "name": "Orphan Accounts", "definition": "Accounts with no owning identity.", "format": "count", "goodDirection": "down", "surfaces": ["dashboard", "reports"] },
+    { "id": "dormant-access", "name": "Dormant Access", "definition": "Entitlements unused beyond the dormancy threshold.", "format": "count", "goodDirection": "down", "surfaces": ["reports"] },
+    { "id": "time-bound-share", "name": "Time-Bound Access Share", "definition": "% of active grants that are time-bound.", "format": "percent", "goodDirection": "up", "surfaces": ["reports"] },
+    { "id": "high-risk-access", "name": "High-Risk Access", "definition": "Count of high/critical-risk grants in effect.", "format": "count", "goodDirection": "down", "surfaces": ["dashboard", "reports"] },
+    { "id": "jml-automation", "name": "JML Automation Rate", "definition": "% of lifecycle access changes applied automatically vs. manually.", "format": "percent", "goodDirection": "up", "surfaces": ["reports"] }
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "$schema": "./_schemas/lifecycle-states.schema.json",
+  "version": "1.0.0",
+  "note": "State machines for stateful entities. 'ui' gives the canonical status label + intent for status chips. Intent maps to Design System status colors (neutral/info/warning/success/error).",
+  "machines": [
+    {
+      "entity": "access-request",
+      "initial": "draft",
+      "states": [
+        { "id": "draft", "label": "Draft", "intent": "neutral" },
+        { "id": "submitted", "label": "Submitted", "intent": "info" },
+        { "id": "pending-approval", "label": "Pending Approval", "intent": "warning" },
+        { "id": "approved", "label": "Approved", "intent": "success" },
+        { "id": "rejected", "label": "Rejected", "intent": "error", "terminal": true },
+        { "id": "provisioning", "label": "Provisioning", "intent": "info" },
+        { "id": "fulfilled", "label": "Fulfilled", "intent": "success", "terminal": true },
+        { "id": "cancelled", "label": "Cancelled", "intent": "neutral", "terminal": true },
+        { "id": "failed", "label": "Failed", "intent": "error" }
+      ],
+      "transitions": [
+        { "from": "draft", "to": "submitted", "action": "submit" },
+        { "from": "submitted", "to": "pending-approval", "action": "route" },
+        { "from": "pending-approval", "to": "approved", "action": "approve" },
+        { "from": "pending-approval", "to": "rejected", "action": "reject" },
+        { "from": "approved", "to": "provisioning", "action": "provision" },
+        { "from": "provisioning", "to": "fulfilled", "action": "complete" },
+        { "from": "provisioning", "to": "failed", "action": "error" },
+        { "from": "failed", "to": "provisioning", "action": "retry" },
+        { "from": "draft", "to": "cancelled", "action": "cancel" },
+        { "from": "submitted", "to": "cancelled", "action": "withdraw" },
+        { "from": "pending-approval", "to": "cancelled", "action": "withdraw" }
+      ]
+    },
+    {
+      "entity": "approval-task",
+      "initial": "pending",
+      "states": [
+        { "id": "pending", "label": "Pending", "intent": "warning" },
+        { "id": "approved", "label": "Approved", "intent": "success", "terminal": true },
+        { "id": "rejected", "label": "Rejected", "intent": "error", "terminal": true },
+        { "id": "escalated", "label": "Escalated", "intent": "warning" },
+        { "id": "expired", "label": "Expired", "intent": "neutral", "terminal": true },
+        { "id": "reassigned", "label": "Reassigned", "intent": "info", "terminal": true }
+      ],
+      "transitions": [
+        { "from": "pending", "to": "approved", "action": "approve" },
+        { "from": "pending", "to": "rejected", "action": "reject" },
+        { "from": "pending", "to": "escalated", "action": "escalate" },
+        { "from": "pending", "to": "expired", "action": "timeout" },
+        { "from": "pending", "to": "reassigned", "action": "reassign" },
+        { "from": "escalated", "to": "approved", "action": "approve" },
+        { "from": "escalated", "to": "rejected", "action": "reject" }
+      ]
+    },
+    {
+      "entity": "certification-item",
+      "initial": "pending",
+      "states": [
+        { "id": "pending", "label": "Pending", "intent": "warning" },
+        { "id": "certified", "label": "Certified", "intent": "success", "terminal": true },
+        { "id": "revoked", "label": "Revoked", "intent": "error", "terminal": true },
+        { "id": "delegated", "label": "Delegated", "intent": "info" }
+      ],
+      "transitions": [
+        { "from": "pending", "to": "certified", "action": "certify" },
+        { "from": "pending", "to": "revoked", "action": "revoke" },
+        { "from": "pending", "to": "delegated", "action": "delegate" },
+        { "from": "delegated", "to": "certified", "action": "certify" },
+        { "from": "delegated", "to": "revoked", "action": "revoke" }
+      ]
+    },
+    {
+      "entity": "certification-campaign",
+      "initial": "draft",
+      "states": [
+        { "id": "draft", "label": "Draft", "intent": "neutral" },
+        { "id": "active", "label": "Active", "intent": "info" },
+        { "id": "overdue", "label": "Overdue", "intent": "warning" },
+        { "id": "completed", "label": "Completed", "intent": "success", "terminal": true },
+        { "id": "cancelled", "label": "Cancelled", "intent": "neutral", "terminal": true }
+      ],
+      "transitions": [
+        { "from": "draft", "to": "active", "action": "launch" },
+        { "from": "active", "to": "overdue", "action": "pass-due-date" },
+        { "from": "active", "to": "completed", "action": "complete" },
+        { "from": "overdue", "to": "completed", "action": "complete" },
+        { "from": "draft", "to": "cancelled", "action": "cancel" },
+        { "from": "active", "to": "cancelled", "action": "cancel" }
+      ]
+    },
+    {
+      "entity": "account",
+      "initial": "active",
+      "states": [
+        { "id": "active", "label": "Active", "intent": "success" },
+        { "id": "disabled", "label": "Disabled", "intent": "neutral" },
+        { "id": "orphaned", "label": "Orphaned", "intent": "warning" },
+        { "id": "deleted", "label": "Deleted", "intent": "error", "terminal": true }
+      ],
+      "transitions": [
+        { "from": "active", "to": "disabled", "action": "disable" },
+        { "from": "disabled", "to": "active", "action": "enable" },
+        { "from": "active", "to": "orphaned", "action": "lose-owner" },
+        { "from": "orphaned", "to": "active", "action": "reassign" },
+        { "from": "disabled", "to": "deleted", "action": "delete" }
+      ]
+    },
+    {
+      "entity": "sod-violation",
+      "initial": "open",
+      "states": [
+        { "id": "open", "label": "Open", "intent": "error" },
+        { "id": "acknowledged", "label": "Acknowledged", "intent": "warning" },
+        { "id": "mitigated", "label": "Mitigated", "intent": "info" },
+        { "id": "exception-granted", "label": "Exception Granted", "intent": "warning" },
+        { "id": "resolved", "label": "Resolved", "intent": "success", "terminal": true }
+      ],
+      "transitions": [
+        { "from": "open", "to": "acknowledged", "action": "acknowledge" },
+        { "from": "acknowledged", "to": "mitigated", "action": "mitigate" },
+        { "from": "acknowledged", "to": "exception-granted", "action": "grant-exception" },
+        { "from": "mitigated", "to": "resolved", "action": "resolve" },
+        { "from": "open", "to": "resolved", "action": "remove-access" }
+      ]
+    },
+    {
+      "entity": "emergency-access-request",
+      "initial": "requested",
+      "states": [
+        { "id": "requested", "label": "Requested", "intent": "warning" },
+        { "id": "active", "label": "Active", "intent": "info" },
+        { "id": "expired", "label": "Expired", "intent": "neutral" },
+        { "id": "revoked", "label": "Revoked", "intent": "error", "terminal": true },
+        { "id": "under-review", "label": "Under Review", "intent": "warning" },
+        { "id": "reviewed", "label": "Reviewed", "intent": "success", "terminal": true }
+      ],
+      "transitions": [
+        { "from": "requested", "to": "active", "action": "activate" },
+        { "from": "active", "to": "expired", "action": "auto-expire" },
+        { "from": "active", "to": "revoked", "action": "revoke" },
+        { "from": "expired", "to": "under-review", "action": "open-review" },
+        { "from": "under-review", "to": "reviewed", "action": "complete-review" }
+      ]
+    },
+    {
+      "entity": "identity",
+      "initial": "active",
+      "states": [
+        { "id": "active", "label": "Active", "intent": "success" },
+        { "id": "inactive", "label": "Inactive", "intent": "neutral" },
+        { "id": "leaver-pending", "label": "Leaver Pending", "intent": "warning" },
+        { "id": "terminated", "label": "Terminated", "intent": "error", "terminal": true }
+      ],
+      "transitions": [
+        { "from": "active", "to": "leaver-pending", "action": "initiate-leaver" },
+        { "from": "leaver-pending", "to": "terminated", "action": "complete-leaver" },
+        { "from": "active", "to": "inactive", "action": "deactivate" },
+        { "from": "inactive", "to": "active", "action": "reactivate" }
+      ]
+    },
+    {
+      "entity": "technical-role",
+      "initial": "draft",
+      "states": [
+        { "id": "draft", "label": "Draft", "intent": "neutral" },
+        { "id": "active", "label": "Active", "intent": "success" },
+        { "id": "deprecated", "label": "Deprecated", "intent": "warning" },
+        { "id": "retired", "label": "Retired", "intent": "neutral", "terminal": true }
+      ],
+      "transitions": [
+        { "from": "draft", "to": "active", "action": "activate" },
+        { "from": "active", "to": "deprecated", "action": "deprecate" },
+        { "from": "deprecated", "to": "active", "action": "reactivate" },
+        { "from": "deprecated", "to": "retired", "action": "retire" }
+      ]
+    },
+    {
+      "entity": "business-role",
+      "initial": "draft",
+      "states": [
+        { "id": "draft", "label": "Draft", "intent": "neutral" },
+        { "id": "active", "label": "Active", "intent": "success" },
+        { "id": "deprecated", "label": "Deprecated", "intent": "warning" },
+        { "id": "retired", "label": "Retired", "intent": "neutral", "terminal": true }
+      ],
+      "transitions": [
+        { "from": "draft", "to": "active", "action": "activate" },
+        { "from": "active", "to": "deprecated", "action": "deprecate" },
+        { "from": "deprecated", "to": "active", "action": "reactivate" },
+        { "from": "deprecated", "to": "retired", "action": "retire" }
+      ]
+    }
+  ]
+}

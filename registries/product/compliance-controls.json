@@ -1,0 +1,22 @@
+{
+  "$schema": "./_schemas/compliance-controls.schema.json",
+  "version": "1.0.0",
+  "note": "Regulations and the product capabilities/rules that satisfy them. Not legal advice — a mapping to inform UX (why evidence, approvals, and reviews exist). 'satisfiedBy' references feature ids and BR- rule ids.",
+  "regulations": [
+    { "id": "SOX", "name": "Sarbanes-Oxley", "focus": "Financial reporting integrity; access to financial systems must be controlled, reviewed, and separated." },
+    { "id": "GDPR", "name": "GDPR", "focus": "Protection of personal data; least-privilege access and auditability of who accessed what." },
+    { "id": "HIPAA", "name": "HIPAA", "focus": "Protected health information; minimum-necessary access and audit trails." },
+    { "id": "SOC2", "name": "SOC 2", "focus": "Trust criteria incl. logical access controls, change management, monitoring." },
+    { "id": "ISO27001", "name": "ISO/IEC 27001", "focus": "ISMS; access control policy, review of access rights, segregation of duties." },
+    { "id": "NIST", "name": "NIST 800-53 / CSF", "focus": "Access control (AC) family; least privilege, separation of duties, account management." }
+  ],
+  "controls": [
+    { "id": "CTRL-ACCESS-REVIEW", "name": "Periodic access review", "regulations": ["SOX", "SOC2", "ISO27001", "NIST"], "satisfiedBy": { "features": ["certification-campaign"], "rules": ["BR-CERT-001", "BR-CERT-002"] } },
+    { "id": "CTRL-SOD", "name": "Separation of duties", "regulations": ["SOX", "ISO27001", "NIST"], "satisfiedBy": { "features": ["sod-policy-management"], "rules": ["BR-SOD-001", "BR-SOD-002", "BR-SOD-003"] } },
+    { "id": "CTRL-LEAST-PRIV", "name": "Least privilege", "regulations": ["GDPR", "HIPAA", "SOC2", "NIST"], "satisfiedBy": { "features": ["access-request", "risk-scoring"], "rules": ["BR-DURATION-001", "BR-RISK-001"] } },
+    { "id": "CTRL-APPROVAL", "name": "Access approval / authorization", "regulations": ["SOX", "SOC2", "ISO27001"], "satisfiedBy": { "features": ["approval-inbox"], "rules": ["BR-APPROVAL-001", "BR-APPROVAL-003"] } },
+    { "id": "CTRL-LIFECYCLE", "name": "Account provisioning & deprovisioning", "regulations": ["SOX", "SOC2", "ISO27001", "NIST"], "satisfiedBy": { "features": ["lifecycle-jml"], "rules": ["BR-LIFECYCLE-001", "BR-LIFECYCLE-003"] } },
+    { "id": "CTRL-EMERGENCY", "name": "Privileged/emergency access control", "regulations": ["SOX", "SOC2", "NIST"], "satisfiedBy": { "features": ["emergency-access"], "rules": ["BR-EMERGENCY-001", "BR-EMERGENCY-002"] } },
+    { "id": "CTRL-AUDIT", "name": "Audit trail & evidence", "regulations": ["SOX", "GDPR", "HIPAA", "SOC2", "ISO27001", "NIST"], "satisfiedBy": { "features": ["audit-trail", "reports"], "rules": [] } }
+  ]
+}

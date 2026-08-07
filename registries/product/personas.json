@@ -1,0 +1,103 @@
+{
+  "$schema": "./_schemas/personas.schema.json",
+  "version": "1.0.0",
+  "note": "Rich source of truth for personas. Permissions reference action ids in permissions.json; journeys reference journeys.json.",
+  "personas": [
+    {
+      "id": "end-user",
+      "name": "End User",
+      "oneLine": "Any employee who requests and manages their own access.",
+      "responsibilities": ["Request access they need", "Provide justification", "Track their requests", "Respond to their own access reviews when asked"],
+      "goals": ["Get access fast", "Understand what to request", "Know request status without chasing"],
+      "painPoints": ["Doesn't know what access exists or to ask for", "Opaque approval status", "Long waits"],
+      "keyEntities": ["access-request", "entitlement", "role"],
+      "primaryJourneys": ["request-to-fulfillment", "emergency-access-grant"],
+      "access": "self-service only; sees own data",
+      "successLooksLike": "Time-to-access drops; fewer 'where is my request' tickets"
+    },
+    {
+      "id": "manager",
+      "name": "Manager",
+      "oneLine": "Approves access for and certifies the access of their direct reports.",
+      "responsibilities": ["Approve/reject reports' requests", "Certify reports' access", "Initiate access on team changes"],
+      "goals": ["Approve confidently and quickly", "Not rubber-stamp risk", "Clear certification workload"],
+      "painPoints": ["Too many approvals with too little context", "Bulk reviews are tedious", "Unclear risk"],
+      "keyEntities": ["approval-task", "certification-item", "identity"],
+      "primaryJourneys": ["request-to-fulfillment", "access-certification-campaign", "mover-access-change"],
+      "access": "team-scoped approvals & reviews",
+      "successLooksLike": "Fast, informed approvals; on-time certifications"
+    },
+    {
+      "id": "access-reviewer",
+      "name": "Access Reviewer",
+      "oneLine": "Performs certification reviews (may be a manager, owner, or dedicated reviewer).",
+      "responsibilities": ["Review assigned certification items", "Certify or revoke with reason", "Meet campaign deadlines"],
+      "goals": ["Get through reviews efficiently", "Focus on risky access", "Defensible decisions"],
+      "painPoints": ["Large review volumes", "Insufficient decision context", "Deadline pressure"],
+      "keyEntities": ["certification-item", "certification-campaign"],
+      "primaryJourneys": ["access-certification-campaign"],
+      "access": "assigned certification items",
+      "successLooksLike": "High on-time completion; risky access revoked"
+    },
+    {
+      "id": "application-owner",
+      "name": "Application Owner",
+      "oneLine": "Accountable for an application and the appropriateness of its access.",
+      "responsibilities": ["Approve access to their app", "Own app's entitlements & risk", "Review app access campaigns"],
+      "goals": ["Keep app access appropriate", "Know who has access and why"],
+      "painPoints": ["No single view of app access", "Approvals scattered"],
+      "keyEntities": ["application", "entitlement", "account", "approval-task"],
+      "primaryJourneys": ["request-to-fulfillment", "access-certification-campaign"],
+      "access": "scoped to owned applications",
+      "successLooksLike": "Clean app access; fast owner approvals"
+    },
+    {
+      "id": "role-owner",
+      "name": "Role Owner",
+      "oneLine": "Accountable for a role's definition and membership.",
+      "responsibilities": ["Maintain role's entitlement bundle", "Approve role assignments", "Review role membership"],
+      "goals": ["Roles stay meaningful and low-risk", "Avoid role bloat"],
+      "painPoints": ["Role drift over time", "Hard to see membership impact"],
+      "keyEntities": ["role", "entitlement", "approval-task"],
+      "primaryJourneys": ["role-definition-and-assignment", "access-certification-campaign"],
+      "access": "scoped to owned roles",
+      "successLooksLike": "Lean, well-governed roles"
+    },
+    {
+      "id": "entitlement-owner",
+      "name": "Entitlement Owner",
+      "oneLine": "Accountable for a specific entitlement's appropriateness.",
+      "responsibilities": ["Approve requests for their entitlement", "Set risk/requestability", "Review who holds it"],
+      "goals": ["Right people hold it", "High-risk grants scrutinized"],
+      "painPoints": ["Approvals without context", "No usage visibility"],
+      "keyEntities": ["entitlement", "approval-task"],
+      "primaryJourneys": ["request-to-fulfillment", "access-certification-campaign"],
+      "access": "scoped to owned entitlements",
+      "successLooksLike": "Appropriate entitlement holders"
+    },
+    {
+      "id": "auditor",
+      "name": "Auditor",
+      "oneLine": "Inspects evidence and compliance posture — mostly read-only.",
+      "responsibilities": ["Review audit trail & evidence", "Verify certifications & SoD handling", "Export reports"],
+      "goals": ["Prove controls work", "Find gaps fast", "Export defensible evidence"],
+      "painPoints": ["Evidence scattered", "Manual export", "Incomplete trails"],
+      "keyEntities": ["audit-event", "certification-campaign", "sod-violation"],
+      "primaryJourneys": [],
+      "access": "read-only across the org; export",
+      "successLooksLike": "Audits close fast with clean evidence"
+    },
+    {
+      "id": "administrator",
+      "name": "Administrator",
+      "oneLine": "Configures and operates the platform.",
+      "responsibilities": ["Configure policies, workflows, connectors", "Launch certification campaigns", "Manage SoD & risk model", "Manage delegation & settings"],
+      "goals": ["Governance runs smoothly", "Low operational toil", "Correct, safe configuration"],
+      "painPoints": ["Complex config", "Hard to test policy impact", "Fear of breaking flows"],
+      "keyEntities": ["approval-policy", "workflow", "sod-policy", "connector", "certification-campaign"],
+      "primaryJourneys": ["joiner-provisioning", "leaver-deprovisioning", "sod-violation-remediation"],
+      "access": "full configuration & operational control",
+      "successLooksLike": "Automated, reliable governance with minimal intervention"
+    }
+  ]
+}

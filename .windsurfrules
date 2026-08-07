@@ -1,0 +1,18 @@
+# Windsurf Rules — thin wrapper. Do not add unique rules here.
+
+All governance for this repository lives in the canonical, vendor-neutral document at the repo
+root: AI_CONSTITUTION.md. Read and obey it before generating or editing code.
+
+Load-bearing rules (the constitution is authoritative):
+- Reuse first: search registries/*.json and existing components/patterns/templates before
+  building. Anything genuinely new is created in the Design System first, documented, recorded
+  as an ADR (if significant), given a changeset, and only then used in the IGA product.
+- Two products, one arrow: the IGA product consumes the Design System; the Design System never
+  imports the product.
+- Never hardcode colors/spacing/radii/elevation/motion — consume tokens/theme. Extend MUI
+  rather than rebuilding it.
+- Every screen ships loading/empty/error/success states, is accessible (WCAG 2.1 AA),
+  permission-aware, and uses the repository/service data layer, not localStorage/fetch directly.
+- Think before coding, ask when unclear, keep changes surgical.
+
+If this file conflicts with AI_CONSTITUTION.md, the constitution wins.

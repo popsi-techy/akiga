@@ -1,0 +1,145 @@
+/* FlowCanvas connector geometry — pure-CSS derived tree (fan-out / merge).
+   A horizontal "bus" is drawn as top/bottom borders on each lane (trimmed to
+   center on the outermost lanes) plus vertical stems.
+   Lane width is content-driven: a small ELSE / APPROVED pill stays compact;
+   a lane with a 320px card or a nested branch sprawl grows to fit.
+   Vertical connectors only run through empty stretch below content (`.spacer`),
+   not as a full-height spine through nested branches. */
+
+/* Each lane column sizes to its own content; row stays centered under the parent. */
+.lanesRow {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.lane {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: 100%;
+  /* Horizontal padding = breathing room between neighboring branch stems/pills. */
+  padding: 0 20px;
+}
+
+/* fan-out bus (top edge of the lanes row) — straight for inner lanes.
+   Outer lanes use a 10px rounded elbow where the bus turns into a stem. */
+.lane::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--ds-color-border-strong);
+}
+/* outer lanes: the elbow (bus + rounded corner + full vertical stem) is drawn as a
+   single bordered box, so the corner reads as one continuous stroke. The straight
+   stem element is hidden on these lanes (below) to avoid drawing over the arc. */
+.lane:first-child::before {
+  left: calc(50% - 1px);
+  right: 0;
+  height: 20px;
+  background: none;
+  border-top: 2px solid var(--ds-color-border-strong);
+  border-left: 2px solid var(--ds-color-border-strong);
+  border-top-left-radius: 10px;
+}
+.lane:last-child::before {
+  left: 0;
+  right: calc(50% - 1px);
+  height: 20px;
+  background: none;
+  border-top: 2px solid var(--ds-color-border-strong);
+  border-right: 2px solid var(--ds-color-border-strong);
+  border-top-right-radius: 10px;
+}
+.lane:only-child::before {
+  display: none;
+}
+
+/* merge bus (bottom edge of the lanes row) — straight for inner lanes */
+.lane::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--ds-color-border-strong);
+}
+.lane:first-child::after {
+  left: calc(50% - 1px);
+  right: 0;
+  height: 20px;
+  background: none;
+  border-bottom: 2px solid var(--ds-color-border-strong);
+  border-left: 2px solid var(--ds-color-border-strong);
+  border-bottom-left-radius: 10px;
+}
+.lane:last-child::after {
+  left: 0;
+  right: calc(50% - 1px);
+  height: 20px;
+  background: none;
+  border-bottom: 2px solid var(--ds-color-border-strong);
+  border-right: 2px solid var(--ds-color-border-strong);
+  border-bottom-right-radius: 10px;
+}
+.lane:only-child::after {
+  display: none;
+}
+
+/* A terminal lane (ends in Exit) doesn't continue or merge: drop the merge bus
+   so nothing is drawn below its last node. */
+.laneTerminal::after {
+  display: none;
+}
+
+.laneStemTop {
+  width: 2px;
+  height: 20px;
+  background: var(--ds-color-border-strong);
+  flex: none;
+}
+.laneStemBottom {
+  width: 2px;
+  height: 20px;
+  background: var(--ds-color-border-strong);
+  flex: none;
+  margin-top: auto;
+}
+/* On outer lanes the rounded elbow already draws the vertical stem — keep these
+   elements for layout height, but hide their straight line so it doesn't overlap
+   the arc. */
+.lane:first-child .laneStemTop,
+.lane:last-child .laneStemTop,
+.lane:first-child .laneStemBottom,
+.lane:last-child .laneStemBottom {
+  background: transparent;
+}
+
+.stem {
+  width: 2px;
+  background: var(--ds-color-border-strong);
+  flex: none;
+}
+
+/* Only the empty stretch below lane content draws a connector — never a full-height
+   spine through nested branches / approval outcomes (that looked like a useless
+   center line). When a sibling lane is taller, this spacer grows to keep the merge. */
+.spacer {
+  flex: 1 1 auto;
+  align-self: center;
+  width: 2px;
+  min-height: 0;
+  background: var(--ds-color-border-strong);
+}
+.laneTerminal .spacer {
+  background: none;
+}

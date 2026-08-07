@@ -1,0 +1,15 @@
+{
+  "$schema": "./_schemas/competitors.schema.json",
+  "version": "1.0.0",
+  "note": "Concise landscape reference for inspiration only. Based on public positioning. We do NOT copy any vendor; we synthesize modern enterprise UX patterns (see patterns-synthesis.md).",
+  "competitors": [
+    { "id": "sailpoint", "name": "SailPoint", "category": "IGA-native", "strengths": ["Deep certification & policy engine", "Mature identity analytics", "Enterprise scale"], "weaknesses": ["Complex, dated UX in places", "Steep learning curve"], "borrow": ["Rigor of certification campaigns", "Policy/SoD depth"], "avoid": ["Overwhelming density", "Config complexity exposed to end users"] },
+    { "id": "saviynt", "name": "Saviynt", "category": "IGA-native", "strengths": ["Broad capability (IGA + cloud PAM)", "Risk-based access"], "weaknesses": ["Feature sprawl", "Inconsistent UX across modules"], "borrow": ["Risk-centric decisioning", "Unified access view"], "avoid": ["Module-to-module inconsistency"] },
+    { "id": "okta", "name": "Okta", "category": "Cloud IdP/access", "strengths": ["Clean, approachable UX", "Strong app catalog & onboarding"], "weaknesses": ["Governance depth lighter than IGA-natives"], "borrow": ["Clarity & polish", "Catalog/request simplicity"], "avoid": ["Under-modeling governance"] },
+    { "id": "microsoft-entra", "name": "Microsoft Entra", "category": "Cloud IdP/governance", "strengths": ["Access reviews & entitlement mgmt", "Ecosystem integration"], "weaknesses": ["Fragmented across portals", "Terminology inconsistency"], "borrow": ["Access packages concept", "Review workflows"], "avoid": ["Portal fragmentation", "Inconsistent terms"] },
+    { "id": "cyberark", "name": "CyberArk", "category": "PAM/identity security", "strengths": ["Privileged access & emergency access depth"], "weaknesses": ["PAM-centric; heavier UX"], "borrow": ["Break-glass rigor & review"], "avoid": ["PAM complexity for general users"] },
+    { "id": "zluri", "name": "Zluri", "category": "SaaS access mgmt", "strengths": ["Modern UX", "SaaS discovery", "Fast onboarding"], "weaknesses": ["Lighter on deep compliance controls"], "borrow": ["Modern, friendly enterprise UX", "Fast self-service"], "avoid": ["Shallow governance for regulated use"] },
+    { "id": "lumos", "name": "Lumos", "category": "SaaS access mgmt", "strengths": ["Slick self-service request UX", "Slack-native flows"], "weaknesses": ["Governance breadth still maturing"], "borrow": ["Frictionless request experience"], "avoid": ["Chat-only flows that skip evidence"] },
+    { "id": "palo-alto", "name": "Palo Alto", "category": "Security platform", "strengths": ["Security posture & analytics"], "weaknesses": ["Not IGA-first; governance is adjacent"], "borrow": ["Risk visualization & posture framing"], "avoid": ["Security-tool framing over governance workflows"] }
+  ]
+}

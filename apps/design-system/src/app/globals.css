@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base resets that Tailwind preflight would normally provide (preflight is off
+   so it doesn't fight MUI CssBaseline). Kept minimal and token-driven. */
+:root {
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Preflight (off) is what normally gives `border` utilities a style + default
+   color. Restore just that in the base layer so `border`/`divide` utilities
+   actually render — utilities still override width/color. */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-width: 0;
+    border-style: solid;
+    border-color: var(--ds-color-border-default, #e1e4e8);
+  }
+
+  /* Preflight (off) normally strips default margins from headings/paragraphs.
+     Without this, browser defaults (e.g. h2 margin ~0.83em) inject phantom
+     spacing. The app uses explicit spacing utilities, so reset these to 0. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  figure,
+  blockquote,
+  dl,
+  dd {
+    margin: 0;
+  }
+
+  /* Lists: strip default markers/indent (preflight would). We build nav/menus
+     from <ul>/<li> and rely on utilities for spacing. */
+  ol,
+  ul,
+  menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Preflight (off) normally strips the UA default button background so a bare
+     <button> is transparent until a utility sets its background. Without this,
+     icon buttons (back, collapse, zoom, bell) render the OS "buttonface" grey.
+     The MUI exclusion is wrapped in :where() so it contributes ZERO specificity —
+     the selector stays at plain-element weight (0,0,1). That keeps two things
+     true at once: it still kills the UA grey on bare buttons, and a `bg-*`
+     utility (0,1,0) always wins, so colored/white buttons render as authored.
+     (A plain `:not([class*='Mui'])` would be 0,2,1 and silently beat utilities.) */
+  button:where(:not([class*='Mui'])),
+  [type='button']:where(:not([class*='Mui'])),
+  [type='reset']:where(:not([class*='Mui'])),
+  [type='submit']:where(:not([class*='Mui'])) {
+    background-color: transparent;
+    background-image: none;
+    cursor: pointer;
+  }
+  button:where(:not([class*='Mui'])):disabled {
+    cursor: default;
+  }
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  font-family: var(--ds-font-sans, 'DM Sans Variable', 'DM Sans', system-ui, sans-serif);
+  background: var(--ds-color-background-canvas, #ffffff);
+  color: var(--ds-color-text-primary, #172b4d);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Consistent, brand-colored focus ring for keyboard users across the DS app. */
+:focus-visible {
+  outline: 2px solid var(--ds-color-border-focus, #eb5424);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Thin, unobtrusive scrollbars for the docs chrome. */
+.ds-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ds-color-border-strong, #c4c9d2) transparent;
+}
+.ds-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.ds-scroll::-webkit-scrollbar-thumb {
+  background: var(--ds-color-border-strong, #c4c9d2);
+  border-radius: 9999px;
+}
+
+/* Builder motion — a gentle entrance for newly inserted canvas nodes. */
+@keyframes ds-node-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+.ds-node-in {
+  animation: ds-node-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Respect reduced-motion everywhere: collapse transitions/animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

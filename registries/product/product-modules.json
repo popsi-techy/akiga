@@ -1,0 +1,30 @@
+{
+  "$schema": "./_schemas/product-modules.schema.json",
+  "version": "1.0.0",
+  "modules": [
+    { "id": "dashboard", "name": "Dashboard", "group": "overview", "owns": "Landing overview: KPIs, my pending actions, risk highlights.", "primaryEntities": [], "primaryPersonas": ["all"], "phase": 1 },
+    { "id": "identities", "name": "Identities", "group": "directory", "owns": "Identity warehouse and lifecycle footprint.", "primaryEntities": ["identity", "account", "entitlement", "role"], "primaryPersonas": ["administrator", "manager", "auditor"], "phase": 1 },
+    { "id": "applications", "name": "Applications", "group": "directory", "owns": "Governed application registry and their access.", "primaryEntities": ["application", "entitlement", "account"], "primaryPersonas": ["application-owner", "administrator"], "phase": 1 },
+    { "id": "access-catalog", "name": "Access Catalog", "group": "access-model", "owns": "Browsable, requestable entitlements and groups.", "primaryEntities": ["entitlement", "group"], "primaryPersonas": ["end-user", "manager"], "phase": 1 },
+    { "id": "roles", "name": "Roles", "group": "access-model", "owns": "Role definition, membership, and assignment.", "primaryEntities": ["role", "entitlement"], "primaryPersonas": ["role-owner", "administrator"], "phase": 4 },
+    { "id": "access-requests", "name": "Access Requests", "group": "access-lifecycle", "owns": "Self-service access requests.", "primaryEntities": ["access-request", "approval-task"], "primaryPersonas": ["end-user", "manager"], "phase": 2 },
+    { "id": "approvals", "name": "Approvals", "group": "access-lifecycle", "owns": "Approval task inbox.", "primaryEntities": ["approval-task", "access-request", "workflow"], "primaryPersonas": ["manager", "application-owner", "role-owner"], "phase": 2 },
+    { "id": "certifications", "name": "Certifications", "group": "governance", "owns": "Access review / attestation campaigns.", "primaryEntities": ["certification-campaign", "certification-item"], "primaryPersonas": ["access-reviewer", "manager", "auditor"], "phase": 3 },
+    { "id": "policies", "name": "Policies", "group": "governance", "owns": "SoD, approval, and provisioning policies and violations.", "primaryEntities": ["sod-policy", "sod-violation", "approval-policy"], "primaryPersonas": ["administrator", "auditor"], "phase": 3 },
+    { "id": "risk", "name": "Risk", "group": "governance", "owns": "Risk scoring and exposure.", "primaryEntities": ["risk-factor"], "primaryPersonas": ["administrator", "auditor"], "phase": 3 },
+    { "id": "emergency-access", "name": "Emergency Access", "group": "access-lifecycle", "owns": "Break-glass, time-bound elevated access.", "primaryEntities": ["emergency-access-request"], "primaryPersonas": ["administrator", "end-user"], "phase": 4 },
+    { "id": "workflows", "name": "Workflows", "group": "governance", "owns": "Visual orchestration of approval/provisioning steps.", "primaryEntities": ["workflow", "approval-policy"], "primaryPersonas": ["administrator"], "phase": 4 },
+    { "id": "reports", "name": "Reports", "group": "evidence", "owns": "Standard reports and exports.", "primaryEntities": [], "primaryPersonas": ["auditor", "administrator"], "phase": 5 },
+    { "id": "audit", "name": "Audit", "group": "evidence", "owns": "Immutable activity trail and evidence.", "primaryEntities": ["audit-event"], "primaryPersonas": ["auditor", "administrator"], "phase": 5 },
+    { "id": "administration", "name": "Administration", "group": "admin", "owns": "Connectors, org settings, delegation.", "primaryEntities": ["connector"], "primaryPersonas": ["administrator"], "phase": 5 }
+  ],
+  "groups": [
+    { "id": "overview", "name": "Overview", "order": 1 },
+    { "id": "directory", "name": "Directory", "order": 2 },
+    { "id": "access-model", "name": "Access Model", "order": 3 },
+    { "id": "access-lifecycle", "name": "Access Lifecycle", "order": 4 },
+    { "id": "governance", "name": "Governance", "order": 5 },
+    { "id": "evidence", "name": "Evidence", "order": 6 },
+    { "id": "admin", "name": "Administration", "order": 7 }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "./_schemas/permissions.schema.json",
+  "version": "1.0.0",
+  "note": "Capability matrix driving permission-aware UI. scope: 'own' = only own records, 'team' = direct reports, 'owned' = objects they own, 'all' = org-wide, 'none' = not allowed. Actions the persona cannot perform are hidden or disabled with explanation.",
+  "actions": [
+    { "id": "identity.view", "label": "View identities" },
+    { "id": "identity.edit", "label": "Edit identity" },
+    { "id": "access.request", "label": "Request access" },
+    { "id": "request.view", "label": "View requests" },
+    { "id": "request.withdraw", "label": "Withdraw request" },
+    { "id": "request.approve", "label": "Approve/reject request" },
+    { "id": "certification.review", "label": "Certify/revoke items" },
+    { "id": "certification.launch", "label": "Launch campaign" },
+    { "id": "entitlement.manage", "label": "Manage entitlements" },
+    { "id": "role.manage", "label": "Manage roles" },
+    { "id": "application.manage", "label": "Manage applications" },
+    { "id": "sod.manage", "label": "Manage SoD policies" },
+    { "id": "sod.remediate", "label": "Remediate violations" },
+    { "id": "risk.configure", "label": "Configure risk model" },
+    { "id": "workflow.manage", "label": "Manage workflows/policies" },
+    { "id": "emergency.request", "label": "Request emergency access" },
+    { "id": "emergency.review", "label": "Review emergency access" },
+    { "id": "connector.manage", "label": "Manage connectors" },
+    { "id": "audit.view", "label": "View audit trail" },
+    { "id": "report.export", "label": "Export reports" },
+    { "id": "settings.manage", "label": "Manage settings/delegation" }
+  ],
+  "matrix": {
+    "end-user":          { "identity.view": "own", "access.request": "own", "request.view": "own", "request.withdraw": "own", "emergency.request": "own" },
+    "manager":           { "identity.view": "team", "access.request": "team", "request.view": "team", "request.approve": "team", "certification.review": "team", "audit.view": "team", "emergency.request": "own" },
+    "access-reviewer":   { "identity.view": "assigned", "certification.review": "assigned", "request.view": "assigned" },
+    "application-owner": { "identity.view": "owned", "application.manage": "owned", "entitlement.manage": "owned", "request.approve": "owned", "certification.review": "owned", "audit.view": "owned" },
+    "role-owner":        { "role.manage": "owned", "request.approve": "owned", "certification.review": "owned", "identity.view": "owned" },
+    "entitlement-owner": { "entitlement.manage": "owned", "request.approve": "owned", "certification.review": "owned", "identity.view": "owned" },
+    "auditor":           { "identity.view": "all", "request.view": "all", "certification.review": "none", "sod.remediate": "none", "audit.view": "all", "report.export": "all" },
+    "administrator":     { "identity.view": "all", "identity.edit": "all", "request.view": "all", "request.approve": "all", "certification.launch": "all", "certification.review": "all", "entitlement.manage": "all", "role.manage": "all", "application.manage": "all", "sod.manage": "all", "sod.remediate": "all", "risk.configure": "all", "workflow.manage": "all", "emergency.review": "all", "connector.manage": "all", "audit.view": "all", "report.export": "all", "settings.manage": "all" }
+  }
+}

@@ -1,0 +1,56 @@
+DueCountdown extraction
+Source: C:/Users/aman.kumar/Desktop/akiga/apps/design-system/src/app/iga/reviewer/sod-resolution-v3/[id]/page.tsx
+Bundle: C:/Users/aman.kumar/Desktop/akiga/apps/design-system/.next/static/chunks/app/iga/reviewer/sod-resolution-v3/[id]/page.js
+Generated: 2026-07-24T06:39:26.827Z
+
+================================================================================
+SOURCE page.tsx DueCountdown occurrences: 1
+function DueCountdown at: -1
+const DueCountdown at: -1
+
+Related lines in source:
+L11: import InfoOutlined from '@mui/icons-material/InfoOutlined';
+L12: import Tooltip from '@mui/material/Tooltip';
+L17: import { SeverityChip, formatDateTime } from '@/components/product/sod/labels';
+L209:         <DueCountdown dueDate={review.dueDate} />
+
+================================================================================
+BUNDLE analysis
+DueCountdown hits in page.js: 1
+function DueCountdown in page.js: false
+
+Unique UI strings from source component:
+
+
+Searching those strings in bundle:
+
+================================================================================
+HOT-UPDATE FILES
+page.10712e2e9b704f38.hot-update.js: DueCountdown=0 hasFn=false
+page.128f8e4f87efd4b2.hot-update.js: DueCountdown=0 hasFn=false
+page.3de8269979c6ecdf.hot-update.js: DueCountdown=1 hasFn=false
+page.644ed060d477f0f3.hot-update.js: DueCountdown=0 hasFn=false
+page.d631cfabf0e62a1c.hot-update.js: DueCountdown=0 hasFn=false
+page.ea86e943276f4623.hot-update.js: DueCountdown=0 hasFn=false
+
+================================================================================
+RELATED HELPERS from labels.tsx
+function formatDate(iso?: string): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+}
+
+/** Date + time, e.g. "Jul 26, 2026, 11:04 PM" (UTC, deterministic). */
+export function formatDateTime(iso?: string): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  let h = d.getUTCHours();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}, ${h}:${String(d.getUTCMinutes()).padStart(2, '0')} ${ampm}`;
+}
+
+================================================================================
+BUNDLE USAGE CONTEXT (~3000 chars)
+                        lineNumber: 203,\n                                                columnNumber: 15\n                                            }, this)\n                                        ]\n                                    }, void 0, true, {\n                                        fileName: \"C:\\\\Users\\\\aman.kumar\\\\Desktop\\\\akiga\\\\apps\\\\design-system\\\\src\\\\app\\\\iga\\\\reviewer\\\\sod-resolution-v3\\\\[id]\\\\page.tsx\",\n                                        lineNumber: 201,\n                                        columnNumber: 13\n                                    }, this)\n                                ]\n                            }, void 0, true, {\n                                fileName: \"C:\\\\Users\\\\aman.kumar\\\\Desktop\\\\akiga\\\\apps\\\\design-system\\\\src\\\\app\\\\iga\\\\reviewer\\\\sod-resolution-v3\\\\[id]\\\\page.tsx\",\n                                lineNumber: 196,\n                                columnNumber: 11\n                            }, this)\n                        ]\n                    }, void 0, true, {\n                        fileName: \"C:\\\\Users\\\\aman.kumar\\\\Desktop\\\\akiga\\\\apps\\\\design-system\\\\src\\\\app\\\\iga\\\\reviewer\\\\sod-resolution-v3\\\\[id]\\\\page.tsx\",\n                        lineNumber: 194,\n                        columnNumber: 9\n                    }, this),\n                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(DueCountdown, {\n                        dueDate: review.dueDate\n                    }, void 0, false, {\n                        fileName: \"C:\\\\Users\\\\aman.kumar\\\\Desktop\\\\akiga\\\\apps\\\\design-system\\\\src\\\\app\\\\iga\\\\reviewer\\\\sod-resolution-v3\\\\[id]\\\\page.tsx\",\n                        lineNumber: 209,\n                        columnNumber: 9\n                    }, this)\n                ]\n            }, void 0, true, {\n                fileName: \"C:\\\\Users\\\\aman.kumar\\\\Desktop\\\\akiga\\\\apps\\\\design-system\\\\src\\\\app\\\\iga\\\\reviewer\\\\sod-resolution-v3\\\\[id]\\\\page.tsx\",\n                lineNumber: 193,\n                columnNumber: 7\n            }, this),\n            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(\"div\", {\n                className: \"flex min-h-0 flex-1\",\n                children: [\n                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(\"section\", {\n                        className: \"flex min-h-0 flex-1 flex-col\",\n                        children: [\n                            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(\"div\", {\n                                className: \"shrink-0 px-4 pb-2 pt-3\",\n                                children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(\"h2\", {\n                                    className: \"text-[13p

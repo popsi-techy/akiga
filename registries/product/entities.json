@@ -1,0 +1,391 @@
+{
+  "$schema": "./_schemas/entities.schema.json",
+  "version": "1.0.0",
+  "note": "Normative source of truth for business entities: attributes, states, and owners. Relationship edges live in relationships.json; state transitions in lifecycle-states.json.",
+  "entities": [
+    {
+      "id": "identity",
+      "name": "User Identity",
+      "definition": "The primary representation of a person (or non-human actor) in the organization. A User Identity may own many App Accounts across applications. Throughout the product 'user' means User Identity unless stated otherwise.",
+      "owner": "manager",
+      "stateful": true,
+      "states": ["active", "inactive", "leaver-pending", "terminated"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "displayName", "type": "string", "required": true },
+        { "name": "email", "type": "email", "required": true },
+        { "name": "type", "type": "enum", "values": ["employee", "contractor", "service-account"], "required": true },
+        { "name": "status", "type": "enum", "values": ["active", "inactive", "leaver-pending", "terminated"], "required": true },
+        { "name": "department", "type": "string", "required": false },
+        { "name": "jobTitle", "type": "string", "required": false },
+        { "name": "managerId", "type": "ref:identity", "required": false },
+        { "name": "location", "type": "string", "required": false },
+        { "name": "startDate", "type": "date", "required": false },
+        { "name": "endDate", "type": "date", "required": false },
+        { "name": "riskScore", "type": "number", "required": false },
+        { "name": "riskLevel", "type": "enum", "values": ["low", "medium", "high", "critical"], "required": false }
+      ]
+    },
+    {
+      "id": "application",
+      "name": "Application",
+      "definition": "A governed system that holds accounts and access.",
+      "owner": "application-owner",
+      "stateful": true,
+      "states": ["active", "onboarding", "deprecated", "retired"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "description", "type": "string", "required": false },
+        { "name": "ownerId", "type": "ref:identity", "required": true },
+        { "name": "status", "type": "enum", "values": ["active", "onboarding", "deprecated", "retired"], "required": true },
+        { "name": "criticality", "type": "enum", "values": ["low", "medium", "high"], "required": false },
+        { "name": "connectorId", "type": "ref:connector", "required": false },
+        { "name": "accountCount", "type": "number", "required": false },
+        { "name": "entitlementCount", "type": "number", "required": false }
+      ]
+    },
+    {
+      "id": "account",
+      "name": "App Account",
+      "definition": "A User Identity's account within a specific application. One User Identity can own multiple App Accounts.",
+      "owner": "application-owner",
+      "stateful": true,
+      "states": ["active", "disabled", "orphaned", "deleted"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "accountName", "type": "string", "required": true, "note": "login/username shown as the account name" },
+        { "name": "email", "type": "email", "required": false },
+        { "name": "applicationId", "type": "ref:application", "required": true },
+        { "name": "identityId", "type": "ref:identity", "required": false, "note": "owning User Identity; null = orphan" },
+        { "name": "entitlementIds", "type": "ref:entitlement[]", "required": false },
+        { "name": "status", "type": "enum", "values": ["active", "disabled", "orphaned", "deleted"], "required": true },
+        { "name": "lastLogin", "type": "datetime", "required": false },
+        { "name": "privileged", "type": "boolean", "required": false }
+      ]
+    },
+    {
+      "id": "entitlement",
+      "name": "Entitlement",
+      "definition": "A grantable unit of access within an application.",
+      "owner": "entitlement-owner",
+      "stateful": true,
+      "states": ["active", "deprecated", "retired"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "description", "type": "string", "required": false },
+        { "name": "applicationId", "type": "ref:application", "required": true },
+        { "name": "ownerId", "type": "ref:identity", "required": true },
+        { "name": "type", "type": "enum", "values": ["permission", "license", "group-membership"], "required": false },
+        { "name": "status", "type": "enum", "values": ["active", "deprecated", "retired"], "required": true },
+        { "name": "riskLevel", "type": "enum", "values": ["low", "medium", "high", "critical"], "required": false },
+        { "name": "requestable", "type": "boolean", "required": true },
+        { "name": "privileged", "type": "boolean", "required": false }
+      ]
+    },
+    {
+      "id": "group",
+      "name": "Group",
+      "definition": "A collection used to grant access to many identities at once.",
+      "owner": "application-owner",
+      "stateful": false,
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "applicationId", "type": "ref:application", "required": false },
+        { "name": "memberCount", "type": "number", "required": false }
+      ]
+    },
+    {
+      "id": "technical-role",
+      "name": "Technical Role",
+      "definition": "A collection of entitlements bundled together to simplify provisioning.",
+      "owner": "role-owner",
+      "stateful": true,
+      "states": ["draft", "active", "deprecated", "retired"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "description", "type": "string", "required": false },
+        { "name": "ownerId", "type": "ref:identity", "required": true },
+        { "name": "status", "type": "enum", "values": ["draft", "active", "deprecated", "retired"], "required": true },
+        { "name": "entitlementIds", "type": "ref:entitlement[]", "required": false },
+        { "name": "memberIds", "type": "ref:identity[]", "required": false, "note": "assigned User Identities" },
+        { "name": "riskScore", "type": "number", "required": false },
+        { "name": "riskLevel", "type": "enum", "values": ["low", "medium", "high", "critical"], "required": false }
+      ]
+    },
+    {
+      "id": "business-role",
+      "name": "Business Role",
+      "definition": "A business function that bundles one or more Technical Roles, and may directly contain entitlements.",
+      "owner": "role-owner",
+      "stateful": true,
+      "states": ["draft", "active", "deprecated", "retired"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "description", "type": "string", "required": false },
+        { "name": "ownerId", "type": "ref:identity", "required": true },
+        { "name": "status", "type": "enum", "values": ["draft", "active", "deprecated", "retired"], "required": true },
+        { "name": "technicalRoleIds", "type": "ref:technical-role[]", "required": false },
+        { "name": "entitlementIds", "type": "ref:entitlement[]", "required": false, "note": "directly-assigned entitlements" },
+        { "name": "memberIds", "type": "ref:identity[]", "required": false, "note": "assigned User Identities" },
+        { "name": "riskScore", "type": "number", "required": false },
+        { "name": "riskLevel", "type": "enum", "values": ["low", "medium", "high", "critical"], "required": false }
+      ]
+    },
+    {
+      "id": "governance-group",
+      "name": "Governance Group",
+      "definition": "A group of reviewers/owners responsible for governing access. Contains one or more User Identities and can own applications, entitlements, technical roles, and business roles.",
+      "owner": "administrator",
+      "stateful": false,
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "description", "type": "string", "required": false },
+        { "name": "reviewerIds", "type": "ref:identity[]", "required": false, "note": "member User Identities" },
+        { "name": "ownedApplicationIds", "type": "ref:application[]", "required": false },
+        { "name": "ownedEntitlementIds", "type": "ref:entitlement[]", "required": false },
+        { "name": "ownedTechnicalRoleIds", "type": "ref:technical-role[]", "required": false },
+        { "name": "ownedBusinessRoleIds", "type": "ref:business-role[]", "required": false }
+      ]
+    },
+    {
+      "id": "access-request",
+      "name": "Access Request",
+      "definition": "A request to grant or revoke access for one or more identities.",
+      "owner": "end-user",
+      "stateful": true,
+      "states": ["draft", "submitted", "pending-approval", "approved", "rejected", "provisioning", "fulfilled", "cancelled", "failed"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "requesterId", "type": "ref:identity", "required": true },
+        { "name": "beneficiaryId", "type": "ref:identity", "required": true, "note": "may equal requester" },
+        { "name": "items", "type": "ref:access-request-item[]", "required": true, "note": "requested entitlements/roles" },
+        { "name": "justification", "type": "string", "required": true },
+        { "name": "status", "type": "enum", "values": ["draft", "submitted", "pending-approval", "approved", "rejected", "provisioning", "fulfilled", "cancelled", "failed"], "required": true },
+        { "name": "priority", "type": "enum", "values": ["normal", "high", "urgent"], "required": false },
+        { "name": "requestedDuration", "type": "enum", "values": ["permanent", "30d", "90d", "custom"], "required": false },
+        { "name": "riskLevel", "type": "enum", "values": ["low", "medium", "high", "critical"], "required": false },
+        { "name": "hasSodConflict", "type": "boolean", "required": false },
+        { "name": "createdAt", "type": "datetime", "required": true }
+      ]
+    },
+    {
+      "id": "approval-task",
+      "name": "Approval Task",
+      "definition": "A single actionable approval assigned to an approver as part of a workflow.",
+      "owner": "manager",
+      "stateful": true,
+      "states": ["pending", "approved", "rejected", "escalated", "expired", "reassigned"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "requestId", "type": "ref:access-request", "required": true },
+        { "name": "approverId", "type": "ref:identity", "required": true },
+        { "name": "step", "type": "number", "required": true },
+        { "name": "status", "type": "enum", "values": ["pending", "approved", "rejected", "escalated", "expired", "reassigned"], "required": true },
+        { "name": "decision", "type": "enum", "values": ["approve", "reject"], "required": false },
+        { "name": "comment", "type": "string", "required": false },
+        { "name": "dueAt", "type": "datetime", "required": false },
+        { "name": "decidedAt", "type": "datetime", "required": false }
+      ]
+    },
+    {
+      "id": "approval-policy",
+      "name": "Approval Policy",
+      "definition": "Rules defining who must approve what, in what order, with escalation and timeouts.",
+      "owner": "administrator",
+      "stateful": true,
+      "states": ["draft", "active", "disabled"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "appliesTo", "type": "string", "required": false, "note": "scope: app/entitlement/risk condition" },
+        { "name": "steps", "type": "json", "required": true, "note": "ordered approver steps" },
+        { "name": "status", "type": "enum", "values": ["draft", "active", "disabled"], "required": true }
+      ]
+    },
+    {
+      "id": "workflow",
+      "name": "Workflow",
+      "definition": "An orchestrated sequence of steps (approvals, checks, provisioning) triggered by an event.",
+      "owner": "administrator",
+      "stateful": true,
+      "states": ["draft", "active", "disabled"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "trigger", "type": "enum", "values": ["access-request", "joiner", "mover", "leaver", "certification"], "required": true },
+        { "name": "nodes", "type": "json", "required": true, "note": "React Flow graph" },
+        { "name": "status", "type": "enum", "values": ["draft", "active", "disabled"], "required": true }
+      ]
+    },
+    {
+      "id": "certification-campaign",
+      "name": "Certification Campaign",
+      "definition": "A scoped, scheduled instance of an access review.",
+      "owner": "administrator",
+      "stateful": true,
+      "states": ["draft", "active", "overdue", "completed", "cancelled"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "scope", "type": "string", "required": true, "note": "e.g. 'Finance app entitlements'" },
+        { "name": "type", "type": "enum", "values": ["user-access", "app-owner", "role", "sod"], "required": true },
+        { "name": "status", "type": "enum", "values": ["draft", "active", "overdue", "completed", "cancelled"], "required": true },
+        { "name": "dueDate", "type": "date", "required": true },
+        { "name": "progress", "type": "number", "required": false, "note": "0-100 % complete" },
+        { "name": "itemCount", "type": "number", "required": false }
+      ]
+    },
+    {
+      "id": "certification-item",
+      "name": "Certification Item",
+      "definition": "One access line to be certified or revoked within a campaign.",
+      "owner": "access-reviewer",
+      "stateful": true,
+      "states": ["pending", "certified", "revoked", "delegated"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "campaignId", "type": "ref:certification-campaign", "required": true },
+        { "name": "identityId", "type": "ref:identity", "required": true },
+        { "name": "accessId", "type": "string", "required": true, "note": "entitlement or role" },
+        { "name": "reviewerId", "type": "ref:identity", "required": true },
+        { "name": "status", "type": "enum", "values": ["pending", "certified", "revoked", "delegated"], "required": true },
+        { "name": "decision", "type": "enum", "values": ["certify", "revoke"], "required": false },
+        { "name": "comment", "type": "string", "required": false },
+        { "name": "riskLevel", "type": "enum", "values": ["low", "medium", "high", "critical"], "required": false }
+      ]
+    },
+    {
+      "id": "sod-policy",
+      "name": "SoD Policy",
+      "definition": "A rule defining a conflicting (toxic) combination of access.",
+      "owner": "administrator",
+      "stateful": true,
+      "states": ["draft", "active", "disabled"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "description", "type": "string", "required": false },
+        { "name": "sideA", "type": "ref:entitlement[]", "required": true },
+        { "name": "sideB", "type": "ref:entitlement[]", "required": true },
+        { "name": "severity", "type": "enum", "values": ["low", "medium", "high", "critical"], "required": true },
+        { "name": "enforcement", "type": "enum", "values": ["preventive", "detective"], "required": true },
+        { "name": "status", "type": "enum", "values": ["draft", "active", "disabled"], "required": true }
+      ]
+    },
+    {
+      "id": "sod-violation",
+      "name": "SoD Violation",
+      "definition": "A detected instance of an identity holding a conflicting combination.",
+      "owner": "administrator",
+      "stateful": true,
+      "states": ["open", "acknowledged", "mitigated", "exception-granted", "resolved"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "policyId", "type": "ref:sod-policy", "required": true },
+        { "name": "identityId", "type": "ref:identity", "required": true },
+        { "name": "status", "type": "enum", "values": ["open", "acknowledged", "mitigated", "exception-granted", "resolved"], "required": true },
+        { "name": "severity", "type": "enum", "values": ["low", "medium", "high", "critical"], "required": true },
+        { "name": "detectedAt", "type": "datetime", "required": true }
+      ]
+    },
+    {
+      "id": "risk-factor",
+      "name": "Risk Factor",
+      "definition": "A contributing factor and weight used to compute a risk score.",
+      "owner": "administrator",
+      "stateful": false,
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "weight", "type": "number", "required": true },
+        { "name": "appliesTo", "type": "enum", "values": ["entitlement", "role", "identity", "request"], "required": true }
+      ]
+    },
+    {
+      "id": "emergency-access-request",
+      "name": "Emergency Access Request",
+      "definition": "A request for temporary, time-bound elevated access (break-glass).",
+      "owner": "end-user",
+      "stateful": true,
+      "states": ["requested", "active", "expired", "revoked", "under-review", "reviewed"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "requesterId", "type": "ref:identity", "required": true },
+        { "name": "accessId", "type": "string", "required": true },
+        { "name": "reason", "type": "string", "required": true },
+        { "name": "status", "type": "enum", "values": ["requested", "active", "expired", "revoked", "under-review", "reviewed"], "required": true },
+        { "name": "activatedAt", "type": "datetime", "required": false },
+        { "name": "expiresAt", "type": "datetime", "required": false }
+      ]
+    },
+    {
+      "id": "lifecycle-event",
+      "name": "Lifecycle Event",
+      "definition": "A Joiner / Mover / Leaver event driving automated access change.",
+      "owner": "administrator",
+      "stateful": true,
+      "states": ["detected", "processing", "completed", "failed"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "identityId", "type": "ref:identity", "required": true },
+        { "name": "type", "type": "enum", "values": ["joiner", "mover", "leaver"], "required": true },
+        { "name": "status", "type": "enum", "values": ["detected", "processing", "completed", "failed"], "required": true },
+        { "name": "effectiveDate", "type": "date", "required": true },
+        { "name": "changes", "type": "json", "required": false, "note": "access granted/revoked" }
+      ]
+    },
+    {
+      "id": "connector",
+      "name": "Connector",
+      "definition": "A simulated integration to a source/target system.",
+      "owner": "administrator",
+      "stateful": true,
+      "states": ["connected", "disconnected", "error", "syncing"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "applicationId", "type": "ref:application", "required": true },
+        { "name": "type", "type": "enum", "values": ["directory", "hr", "saas-app", "database", "custom"], "required": true },
+        { "name": "status", "type": "enum", "values": ["connected", "disconnected", "error", "syncing"], "required": true },
+        { "name": "lastSync", "type": "datetime", "required": false }
+      ]
+    },
+    {
+      "id": "audit-event",
+      "name": "Audit Event",
+      "definition": "An immutable record of a governance action.",
+      "owner": "auditor",
+      "stateful": false,
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "actorId", "type": "ref:identity", "required": true },
+        { "name": "action", "type": "string", "required": true },
+        { "name": "targetType", "type": "string", "required": true },
+        { "name": "targetId", "type": "id", "required": true },
+        { "name": "timestamp", "type": "datetime", "required": true },
+        { "name": "outcome", "type": "enum", "values": ["success", "failure"], "required": true }
+      ]
+    },
+    {
+      "id": "notification",
+      "name": "Notification",
+      "definition": "A message informing a persona of an event or required action.",
+      "owner": "administrator",
+      "stateful": true,
+      "states": ["unread", "read", "dismissed"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "recipientId", "type": "ref:identity", "required": true },
+        { "name": "type", "type": "ref:notification-type", "required": true },
+        { "name": "status", "type": "enum", "values": ["unread", "read", "dismissed"], "required": true },
+        { "name": "createdAt", "type": "datetime", "required": true }
+      ]
+    }
+  ]
+}

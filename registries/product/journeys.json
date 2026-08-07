@@ -1,0 +1,109 @@
+{
+  "$schema": "./_schemas/journeys.schema.json",
+  "version": "1.0.0",
+  "note": "End-to-end, cross-persona flows. Each step names the acting persona, the entity touched, and the resulting state. These are the backbone scenarios the product must support end-to-end.",
+  "journeys": [
+    {
+      "id": "request-to-fulfillment",
+      "name": "Request access → fulfillment",
+      "trigger": "An end user needs access to an application/entitlement/role.",
+      "personas": ["end-user", "manager", "application-owner", "administrator"],
+      "steps": [
+        { "actor": "end-user", "action": "Browse catalog, add items to cart, add justification, submit", "entity": "access-request", "toState": "submitted" },
+        { "actor": "system", "action": "Run policy checks (SoD, risk), route via workflow/approval policy", "entity": "access-request", "toState": "pending-approval" },
+        { "actor": "manager", "action": "Review with risk/context, approve or reject (possibly multi-step)", "entity": "approval-task", "toState": "approved" },
+        { "actor": "system", "action": "Provision to target app (simulated)", "entity": "access-request", "toState": "provisioning" },
+        { "actor": "system", "action": "Confirm grant, notify requester, write audit event", "entity": "access-request", "toState": "fulfilled" }
+      ],
+      "keyUX": ["catalog search/filter", "cart", "SoD warning at request time", "approval inbox with context", "provisioning progress", "toast + notification on fulfillment"]
+    },
+    {
+      "id": "access-certification-campaign",
+      "name": "Access certification campaign",
+      "trigger": "A scheduled or ad-hoc review of who has what access.",
+      "personas": ["administrator", "access-reviewer", "manager", "auditor"],
+      "steps": [
+        { "actor": "administrator", "action": "Define scope, type, reviewers, due date; launch", "entity": "certification-campaign", "toState": "active" },
+        { "actor": "access-reviewer", "action": "Work reviewer inbox: certify/revoke/delegate each item (bulk supported)", "entity": "certification-item", "toState": "certified" },
+        { "actor": "system", "action": "Revocations trigger deprovisioning; track progress", "entity": "certification-item", "toState": "revoked" },
+        { "actor": "system", "action": "On completion, generate evidence; close campaign", "entity": "certification-campaign", "toState": "completed" },
+        { "actor": "auditor", "action": "Inspect/export campaign evidence", "entity": "audit-event", "toState": null }
+      ],
+      "keyUX": ["campaign progress", "reviewer inbox", "bulk certify/revoke", "risk-first sorting", "overdue emphasis", "evidence export"]
+    },
+    {
+      "id": "joiner-provisioning",
+      "name": "Joiner — birthright provisioning",
+      "trigger": "HR event: a new identity joins.",
+      "personas": ["administrator", "manager"],
+      "steps": [
+        { "actor": "system", "action": "Detect joiner event from HR (simulated)", "entity": "lifecycle-event", "toState": "detected" },
+        { "actor": "system", "action": "Evaluate birthright policy (department/title → roles)", "entity": "lifecycle-event", "toState": "processing" },
+        { "actor": "system", "action": "Provision birthright access; flag exceptions for manager", "entity": "identity", "toState": "active" },
+        { "actor": "system", "action": "Complete event; write audit evidence", "entity": "lifecycle-event", "toState": "completed" }
+      ],
+      "keyUX": ["lifecycle event timeline", "birthright preview", "exception handling"]
+    },
+    {
+      "id": "mover-access-change",
+      "name": "Mover — access change on transfer",
+      "trigger": "HR event: identity changes role/department.",
+      "personas": ["administrator", "manager"],
+      "steps": [
+        { "actor": "system", "action": "Detect mover event; compute access delta (add/remove)", "entity": "lifecycle-event", "toState": "processing" },
+        { "actor": "manager", "action": "Review proposed changes; confirm removals of old access", "entity": "lifecycle-event", "toState": "processing" },
+        { "actor": "system", "action": "Apply grants/revocations; complete", "entity": "lifecycle-event", "toState": "completed" }
+      ],
+      "keyUX": ["access diff view (before/after)", "risky-removal confirmation"]
+    },
+    {
+      "id": "leaver-deprovisioning",
+      "name": "Leaver — deprovisioning",
+      "trigger": "HR event: identity departs.",
+      "personas": ["administrator", "manager"],
+      "steps": [
+        { "actor": "system", "action": "Detect leaver; set identity leaver-pending", "entity": "identity", "toState": "leaver-pending" },
+        { "actor": "system", "action": "Revoke all access; disable accounts (simulated)", "entity": "account", "toState": "disabled" },
+        { "actor": "system", "action": "Confirm full deprovisioning; terminate identity; evidence", "entity": "identity", "toState": "terminated" }
+      ],
+      "keyUX": ["deprovisioning checklist/progress", "orphan detection", "completion evidence"]
+    },
+    {
+      "id": "sod-violation-remediation",
+      "name": "SoD violation remediation",
+      "trigger": "A conflicting access combination is detected.",
+      "personas": ["administrator", "auditor"],
+      "steps": [
+        { "actor": "system", "action": "Detect violation against active SoD policy", "entity": "sod-violation", "toState": "open" },
+        { "actor": "administrator", "action": "Acknowledge; choose remediation (remove access) or grant exception with justification", "entity": "sod-violation", "toState": "acknowledged" },
+        { "actor": "administrator", "action": "Apply remediation; resolve", "entity": "sod-violation", "toState": "resolved" }
+      ],
+      "keyUX": ["violation detail with both conflicting sides", "remediate vs exception choice", "exception justification + expiry"]
+    },
+    {
+      "id": "emergency-access-grant",
+      "name": "Emergency (break-glass) access",
+      "trigger": "Urgent need for temporary elevated access.",
+      "personas": ["end-user", "administrator"],
+      "steps": [
+        { "actor": "end-user", "action": "Request emergency access with reason", "entity": "emergency-access-request", "toState": "requested" },
+        { "actor": "system", "action": "Grant time-bound access; start countdown", "entity": "emergency-access-request", "toState": "active" },
+        { "actor": "system", "action": "Auto-expire at window end", "entity": "emergency-access-request", "toState": "expired" },
+        { "actor": "administrator", "action": "Mandatory post-use review of actions taken", "entity": "emergency-access-request", "toState": "reviewed" }
+      ],
+      "keyUX": ["prominent countdown", "reason capture", "mandatory review queue"]
+    },
+    {
+      "id": "role-definition-and-assignment",
+      "name": "Role definition & assignment",
+      "trigger": "A role owner defines or updates a role.",
+      "personas": ["role-owner", "administrator", "end-user"],
+      "steps": [
+        { "actor": "role-owner", "action": "Define role: name, owner, bundle entitlements (draft)", "entity": "role", "toState": "draft" },
+        { "actor": "role-owner", "action": "Review SoD/risk impact of bundle; activate", "entity": "role", "toState": "active" },
+        { "actor": "end-user", "action": "Request the role (enters request-to-fulfillment)", "entity": "access-request", "toState": "submitted" }
+      ],
+      "keyUX": ["role builder (entitlement picker)", "SoD/risk impact preview", "membership view"]
+    }
+  ]
+}

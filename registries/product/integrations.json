@@ -1,0 +1,17 @@
+{
+  "$schema": "./_schemas/integrations.schema.json",
+  "version": "1.0.0",
+  "note": "Conceptual source/target systems. All SIMULATED — no real connectivity. Defines the mental model the domain assumes and the sample data seeds.",
+  "connectorTypes": [
+    { "id": "directory", "name": "Directory", "role": "authoritative for accounts & groups", "examples": ["Corporate LDAP/AD-style directory"], "reads": ["account", "group"], "writes": ["account", "group"] },
+    { "id": "hr", "name": "HR System", "role": "authoritative source for identities & lifecycle events", "examples": ["HRIS"], "reads": ["identity", "lifecycle-event"], "writes": [] },
+    { "id": "saas-app", "name": "SaaS Application", "role": "target for provisioning entitlements", "examples": ["CRM", "Finance", "Collaboration suite"], "reads": ["account", "entitlement"], "writes": ["account", "entitlement"] },
+    { "id": "database", "name": "Database", "role": "target application with schema-level access", "examples": ["Data warehouse"], "reads": ["account", "entitlement"], "writes": ["account", "entitlement"] },
+    { "id": "custom", "name": "Custom", "role": "generic connector for bespoke systems", "examples": [], "reads": ["account", "entitlement"], "writes": ["account", "entitlement"] }
+  ],
+  "concepts": {
+    "authoritativeSource": "HR is the authoritative source of identities; the directory is authoritative for accounts. Governance flows FROM these sources.",
+    "provisioning": "When a request is approved, provisioning WRITES the entitlement to the target app via its connector — simulated with realistic states (provisioning → fulfilled/failed).",
+    "reconciliation": "Connectors periodically 'sync', which can surface orphan accounts and out-of-band changes — a source of governance findings."
+  }
+}

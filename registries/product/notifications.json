@@ -1,0 +1,18 @@
+{
+  "$schema": "./_schemas/notifications.schema.json",
+  "version": "1.0.0",
+  "note": "Notification catalog. channel: in-app (always), email (simulated). urgency maps to visual emphasis. Each has a deep-link target.",
+  "types": [
+    { "id": "approval-pending", "name": "Approval pending", "trigger": "An approval task is assigned to you.", "audience": ["manager", "application-owner", "role-owner", "entitlement-owner"], "channels": ["in-app", "email"], "urgency": "normal", "linksTo": "approval-task" },
+    { "id": "approval-overdue", "name": "Approval overdue", "trigger": "Your approval task passed SLA.", "audience": ["manager", "application-owner", "administrator"], "channels": ["in-app", "email"], "urgency": "high", "linksTo": "approval-task" },
+    { "id": "request-decided", "name": "Request approved/rejected", "trigger": "Your request was decided.", "audience": ["end-user"], "channels": ["in-app", "email"], "urgency": "normal", "linksTo": "access-request" },
+    { "id": "request-fulfilled", "name": "Access provisioned", "trigger": "Your requested access is now active.", "audience": ["end-user"], "channels": ["in-app"], "urgency": "normal", "linksTo": "access-request" },
+    { "id": "cert-assigned", "name": "Review assigned", "trigger": "You have certification items to review.", "audience": ["access-reviewer", "manager", "application-owner"], "channels": ["in-app", "email"], "urgency": "normal", "linksTo": "certification-campaign" },
+    { "id": "cert-due-soon", "name": "Review due soon", "trigger": "A campaign you review is nearing its due date.", "audience": ["access-reviewer", "manager"], "channels": ["in-app", "email"], "urgency": "high", "linksTo": "certification-campaign" },
+    { "id": "access-expiring", "name": "Access expiring", "trigger": "Time-bound access expires soon (default 7 days).", "audience": ["end-user"], "channels": ["in-app", "email"], "urgency": "normal", "linksTo": "entitlement" },
+    { "id": "sod-violation-open", "name": "SoD violation detected", "trigger": "A new SoD violation was detected.", "audience": ["administrator"], "channels": ["in-app"], "urgency": "high", "linksTo": "sod-violation" },
+    { "id": "emergency-active", "name": "Emergency access active", "trigger": "Break-glass access was activated.", "audience": ["administrator"], "channels": ["in-app", "email"], "urgency": "critical", "linksTo": "emergency-access-request" },
+    { "id": "emergency-review-due", "name": "Emergency access review due", "trigger": "An expired emergency grant needs review.", "audience": ["administrator"], "channels": ["in-app"], "urgency": "high", "linksTo": "emergency-access-request" },
+    { "id": "lifecycle-exception", "name": "Lifecycle exception", "trigger": "A JML event needs manual attention.", "audience": ["administrator", "manager"], "channels": ["in-app"], "urgency": "high", "linksTo": "lifecycle-event" }
+  ]
+}

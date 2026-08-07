@@ -1,0 +1,38 @@
+{
+  "name": "@akiga/design-system-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The Design System — a polished application with its own navigation, documentation, tokens, components, and patterns.",
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "prebuild": "npm run check:contrast",
+    "build": "next build",
+    "start": "next start -p 3001",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "check:contrast": "tsx scripts/check-contrast.ts",
+    "check:a11y": "npm run check:contrast"
+  },
+  "dependencies": {
+    "@emotion/cache": "^11.13.5",
+    "@emotion/react": "^11.13.5",
+    "@emotion/styled": "^11.13.5",
+    "@fontsource-variable/dm-sans": "^5.1.0",
+    "@mui/icons-material": "^5.16.7",
+    "@mui/material": "^5.16.7",
+    "next": "^14.2.15",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "simple-icons": "^13.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.11",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
+  }
+}

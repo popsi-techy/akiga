@@ -1,0 +1,264 @@
+/**
+ * Seed data — the prototype's single, deterministic source of runtime data.
+ *
+ * Per the Product Knowledge Base sample-data strategy: one coherent fictional
+ * organisation, deterministic (no Date.now()/Math.random() at module scope), and
+ * sized to exercise real UI. Screens never read this directly — they go through
+ * the service functions (e.g. `data/dashboard.ts`), which mirror the future
+ * repository/API layer so a real backend can be swapped in without UI changes.
+ */
+
+export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
+export type Tone = 'brand' | 'info' | 'success' | 'warning' | 'danger' | 'neutral';
+
+/** Org-wide counts surfaced as dashboard KPIs. */
+export const orgStats = {
+  applications: 234,
+  identities: 3413,
+  entitlements: 34123,
+  orphanAccounts: 32,
+};
+
+export interface SeedIdentity {
+  id: string;
+  name: string;
+  title: string;
+  app: string;
+  riskLevel: RiskLevel;
+  riskScore: number;
+}
+
+export const identities: SeedIdentity[] = [
+  { id: 'u-scott', name: 'Scott William', title: 'SDE 1', app: 'WordPress', riskLevel: 'critical', riskScore: 94 },
+  { id: 'u-jessica', name: 'Jessica Liu', title: 'UX Designer', app: 'Figma', riskLevel: 'critical', riskScore: 88 },
+  { id: 'u-mohammed', name: 'Mohammed Ali', title: 'Product Manager', app: 'Trello', riskLevel: 'critical', riskScore: 81 },
+  { id: 'u-ananya', name: 'Ananya Patel', title: 'Data Scientist', app: 'Python', riskLevel: 'high', riskScore: 68 },
+  { id: 'u-bob', name: 'Bob Smith', title: 'Finance Analyst', app: 'NetSuite', riskLevel: 'high', riskScore: 63 },
+  { id: 'u-grace', name: 'Grace Lee', title: 'Support Lead', app: 'Zendesk', riskLevel: 'medium', riskScore: 41 },
+  { id: 'u-emily', name: 'Emily Davis', title: 'HR Manager', app: 'Workday', riskLevel: 'medium', riskScore: 35 },
+  { id: 'u-daniel', name: 'Daniel White', title: 'Sales Rep', app: 'Salesforce', riskLevel: 'low', riskScore: 18 },
+];
+
+export type CertDue = { tone: Extract<Tone, 'danger' | 'warning'>; label: string } | { date: string };
+export interface SeedCertCampaign {
+  id: string;
+  name: string;
+  scope: string;
+  due: CertDue;
+}
+
+export const certificationCampaigns: SeedCertCampaign[] = [
+  { id: 'c-fin', name: 'Quarterly Finance Review', scope: 'Financial data', due: { tone: 'danger', label: 'Expiring in 4 hrs' } },
+  { id: 'c-eng', name: 'Yearly Engineering Review', scope: 'Engineering access', due: { tone: 'warning', label: 'Expiring tomorrow' } },
+  { id: 'c-design', name: 'Quarterly Design Review', scope: 'Design team access', due: { date: '24 Oct 2026' } },
+  { id: 'c-legal', name: 'Legal Review', scope: 'Legal team access', due: { date: '24 Oct 2026' } },
+];
+
+/** Access-certification status breakdown (donut). */
+export const certificationStatus = { completed: 1180, inProgress: 520, readyToLaunch: 460, others: 240 };
+
+/** SoD policy state breakdown (donut). */
+export const sodPolicyStatus = { active: 86, draft: 20, violations: 12 };
+
+export interface SeedSodPolicy {
+  id: string;
+  name: string;
+  area: string;
+  count: number;
+}
+
+export const highRiskSodPolicies: SeedSodPolicy[] = [
+  { id: 's-grafana', name: 'Grafana Write + Delete', area: 'Observability access', count: 23 },
+  { id: 's-bitbucket', name: 'BitBucket Write + Delete', area: 'Source control', count: 19 },
+  { id: 's-aws', name: 'AWS Admin + Billing', area: 'Cloud infrastructure', count: 14 },
+];
+
+/** The current user's pending work — drives dashboard + nav badges. */
+export const myWork = { approvals: 7, reviews: 12, requests: 3, reviewRequests: 6 };
+
+/* ------------------------------------------------------------------ *
+ * Emergency Access module
+ * ------------------------------------------------------------------ */
+export type EAStatus = 'draft' | 'active';
+
+export interface SeedEmergencyAccess {
+  id: string;
+  name: string;
+  initial: string;
+  description: string;
+  status: EAStatus;
+  riskLevel?: RiskLevel;
+  riskScore?: number;
+  activeUsers?: number;
+  maxDurationHrs: number;
+  maxConcurrent: number;
+  maxRequestsPerDay: number;
+  cooldownHrs: number;
+  createdOn: string;
+  updatedOn: string;
+}
+
+export const emergencyAccessList: SeedEmergencyAccess[] = [
+  { id: 'ea-bitbucket-prod', name: 'Bitbucket Production Env', initial: 'B', description: 'Break-glass access to the Bitbucket production environment.', status: 'draft', maxDurationHrs: 24, maxConcurrent: 24, maxRequestsPerDay: 5, cooldownHrs: 2, createdOn: 'April 20, 2026', updatedOn: 'April 20, 2026' },
+  { id: 'ea-github-staging', name: 'GitHub Staging Env', initial: 'G', description: 'Emergency access to GitHub staging.', status: 'active', riskLevel: 'critical', riskScore: 94, activeUsers: 48, maxDurationHrs: 24, maxConcurrent: 24, maxRequestsPerDay: 5, cooldownHrs: 2, createdOn: 'April 18, 2026', updatedOn: 'April 20, 2026' },
+  { id: 'ea-docker-local', name: 'Docker Localhost Setup', initial: 'D', description: 'Local Docker break-glass configuration.', status: 'draft', maxDurationHrs: 12, maxConcurrent: 10, maxRequestsPerDay: 3, cooldownHrs: 1, createdOn: 'April 19, 2026', updatedOn: 'April 19, 2026' },
+  { id: 'ea-azure-dev', name: 'Azure Dev Environment', initial: 'A', description: 'Emergency access to the Azure development subscription.', status: 'active', riskLevel: 'critical', riskScore: 91, activeUsers: 60, maxDurationHrs: 24, maxConcurrent: 24, maxRequestsPerDay: 5, cooldownHrs: 2, createdOn: 'April 15, 2026', updatedOn: 'April 20, 2026' },
+  { id: 'ea-gitlab-test', name: 'GitLab Testing Env', initial: 'G', description: 'Break-glass access to GitLab testing.', status: 'active', riskLevel: 'high', riskScore: 74, activeUsers: 36, maxDurationHrs: 24, maxConcurrent: 20, maxRequestsPerDay: 5, cooldownHrs: 2, createdOn: 'April 14, 2026', updatedOn: 'April 20, 2026' },
+  { id: 'ea-aws-qa', name: 'AWS QA Environment', initial: 'A', description: 'Emergency access to the AWS QA account.', status: 'active', riskLevel: 'high', riskScore: 66, activeUsers: 24, maxDurationHrs: 24, maxConcurrent: 20, maxRequestsPerDay: 5, cooldownHrs: 2, createdOn: 'April 12, 2026', updatedOn: 'April 20, 2026' },
+  { id: 'ea-salesforce', name: 'Emergency Access Salesforce', initial: 'A', description: 'Emergency access for salesforce', status: 'active', riskLevel: 'critical', riskScore: 94, activeUsers: 24, maxDurationHrs: 24, maxConcurrent: 24, maxRequestsPerDay: 5, cooldownHrs: 2, createdOn: 'April 20, 2026', updatedOn: 'April 20, 2026' },
+  { id: 'ea-bitbucket-prod-2', name: 'Bitbucket Production Env', initial: 'B', description: 'Secondary break-glass access to Bitbucket production.', status: 'active', riskLevel: 'medium', riskScore: 48, activeUsers: 12, maxDurationHrs: 24, maxConcurrent: 24, maxRequestsPerDay: 5, cooldownHrs: 2, createdOn: 'April 10, 2026', updatedOn: 'April 20, 2026' },
+];
+
+/** Sessions shown on an emergency-access detail (reference seed identities). */
+export interface SeedEASession {
+  identityId: string;
+  ongoing: boolean;
+  when: string;
+}
+export const emergencySessions: SeedEASession[] = [
+  { identityId: 'u-scott', ongoing: true, when: 'Ongoing · Ends in 4 hrs' },
+  { identityId: 'u-jessica', ongoing: false, when: 'Ended Aug 16, 2026 12:09 PM' },
+  { identityId: 'u-mohammed', ongoing: false, when: 'Ended Aug 16, 2026 12:09 PM' },
+  { identityId: 'u-ananya', ongoing: false, when: 'Ended Aug 16, 2026 12:09 PM' },
+];
+export const emergencySessionsTotal = 24;
+
+/* ------------------------------------------------------------------ *
+ * Directory — canonical domain entities (User Identity is the primary
+ * representation of a person; App Accounts link identities to applications).
+ * ------------------------------------------------------------------ */
+export type IdentityStatus = 'active' | 'inactive' | 'leaver-pending' | 'terminated';
+
+export interface SeedUserIdentity {
+  id: string;
+  name: string;
+  email: string;
+  jobTitle: string;
+  department: string;
+  status: IdentityStatus;
+  riskLevel: RiskLevel;
+  riskScore: number;
+}
+
+/** The canonical people directory. Owners/reviewers everywhere reference these. */
+export const userIdentities: SeedUserIdentity[] = [
+  { id: 'o-liam', name: 'Liam Turner', email: 'liam.turner@acme.com', jobTitle: 'Cloud Architect', department: 'Engineering', status: 'active', riskLevel: 'critical', riskScore: 82 },
+  { id: 'o-marcus', name: 'Marcus Lee', email: 'marcus.lee@acme.com', jobTitle: 'IT Administrator', department: 'IT', status: 'active', riskLevel: 'critical', riskScore: 77 },
+  { id: 'o-frank', name: 'Frank Wilson', email: 'frank.wilson@acme.com', jobTitle: 'DevOps Engineer', department: 'Engineering', status: 'active', riskLevel: 'high', riskScore: 71 },
+  { id: 'o-priya', name: 'Priya Sharma', email: 'priya.sharma@acme.com', jobTitle: 'Engineering Manager', department: 'Engineering', status: 'active', riskLevel: 'high', riskScore: 66 },
+  { id: 'o-bob', name: 'Bob Smith', email: 'bob.smith@acme.com', jobTitle: 'Finance Analyst', department: 'Finance', status: 'active', riskLevel: 'high', riskScore: 63 },
+  { id: 'o-nathan', name: 'Nathan Green', email: 'nathan.green@acme.com', jobTitle: 'Data Engineer', department: 'Data', status: 'active', riskLevel: 'high', riskScore: 58 },
+  { id: 'o-catherine', name: 'Catherine Brown', email: 'catherine.brown@acme.com', jobTitle: 'Security Analyst', department: 'Security', status: 'active', riskLevel: 'high', riskScore: 55 },
+  { id: 'o-hana', name: 'Hana Kim', email: 'hana.kim@acme.com', jobTitle: 'Finance Manager', department: 'Finance', status: 'active', riskLevel: 'medium', riskScore: 49 },
+  { id: 'o-henry', name: 'Henry Taylor', email: 'henry.taylor@acme.com', jobTitle: 'Application Owner', department: 'IT', status: 'active', riskLevel: 'medium', riskScore: 44 },
+  { id: 'o-grace', name: 'Grace Lee', email: 'grace.lee@acme.com', jobTitle: 'Support Lead', department: 'Customer Support', status: 'active', riskLevel: 'medium', riskScore: 41 },
+  { id: 'o-emily', name: 'Emily Davis', email: 'emily.davis@acme.com', jobTitle: 'HR Manager', department: 'People', status: 'active', riskLevel: 'medium', riskScore: 35 },
+  { id: 'o-olivia', name: 'Olivia Martin', email: 'olivia.martin@acme.com', jobTitle: 'Compliance Officer', department: 'Compliance', status: 'active', riskLevel: 'medium', riskScore: 29 },
+  { id: 'o-sofia', name: 'Sofia Rossi', email: 'sofia.rossi@acme.com', jobTitle: 'Product Manager', department: 'Product', status: 'active', riskLevel: 'low', riskScore: 24 },
+  { id: 'o-daniel', name: 'Daniel White', email: 'daniel.white@acme.com', jobTitle: 'Sales Representative', department: 'Sales', status: 'active', riskLevel: 'low', riskScore: 18 },
+];
+
+/** Owners assignable to an emergency access — a projection of User Identities. */
+export interface SeedEAOwner {
+  id: string;
+  name: string;
+  email: string;
+}
+const toOwner = (u: SeedUserIdentity): SeedEAOwner => ({ id: u.id, name: u.name, email: u.email });
+export const emergencyOwners: SeedEAOwner[] = userIdentities.slice(0, 8).map(toOwner);
+export const emergencyGovernanceGroupsCount = 4;
+
+/**
+ * Approval Policy seed — used only to prime an empty localStorage store on first
+ * visit (the service owns persistence). A handful of mixed Active/Draft rows.
+ * Builder trees start empty; users author them in the builder (M3+).
+ */
+export const approvalPolicySeed: import('./automation-types').ApprovalPolicy[] = [
+  { id: 'ap-joiner-access', policyName: 'Joiner Access Approval', description: 'Standard approval for new-joiner access requests.', status: 'active', root: [], createdAt: '2026-02-11T09:00:00.000Z', updatedAt: '2026-06-30T14:20:00.000Z' },
+  { id: 'ap-privileged', policyName: 'Privileged Access Review', description: 'Multi-level approval for privileged entitlements.', status: 'active', root: [], createdAt: '2026-03-04T10:30:00.000Z', updatedAt: '2026-06-18T11:05:00.000Z' },
+  { id: 'ap-finance-apps', policyName: 'Finance Applications', description: 'Approval routing for finance-system access.', status: 'active', root: [], createdAt: '2026-01-22T08:15:00.000Z', updatedAt: '2026-05-27T16:40:00.000Z' },
+  { id: 'ap-contractor', policyName: 'Contractor Onboarding', description: 'Time-boxed approval flow for contractors.', status: 'draft', root: [], createdAt: '2026-05-09T13:00:00.000Z', updatedAt: '2026-05-09T13:00:00.000Z' },
+  { id: 'ap-saas-selfserve', policyName: 'SaaS Self-Service', description: 'Lightweight approval for low-risk SaaS apps.', status: 'draft', root: [], createdAt: '2026-06-12T09:45:00.000Z', updatedAt: '2026-06-15T10:10:00.000Z' },
+  { id: 'ap-emergency', policyName: 'Emergency Break-Glass', description: 'Expedited single-approver path for emergencies.', status: 'active', root: [], createdAt: '2026-04-01T07:20:00.000Z', updatedAt: '2026-06-02T09:00:00.000Z' },
+];
+
+/** Application + entitlement catalog — selectable in Assign Entities and the Directory.
+    `ownerIds` reference User Identities (see `userIdentities`). */
+export const catalogApps: { id: string; name: string; description: string; ownerIds: string[]; entitlements: { id: string; name: string; description: string; risk: number; ownerIds: string[] }[] }[] = [
+  { id: 'app-okta', name: 'Okta', description: 'Workforce identity & single sign-on.', ownerIds: ['o-marcus', 'o-henry'], entitlements: [
+    { id: 'ent-okta-admin', name: 'Super Admin', description: 'Full tenant administration and user management.', risk: 88, ownerIds: ['o-marcus'] },
+    { id: 'ent-okta-ro', name: 'Read-only Admin', description: 'View-only access to admin console.', risk: 32, ownerIds: ['o-henry'] },
+    { id: 'ent-okta-user', name: 'Standard User', description: 'Standard sign-in access for end users.', risk: 8, ownerIds: ['o-henry'] },
+  ] },
+  { id: 'app-salesforce', name: 'Salesforce', description: 'CRM for sales, service, and marketing teams.', ownerIds: ['o-bob', 'o-henry'], entitlements: [
+    { id: 'ent-sf-admin', name: 'System Administrator', description: 'Manage org configuration, users, and data.', risk: 84, ownerIds: ['o-bob'] },
+    { id: 'ent-sf-sales', name: 'Sales User', description: 'Access leads, opportunities, and accounts.', risk: 40, ownerIds: ['o-bob'] },
+    { id: 'ent-sf-service', name: 'Service Cloud User', description: 'Handle cases and service console.', risk: 38, ownerIds: ['o-henry'] },
+  ] },
+  { id: 'app-github', name: 'GitHub', description: 'Source control and CI for engineering.', ownerIds: ['o-priya', 'o-frank'], entitlements: [
+    { id: 'ent-gh-org-admin', name: 'Org Admin', description: 'Owner of the organization and its repos.', risk: 80, ownerIds: ['o-priya'] },
+    { id: 'ent-gh-maintain', name: 'Maintain', description: 'Manage a repository without admin rights.', risk: 52, ownerIds: ['o-frank'] },
+    { id: 'ent-gh-write', name: 'Write', description: 'Push to repositories and open PRs.', risk: 45, ownerIds: ['o-frank'] },
+  ] },
+  { id: 'app-aws', name: 'AWS', description: 'Cloud infrastructure and services.', ownerIds: ['o-liam', 'o-marcus'], entitlements: [
+    { id: 'ent-aws-admin', name: 'AdministratorAccess', description: 'Full access to all AWS services.', risk: 95, ownerIds: ['o-marcus'] },
+    { id: 'ent-aws-power', name: 'PowerUserAccess', description: 'Full access except IAM management.', risk: 68, ownerIds: ['o-liam'] },
+    { id: 'ent-aws-ro', name: 'ReadOnlyAccess', description: 'View-only across AWS resources.', risk: 22, ownerIds: ['o-nathan'] },
+  ] },
+];
+
+export const technicalRoles: { id: string; name: string; description: string; risk: number; entitlementIds: string[]; memberIds: string[]; ownerIds: string[] }[] = [
+  { id: 'tr-eng-baseline', name: 'Engineering Baseline', description: 'Standard tooling for engineers', risk: 25, entitlementIds: ['ent-gh-write', 'ent-okta-user'], memberIds: ['o-frank', 'o-sofia', 'o-priya'], ownerIds: ['o-priya'] },
+  { id: 'tr-devops', name: 'DevOps Access', description: 'CI/CD and infrastructure access', risk: 74, entitlementIds: ['ent-aws-power', 'ent-gh-maintain', 'ent-aws-admin'], memberIds: ['o-frank', 'o-liam', 'o-marcus'], ownerIds: ['o-liam'] },
+  { id: 'tr-data', name: 'Data Platform', description: 'Warehouse and BI access', risk: 56, entitlementIds: ['ent-aws-ro', 'ent-sf-service'], memberIds: ['o-nathan', 'o-bob'], ownerIds: ['o-nathan'] },
+];
+export const businessRoles: { id: string; name: string; description: string; risk: number; technicalRoleIds: string[]; entitlementIds: string[]; memberIds: string[]; ownerIds: string[] }[] = [
+  { id: 'br-sales-rep', name: 'Sales Representative', description: 'Apps for the sales org', risk: 30, technicalRoleIds: ['tr-eng-baseline'], entitlementIds: ['ent-sf-sales'], memberIds: ['o-daniel', 'o-bob', 'o-hana'], ownerIds: ['o-henry'] },
+  { id: 'br-support', name: 'Support Agent', description: 'Customer support toolset', risk: 28, technicalRoleIds: ['tr-data'], entitlementIds: ['ent-sf-service'], memberIds: ['o-grace'], ownerIds: ['o-henry'] },
+  { id: 'br-finance', name: 'Finance Analyst', description: 'Finance systems bundle', risk: 62, technicalRoleIds: ['tr-data'], entitlementIds: ['ent-aws-ro', 'ent-sf-sales'], memberIds: ['o-bob', 'o-hana'], ownerIds: ['o-bob'] },
+];
+
+/** Governance groups — reviewers/owners that govern access. `members` = reviewer count. */
+export const governanceGroups: { id: string; name: string; description: string; members: number; reviewerIds: string[]; ownedApplicationIds: string[]; ownedEntitlementIds: string[]; ownedTechnicalRoleIds: string[]; ownedBusinessRoleIds: string[] }[] = [
+  { id: 'gg-secops', name: 'Security Operations', description: 'Owns privileged access and reviews security-sensitive entitlements.', members: 2, reviewerIds: ['o-catherine', 'o-marcus'], ownedApplicationIds: ['app-okta'], ownedEntitlementIds: ['ent-okta-admin', 'ent-aws-admin'], ownedTechnicalRoleIds: ['tr-devops'], ownedBusinessRoleIds: [] },
+  { id: 'gg-it-admins', name: 'IT Administrators', description: 'Owns infrastructure applications and administrator access.', members: 2, reviewerIds: ['o-marcus', 'o-henry'], ownedApplicationIds: ['app-aws'], ownedEntitlementIds: ['ent-aws-power'], ownedTechnicalRoleIds: ['tr-devops'], ownedBusinessRoleIds: [] },
+  { id: 'gg-compliance', name: 'Compliance Team', description: 'Reviews access for regulatory compliance.', members: 2, reviewerIds: ['o-olivia', 'o-catherine'], ownedApplicationIds: [], ownedEntitlementIds: ['ent-sf-admin'], ownedTechnicalRoleIds: [], ownedBusinessRoleIds: ['br-finance'] },
+  { id: 'gg-app-owners', name: 'Application Owners', description: 'Owns business applications and their role bundles.', members: 3, reviewerIds: ['o-henry', 'o-priya', 'o-bob'], ownedApplicationIds: ['app-salesforce', 'app-github'], ownedEntitlementIds: [], ownedTechnicalRoleIds: ['tr-eng-baseline'], ownedBusinessRoleIds: ['br-sales-rep', 'br-support'] },
+  { id: 'gg-finance', name: 'Finance Approvers', description: 'Approves and owns finance-system access.', members: 2, reviewerIds: ['o-bob', 'o-hana'], ownedApplicationIds: [], ownedEntitlementIds: ['ent-sf-sales'], ownedTechnicalRoleIds: [], ownedBusinessRoleIds: ['br-finance'] },
+];
+
+/** App Accounts — a User Identity's login within an application (identityId null = orphan). */
+export interface SeedAppAccount {
+  id: string;
+  accountName: string;
+  email: string;
+  applicationId: string;
+  identityId: string | null;
+  entitlementIds: string[];
+}
+export const appAccounts: SeedAppAccount[] = [
+  { id: 'aa-marcus-okta', accountName: 'marcus.lee', email: 'marcus.lee@acme.com', applicationId: 'app-okta', identityId: 'o-marcus', entitlementIds: ['ent-okta-admin'] },
+  { id: 'aa-marcus-aws', accountName: 'mlee', email: 'marcus.lee@acme.com', applicationId: 'app-aws', identityId: 'o-marcus', entitlementIds: ['ent-aws-admin'] },
+  { id: 'aa-liam-aws', accountName: 'lturner', email: 'liam.turner@acme.com', applicationId: 'app-aws', identityId: 'o-liam', entitlementIds: ['ent-aws-power', 'ent-aws-admin'] },
+  { id: 'aa-liam-github', accountName: 'liam-t', email: 'liam.turner@acme.com', applicationId: 'app-github', identityId: 'o-liam', entitlementIds: ['ent-gh-org-admin'] },
+  { id: 'aa-priya-github', accountName: 'priya-s', email: 'priya.sharma@acme.com', applicationId: 'app-github', identityId: 'o-priya', entitlementIds: ['ent-gh-maintain'] },
+  { id: 'aa-priya-aws', accountName: 'psharma', email: 'priya.sharma@acme.com', applicationId: 'app-aws', identityId: 'o-priya', entitlementIds: ['ent-aws-power'] },
+  { id: 'aa-frank-github', accountName: 'frank-w', email: 'frank.wilson@acme.com', applicationId: 'app-github', identityId: 'o-frank', entitlementIds: ['ent-gh-write'] },
+  { id: 'aa-nathan-aws', accountName: 'ngreen', email: 'nathan.green@acme.com', applicationId: 'app-aws', identityId: 'o-nathan', entitlementIds: ['ent-aws-ro'] },
+  { id: 'aa-nathan-sf', accountName: 'nathan.green@acme.com', email: 'nathan.green@acme.com', applicationId: 'app-salesforce', identityId: 'o-nathan', entitlementIds: ['ent-sf-service'] },
+  { id: 'aa-bob-sf', accountName: 'bob.smith@acme.com', email: 'bob.smith@acme.com', applicationId: 'app-salesforce', identityId: 'o-bob', entitlementIds: ['ent-sf-sales'] },
+  { id: 'aa-bob-aws', accountName: 'bsmith', email: 'bob.smith@acme.com', applicationId: 'app-aws', identityId: 'o-bob', entitlementIds: ['ent-aws-ro'] },
+  { id: 'aa-daniel-sf', accountName: 'daniel.white@acme.com', email: 'daniel.white@acme.com', applicationId: 'app-salesforce', identityId: 'o-daniel', entitlementIds: ['ent-sf-sales'] },
+  { id: 'aa-grace-sf', accountName: 'grace.lee@acme.com', email: 'grace.lee@acme.com', applicationId: 'app-salesforce', identityId: 'o-grace', entitlementIds: ['ent-sf-service'] },
+  { id: 'aa-emily-okta', accountName: 'emily.davis', email: 'emily.davis@acme.com', applicationId: 'app-okta', identityId: 'o-emily', entitlementIds: ['ent-okta-user'] },
+  { id: 'aa-catherine-okta', accountName: 'catherine.brown', email: 'catherine.brown@acme.com', applicationId: 'app-okta', identityId: 'o-catherine', entitlementIds: ['ent-okta-ro'] },
+  { id: 'aa-catherine-aws', accountName: 'cbrown', email: 'catherine.brown@acme.com', applicationId: 'app-aws', identityId: 'o-catherine', entitlementIds: ['ent-aws-ro'] },
+  { id: 'aa-henry-okta', accountName: 'henry.taylor', email: 'henry.taylor@acme.com', applicationId: 'app-okta', identityId: 'o-henry', entitlementIds: ['ent-okta-ro'] },
+  { id: 'aa-sofia-github', accountName: 'sofia-r', email: 'sofia.rossi@acme.com', applicationId: 'app-github', identityId: 'o-sofia', entitlementIds: ['ent-gh-write'] },
+  { id: 'aa-hana-sf', accountName: 'hana.kim@acme.com', email: 'hana.kim@acme.com', applicationId: 'app-salesforce', identityId: 'o-hana', entitlementIds: ['ent-sf-sales'] },
+  { id: 'aa-orphan-sf', accountName: 'svc-integration', email: 'integration@acme.com', applicationId: 'app-salesforce', identityId: null, entitlementIds: ['ent-sf-service'] },
+  { id: 'aa-orphan-aws', accountName: 'legacy-admin', email: '', applicationId: 'app-aws', identityId: null, entitlementIds: ['ent-aws-power'] },
+];
+
+/** People directory — candidates for "Add Owners". The full canonical people set. */
+export const ownerDirectory: SeedEAOwner[] = userIdentities.map(toOwner);

@@ -1,0 +1,80 @@
+{
+  "$schema": "./_schemas/navigation.schema.json",
+  "version": "1.0.0",
+  "note": "Primary navigation is a list of sections. A section has an optional 'label' (rendered as an all-caps heading) and 'items'. Each item is a leaf (has 'route') or a collapsible group (has 'children'). 'footer' entries pin to the bottom of the rail. 'personas' gates visibility; 'requiresAction' items surface counts/badges. Order is array order.",
+  "primary": [
+    { "group": "overview", "items": [
+      { "id": "dashboard", "label": "Dashboard", "route": "/iga/dashboard", "icon": "dashboard", "personas": ["all"] }
+    ]},
+    { "group": "resources", "label": "Resources", "items": [
+      { "id": "applications", "label": "Applications", "route": "/iga/directory/applications", "icon": "apps", "personas": ["application-owner", "auditor", "administrator"] },
+      { "id": "identities", "label": "Identities", "icon": "person", "personas": ["manager", "application-owner", "auditor", "administrator"], "children": [
+        { "id": "user-identities", "label": "User Identities", "route": "/iga/directory/user-identities", "icon": "account_box" },
+        { "id": "app-accounts", "label": "App Accounts", "route": "/iga/directory/app-accounts", "icon": "manage_accounts" },
+        { "id": "orphan-accounts", "label": "Orphan Accounts", "route": "/iga/orphan-accounts", "icon": "link_off" },
+        { "id": "iam-groups", "label": "IAM Groups", "route": "/iga/groups", "icon": "group_work" }
+      ]},
+      { "id": "entitlements", "label": "Entitlements", "route": "/iga/directory/entitlements", "icon": "shield", "personas": ["entitlement-owner", "auditor", "administrator"] },
+      { "id": "roles", "label": "Roles", "icon": "business", "personas": ["role-owner", "auditor", "administrator"], "children": [
+        { "id": "technical-roles", "label": "Technical Roles", "route": "/iga/directory/technical-roles", "icon": "laptop" },
+        { "id": "business-roles", "label": "Business Roles", "route": "/iga/directory/business-roles", "icon": "business" },
+        { "id": "role-mining", "label": "Role Mining", "route": "/iga/role-mining", "icon": "insights" }
+      ]}
+    ]},
+    { "group": "governance-rules", "label": "Governance Rules", "items": [
+      { "id": "automations", "label": "Automation", "route": "/iga/automation/workflows", "icon": "account_tree", "personas": ["administrator"] },
+      { "id": "policies", "label": "Policies", "icon": "policy", "personas": ["administrator", "auditor"], "children": [
+        { "id": "sod-policies", "label": "SoD Policies", "route": "/iga/sod-policies", "icon": "balance" },
+        { "id": "approval-policies", "label": "Approval Policies", "route": "/iga/automation/approval-policies", "icon": "rule" },
+        { "id": "birthright-policies", "label": "Birthright Policies", "route": "/iga/birthright", "icon": "verified" }
+      ]},
+      { "id": "governance-teams", "label": "Governance Teams", "route": "/iga/directory/governance-groups", "icon": "groups", "personas": ["auditor", "administrator"] },
+      { "id": "certifications", "label": "Access Certification", "route": "/iga/certifications", "icon": "campaign", "personas": ["administrator", "auditor"] }
+    ]},
+    { "group": "administration", "label": "Administration", "items": [
+      { "id": "risk", "label": "SoD Violations", "route": "/iga/risk", "icon": "warning", "personas": ["administrator", "auditor"] },
+      { "id": "license-governance", "label": "License Governance", "route": "/iga/license-governance", "icon": "card_membership", "personas": ["administrator", "auditor"] },
+      { "id": "emergency", "label": "Emergency Access", "route": "/iga/emergency", "icon": "key", "personas": ["administrator"] },
+      { "id": "provisioning-tasks", "label": "Provisioning Tasks", "route": "/iga/provisioning-tasks", "icon": "playlist_add_check", "personas": ["administrator"] }
+    ]},
+    { "group": "analytics", "label": "Analytics", "items": [
+      { "id": "reports", "label": "Reports", "route": "/iga/reports", "icon": "assessment", "personas": ["auditor", "administrator"] },
+      { "id": "audit-logs", "label": "Audit Logs", "route": "/iga/audit", "icon": "history", "personas": ["auditor", "administrator"] },
+      { "id": "access-view", "label": "Access View", "route": "/iga/access-view", "icon": "visibility", "personas": ["auditor", "administrator"] },
+      { "id": "peer-groups", "label": "Peer Groups", "route": "/iga/peer-groups", "icon": "hub", "personas": ["auditor", "administrator"] }
+    ]},
+    { "group": "settings", "divider": true, "items": [
+      { "id": "configurations", "label": "System Settings", "route": "/iga/configurations", "icon": "settings", "personas": ["administrator"] }
+    ]}
+  ],
+  "footer": [],
+  "utility": [
+    { "id": "search", "label": "Global Search", "icon": "search", "personas": ["all"] },
+    { "id": "notifications", "label": "Notifications", "icon": "notifications", "personas": ["all"], "requiresAction": true },
+    { "id": "persona-switcher", "label": "Switch Persona (prototype)", "icon": "switch_account", "personas": ["all"] },
+    { "id": "profile", "label": "Profile & Preferences", "icon": "account_circle", "personas": ["all"] }
+  ],
+  "note_personaViews": "Curated per-persona experiences swapped by the top-bar apps switcher. 'admin' uses the full primary nav; reviewer/end-user get a focused nav + their own dashboard.",
+  "personaViews": {
+    "reviewer": {
+      "label": "Reviewer",
+      "description": "Access reviews & separation-of-duties",
+      "items": [
+        { "id": "reviewer-dashboard", "label": "Dashboard", "route": "/iga/reviewer/dashboard", "icon": "dashboard" },
+        { "id": "review-requests", "label": "Review Requests", "route": "/iga/reviewer/review-requests", "icon": "task", "requiresAction": true },
+        { "id": "sod-resolution", "label": "SoD Resolution", "route": "/iga/reviewer/sod-resolution", "icon": "balance" },
+        { "id": "sod-resolution-v2", "label": "SoD Resolution V2", "route": "/iga/reviewer/sod-resolution-v2", "icon": "rule" },
+        { "id": "sod-resolution-v3", "label": "SoD Policy Violation V3", "route": "/iga/reviewer/sod-resolution-v3", "icon": "policy" },
+        { "id": "sod-resolution-v4", "label": "SoD Resolution V4", "route": "/iga/reviewer/sod-resolution-v4", "icon": "fact_check" }
+      ]
+    },
+    "endUser": {
+      "label": "End User",
+      "description": "Request and track your access",
+      "items": [
+        { "id": "enduser-dashboard", "label": "Dashboard", "route": "/iga/enduser/dashboard", "icon": "dashboard" },
+        { "id": "my-assets", "label": "My Assets", "route": "/iga/enduser/my-assets", "icon": "inventory" }
+      ]
+    }
+  }
+}
