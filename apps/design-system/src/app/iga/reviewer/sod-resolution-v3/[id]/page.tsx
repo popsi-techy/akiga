@@ -13,7 +13,7 @@ import WatchLater from '@mui/icons-material/WatchLater';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import CircularProgress from '@mui/material/CircularProgress';
-import { Avatar, Button, Card, Checkbox, DatePicker, InfoRow, InfoRowGroup, Input, QuickFilter, SelectableList, Stepper, Tabs, TimePicker, Tooltip, useToast } from '@ds/components';
+import { Avatar, Button, Card, Checkbox, DatePicker, InfoRow, InfoRowGroup, Input, QuickFilter, SelectableList, StatusChip, Stepper, Tabs, TimePicker, Tooltip, useToast } from '@ds/components';
 import {
   getReview,
   getAccess,
@@ -22,9 +22,10 @@ import {
   fastestPath,
   clearedByRemoval,
 } from '@/data/sod';
+import { V3_STORE_KEY, V3_STEP_KEY, v3ReviewerStatus } from '@/data/sod-resolution-v3-store';
 import { policyById } from '@/data/sod-seed';
 import type { SodReview, SodAccess, SodRule, AcceptedRisk, Severity } from '@/data/sod-types';
-import { SeverityChip, AppBadge, ACCESS_TYPE_LABEL, formatDateTime, formatUntil } from '@/components/product/sod/labels';
+import { SeverityChip, AppBadge, ACCESS_TYPE_LABEL, ReviewerStatusPillV3, formatDateTime, formatUntil } from '@/components/product/sod/labels';
 import { RiskScoreChip } from '@/components/product/directory';
 import { RuleStatusPill, ruleAccessText, type RuleUiStatus } from '@/components/product/sod/resolution-ui';
 import { UserDetailsDrawer } from '@/components/product/sod/UserDetailsDrawer';
@@ -35,7 +36,7 @@ import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 // access-centric sod review store. Resolution is RULE-LEVEL and accumulates across
 // actions; V3 guides the reviewer through it as a linear stepper. Step 2 (Remove
 // access) uses a two-column layout: action + justification | violated policy (60/40).
-const STORE_KEY = 'iga.sodResolutionV3.v2';
+const STORE_KEY = V3_STORE_KEY;
 type RemoveAction = { kind: 'remove'; removedAccessIds: string[]; justification: string; at: string };
 /** `untilAt` is optional so drafts persisted before time-of-day existed still load. */
 type AcceptAction = { kind: 'accept'; scope: 'all' | 'custom'; ruleIds: string[]; justification: string; days: number; at: string; untilAt?: string };
@@ -246,7 +247,7 @@ function loadActions(id: string): V3Action[] {
  * resolution" resumes where the reviewer stopped instead of restarting at step 1.
  * Separate key from `STORE_KEY` so an older draft without a step still loads.
  */
-const STEP_KEY = 'iga.sodResolutionV3.step.v1';
+const STEP_KEY = V3_STEP_KEY;
 function loadDraftStep(id: string): number | null {
   if (typeof window === 'undefined') return null;
   try {
@@ -934,6 +935,13 @@ function SodResolutionV3WorkspacePageInner() {
                   <span className="font-normal text-text-secondary"> – Violated by </span>
                   {review.userName}
                 </span>
+                {/* Same pill and the same derivation the list's Status column uses, so a
+                    row and the page it opens can never disagree. `actions` is this
+                    review's saved V3 work, which is what makes In Progress reachable —
+                    `reviewerStatusOf` alone cannot see a V3 draft. */}
+                <ReviewerStatusPillV3
+                  status={v3ReviewerStatus({ submitted: isSubmitted, hasDraft: actions.length > 0 })}
+                />
               </div>
               {!workspaceOpen && (
                 <p className="mt-0.5 truncate text-body-sm text-text-secondary">
@@ -2292,6 +2300,12 @@ function PreviewSubmitColumns({
                           <span className="font-medium text-text-primary">{a.name}</span>
                         </span>
                         <AccessDetailsTip access={a} />
+                        {/* Danger intent, matching how this access is marked everywhere
+                            else on this step. The section heading carries the tense —
+                            this is the plan, nothing is revoked until submit. */}
+                        <span className="ml-1 shrink-0">
+                          <StatusChip intent="danger" label="Revoked" />
+                        </span>
                       </div>
                       {n > 0 && (
                         <div className="shrink-0 text-right text-caption text-text-tertiary">

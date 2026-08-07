@@ -47,12 +47,20 @@ export const REVIEWER_STATUS_META: Record<ReviewerStatus, { label: string; inten
   completed: { label: 'Completed', intent: 'success' },
   revising: { label: 'Revising', intent: 'info' },
 };
-/** V3 list + workspace — open reviews read as Pending, not Not Started.
- *  `revising` is info (blue), so amending a submitted resolution reads as neither
- *  "still open" (warning) nor "done" (success). */
+/**
+ * V3 list + workspace — open reviews read as Pending, not Not Started.
+ *
+ * Three states, three hues: Pending amber (untouched, waiting on the reviewer),
+ * In Progress blue (started — work in hand, nothing outstanding to prompt), Completed
+ * green. In Progress was amber too, which made the two open states indistinguishable
+ * at a glance in the Status column.
+ *
+ * `revising` keeps the same blue but nothing renders it — V3 reports only the three
+ * states above, and a resolution being amended stays Completed.
+ */
 export const REVIEWER_STATUS_META_V3: Record<ReviewerStatus, { label: string; intent: Intent }> = {
   notStarted: { label: 'Pending', intent: 'warning' },
-  inProgress: { label: 'In Progress', intent: 'warning' },
+  inProgress: { label: 'In Progress', intent: 'info' },
   completed: { label: 'Completed', intent: 'success' },
   revising: { label: 'Revising', intent: 'info' },
 };

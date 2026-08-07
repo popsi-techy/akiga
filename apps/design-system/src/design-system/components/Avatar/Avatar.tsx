@@ -4,9 +4,18 @@ import * as React from 'react';
  * Avatar — identity mark. Default `soft` is a rounded-square for lists/tables.
  * `circle` is the profile-card treatment: fully round with a grey outline
  * separated from the fill by a 2px surface gap.
- * Shows an image when available, else initials on the brand tint. Initials use
- * the darkest brand orange so they meet WCAG AA on the tint
- * (`brand.primaryActive` on `brand.subtle`).
+ *
+ * Shows an image when available, else a SINGLE letter on the brand tint —
+ * `brand.primary` (#EB5424) on `brand.subtle` (#FFF4EE), every avatar, every shape,
+ * every size.
+ *
+ * ACCESSIBILITY EXCEPTION, chosen by the product owner: that pairing is 3.33:1, which
+ * fails WCAG AA for normal text (4.5:1), and avatar letters run 11–18px so the
+ * large-text allowance does not apply. The previous value, `brand.primaryActive`
+ * (#9E3416), was 6.57:1. It is recorded as a waiver in `check-contrast.ts` so the
+ * deviation is reported on every run rather than quietly regressing the guardrail.
+ * The letter is decorative in practice — `aria-label` carries the full name — but it
+ * is still visible text, so this is a real, deliberate trade.
  */
 export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg';
 export type AvatarShape = 'soft' | 'circle';
@@ -32,13 +41,17 @@ const sizePx: Record<AvatarSize, { box: number; font: number }> = {
   lg: { box: 48, font: 18 },
 };
 
+/** First letter of the name — avatars carry one character, never two. */
 export function initialsOf(name?: string): string {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name?.trim().charAt(0).toUpperCase() || '?';
 }
+
+/**
+ * Whatever a caller passes for `initials` is reduced to one character here rather
+ * than trusted. Several call sites still pass two (a reference number, say), and the
+ * rule is meant to hold everywhere without auditing every consumer.
+ */
+const oneLetter = (s: string) => s.trim().charAt(0).toUpperCase() || '?';
 
 export function Avatar({
   name,
@@ -69,7 +82,8 @@ export function Avatar({
   return (
     <span
       className={[
-        'inline-flex shrink-0 items-center justify-center bg-brand-subtle font-semibold text-brand-active',
+        // `text-brand` is brand.primary #EB5424 — see the accessibility note above.
+        'inline-flex shrink-0 items-center justify-center bg-brand-subtle font-semibold text-brand',
         shapeClass,
         className,
       ]
@@ -79,7 +93,7 @@ export function Avatar({
       aria-label={name ? `${name} avatar` : undefined}
       role={name ? 'img' : undefined}
     >
-      {initials ?? initialsOf(name)}
+      {initials != null ? oneLetter(initials) : initialsOf(name)}
     </span>
   );
 }

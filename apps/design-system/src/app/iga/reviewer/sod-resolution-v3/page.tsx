@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import { DataTable, Avatar, Input, Tabs, type Column, type TabItem } from '@ds/components';
 import { listMyReviews } from '@/data/sod';
+import { hasV3Draft, v3ReviewerStatus } from '@/data/sod-resolution-v3-store';
 import type { MyReviewRow } from '@/data/sod-types';
 import { ReviewerStatusPillV3, AccessConflictPill, formatDateTime } from '@/components/product/sod/labels';
 
@@ -23,9 +24,22 @@ export default function SodResolutionV3ListPage() {
   const [search, setSearch] = React.useState('');
   const [tab, setTab] = React.useState<'active' | 'acceptedRisk' | 'history'>('active');
 
+  /**
+   * Which reviews have unsubmitted V3 work. Snapshotted here with the rows rather
+   * than read per row: it is a localStorage parse, and this effect is already the
+   * one client-only place that loads the list.
+   */
+  const [draftIds, setDraftIds] = React.useState<Set<string>>(() => new Set());
+
   React.useEffect(() => {
-    setRows(listMyReviews());
+    const loaded = listMyReviews();
+    setRows(loaded);
+    setDraftIds(new Set(loaded.filter((r) => hasV3Draft(r.id)).map((r) => r.id)));
   }, []);
+
+  /** Pending → In Progress → Completed, from the shared rule. */
+  const statusOf = (r: MyReviewRow) =>
+    v3ReviewerStatus({ submitted: r.reviewerStatus === 'completed', hasDraft: draftIds.has(r.id) });
 
   const all = rows ?? [];
   const isActive = (r: MyReviewRow) => r.reviewerStatus !== 'completed';
@@ -91,8 +105,8 @@ export default function SodResolutionV3ListPage() {
       id: 'status',
       header: 'Status',
       sortable: true,
-      value: (r) => r.reviewerStatus,
-      render: (r) => <ReviewerStatusPillV3 status={r.reviewerStatus} />,
+      value: (r) => statusOf(r),
+      render: (r) => <ReviewerStatusPillV3 status={statusOf(r)} />,
     },
     {
       id: 'rules',

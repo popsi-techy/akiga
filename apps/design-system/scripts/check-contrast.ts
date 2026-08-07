@@ -65,8 +65,34 @@ for (const [bn, bg] of Object.entries(backgrounds)) {
 checks.push({ label: 'text.tertiary on surface', fg: color.text.tertiary, bg: color.surface.default, min: AA_TEXT });
 checks.push({ label: 'text.link on surface', fg: color.text.link, bg: color.surface.default, min: AA_TEXT });
 checks.push({ label: 'text.brand on surface', fg: color.text.brand, bg: color.surface.default, min: AA_TEXT });
-// Brand-colored text on the brand tint (avatar initials, active nav) uses the darkest orange.
+// Brand-colored text on the brand tint (active nav, brand labels) uses the darkest orange.
 checks.push({ label: 'brand.primaryActive on brand.subtle', fg: color.brand.primaryActive, bg: color.brand.subtle, min: AA_TEXT });
+// Avatar initials, however, are brand.primary by owner's decision — see the waiver.
+checks.push({
+  label: 'brand.primary on brand.subtle (avatar initials)',
+  fg: color.brand.primary,
+  bg: color.brand.subtle,
+  min: AA_TEXT,
+  waiver:
+    "Owner's decision: every avatar renders its letter as brand.primary #EB5424 on " +
+    'brand.subtle #FFF4EE = 3.33:1, below AA for normal text, and avatar letters are ' +
+    '11-18px so the large-text allowance does not apply. Accepted knowingly for visual ' +
+    'consistency. Mitigation: the avatar carries an aria-label with the full name, so no ' +
+    'information depends on reading the letter. brand.primaryActive #9E3416 (6.57:1) is ' +
+    'the compliant value if this is ever revisited.',
+});
+// Selected tab labels are brand.primary on the page surface, also by owner's decision.
+checks.push({
+  label: 'brand.primary on surface (selected tab label)',
+  fg: color.brand.primary,
+  bg: color.surface.default,
+  min: AA_TEXT,
+  waiver:
+    "Owner's decision: the selected Tab label matches the underline at brand.primary " +
+    '#EB5424 = 3.60:1 on white, below AA for its 14px regular type. This is the case ' +
+    'text.brand #C9441E (4.85:1) was introduced for. Mitigation: the 2px indicator and ' +
+    'aria-selected both mark the active tab, so selection never depends on the colour.',
+});
 checks.push({ label: 'text.inverse on sidebar', fg: color.text.inverse, bg: color.background.sidebar, min: AA_TEXT });
 checks.push({
   label: 'brand.onPrimary on brand.primary',

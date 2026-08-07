@@ -10,7 +10,7 @@ export default function AvatarDocs() {
       <PageHeader
         eyebrow="Components"
         title="Avatar"
-        description="Identity mark for people and entities. Default soft shape is a rounded-square for lists and tables. Circle shape is the profile-card treatment — fully round with a brand-tint ring. Shows an image when available, otherwise initials on the brand tint (WCAG AA verified)."
+        description="Identity mark for people and entities. Default soft shape is a rounded-square for lists and tables. Circle shape is the profile-card treatment — fully round with a brand-tint ring. Shows an image when available, otherwise a single letter in brand orange (#EB5424) on the brand tint (#FFF4EE) — one letter, one colour pair, every avatar. That pairing is 3.33:1, a deliberate sub-AA exception recorded as a waiver in check-contrast.ts; the aria-label carries the full name, so nothing depends on reading the letter."
       />
 
       <Section title="Sizes">
@@ -110,13 +110,12 @@ export default function AvatarDocs() {
             'Use shape="circle" on profile / identity cards.',
             'Use soft (default) in tables, groups, and dense lists.',
             'Use size sm in tables, md in profile headers, lg on detail pages.',
-            'Override initials to a single letter for apps/systems.',
           ]}
           donts={[
             'Don’t put white text on a solid brand fill at this size (fails AA).',
             'Don’t use images without a name/alt.',
             'Don’t hand-roll avatar circles — use shape="circle".',
-            'Don’t exceed two initials.',
+            'Don’t pass more than one character to initials — it is truncated anyway.',
           ]}
         />
         <p className="mt-3 text-body-sm text-text-tertiary">

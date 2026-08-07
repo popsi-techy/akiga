@@ -5,9 +5,16 @@ import MuiTabs from '@mui/material/Tabs';
 import MuiTab from '@mui/material/Tab';
 
 /**
- * Tabs — section navigation matching the product: an orange underline indicator
- * with the active label in brand orange (AA-safe darker orange as text; the
- * vibrant indicator is a UI graphic). Used for detail-page sections.
+ * Tabs — section navigation matching the product: a 2px brand underline with the
+ * active label in the same vibrant brand orange. 14px regular throughout; the
+ * selected tab is marked by colour and the indicator, not by weight, so labels
+ * never shift width as the selection moves.
+ *
+ * ACCESSIBILITY EXCEPTION, chosen by the product owner: `brand.primary` (#EB5424) on
+ * a white surface is 3.60:1, below WCAG AA for 14px regular text — that is exactly
+ * why `text.brand` (#C9441E, 4.85:1) exists and was used here before. Recorded as a
+ * waiver in `check-contrast.ts`. The underline is a non-colour cue and `aria-selected`
+ * carries the state, so selection is not conveyed by colour alone.
  */
 export interface TabItem {
   value: string;
@@ -44,10 +51,11 @@ export function Tabs({ items, value, onChange, 'aria-label': ariaLabel, noBorder
           marginRight: '24px',
           textTransform: 'none',
           fontSize: '14px',
-          fontWeight: 500,
+          fontWeight: 400,
           color: 'var(--ds-color-text-secondary)',
           '&:hover': { color: 'var(--ds-color-text-primary)' },
-          '&.Mui-selected': { color: 'var(--ds-color-text-brand)', fontWeight: 600 },
+          // Same orange as the indicator — see the accessibility note above.
+          '&.Mui-selected': { color: 'var(--ds-color-brand-primary)' },
         },
       }}
     >
