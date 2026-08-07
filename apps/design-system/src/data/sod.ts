@@ -194,6 +194,7 @@ export function listMyReviews(reviewerId: string = CURRENT_REVIEWER.id): MyRevie
       policyNames: r.policyNames,
       ruleCount: r.rules.length,
       dueDate: r.dueDate,
+      assignedAt: r.assignedAt,
       detectedAt: detectedAtOf(r),
       submittedAt: r.submission?.at,
       submissionReference: r.submission?.reference,

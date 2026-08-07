@@ -169,6 +169,8 @@ export interface MyReviewRow {
   policyNames: string[];
   ruleCount: number;
   dueDate?: string;
+  /** When the review was assigned to the reviewer. */
+  assignedAt?: string;
   /** When the violation was first detected (from audit). */
   detectedAt: string;
   /** Present when the review was submitted (history). */
