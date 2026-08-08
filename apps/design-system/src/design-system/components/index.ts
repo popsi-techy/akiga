@@ -10,11 +10,6 @@ export type { DataTableProps, Column } from './DataTable/DataTable';
 export { Card } from './Card/Card';
 export type { CardProps } from './Card/Card';
 
-export { Callout } from './Callout/Callout';
-export type { CalloutProps, CalloutTone } from './Callout/Callout';
-
-export { ColumnBrowser } from './ColumnBrowser/ColumnBrowser';
-export type { ColumnBrowserProps, ColumnBrowserColumn, ColumnBrowserItem } from './ColumnBrowser/ColumnBrowser';
 
 export { InfoRow, InfoRowGroup } from './InfoRow/InfoRow';
 export type { InfoRowProps } from './InfoRow/InfoRow';

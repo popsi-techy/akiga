@@ -38,8 +38,7 @@
     ]},
     { "group": "analytics", "label": "Analytics", "items": [
       { "id": "reports", "label": "Reports", "route": "/iga/reports", "icon": "assessment", "personas": ["auditor", "administrator"] },
-      { "id": "audit-logs", "label": "Audit Logs", "route": "/iga/audit", "icon": "history", "personas": ["auditor", "administrator"] },
-      { "id": "access-view", "label": "Access View", "route": "/iga/access-view", "icon": "visibility", "personas": ["auditor", "administrator"] },
+      { "id": "audit-logs", "label": "Audit Logs", "route": "/iga/audit", "icon": "history", "personas": ["auditor", "administrator"] },
       { "id": "peer-groups", "label": "Peer Groups", "route": "/iga/peer-groups", "icon": "hub", "personas": ["auditor", "administrator"] }
     ]},
     { "group": "settings", "divider": true, "items": [

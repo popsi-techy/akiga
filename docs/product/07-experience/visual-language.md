@@ -52,7 +52,7 @@ the table, and the sidebar all shout equally.
 | **Object detail** | The decision and its evidence | Right rail is context; it never out-weighs the main column |
 | **Canvas workspace** | The work surface | Chrome collapses to a ~44px bar; the stepper replaces the page title |
 | **Wizard step** | The single question being asked | Preview/impact panel supports it, never competes |
-| **Chooser / landing** | The choice cards | Prose above them is one sentence |
+| **Landing / choice page** | Whatever is being chosen between | Prose above it is one sentence |
 | **Dashboard** | "What needs me" | Org-wide stats sit below the fold of attention |
 
 Test: *if you deleted everything except the protagonist, would the screen still do its job?* If yes,
@@ -308,7 +308,7 @@ padding 24px top/bottom and 32px left/right.
 
 | | Padded | Canvas |
 |---|---|---|
-| Used by | list, object detail, chooser, dashboard | builder, workspace, explorer, decision detail |
+| Used by | list, object detail, landing, dashboard | builder, workspace, explorer, decision detail |
 | Frame | inherits the `<main>` padding | cancels it: `-mx-8 -my-6 h-[calc(100%+3rem)] flex flex-col` |
 | What scrolls | the page | nothing — only inner regions |
 | Title | `h2` (list) or `h3` (detail) | `h5` |
@@ -446,29 +446,7 @@ on a final review step (which owns its own way back, so the arrow is suppressed 
 
 ---
 
-### 8.5 Chooser
-
-> Reference: `/iga/access-view`
-
-```
-+-- main - pad 24 / 32 ------------------------------------------+
-|  h2 title                                   [skip for now >]   |  32h
-|  body lead                                                     |  20h
-|  (gap 24)                                                      |
-|  Callout - full content width                        50h       |
-|  (gap 20)                                                      |
-|  +-- 2-up grid - max-w-5xl (1024) - 502 cards - gap 20 ------+ |
-|  |  card p-5 r-12: h4 title + arrow, dashed chain, prose     | |
-|  +-----------------------------------------------------------+ |
-+----------------------------------------------------------------+
-```
-
-The banner spans the full content width; the card grid is **capped and left-aligned**, not
-stretched — two cards spread across a wide monitor read as a toolbar rather than a choice.
-
----
-
-### 8.6 Dashboard
+### 8.5 Dashboard
 
 > Reference: `/iga/dashboard`
 
@@ -487,6 +465,8 @@ stretched — two cards spread across a wide monitor read as a toolbar rather th
 The only archetype where the page itself scrolls. "What needs me" comes before org-wide totals.
 Card header icons stay `text-icon` grey — a dashboard is where decorative tinting creeps in, and
 six differently-coloured card headers is not a hierarchy.
+
+---
 
 ## 9. Building from a reference or screenshot
 

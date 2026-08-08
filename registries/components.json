@@ -39,25 +39,6 @@
       "notes": "soft = rounded-square for lists; circle = profile cards with grey outline + 2px surface gap. See ADR-0009."
     },
     {
-      "name": "Callout",
-      "status": "stable",
-      "source": "apps/design-system/src/design-system/components/Callout/Callout.tsx",
-      "extends": null,
-      "variants": [
-        "info",
-        "success",
-        "warning",
-        "danger"
-      ],
-      "states": [
-        "with-title",
-        "with-action",
-        "icon-less"
-      ],
-      "docs": null,
-      "notes": "Persistent inline explanatory message, tinted from status.subtle/border/fg. Not for transient events - use Toast."
-    },
-    {
       "name": "Card",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/Card/Card.tsx",
@@ -77,23 +58,6 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/components/card/page.tsx",
       "notes": "Header uses 15px regular title + 15px filled icon. padding=none keeps a horizontal content gutter so flush-list dividers stay inset. See ADR-0009."
-    },
-    {
-      "name": "ColumnBrowser",
-      "status": "stable",
-      "source": "apps/design-system/src/design-system/components/ColumnBrowser/ColumnBrowser.tsx",
-      "extends": null,
-      "variants": [
-        "n-column"
-      ],
-      "states": [
-        "awaiting-upstream",
-        "empty",
-        "selected",
-        "paged"
-      ],
-      "docs": null,
-      "notes": "Miller-columns drill-down for a fixed hierarchy. Owns per-column search and paging; resets both when an upstream selection changes. Callers own selections only."
     },
     {
       "name": "InfoRow",
