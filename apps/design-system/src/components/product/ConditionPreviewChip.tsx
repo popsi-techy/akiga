@@ -16,7 +16,7 @@ export function ConditionPreviewLabel({
     <span className="min-w-0 truncate">
       <span className="text-text-secondary">{attribute}</span>
       <span className="text-text-tertiary">{` ${operator} `}</span>
-      <span className="font-medium text-text-primary">{value}</span>
+      <span className="font-emphasis text-text-primary">{value}</span>
     </span>
   );
 }

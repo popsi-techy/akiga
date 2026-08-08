@@ -200,7 +200,7 @@ export function PolicyConditionDrawer({ open, onClose, title = 'Conditions', sub
       <div className="space-y-4">
         {/* combinator */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center rounded-md bg-subtle p-0.5 text-caption font-medium">
+          <div className="flex items-center rounded-md bg-subtle p-0.5 text-caption-strong">
             {(['AND', 'OR'] as const).map((c) => (
               <button
                 key={c}

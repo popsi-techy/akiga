@@ -43,7 +43,7 @@ export function AppIcon({ app, size = 24, variant = 'subtle' }: AppIconProps) {
 
   if (!icon) {
     return (
-      <span className={`${tile} text-caption font-semibold text-text-secondary`} style={{ width: size, height: size }} title={app}>
+      <span className={`${tile} text-caption-strong text-text-secondary`} style={{ width: size, height: size }} title={app}>
         {app.trim().charAt(0).toUpperCase() || '?'}
       </span>
     );

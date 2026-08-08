@@ -34,7 +34,7 @@ export function NavCard({ title, description, count, tags, icon, onClick }: NavC
         {icon && (
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-subtle text-icon-brand">{icon}</span>
         )}
-        <h3 className="min-w-0 flex-1 text-h5 font-semibold text-text-primary">{title}</h3>
+        <h3 className="min-w-0 flex-1 text-h5 text-text-primary">{title}</h3>
         <ArrowForwardOutlined
           sx={{ fontSize: 18 }}
           className="mt-0.5 shrink-0 text-icon transition-transform group-hover:translate-x-0.5 group-hover:text-text-primary"
@@ -44,12 +44,12 @@ export function NavCard({ title, description, count, tags, icon, onClick }: NavC
       {(count != null || (tags && tags.length > 0)) && (
         <div className="mt-4 flex flex-wrap items-center gap-1.5">
           {count != null && (
-            <span className="rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2.5 py-1 text-caption font-semibold tabular-nums text-[var(--ds-color-status-info-fg)]">
+            <span className="rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2.5 py-1 text-caption-strong tabular-nums text-[var(--ds-color-status-info-fg)]">
               {formatCount(count)}
             </span>
           )}
           {tags?.map((t) => (
-            <span key={t} className="rounded-pill bg-subtle px-2.5 py-1 text-caption font-medium text-text-secondary">
+            <span key={t} className="rounded-pill bg-subtle px-2.5 py-1 text-caption-strong text-text-secondary">
               {t}
             </span>
           ))}

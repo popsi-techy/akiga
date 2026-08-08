@@ -78,7 +78,7 @@ export default function ReviewRequestsPage() {
       header: 'Request ID',
       sortable: true,
       value: (r) => r.reference,
-      render: (r) => <span className="font-medium tabular-nums text-text-primary">{r.reference}</span>,
+      render: (r) => <span className="text-body-sm-strong tabular-nums text-text-primary">{r.reference}</span>,
     },
     {
       id: 'type',
@@ -104,7 +104,7 @@ export default function ReviewRequestsPage() {
             e.stopPropagation();
             router.push(`/iga/reviewer/review-requests/${r.id}`);
           }}
-          className="text-body-sm font-medium text-brand hover:underline"
+          className="text-body-sm-strong text-brand hover:underline"
         >
           {r.accessDurationLabel}
         </button>
@@ -155,7 +155,7 @@ export default function ReviewRequestsPage() {
                 <span
                   className={[
                     'inline-flex items-center gap-1 whitespace-nowrap text-body-sm',
-                    overdue ? 'font-medium text-danger' : 'text-text-secondary',
+                    overdue ? 'text-body-sm-strong text-danger' : 'text-text-secondary',
                   ].join(' ')}
                 >
                   <ScheduleOutlined sx={{ fontSize: 16 }} />
@@ -213,7 +213,7 @@ export default function ReviewRequestsPage() {
   return (
     <div className="flex h-full flex-col">
       <div className="mb-5 shrink-0">
-        <h1 className="text-h2 font-bold tracking-tight text-text-primary">Review Requests</h1>
+        <h1 className="text-h2 tracking-tight text-text-primary">Review Requests</h1>
         <p className="mt-1 text-body text-text-secondary">
           Approve or reject access requests assigned to you. Use quick actions from the table or open a request for full
           context.

@@ -54,7 +54,7 @@ const PILL =
 /** A branch-lane heading pill on the canvas. Outcome lanes use `upper` + a tone.
     Pass `onOpen` to make the chip select its parent node on click. */
 export function LaneLabel({ text, tone = 'neutral', upper = false, onOpen }: { text: string; tone?: LaneTone; upper?: boolean; onOpen?: () => void }) {
-  const typ = upper ? 'text-caption font-semibold uppercase tracking-wide' : 'text-caption font-medium';
+  const typ = upper ? 'text-caption-strong uppercase tracking-wide' : 'text-caption-strong';
   const ip = laneOpenProps(onOpen);
   return <div {...ip.attrs} className={['mb-0 inline-flex w-max max-w-[280px] truncate rounded-pill px-3 py-1', typ, TONE_CLASS[tone], ip.className].join(' ')}>{text}</div>;
 }
@@ -67,14 +67,14 @@ export function ConditionLaneLabel({ label, group, onOpen }: { label: string; gr
   const ip = laneOpenProps(onOpen);
   return (
     <div {...ip.attrs} className={[PILL, ip.className].join(' ')}>
-      <span className="shrink-0 rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2 py-0.5 text-micro font-bold uppercase tracking-wide text-[var(--ds-color-status-info-fg)]">{label}</span>
+      <span className="shrink-0 rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2 py-0.5 text-micro uppercase tracking-wide text-[var(--ds-color-status-info-fg)]">{label}</span>
       {valid ? (
         <>
           <ConditionPreviewLabel
             {...(isPolicyOperand(rules[0].attribute) ? policyRuleParts(rules[0]) : ruleParts(rules[0]))}
           />
           {rules.length > 1 && (
-            <span className="shrink-0 rounded bg-subtle px-1.5 py-0.5 text-caption font-semibold text-text-secondary">+{rules.length - 1}</span>
+            <span className="shrink-0 rounded bg-subtle px-1.5 py-0.5 text-caption-strong text-text-secondary">+{rules.length - 1}</span>
           )}
         </>
       ) : (
@@ -93,12 +93,12 @@ export function SplitLaneLabel({ label, matchValues, onOpen }: { label: string; 
   const ip = laneOpenProps(onOpen);
   return (
     <div {...ip.attrs} className={[PILL, ip.className].join(' ')}>
-      <span className="max-w-[96px] shrink-0 truncate rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2 py-0.5 text-caption font-semibold text-[var(--ds-color-status-info-fg)]">{label}</span>
+      <span className="max-w-[96px] shrink-0 truncate rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2 py-0.5 text-caption-strong text-[var(--ds-color-status-info-fg)]">{label}</span>
       {matches.length ? (
         <>
           <span className="min-w-0 truncate text-text-primary">{matches[0]}</span>
           {matches.length > 1 && (
-            <span className="shrink-0 rounded bg-subtle px-1.5 py-0.5 text-caption font-semibold text-text-secondary">+{matches.length - 1}</span>
+            <span className="shrink-0 rounded bg-subtle px-1.5 py-0.5 text-caption-strong text-text-secondary">+{matches.length - 1}</span>
           )}
         </>
       ) : (
@@ -114,7 +114,7 @@ export function ParallelLaneLabel({ label, approver, onOpen }: { label: string; 
   const ip = laneOpenProps(onOpen);
   return (
     <div {...ip.attrs} className={[PILL, ip.className].join(' ')}>
-      <span className="max-w-[110px] shrink-0 truncate rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2 py-0.5 text-caption font-semibold text-[var(--ds-color-status-info-fg)]">{label}</span>
+      <span className="max-w-[110px] shrink-0 truncate rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2 py-0.5 text-caption-strong text-[var(--ds-color-status-info-fg)]">{label}</span>
       {approver ? (
         <span className="min-w-0 truncate text-text-primary">{approver}</span>
       ) : (
@@ -164,7 +164,7 @@ export function AutoResolveBody({
           <div
             {...ip.attrs}
             className={[
-              'inline-flex w-max max-w-[280px] items-center rounded-pill border border-dashed border-border bg-surface px-3 py-1.5 text-caption font-medium text-text-secondary',
+              'inline-flex w-max max-w-[280px] items-center rounded-pill border border-dashed border-border bg-surface px-3 py-1.5 text-caption-strong text-text-secondary',
               ip.className,
             ].join(' ')}
           >
@@ -176,7 +176,7 @@ export function AutoResolveBody({
       <div
         {...(detail ? {} : ip.attrs)}
         className={[
-          'inline-flex w-max max-w-[280px] items-center gap-1.5 rounded-pill border px-3 py-1.5 text-caption font-medium',
+          'inline-flex w-max max-w-[280px] items-center gap-1.5 rounded-pill border px-3 py-1.5 text-caption-strong',
           BODY_TONE_CLASS[tone],
           detail ? '' : ip.className,
           detail && onOpen ? 'cursor-pointer' : '',

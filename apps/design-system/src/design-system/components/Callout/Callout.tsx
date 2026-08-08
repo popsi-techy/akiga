@@ -55,7 +55,7 @@ export function Callout({ tone = 'info', title, children, action, icon }: Callou
         </span>
       )}
       <div className="min-w-0 flex-1 text-body-sm leading-5">
-        {title != null && <p className="font-semibold text-text-primary">{title}</p>}
+        {title != null && <p className="font-emphasis text-text-primary">{title}</p>}
         <div className={['text-text-secondary', title != null ? 'mt-0.5' : ''].join(' ')}>
           {children}
         </div>

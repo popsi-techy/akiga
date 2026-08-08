@@ -32,7 +32,7 @@ export function Meter({ value, max = 100, tone = 'brand', label, valueLabel, siz
     <div className="w-full">
       {(label || valueLabel) && (
         <div className="mb-1.5 flex items-center justify-between text-caption">
-          <span className="font-medium text-text-secondary">{label}</span>
+          <span className="font-emphasis text-text-secondary">{label}</span>
           <span className="tabular-nums text-text-primary">{valueLabel}</span>
         </div>
       )}

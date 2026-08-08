@@ -86,7 +86,7 @@ function Calendar({
   return (
     <div className="w-[268px] p-2">
       <div className="mb-1 flex items-center justify-between gap-2 px-1">
-        <span className="text-body-sm font-semibold text-text-primary">
+        <span className="text-body-sm-strong text-text-primary">
           {MONTHS[view.m - 1]} {view.y}
         </span>
         <span className="flex items-center gap-0.5">
@@ -114,7 +114,7 @@ function Calendar({
           <div
             key={`${w}-${i}`}
             aria-hidden
-            className="grid h-7 place-items-center text-micro font-semibold uppercase text-text-tertiary"
+            className="grid h-7 place-items-center text-micro uppercase text-text-tertiary"
           >
             {w}
           </div>
@@ -138,9 +138,9 @@ function Calendar({
               className={[
                 'grid h-8 place-items-center rounded-md text-body-sm tabular-nums transition-colors',
                 on
-                  ? 'bg-brand font-semibold text-brand-on'
+                  ? 'bg-brand font-emphasis text-brand-on'
                   : cell === today
-                    ? 'font-semibold text-text-brand hover:bg-surface-hover'
+                    ? 'font-emphasis text-text-brand hover:bg-surface-hover'
                     : 'text-text-primary hover:bg-surface-hover',
                 'disabled:pointer-events-none disabled:text-text-disabled',
               ].join(' ')}

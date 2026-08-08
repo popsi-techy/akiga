@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { typography } from '../../tokens/tokens';
 import TextField, { type TextFieldProps } from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 
@@ -42,7 +43,7 @@ export function Input({
       {label && (
         <label
           htmlFor={fieldId}
-          className="mb-1.5 block text-body-sm font-medium text-text-primary"
+          className="mb-1.5 block text-body-sm-strong text-text-primary"
         >
           {label}
           {required && (
@@ -75,14 +76,14 @@ export function Input({
           ),
         }}
         sx={{
-          '& .MuiInputBase-root': { borderRadius: 'var(--ds-radius-md)', fontSize: '14px', backgroundColor: 'var(--ds-color-surface-default)' },
+          '& .MuiInputBase-root': { borderRadius: 'var(--ds-radius-md)', fontSize: typography.body.fontSize, backgroundColor: 'var(--ds-color-surface-default)' },
           // Shared control-height scale (sm 36px / md 40px) — matches Button & Select
           // so controls always align in a toolbar. Multiline keeps auto height.
           '& .MuiInputBase-input:not(.MuiInputBase-inputMultiline)': {
             paddingTop: size === 'sm' ? '8px' : '10px',
             paddingBottom: size === 'sm' ? '8px' : '10px',
           },
-          '& .MuiFormHelperText-root': { marginLeft: 0, marginTop: '6px', fontSize: '12px' },
+          '& .MuiFormHelperText-root': { marginLeft: 0, marginTop: '6px', fontSize: typography.caption.fontSize },
         }}
         {...rest}
       />

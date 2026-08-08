@@ -48,7 +48,7 @@ function RowTile({ kind }: { kind: keyof typeof LEVEL_ICON }) {
 /** Child count on a row — a bare figure, since the column head names the unit. */
 function CountFigure({ n, of }: { n: number; of: string }) {
   return (
-    <span title={`${n} ${of}`} className="shrink-0 text-body-sm font-medium tabular-nums text-text-secondary">
+    <span title={`${n} ${of}`} className="shrink-0 text-body-sm-strong tabular-nums text-text-secondary">
       {n}
     </span>
   );
@@ -295,7 +295,7 @@ export default function AccessViewExplorerPage() {
           <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand-subtle text-icon-brand">
             <VisibilityOutlined sx={{ fontSize: 20 }} />
           </span>
-          <h1 className="min-w-0 truncate text-h4 font-medium text-text-primary">Access Overview</h1>
+          <h1 className="min-w-0 truncate text-h4 text-text-primary">Access Overview</h1>
         </div>
         <div className="flex shrink-0 items-center gap-3">
           <SegmentedControl
@@ -308,7 +308,7 @@ export default function AccessViewExplorerPage() {
           {/* Caption + field as one attached control: the label is not a form label
               here, it names the value sitting next to it in a dense toolbar. */}
           <div className="flex items-center">
-            <span className="rounded-l-md border border-border bg-sunken px-3.5 py-[7px] text-body-sm font-medium text-text-primary">
+            <span className="rounded-l-md border border-border bg-sunken px-3.5 py-[7px] text-body-sm-strong text-text-primary">
               Access Path
             </span>
             <div className="w-[168px]">

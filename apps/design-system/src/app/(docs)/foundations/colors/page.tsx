@@ -17,7 +17,7 @@ export default function ColorsPage() {
         description="Roles mapped from primitives. This is what you use in code."
       >
         <div className="mb-6">
-          <h3 className="mb-3 text-body font-semibold text-text-primary">Text</h3>
+          <h3 className="mb-3 text-body-strong text-text-primary">Text</h3>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
             <Swatch value={color.text.primary} name="text.primary" ring />
             <Swatch value={color.text.secondary} name="text.secondary" ring />
@@ -29,7 +29,7 @@ export default function ColorsPage() {
         </div>
 
         <div className="mb-6">
-          <h3 className="mb-3 text-body font-semibold text-text-primary">Surface, background & border</h3>
+          <h3 className="mb-3 text-body-strong text-text-primary">Surface, background & border</h3>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
             <Swatch value={color.background.canvas} name="background.canvas" ring />
             <Swatch value={color.background.subtle} name="background.subtle" ring />
@@ -41,7 +41,7 @@ export default function ColorsPage() {
         </div>
 
         <div className="mb-6">
-          <h3 className="mb-3 text-body font-semibold text-text-primary">Brand</h3>
+          <h3 className="mb-3 text-body-strong text-text-primary">Brand</h3>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
             <Swatch value={color.brand.primary} name="brand.primary" sub="Orange 700" />
             <Swatch value={color.brand.primaryHover} name="brand.primaryHover" />
@@ -64,13 +64,13 @@ export default function ColorsPage() {
             return (
               <Card key={k} className="overflow-hidden">
                 <div className="flex h-14 items-center justify-center" style={{ background: s.solid }}>
-                  <span className="text-body-sm font-semibold" style={{ color: s.onSolid }}>
+                  <span className="text-body-sm-strong" style={{ color: s.onSolid }}>
                     {k}
                   </span>
                 </div>
                 <div className="p-3">
                   <span
-                    className="inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-caption font-medium"
+                    className="inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-caption-strong"
                     style={{ background: s.subtle, color: s.fg, border: `1px solid ${s.border}` }}
                   >
                     <span className="h-1.5 w-1.5 rounded-pill" style={{ background: s.solid }} />
@@ -109,7 +109,7 @@ export default function ColorsPage() {
           </p>
         </Card>
         <Card className="mt-3 p-5 text-body-sm leading-6 text-text-secondary">
-          <p className="mb-1 font-semibold text-text-primary">Contrast is enforced, not assumed</p>
+          <p className="mb-1 font-emphasis text-text-primary">Contrast is enforced, not assumed</p>
           <p>
             Every pairing is validated by <Code>npm run check:contrast</Code> against WCAG (text AA
             4.5:1, graphical 3:1). One documented exception: <strong>brand orange (#EB5424) with

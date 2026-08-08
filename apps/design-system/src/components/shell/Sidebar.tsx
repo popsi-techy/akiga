@@ -8,7 +8,7 @@ function StatusDot({ status }: { status?: string }) {
   if (status === 'planned')
     return <span className="ml-auto text-caption text-text-disabled">soon</span>;
   if (status === 'wip')
-    return <span className="ml-auto rounded-pill bg-brand-subtle px-2 py-0.5 text-caption font-medium text-brand-active">WIP</span>;
+    return <span className="ml-auto rounded-pill bg-brand-subtle px-2 py-0.5 text-caption-strong text-brand-active">WIP</span>;
   return null;
 }
 
@@ -33,11 +33,11 @@ export default function Sidebar() {
         href="/"
         className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-6"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-brand text-h5 font-bold text-brand-on">
+        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-brand text-h5 text-brand-on">
           a
         </span>
         <span className="flex flex-col leading-tight">
-          <span className="text-h5 font-bold text-text-primary">akiga</span>
+          <span className="text-h5 text-text-primary">akiga</span>
           <span className="text-caption text-text-secondary">Design System</span>
         </span>
       </Link>
@@ -46,7 +46,7 @@ export default function Sidebar() {
       <nav className="flex-1 px-3 py-4">
         {navigation.map((section) => (
           <div key={section.title} className="mb-5">
-            <div className="px-3 pb-1.5 text-caption font-semibold uppercase tracking-wider text-text-tertiary">
+            <div className="px-3 pb-1.5 text-caption-strong uppercase tracking-wider text-text-tertiary">
               {section.title}
             </div>
             <ul className="flex flex-col gap-0.5">
@@ -60,8 +60,8 @@ export default function Sidebar() {
                       className={[
                         'flex items-center rounded-md px-3 py-1.5 text-body-sm transition-colors',
                         active
-                          ? 'bg-brand-subtle font-semibold text-brand-active'
-                          : 'font-medium text-text-secondary hover:bg-surface-hover hover:text-text-primary',
+                          ? 'bg-brand-subtle font-emphasis text-brand-active'
+                          : 'font-emphasis text-text-secondary hover:bg-surface-hover hover:text-text-primary',
                       ].join(' ')}
                     >
                       {item.label}

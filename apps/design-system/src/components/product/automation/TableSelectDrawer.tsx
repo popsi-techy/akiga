@@ -58,7 +58,7 @@ export function TableSelectDrawer({
   const filtered = rows.filter((r) => r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q));
 
   const columns: Column<TableSelectRow>[] = [
-    { id: 'name', header: nameHeader, sortable: true, value: (r) => r.name, render: (r) => <span className="font-medium text-text-primary">{r.name}</span> },
+    { id: 'name', header: nameHeader, sortable: true, value: (r) => r.name, render: (r) => <span className="text-body-sm-strong text-text-primary">{r.name}</span> },
     { id: 'description', header: 'Description', render: (r) => <span className="text-text-secondary">{r.description}</span> },
     ...(showRisk
       ? [

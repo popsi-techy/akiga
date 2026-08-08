@@ -18,21 +18,38 @@ const config: Config = {
       // text-body, text-body-sm, text-caption, …). Each carries size + line-height
       // (+ tracking); weight stays a separate `font-*` utility so the two compose
       // without conflict. Prefer these over arbitrary `text-[Npx]`.
+      // Every entry carries its own fontWeight, so a `text-*` class IS the complete
+      // type style. That is the point: weight belongs to the token, never to a
+      // `font-*` utility chosen at the call site. To emphasise, switch to the
+      // `-strong` partner — do not bolt `font-semibold` onto a size class.
       fontSize: {
-        display: ['2rem', { lineHeight: '2.5rem', letterSpacing: '-0.02em' }],
-        h1: ['1.75rem', { lineHeight: '2.25rem', letterSpacing: '-0.02em' }],
-        h2: ['1.5rem', { lineHeight: '2rem', letterSpacing: '-0.01em' }],
-        h3: ['1.25rem', { lineHeight: '1.75rem', letterSpacing: '-0.01em' }],
-        h4: ['1.125rem', { lineHeight: '1.625rem' }],
-        h5: ['1rem', { lineHeight: '1.5rem' }],
-        'body-lg': ['1rem', { lineHeight: '1.5rem' }],
-        body: ['0.875rem', { lineHeight: '1.25rem' }],
-        'body-sm': ['0.8125rem', { lineHeight: '1.125rem' }],
-        caption: ['0.75rem', { lineHeight: '1rem' }],
-        overline: ['0.75rem', { lineHeight: '1rem', letterSpacing: '0.06em' }],
-        micro: ['0.625rem', { lineHeight: '0.875rem' }],
-        stat: ['1.5rem', { lineHeight: '1.75rem', letterSpacing: '-0.01em' }],
+        display: ['2rem', { lineHeight: '2.5rem', letterSpacing: '-0.02em', fontWeight: '700' }],
+        h1: ['1.75rem', { lineHeight: '2.25rem', letterSpacing: '-0.02em', fontWeight: '700' }],
+        h2: ['1.5rem', { lineHeight: '2rem', letterSpacing: '-0.01em', fontWeight: '700' }],
+        h3: ['1.25rem', { lineHeight: '1.75rem', letterSpacing: '-0.01em', fontWeight: '600' }],
+        h4: ['1.125rem', { lineHeight: '1.625rem', fontWeight: '600' }],
+        h5: ['1rem', { lineHeight: '1.5rem', fontWeight: '600' }],
+        'card-title': ['0.9375rem', { lineHeight: '1.25rem', fontWeight: '400' }],
+        'body-lg': ['1rem', { lineHeight: '1.5rem', fontWeight: '400' }],
+        body: ['0.875rem', { lineHeight: '1.25rem', fontWeight: '400' }],
+        'body-medium': ['0.875rem', { lineHeight: '1.25rem', fontWeight: '500' }],
+        'body-strong': ['0.875rem', { lineHeight: '1.25rem', fontWeight: '600' }],
+        'body-sm': ['0.8125rem', { lineHeight: '1.125rem', fontWeight: '400' }],
+        'body-sm-medium': ['0.8125rem', { lineHeight: '1.125rem', fontWeight: '500' }],
+        'body-sm-strong': ['0.8125rem', { lineHeight: '1.125rem', fontWeight: '600' }],
+        caption: ['0.75rem', { lineHeight: '1rem', fontWeight: '400' }],
+        'caption-medium': ['0.75rem', { lineHeight: '1rem', fontWeight: '500' }],
+        'caption-strong': ['0.75rem', { lineHeight: '1rem', fontWeight: '600' }],
+        overline: ['0.75rem', { lineHeight: '1rem', letterSpacing: '0.06em', fontWeight: '600' }],
+        micro: ['0.625rem', { lineHeight: '0.875rem', fontWeight: '600' }],
+        stat: ['1.5rem', { lineHeight: '1.75rem', letterSpacing: '-0.01em', fontWeight: '700' }],
       },
+      // Inline emphasis for text whose size is inherited or set dynamically — a run
+      // inside a paragraph, an Avatar's initials. It is the ONLY weight utility the
+      // system permits: `font-medium` / `font-semibold` / `font-bold` let each call
+      // site invent a step, which is how the scale drifted. Pair with a `text-*`
+      // class and you have re-created the banned pattern — use the -strong partner.
+      fontWeight: { emphasis: '600' },
       colors: {
         canvas: 'var(--ds-color-background-canvas)',
         subtle: 'var(--ds-color-background-subtle)',

@@ -23,7 +23,7 @@ type DrawerKind = 'entities' | 'tRoles' | 'bRoles' | 'policy' | 'criteria' | nul
 
 /** Quiet uppercase section label (the one heading style across the builders). */
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <div className="mb-3 text-caption font-semibold uppercase tracking-[0.07em] text-text-tertiary">{children}</div>;
+  return <div className="mb-3 text-caption-strong uppercase tracking-[0.07em] text-text-tertiary">{children}</div>;
 }
 
 const chipLabel = (i: EntitySelection) => (i.appName ? `${i.appName}: ${i.name}` : i.name);
@@ -46,7 +46,7 @@ function AddRow({ title, summary, items, onClick }: { title: string; summary?: s
           <AddIcon sx={{ fontSize: 18 }} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-body-sm font-medium text-text-primary">{title}</span>
+          <span className="block text-body-sm-strong text-text-primary">{title}</span>
           {summary && <span className="block truncate text-caption text-text-secondary">{summary}</span>}
         </span>
         <ChevronRight sx={{ fontSize: 18 }} className="shrink-0 text-icon" />
@@ -58,19 +58,19 @@ function AddRow({ title, summary, items, onClick }: { title: string; summary?: s
               // Entitlements render as an app-badge chip, matching the SoD resolution
               // "Needs Decision" access chip.
               <span key={i.id} className="inline-flex max-w-[170px] items-center gap-1 rounded-md border border-border bg-subtle py-1 pl-1 pr-2 text-caption">
-                <span className="grid h-4 w-4 shrink-0 place-items-center rounded bg-surface text-micro font-semibold text-text-secondary">{i.appName.charAt(0).toUpperCase()}</span>
+                <span className="grid h-4 w-4 shrink-0 place-items-center rounded bg-surface text-micro text-text-secondary">{i.appName.charAt(0).toUpperCase()}</span>
                 <span className="truncate">
-                  <span className="text-text-tertiary">{i.appName}</span> <span className="font-medium text-text-primary">{i.name}</span>
+                  <span className="text-text-tertiary">{i.appName}</span> <span className="font-emphasis text-text-primary">{i.name}</span>
                 </span>
               </span>
             ) : (
-              <span key={i.id} className="inline-flex max-w-[140px] items-center rounded-md border border-border bg-subtle px-2 py-1 text-caption font-medium text-text-primary">
+              <span key={i.id} className="inline-flex max-w-[140px] items-center rounded-md border border-border bg-subtle px-2 py-1 text-caption-strong text-text-primary">
                 <span className="truncate">{chipLabel(i)}</span>
               </span>
             ),
           )}
           {chips.length > 2 && (
-            <span className="inline-flex shrink-0 items-center rounded-md border border-border bg-subtle px-1.5 py-1 text-caption font-semibold text-text-secondary">+{chips.length - 2}</span>
+            <span className="inline-flex shrink-0 items-center rounded-md border border-border bg-subtle px-1.5 py-1 text-caption-strong text-text-secondary">+{chips.length - 2}</span>
           )}
         </div>
       )}
@@ -109,7 +109,7 @@ export function AssignEntitiesConfig({ config, onChange }: { config: AEConfig; o
           <div className="flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2.5">
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand-subtle text-brand"><RuleOutlined sx={{ fontSize: 18 }} /></span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-body-sm font-semibold text-text-primary">{config.approvalPolicyName}</span>
+              <span className="block truncate text-body-sm-strong text-text-primary">{config.approvalPolicyName}</span>
               <span className="block text-caption text-text-secondary">Approval policy attached</span>
             </span>
             <button type="button" onClick={() => onChange({ ...config, approvalPolicyId: undefined, approvalPolicyName: undefined })} aria-label="Remove policy" className="text-icon hover:text-danger">
@@ -130,7 +130,7 @@ export function AssignEntitiesConfig({ config, onChange }: { config: AEConfig; o
               <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                 <ConditionPreviewChip {...ruleParts(criteriaRules[0])} />
                 {criteriaRules.length > 1 && (
-                  <span className="inline-flex shrink-0 items-center rounded-md bg-subtle px-1.5 py-1 text-caption font-semibold text-text-secondary">+{criteriaRules.length - 1}</span>
+                  <span className="inline-flex shrink-0 items-center rounded-md bg-subtle px-1.5 py-1 text-caption-strong text-text-secondary">+{criteriaRules.length - 1}</span>
                 )}
               </div>
               <button

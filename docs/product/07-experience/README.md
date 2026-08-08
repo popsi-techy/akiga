@@ -9,6 +9,7 @@ product; the Design System later decides *how* to render it. No components or to
 | Document | Purpose |
 |----------|---------|
 | `ux-principles.md` | **The product's UX philosophy** — the small set of principles every screen must honor (clarity over density, guided over open-ended, safe destructive actions, etc.). |
+| `visual-language.md` | **What the product looks like, and why** — the aesthetic decisions stated as constraints: the protagonist rule, surface ladder, type hierarchy, the colour budget, density, motion, screen archetypes, and the protocol for building from a screenshot. Read it before writing any UI. |
 | `interaction-patterns.md` | **Philosophies for recurring surfaces** — navigation, dashboards, forms, tables, search, filters, drawers, wizards. *When and why* to use each, at the product level (the Design System implements the *how*). |
 | `state-experience.md` | **The product's stance on empty, loading, error, and success states** — what each should communicate and when. The behavioral contract the Design System's state components fulfill. |
 | `notifications-catalog.md` | **Every notification type** — trigger, audience, channel, urgency (e.g. "approval pending", "certification due", "access expiring"). Mirrored in `notifications.json`. |

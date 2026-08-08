@@ -19,7 +19,7 @@ export const entitlementColumns: Column<EntitlementRow>[] = [
     render: (r) => (
       <div className="flex items-center gap-3">
         <EntityAvatar kind="entitlement" name={r.name} />
-        <span className="font-medium text-text-primary">{r.name}</span>
+        <span className="text-body-sm-strong text-text-primary">{r.name}</span>
       </div>
     ),
   },
@@ -36,7 +36,7 @@ export const applicationColumns: Column<ApplicationRow>[] = [
     render: (r) => (
       <div className="flex items-center gap-3">
         <EntityAvatar kind="application" name={r.name} />
-        <span className="font-medium text-text-primary">{r.name}</span>
+        <span className="text-body-sm-strong text-text-primary">{r.name}</span>
       </div>
     ),
   },
@@ -52,7 +52,7 @@ export const accountColumns: Column<AppAccountRow>[] = [
     render: (r) => (
       <div className="flex items-center gap-3">
         <EntityAvatar kind="account" name={r.accountName} />
-        <span className="font-medium text-text-primary">{r.accountName}</span>
+        <span className="text-body-sm-strong text-text-primary">{r.accountName}</span>
         {r.orphan && <StatusChip intent="warning" label="Orphan" />}
       </div>
     ),
@@ -82,7 +82,7 @@ export const peopleColumns: Column<UserIdentityRow>[] = [
       <div className="flex items-center gap-3">
         <EntityAvatar kind="user" name={r.name} />
         <div className="min-w-0">
-          <div className="truncate font-medium text-text-primary">{r.name}</div>
+          <div className="truncate text-body-sm-strong text-text-primary">{r.name}</div>
           <div className="truncate text-caption text-text-secondary">{r.jobTitle}</div>
         </div>
       </div>
@@ -102,7 +102,7 @@ export function roleColumns(kind: Extract<EntityKind, 'technical-role' | 'busine
       render: (r) => (
         <div className="flex items-center gap-3">
           <EntityAvatar kind={kind} name={r.name} />
-          <span className="font-medium text-text-primary">{r.name}</span>
+          <span className="text-body-sm-strong text-text-primary">{r.name}</span>
         </div>
       ),
     },

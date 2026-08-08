@@ -27,15 +27,15 @@ export default function Topbar() {
       <div className="flex items-center gap-2 text-body-sm">
         <span className="text-text-tertiary">{group}</span>
         <span className="text-text-disabled">/</span>
-        <span className="font-medium text-text-primary">{page}</span>
+        <span className="font-emphasis text-text-primary">{page}</span>
       </div>
       <div className="flex items-center gap-3">
-        <span className="rounded-pill border border-border bg-surface px-2.5 py-1 text-caption font-medium text-text-secondary">
+        <span className="rounded-pill border border-border bg-surface px-2.5 py-1 text-caption-strong text-text-secondary">
           DM Sans
         </span>
         <Link
           href="/iga/dashboard"
-          className="rounded-pill border border-brand-border bg-brand-subtle px-2.5 py-1 text-caption font-medium text-brand-active hover:bg-brand-subtle-hover"
+          className="rounded-pill border border-brand-border bg-brand-subtle px-2.5 py-1 text-caption-strong text-brand-active hover:bg-brand-subtle-hover"
         >
           Open IGA Product →
         </Link>

@@ -28,7 +28,7 @@ export function UserFilterConfig({ config, onChange }: { config: UFConfig; onCha
           <span className="grid h-11 w-11 place-items-center rounded-full bg-subtle text-icon">
             <AddIcon sx={{ fontSize: 22 }} />
           </span>
-          <span className="text-body font-semibold text-text-primary">Add Condition</span>
+          <span className="text-body-strong text-text-primary">Add Condition</span>
           <span className="text-caption leading-snug text-text-secondary">Build rules from identity, request, and relationship attributes.</span>
         </button>
       ) : (
@@ -37,7 +37,7 @@ export function UserFilterConfig({ config, onChange }: { config: UFConfig; onCha
             <div className="flex min-w-0 flex-wrap items-center gap-1.5">
               <ConditionPreviewChip {...ruleParts(rules[0])} />
               {rules.length > 1 && (
-                <span className="inline-flex shrink-0 items-center rounded-md bg-subtle px-1.5 py-1 text-caption font-semibold text-text-secondary">+{rules.length - 1}</span>
+                <span className="inline-flex shrink-0 items-center rounded-md bg-subtle px-1.5 py-1 text-caption-strong text-text-secondary">+{rules.length - 1}</span>
               )}
             </div>
             <button

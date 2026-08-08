@@ -130,7 +130,7 @@ function AuditTimestamp({ at, className }: { at: string; className?: string }) {
   return (
     <time
       dateTime={at}
-      className={['block text-body-sm font-semibold tabular-nums text-text-primary', className].filter(Boolean).join(' ')}
+      className={['block text-body-sm-strong tabular-nums text-text-primary', className].filter(Boolean).join(' ')}
     >
       {formatDateTime(at)}
     </time>
@@ -152,7 +152,7 @@ function SetupAuditCard({ entry }: { entry: SodReview['audit'][number] }) {
         chip={<StatusChip intent={chip.intent} label={chip.label} />}
       />
       <div className="mt-3">
-        <p className="text-body-sm font-medium text-text-primary">{entry.action}</p>
+        <p className="text-body-sm-strong text-text-primary">{entry.action}</p>
         {entry.detail ? (
           <p className="mt-1.5 text-caption leading-5 text-text-secondary">{entry.detail}</p>
         ) : null}
@@ -182,7 +182,7 @@ function SubmittedDecisionCard({
       <div className="mt-3 space-y-4">
         {accessToRemove.length > 0 && (
           <section>
-            <h4 className="mb-2 text-overline font-semibold uppercase text-text-tertiary">
+            <h4 className="mb-2 text-overline uppercase text-text-tertiary">
               Access revoked <span className="tabular-nums">({accessToRemove.length})</span>
             </h4>
             <ul className="space-y-1.5">
@@ -196,7 +196,7 @@ function SubmittedDecisionCard({
                     <AppBadge app={a.appName} size={20} variant="surface" appearance="logo" />
                     <div className="min-w-0 flex-1 truncate text-caption">
                       <span className="text-text-tertiary">{a.appName}</span>{' '}
-                      <span className="font-medium text-text-primary">{a.name}</span>
+                      <span className="font-emphasis text-text-primary">{a.name}</span>
                     </div>
                     {n > 0 ? (
                       <span className="shrink-0 text-caption text-text-tertiary">
@@ -212,7 +212,7 @@ function SubmittedDecisionCard({
 
         {item.removedRules.length > 0 && (
           <section>
-            <h4 className="mb-2 text-overline font-semibold uppercase text-text-tertiary">
+            <h4 className="mb-2 text-overline uppercase text-text-tertiary">
               Resolved by revoking access <span className="tabular-nums">({item.removedRules.length})</span>
             </h4>
             <div className="space-y-2">
@@ -231,7 +231,7 @@ function SubmittedDecisionCard({
 
         {item.acceptedRules.length > 0 && (
           <section>
-            <h4 className="mb-2 text-overline font-semibold uppercase text-text-tertiary">
+            <h4 className="mb-2 text-overline uppercase text-text-tertiary">
               Resolved by accepting risk <span className="tabular-nums">({item.acceptedRules.length})</span>
             </h4>
             <div className="space-y-2">
@@ -296,7 +296,7 @@ function DecisionRuleCard({
   return (
     <div className="rounded-lg border border-border-subtle bg-surface p-3">
       <div className="mb-2 flex items-center gap-2 text-caption">
-        <span className="font-semibold text-text-primary">{rule.code}</span>
+        <span className="font-emphasis text-text-primary">{rule.code}</span>
         <span className="ml-auto shrink-0">
           <RuleStatusPill status={kind === 'accepted' ? 'risk-accepted' : 'resolved'} />
         </span>
@@ -310,7 +310,7 @@ function DecisionRuleCard({
           return (
             <React.Fragment key={aid}>
               {idx > 0 && (
-                <span className="text-caption font-semibold text-text-tertiary">AND</span>
+                <span className="text-caption-strong text-text-tertiary">AND</span>
               )}
               <span
                 className={[
@@ -320,7 +320,7 @@ function DecisionRuleCard({
               >
                 <AppBadge app={a.appName} size={16} variant="surface" appearance="logo" />
                 <span className={revoking ? '' : 'text-text-tertiary'}>{a.appName}</span>
-                <span className={['font-medium', revoking ? '' : 'text-text-primary'].join(' ')}>
+                <span className={['font-emphasis', revoking ? '' : 'text-text-primary'].join(' ')}>
                   {a.name}
                 </span>
               </span>
@@ -346,7 +346,7 @@ function DecisionRuleCard({
             )}
           </span>
           <div className="min-w-0 flex-1 space-y-1.5">
-            <p className="text-body-sm font-medium leading-5 text-text-primary">{actionLabel}</p>
+            <p className="text-body-sm-strong leading-5 text-text-primary">{actionLabel}</p>
             {kind === 'accepted' && acceptance ? (
               <p className="text-caption text-text-tertiary">
                 {/* Exact expiry when recorded; older acceptances only have a duration. */}

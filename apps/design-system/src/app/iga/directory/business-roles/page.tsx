@@ -17,7 +17,7 @@ export default function BusinessRolesListPage() {
       render: (r) => (
         <div className="flex items-center gap-3">
           <EntityAvatar kind="business-role" name={r.name} />
-          <span className="font-medium text-text-primary">{r.name}</span>
+          <span className="text-body-sm-strong text-text-primary">{r.name}</span>
         </div>
       ),
     },

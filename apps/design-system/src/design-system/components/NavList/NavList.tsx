@@ -35,7 +35,7 @@ export function NavList({ items, value, onChange, ariaLabel }: NavListProps) {
             aria-selected={active}
             onClick={() => onChange(item.id)}
             className={[
-              'flex w-full items-center gap-2.5 rounded-md border px-3 py-2.5 text-left text-body-sm font-medium transition-colors',
+              'flex w-full items-center gap-2.5 rounded-md border px-3 py-2.5 text-left text-body-sm-strong transition-colors',
               active ? 'border-brand bg-surface text-text-primary' : 'border-transparent text-text-primary hover:bg-surface-hover',
             ].join(' ')}
           >
@@ -44,7 +44,7 @@ export function NavList({ items, value, onChange, ariaLabel }: NavListProps) {
             {item.count != null && (
               <span
                 className={[
-                  'shrink-0 rounded-pill px-2 py-0.5 text-caption font-semibold',
+                  'shrink-0 rounded-pill px-2 py-0.5 text-caption-strong',
                   active ? 'bg-brand text-brand-on' : 'bg-subtle text-text-secondary',
                 ].join(' ')}
               >

@@ -92,7 +92,7 @@ export function ApprovalLevelConfig({ config, onChange }: { config: ALConfig; on
         {/* Fallback lives in the Approver group too — no divider before it. */}
         <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <span className="text-body-sm font-medium text-text-primary">Add fallback</span>
+            <span className="text-body-sm-strong text-text-primary">Add fallback</span>
             <Tooltip title="Used when primary approver is not found." placement="top">
               <span
                 tabIndex={0}
@@ -243,7 +243,7 @@ function PickerRow({ value, onOpen, icon, selectLabel = 'Select' }: { value?: st
       <button
         type="button"
         onClick={onOpen}
-        className="flex w-full items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-body-sm font-medium text-text-secondary transition-colors hover:border-border-strong hover:text-text-primary"
+        className="flex w-full items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-body-sm-strong text-text-secondary transition-colors hover:border-border-strong hover:text-text-primary"
       >
         {icon && <span className="flex shrink-0 items-center text-icon">{icon}</span>}
         {selectLabel}

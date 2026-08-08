@@ -144,21 +144,6 @@ export interface SodReview {
   audit: AuditEntry[];
 }
 
-/** Admin list row projection. */
-export interface ViolationRow {
-  id: string;
-  userName: string;
-  userEmail: string;
-  policyNames: string[];
-  ruleCount: number;
-  riskScore: number;
-  severity: Severity;
-  assignedReviewerName?: string;
-  status: ReviewStatus;
-  dueDate?: string;
-  updatedAt: string;
-}
-
 /** Reviewer "My Reviews" row projection. */
 export interface MyReviewRow {
   id: string;

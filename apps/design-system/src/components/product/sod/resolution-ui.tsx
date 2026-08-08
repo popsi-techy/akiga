@@ -71,7 +71,7 @@ export function DueCountdown({
   return (
     <div className={['flex flex-col gap-1.5', className ?? 'w-[180px] shrink-0'].join(' ')}>
       <div className="flex items-center justify-between gap-2">
-        <span className={['text-body-sm font-medium', overdue ? 'text-[var(--ds-color-status-danger-fg)]' : 'text-text-primary'].join(' ')}>
+        <span className={['text-body-sm-strong', overdue ? 'text-[var(--ds-color-status-danger-fg)]' : 'text-text-primary'].join(' ')}>
           {label}
         </span>
         <Tooltip title={dueLabel} placement="bottom">

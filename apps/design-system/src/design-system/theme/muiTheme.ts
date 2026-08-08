@@ -47,11 +47,13 @@ export const muiTheme = createTheme({
     h4: t.h4,
     h5: t.h5,
     h6: t.h5,
-    subtitle1: t.bodyMedium,
+    subtitle1: t.bodyStrong,
     subtitle2: { ...t.bodySm, fontWeight: fontWeight.medium },
     body1: t.body,
     body2: t.bodySm,
-    button: { ...t.bodyMedium, textTransform: 'none' as const },
+    // Button labels take the emphasis step (600). At 500 a label sat at the same
+    // visual weight as the body text around it — the defect this scale fixes.
+    button: { ...t.bodyStrong, textTransform: 'none' as const },
     caption: t.caption,
     overline: t.overline,
   },

@@ -98,9 +98,9 @@ export default function DashboardPage() {
     <div className="mx-auto max-w-[1200px]">
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <h1 className="text-h2 font-bold text-text-primary">
+        <h1 className="text-h2 text-text-primary">
           Welcome Amelia,{' '}
-          <span className="font-semibold text-text-secondary">
+          <span className="font-normal text-text-secondary">
             Configure and Govern Access across the Organization
           </span>
         </h1>
@@ -121,7 +121,7 @@ export default function DashboardPage() {
         <Card
           hoverElevate
           title="Access Certification"
-          icon={<Campaign sx={{ color: 'var(--ds-color-brand-primary)' }} />}
+          icon={<Campaign />}
           action={<CardActions onOpen={() => toast.info('Open certifications')} />}
         >
           <div className="py-2">
@@ -137,7 +137,7 @@ export default function DashboardPage() {
         <Card
           hoverElevate
           title="Certifications Approaching Deadline"
-          icon={<Schedule sx={{ color: 'var(--ds-color-text-secondary)' }} />}
+          icon={<Schedule />}
           action={<CardActions />}
           padding="none"
         >
@@ -146,7 +146,7 @@ export default function DashboardPage() {
               <ListRow key={d.id}>
                 <Avatar name={d.name} initials={d.name[0]} size="sm" />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-body font-medium text-text-primary">{d.name}</div>
+                  <div className="truncate text-body-strong text-text-primary">{d.name}</div>
                   <div className="truncate text-caption text-text-secondary">{d.scope}</div>
                 </div>
                 {'tone' in d.due ? (
@@ -162,7 +162,7 @@ export default function DashboardPage() {
         <Card
           hoverElevate
           title="Quick Actions"
-          icon={<Bolt sx={{ color: 'var(--ds-color-brand-primary)' }} />}
+          icon={<Bolt />}
           padding="none"
         >
           <div>
@@ -175,7 +175,7 @@ export default function DashboardPage() {
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-brand-subtle text-brand">
                   {a.icon}
                 </span>
-                <span className="flex-1 text-body font-medium text-text-primary">{a.label}</span>
+                <span className="flex-1 text-body-strong text-text-primary">{a.label}</span>
                 <ChevronRightOutlined sx={{ fontSize: 20, color: 'var(--ds-color-icon-default)' }} />
               </button>
             ))}
@@ -188,7 +188,7 @@ export default function DashboardPage() {
         <Card
           hoverElevate
           title="SoD Policies"
-          icon={<GppGood sx={{ color: 'var(--ds-color-status-info-solid)' }} />}
+          icon={<GppGood />}
           action={<CardActions />}
         >
           <div className="py-2">
@@ -204,7 +204,7 @@ export default function DashboardPage() {
         <Card
           hoverElevate
           title="High-Risk SoD Policies"
-          icon={<GppMaybe sx={{ color: 'var(--ds-color-status-danger-solid)' }} />}
+          icon={<GppMaybe />}
           action={<CardActions />}
           padding="none"
         >
@@ -213,7 +213,7 @@ export default function DashboardPage() {
               <ListRow key={p.id}>
                 <Avatar name={p.name} initials={p.name[0]} size="sm" />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-body font-medium text-text-primary">{p.name}</div>
+                  <div className="truncate text-body-strong text-text-primary">{p.name}</div>
                   <div className="truncate text-caption text-text-secondary">{p.area}</div>
                 </div>
                 <StatusChip intent="danger" dot={false} label={`Critical (${p.count})`} />
@@ -225,7 +225,7 @@ export default function DashboardPage() {
         <Card
           hoverElevate
           title="High Risk Users"
-          icon={<Groups sx={{ color: 'var(--ds-color-status-danger-solid)' }} />}
+          icon={<Groups />}
           action={<CardActions />}
           padding="none"
         >
@@ -234,7 +234,7 @@ export default function DashboardPage() {
               <ListRow key={u.id}>
                 <Avatar name={u.name} size="sm" />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-body font-medium text-text-primary">{u.name}</div>
+                  <div className="truncate text-body-strong text-text-primary">{u.name}</div>
                   <div className="truncate text-caption text-text-secondary">
                     {u.title} · {u.app}
                   </div>

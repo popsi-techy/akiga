@@ -26,7 +26,7 @@ export default function UserIdentitiesListPage() {
         <div className="flex items-center gap-3">
           <EntityAvatar kind="user" name={r.name} />
           <div className="min-w-0">
-            <div className="truncate font-medium text-text-primary">{r.name}</div>
+            <div className="truncate text-body-sm-strong text-text-primary">{r.name}</div>
             <div className="truncate text-caption text-text-secondary">{r.jobTitle}</div>
           </div>
         </div>

@@ -33,7 +33,7 @@ export function InfoRow({ label, value, icon, className = '' }: InfoRowProps) {
       </div>
       <div
         role="cell"
-        className="min-w-0 truncate py-3 text-left text-body-sm font-medium text-text-primary"
+        className="min-w-0 truncate py-3 text-left text-body-sm-strong text-text-primary"
       >
         {value}
       </div>

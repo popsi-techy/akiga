@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { typography } from '@/design-system/tokens/tokens';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import ExpandMoreOutlined from '@mui/icons-material/ExpandMoreOutlined';
@@ -30,7 +31,7 @@ export function MultisplitConfig({ node, onPatchNode }: { node: WorkflowNode; on
     <div className="space-y-5">
       {/* split attributes — multiselect dropdown */}
       <div>
-        <div className="mb-2 text-caption font-semibold uppercase tracking-[0.07em] text-text-tertiary">Split Attributes</div>
+        <div className="mb-2 text-caption-strong uppercase tracking-[0.07em] text-text-tertiary">Split Attributes</div>
         <MuiSelect
           multiple
           displayEmpty
@@ -44,7 +45,7 @@ export function MultisplitConfig({ node, onPatchNode }: { node: WorkflowNode; on
             if (ids.length === 0) return <span className="text-text-tertiary">Select attributes</span>;
             return ids.map((id) => getAttribute(id)?.label ?? id).join(', ');
           }}
-          sx={{ fontSize: '13px', borderRadius: 'var(--ds-radius-md)' }}
+          sx={{ fontSize: typography.bodySm.fontSize, borderRadius: 'var(--ds-radius-md)' }}
           MenuProps={{ PaperProps: { sx: { borderRadius: 'var(--ds-radius-md)' } } }}
         >
           {splitAttrs.map((a) => (
@@ -53,7 +54,7 @@ export function MultisplitConfig({ node, onPatchNode }: { node: WorkflowNode; on
               <span className="mr-2 inline-flex">
                 <Checkbox checked={config.splitAttributes.includes(a.id)} presentational />
               </span>
-              <ListItemText primary={a.label} primaryTypographyProps={{ fontSize: '13px' }} />
+              <ListItemText primary={a.label} primaryTypographyProps={{ fontSize: typography.bodySm.fontSize }} />
             </MenuItem>
           ))}
         </MuiSelect>
@@ -61,7 +62,7 @@ export function MultisplitConfig({ node, onPatchNode }: { node: WorkflowNode; on
 
       {/* branches */}
       <div>
-        <div className="mb-1.5 text-caption font-semibold uppercase tracking-[0.07em] text-text-tertiary">Branches</div>
+        <div className="mb-1.5 text-caption-strong uppercase tracking-[0.07em] text-text-tertiary">Branches</div>
         <div className="space-y-2">
           {splitLanes.map((lane) => (
             <div key={lane.id} className="space-y-3 rounded-md bg-subtle p-3">
@@ -86,7 +87,7 @@ export function MultisplitConfig({ node, onPatchNode }: { node: WorkflowNode; on
                   if (!attr) return null;
                   return (
                     <div key={attrId}>
-                      <div className="mb-1 text-caption font-medium text-text-secondary">{attr.label}</div>
+                      <div className="mb-1 text-caption-strong text-text-secondary">{attr.label}</div>
                       <Select
                         options={(attr.options ?? []).map((o) => ({ value: o, label: o }))}
                         value={lane.matchValues?.[attrId]?.[0] ?? ''}
@@ -107,9 +108,9 @@ export function MultisplitConfig({ node, onPatchNode }: { node: WorkflowNode; on
 
       {/* fallback */}
       <div>
-        <div className="mb-1.5 text-caption font-semibold uppercase tracking-[0.07em] text-text-tertiary">Fallback Branch</div>
+        <div className="mb-1.5 text-caption-strong uppercase tracking-[0.07em] text-text-tertiary">Fallback Branch</div>
         <div className="flex items-center gap-2.5 rounded-lg border border-border bg-surface px-3 py-2.5">
-          <span className="rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2.5 py-0.5 text-caption font-bold tracking-wide text-[var(--ds-color-status-info-fg)]">ELSE</span>
+          <span className="rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2.5 py-0.5 text-caption-strong tracking-wide text-[var(--ds-color-status-info-fg)]">ELSE</span>
           <span className="text-body-sm text-text-secondary">All identities that match no branch</span>
         </div>
       </div>

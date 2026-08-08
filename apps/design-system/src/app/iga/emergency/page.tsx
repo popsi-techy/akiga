@@ -42,7 +42,7 @@ export default function EmergencyAccessListPage() {
       render: (r) => (
         <div className="flex items-center gap-3">
           <Avatar name={r.name} initials={r.initial} size="sm" />
-          <span className="font-medium text-text-primary">{r.name}</span>
+          <span className="text-body-sm-strong text-text-primary">{r.name}</span>
         </div>
       ),
     },
@@ -99,7 +99,7 @@ export default function EmergencyAccessListPage() {
   return (
     <div className="flex h-full flex-col">
       <div className="mb-5 shrink-0">
-        <h1 className="text-h2 font-bold text-text-primary">Emergency Access</h1>
+        <h1 className="text-h2 text-text-primary">Emergency Access</h1>
         <p className="mt-1 text-body text-text-secondary">
           Track and manage time-bound, break-glass access to critical systems from one central table.
         </p>

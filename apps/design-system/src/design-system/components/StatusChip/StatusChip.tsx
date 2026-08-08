@@ -40,7 +40,7 @@ export function StatusChip({
     <span
       /* Height comes from the `caption` type step (12/16) — no `leading-*`
          override, so the chip stays 22px and tracks the scale if it changes. */
-      className="inline-flex items-center gap-1.5 rounded-pill px-2 py-0.5 text-caption font-medium"
+      className="inline-flex items-center gap-1.5 rounded-pill px-2 py-0.5 text-caption-strong"
       style={style}
     >
       {dot && (

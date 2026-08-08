@@ -42,7 +42,7 @@ export function Modal({ open, onClose, title, subtitle, icon, footer, width = 48
             </span>
           )}
           <div className="min-w-0 flex-1">
-            <h2 id={titleId} className="text-h5 font-semibold leading-tight text-text-primary">
+            <h2 id={titleId} className="text-h5 leading-tight text-text-primary">
               {title}
             </h2>
             {subtitle != null && <div className="mt-0.5 text-caption text-text-secondary">{subtitle}</div>}

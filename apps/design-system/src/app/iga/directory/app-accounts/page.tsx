@@ -18,7 +18,7 @@ export default function AppAccountsListPage() {
       render: (r) => (
         <div className="flex items-center gap-3">
           <EntityAvatar kind="account" name={r.accountName} />
-          <span className="font-medium text-text-primary">{r.accountName}</span>
+          <span className="text-body-sm-strong text-text-primary">{r.accountName}</span>
           {r.orphan && <StatusChip intent="warning" label="Orphan" />}
         </div>
       ),

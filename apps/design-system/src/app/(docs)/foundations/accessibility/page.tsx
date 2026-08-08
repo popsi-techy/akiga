@@ -20,7 +20,7 @@ export default function AccessibilityPage() {
             ['Motion', 'Respect prefers-reduced-motion; disable non-essential animation.'],
           ].map(([t, d]) => (
             <Card key={t} className="p-4">
-              <div className="text-body font-semibold text-text-primary">{t}</div>
+              <div className="text-body-strong text-text-primary">{t}</div>
               <p className="mt-1 text-body-sm leading-5 text-text-secondary">{d}</p>
             </Card>
           ))}
@@ -29,13 +29,13 @@ export default function AccessibilityPage() {
 
       <Section title="Focus ring demo" description="Tab to the buttons below to see the standard ring.">
         <div className="flex flex-wrap gap-3">
-          <button className="rounded-md bg-brand px-4 py-2 text-body-sm font-medium text-brand-on">
+          <button className="rounded-md bg-brand px-4 py-2 text-body-sm-strong text-brand-on">
             Primary action
           </button>
-          <button className="rounded-md border border-border bg-surface px-4 py-2 text-body-sm font-medium text-text-primary">
+          <button className="rounded-md border border-border bg-surface px-4 py-2 text-body-sm-strong text-text-primary">
             Secondary action
           </button>
-          <a href="#" className="rounded-md px-2 py-2 text-body-sm font-medium text-text-link">
+          <a href="#" className="rounded-md px-2 py-2 text-body-sm-strong text-text-link">
             A link
           </a>
         </div>
@@ -43,7 +43,7 @@ export default function AccessibilityPage() {
 
       <Section title="How it's enforced">
         <Card className="p-5 text-body-sm leading-6 text-text-secondary">
-          Contrast is <span className="font-medium text-text-primary">verified mechanically</span>,
+          Contrast is <span className="font-emphasis text-text-primary">verified mechanically</span>,
           not by eye: <Code>npm run check:contrast</Code> validates every semantic token pairing
           (text on backgrounds, status <Code>fg</Code> on <Code>subtle</Code>, <Code>onSolid</Code>{' '}
           on <Code>solid</Code>, risk badges, focus ring) against WCAG — text at AA (4.5:1),

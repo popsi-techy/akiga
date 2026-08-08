@@ -53,7 +53,7 @@ export default function FlowCanvasDocs() {
         <span className="flex h-8 w-8 items-center justify-center rounded-md bg-brand-subtle text-icon-brand">
           <Icon sx={{ fontSize: 18 }} />
         </span>
-        <span className="text-body font-semibold text-text-primary">{LABEL[node.kind]}</span>
+        <span className="text-body-strong text-text-primary">{LABEL[node.kind]}</span>
       </button>
     );
   };

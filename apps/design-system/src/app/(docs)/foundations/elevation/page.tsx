@@ -21,7 +21,7 @@ export default function ElevationPage() {
                   style={{ boxShadow: value }}
                 />
                 <div className="text-center">
-                  <div className="text-body-sm font-medium text-text-primary">{key}</div>
+                  <div className="text-body-sm-strong text-text-primary">{key}</div>
                 </div>
               </div>
             ))}

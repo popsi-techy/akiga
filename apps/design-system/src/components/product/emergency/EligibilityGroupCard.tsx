@@ -49,7 +49,7 @@ function ConditionChip({ condition }: { condition: EligibilityCondition }) {
 
 function AndBadge() {
   return (
-    <span className="inline-flex h-5 w-fit items-center justify-center self-start rounded px-1.5 text-micro font-semibold uppercase leading-none tracking-wide text-[var(--ds-color-status-info-fg)] bg-[var(--ds-color-status-info-subtle)]">
+    <span className="inline-flex h-5 w-fit items-center justify-center self-start rounded px-1.5 text-micro uppercase leading-none tracking-wide text-[var(--ds-color-status-info-fg)] bg-[var(--ds-color-status-info-subtle)]">
       AND
     </span>
   );
@@ -96,7 +96,7 @@ export function EligibilityGroupCard({
             checked={selected}
             onChange={onSelectChange}
             ariaLabel={`Select ${title}`}
-            label={<span className="block truncate text-body font-semibold text-text-primary">{title}</span>}
+            label={<span className="block truncate text-body-strong text-text-primary">{title}</span>}
           />
         </div>
         <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -122,7 +122,7 @@ export function EligibilityGroupCard({
         ].join(' ')}
       >
         {/* Quiet eyebrow label — same convention as the automation config panels. */}
-        <div className="shrink-0 text-micro font-semibold uppercase tracking-[0.07em] text-text-tertiary">
+        <div className="shrink-0 text-micro uppercase tracking-[0.07em] text-text-tertiary">
           {conditions.length} condition{conditions.length === 1 ? '' : 's'}
         </div>
 
@@ -134,7 +134,7 @@ export function EligibilityGroupCard({
             </React.Fragment>
           ))}
           {overflow > 0 && (
-            <span className="shrink-0 pt-0.5 text-caption font-medium text-text-secondary">
+            <span className="shrink-0 pt-0.5 text-caption-strong text-text-secondary">
               +{overflow} more
             </span>
           )}
@@ -196,7 +196,7 @@ export function EligibilityAddCard({ onClick }: { onClick: () => void }) {
             <AddIcon sx={{ fontSize: 26 }} />
           </span>
           <div className="flex w-full flex-col items-center gap-1.5">
-            <span className="text-body font-medium text-text-primary">
+            <span className="text-body-strong text-text-primary">
               Add Eligibility Criteria Group
             </span>
             <span className="text-caption leading-snug text-text-secondary">

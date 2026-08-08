@@ -39,7 +39,7 @@ export function StatTile({ label, value, icon, tone = 'brand', hint, hoverElevat
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="truncate text-body-sm text-text-secondary">{label}</div>
-          <div className="mt-1 text-stat font-bold leading-8 text-text-primary">{value}</div>
+          <div className="mt-1 text-stat leading-8 text-text-primary">{value}</div>
           {hint && <div className="mt-1 text-caption text-text-tertiary">{hint}</div>}
         </div>
         {icon && (

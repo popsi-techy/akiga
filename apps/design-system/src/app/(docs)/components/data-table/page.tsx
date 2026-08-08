@@ -30,7 +30,7 @@ function AvatarCell({ initial, name }: { initial: string; name: string }) {
   return (
     <div className="flex items-center gap-3">
       <Avatar name={name} initials={initial} size="sm" />
-      <span className="font-medium text-text-primary">{name}</span>
+      <span className="text-body-sm-strong text-text-primary">{name}</span>
     </div>
   );
 }
@@ -136,7 +136,7 @@ export default function DataTableDocs() {
             ['Populated', 'Sort, select, paginate, custom cells.'],
           ].map(([t, d]) => (
             <Card key={t} className="p-4">
-              <div className="font-semibold text-text-primary">{t}</div>
+              <div className="text-body-sm-strong text-text-primary">{t}</div>
               <p className="mt-1 text-text-secondary">{d}</p>
             </Card>
           ))}

@@ -14,7 +14,7 @@ import { ConditionBuilderDrawer } from './ConditionBuilderDrawer';
 
 /** Quiet uppercase section label (the one heading style across the builders). */
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <div className="mb-3 text-caption font-semibold uppercase tracking-[0.07em] text-text-tertiary">{children}</div>;
+  return <div className="mb-3 text-caption-strong uppercase tracking-[0.07em] text-text-tertiary">{children}</div>;
 }
 
 export function WfConditionalConfig({ node, onPatchNode }: { node: WorkflowNode; onPatchNode: (patch: Partial<WorkflowNode>) => void }) {
@@ -52,7 +52,7 @@ export function WfConditionalConfig({ node, onPatchNode }: { node: WorkflowNode;
             <span className="grid h-11 w-11 place-items-center rounded-full bg-subtle text-icon">
               <AddIcon sx={{ fontSize: 22 }} />
             </span>
-            <span className="text-body font-semibold text-text-primary">Add Condition</span>
+            <span className="text-body-strong text-text-primary">Add Condition</span>
             <span className="text-caption leading-snug text-text-secondary">Build rules from identity, request, and relationship attributes.</span>
           </button>
         ) : (
@@ -63,7 +63,7 @@ export function WfConditionalConfig({ node, onPatchNode }: { node: WorkflowNode;
               return (
                 <div key={b.id} className="rounded-lg border border-border bg-surface px-3 py-2.5">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2.5 py-0.5 text-caption font-bold tracking-wide text-[var(--ds-color-status-info-fg)]">{b.label}</span>
+                    <span className="rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2.5 py-0.5 text-caption-strong tracking-wide text-[var(--ds-color-status-info-fg)]">{b.label}</span>
                     <div className="flex items-center gap-0.5">
                       {!valid && <StatusChip intent="warning" label="Not set" />}
                       <button
@@ -92,7 +92,7 @@ export function WfConditionalConfig({ node, onPatchNode }: { node: WorkflowNode;
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
                       <ConditionPreviewChip {...ruleParts(rules[0])} />
                       {rules.length > 1 && (
-                        <span className="inline-flex shrink-0 items-center rounded-md bg-subtle px-1.5 py-1 text-caption font-semibold text-text-secondary">+{rules.length - 1}</span>
+                        <span className="inline-flex shrink-0 items-center rounded-md bg-subtle px-1.5 py-1 text-caption-strong text-text-secondary">+{rules.length - 1}</span>
                       )}
                     </div>
                   )}
@@ -103,7 +103,7 @@ export function WfConditionalConfig({ node, onPatchNode }: { node: WorkflowNode;
             <button
               type="button"
               onClick={addAndEdit}
-              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2.5 text-body-sm font-medium text-text-secondary transition-colors hover:border-border-strong hover:bg-surface-hover hover:text-text-primary"
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2.5 text-body-sm-strong text-text-secondary transition-colors hover:border-border-strong hover:bg-surface-hover hover:text-text-primary"
             >
               <AddIcon sx={{ fontSize: 16 }} /> Add ELSE IF
             </button>
@@ -115,7 +115,7 @@ export function WfConditionalConfig({ node, onPatchNode }: { node: WorkflowNode;
       <div>
         <SectionLabel>Fallback Branch</SectionLabel>
         <div className="flex items-center gap-2.5 rounded-lg border border-border bg-surface px-3 py-2.5">
-          <span className="rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2.5 py-0.5 text-caption font-bold tracking-wide text-[var(--ds-color-status-info-fg)]">{elseBranch?.label ?? 'ELSE'}</span>
+          <span className="rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2.5 py-0.5 text-caption-strong tracking-wide text-[var(--ds-color-status-info-fg)]">{elseBranch?.label ?? 'ELSE'}</span>
           <span className="text-body-sm text-text-secondary">All other identities</span>
         </div>
       </div>

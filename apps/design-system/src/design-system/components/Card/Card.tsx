@@ -100,7 +100,7 @@ export function Card({
 
   const titleEl =
     title != null ? (
-      <h3 className="truncate text-[15px] font-normal leading-5 text-text-primary">{title}</h3>
+      <h3 className="truncate text-card-title text-text-primary">{title}</h3>
     ) : null;
   const subtitleEl =
     subtitle != null ? (

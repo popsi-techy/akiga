@@ -52,7 +52,7 @@ export function DirectoryListPage<Row extends { id: string }>({
   return (
     <div className="flex h-full flex-col">
       <div className="mb-5 shrink-0">
-        <h1 className="text-h2 font-bold text-text-primary">{title}</h1>
+        <h1 className="text-h2 text-text-primary">{title}</h1>
         <p className="mt-1 text-body text-text-secondary">{description}</p>
       </div>
       <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">

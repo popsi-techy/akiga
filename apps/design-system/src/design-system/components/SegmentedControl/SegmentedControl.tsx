@@ -45,7 +45,7 @@ export function SegmentedControl<T extends string = string>({
             aria-checked={active}
             onClick={() => onChange(opt.value)}
             className={[
-              'rounded-[6px] font-medium transition-colors',
+              'rounded-[6px] font-emphasis transition-colors',
               pad,
               fullWidth ? 'flex-1' : '',
               active ? 'bg-surface text-text-primary shadow-xs' : 'text-text-secondary hover:text-text-primary',

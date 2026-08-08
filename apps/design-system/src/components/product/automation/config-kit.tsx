@@ -12,7 +12,7 @@ import * as React from 'react';
 /** Quiet uppercase micro-label that opens a group. */
 export function GroupLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-3 text-caption font-semibold uppercase tracking-[0.07em] text-text-tertiary">
+    <div className="mb-3 text-caption-strong uppercase tracking-[0.07em] text-text-tertiary">
       {children}
     </div>
   );
@@ -38,7 +38,7 @@ export function ConfigSection({
 
 /** Medium, muted field label (never semibold). */
 export function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <div className="mb-1.5 text-body-sm font-medium text-text-secondary">{children}</div>;
+  return <div className="mb-1.5 text-body-sm-strong text-text-secondary">{children}</div>;
 }
 
 /** Muted helper line under a control. */
@@ -63,7 +63,7 @@ export function EmptyState({
           {icon}
         </span>
       )}
-      <div className="text-body-sm font-medium text-text-primary">{title}</div>
+      <div className="text-body-sm-strong text-text-primary">{title}</div>
       <p className="max-w-[220px] text-caption leading-5 text-text-secondary">{message}</p>
     </div>
   );

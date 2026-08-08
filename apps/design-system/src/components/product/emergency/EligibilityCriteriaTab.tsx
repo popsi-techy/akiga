@@ -108,7 +108,7 @@ export function EligibilityCriteriaTab({ eaId }: { eaId: string }) {
             <FilterListOutlined sx={{ fontSize: 24 }} />
           </span>
           <div className="space-y-1">
-            <div className="text-h5 font-semibold text-text-primary">No eligibility criteria yet</div>
+            <div className="text-h5 text-text-primary">No eligibility criteria yet</div>
             <p className="mx-auto max-w-md text-body-sm text-text-secondary">
               Define who can request this emergency profile. Create a group of conditions — people
               matching any group will be eligible.

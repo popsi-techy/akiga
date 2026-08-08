@@ -85,7 +85,7 @@ export default function SodResolutionV3ListPage() {
         <div className="flex items-center gap-3">
           <Avatar name={r.userName} initials={r.userName.trim().charAt(0).toUpperCase()} size="sm" />
           <div className="min-w-0">
-            <div className="truncate font-medium text-text-primary">{r.userName}</div>
+            <div className="truncate text-body-sm-strong text-text-primary">{r.userName}</div>
             <div className="truncate text-caption text-text-secondary">{r.userEmail}</div>
           </div>
         </div>
@@ -150,7 +150,7 @@ export default function SodResolutionV3ListPage() {
   return (
     <div className="flex h-full flex-col">
       <div className="mb-5 shrink-0">
-        <h1 className="text-h2 font-bold tracking-tight text-text-primary">SoD Policy Violations</h1>
+        <h1 className="text-h2 tracking-tight text-text-primary">SoD Policy Violations</h1>
         <p className="mt-1 text-body text-text-secondary">
           Resolve SoD Policy Violations assigned to you or review resolutions you have already submitted.
         </p>

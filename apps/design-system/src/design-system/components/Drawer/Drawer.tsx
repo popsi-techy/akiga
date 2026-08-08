@@ -47,7 +47,7 @@ export function Drawer({ open, onClose, title, subtitle, icon, footer, width = 4
             </span>
           )}
           <div className="min-w-0 flex-1">
-            <h2 id={titleId} className="text-h4 font-bold leading-tight text-text-primary">
+            <h2 id={titleId} className="text-h4 leading-tight text-text-primary">
               {title}
             </h2>
             {subtitle && (

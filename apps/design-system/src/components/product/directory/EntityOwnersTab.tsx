@@ -83,7 +83,7 @@ export function EntityOwnersTab({
     <div className="flex items-center gap-3">
       <Avatar name={o.name} size="sm" />
       <div className="min-w-0">
-        <div className="truncate font-medium text-text-primary">{o.name}</div>
+        <div className="truncate text-body-sm-strong text-text-primary">{o.name}</div>
         <div className="truncate text-caption text-text-secondary">{o.jobTitle}</div>
       </div>
     </div>
@@ -123,7 +123,7 @@ export function EntityOwnersTab({
       render: (o) => (
         <div className="flex items-center gap-3">
           <Avatar name={o.name} size="sm" />
-          <span className="font-medium text-text-primary">{o.name}</span>
+          <span className="text-body-sm-strong text-text-primary">{o.name}</span>
         </div>
       ),
     },

@@ -145,7 +145,7 @@ function ColumnPane({
               {column.icon}
             </span>
           )}
-          <h3 className="min-w-0 truncate text-h5 font-medium text-text-primary">{column.title}</h3>
+          <h3 className="min-w-0 truncate text-h5 text-text-primary">{column.title}</h3>
           {!awaiting && (
             <span className="shrink-0 rounded border border-border px-2 py-0.5 text-body-sm tabular-nums text-text-secondary">
               {fmt(column.items.length)}
@@ -198,7 +198,7 @@ function ColumnPane({
                 >
                   {it.leading}
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-body font-medium text-text-primary">{it.label}</span>
+                    <span className="block truncate text-body-strong text-text-primary">{it.label}</span>
                     {it.sublabel && (
                       <span className="block truncate text-body-sm text-text-secondary">{it.sublabel}</span>
                     )}

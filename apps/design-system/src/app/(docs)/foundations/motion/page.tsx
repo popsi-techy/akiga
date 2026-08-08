@@ -34,7 +34,7 @@ export default function MotionPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           {Object.entries(motion.easing).map(([key, value]) => (
             <Card key={key} className="p-4">
-              <div className="text-body-sm font-medium capitalize text-text-primary">{key}</div>
+              <div className="text-body-sm-strong capitalize text-text-primary">{key}</div>
               <div className="mt-0.5 font-mono text-caption text-text-tertiary">{value}</div>
             </Card>
           ))}

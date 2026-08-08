@@ -197,7 +197,7 @@ function RuleResolutionSummary({ detail }: { detail: RuleResolutionDetail }) {
           )}
         </span>
         <div className="min-w-0 flex-1 space-y-1.5">
-          <p className="text-body-sm font-medium leading-5 text-text-primary">
+          <p className="text-body-sm-strong leading-5 text-text-primary">
             {ruleResolutionActionLabel(detail)}
           </p>
           {detail.justification.trim() ? (
@@ -503,7 +503,7 @@ function SodResolutionV3WorkspacePageInner() {
     return (
       <div className="-mx-8 -my-6 grid h-[calc(100%+3rem)] place-items-center bg-subtle">
         <div className="text-center">
-          <div className="text-h5 font-semibold text-text-primary">Violation not found</div>
+          <div className="text-h5 text-text-primary">Violation not found</div>
           <div className="mt-4">
             <Button variant="secondary" onClick={() => router.push(LIST_HREF)}>Back</Button>
           </div>
@@ -930,7 +930,7 @@ function SodResolutionV3WorkspacePageInner() {
             />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="min-w-0 truncate text-h5 font-semibold text-text-primary">
+                <span className="min-w-0 truncate text-h5 text-text-primary">
                   {policyName}
                   <span className="font-normal text-text-secondary"> – Violated by </span>
                   {review.userName}
@@ -1118,7 +1118,7 @@ function ViolatedPolicyHeading({
   return (
     <div className="shrink-0 space-y-3 px-5 pb-4 pt-5">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="text-h5 font-semibold text-text-primary">{title}</h2>
+        <h2 className="text-h5 text-text-primary">{title}</h2>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
       {total > 0 && (
@@ -1126,7 +1126,7 @@ function ViolatedPolicyHeading({
           <div className="mb-2 flex items-center gap-2">
             <span
               className={[
-                'inline-flex items-center gap-1.5 text-caption font-medium',
+                'inline-flex items-center gap-1.5 text-caption-strong',
                 allCovered
                   ? 'text-[var(--ds-color-status-success-fg)]'
                   : 'text-text-secondary',
@@ -1192,7 +1192,7 @@ function AccessChip({ access, danger = false }: { access: SodAccess; danger?: bo
     >
       <AppBadge app={access.appName} size={18} variant="surface" appearance="logo" />
       <span className={danger ? '' : 'text-text-tertiary'}>{access.appName}</span>
-      <span className={['font-medium', danger ? '' : 'text-text-primary'].join(' ')}>
+      <span className={['font-emphasis', danger ? '' : 'text-text-primary'].join(' ')}>
         {access.name}
       </span>
       <AccessDetailsTip access={access} />
@@ -1259,7 +1259,7 @@ function AccessDetailsCard({ access }: { access: SodAccess }) {
           shape="soft"
         />
         <span className="min-w-0">
-          <span className="block truncate text-h5 font-semibold leading-tight text-text-primary">
+          <span className="block truncate text-h5 leading-tight text-text-primary">
             {access.name}
           </span>
           <span className="block text-caption text-text-tertiary">
@@ -1283,7 +1283,7 @@ function AccessDetailsCard({ access }: { access: SodAccess }) {
           </dd>
           <dd className="flex min-w-0 items-center gap-1.5">
             <AppBadge app={access.appName} size={18} variant="subtle" appearance="logo" />
-            <span className="min-w-0 truncate text-body-sm font-medium text-text-primary">
+            <span className="min-w-0 truncate text-body-sm-strong text-text-primary">
               {access.appName}
             </span>
           </dd>
@@ -1326,7 +1326,7 @@ function RuleCard({
   return (
     <div className="rounded-lg border border-border bg-surface p-3">
       <div className="mb-2 flex items-center gap-2 text-caption">
-        <span className="font-semibold text-text-primary">{rule.code}</span>
+        <span className="font-emphasis text-text-primary">{rule.code}</span>
         <span className="ml-auto shrink-0">
           <RuleStatusPill status={status} />
         </span>
@@ -1338,7 +1338,7 @@ function RuleCard({
           const danger = Boolean(stagedAccessIds?.has(aid));
           return (
             <React.Fragment key={aid}>
-              {idx > 0 && <span className="text-caption font-semibold text-text-tertiary">AND</span>}
+              {idx > 0 && <span className="text-caption-strong text-text-tertiary">AND</span>}
               <AccessChip access={a} danger={danger} />
             </React.Fragment>
           );
@@ -1354,7 +1354,7 @@ function RuleCard({
               <ShieldOutlined sx={{ fontSize: 16 }} />
             </span>
             <div className="min-w-0 flex-1 space-y-1.5">
-              <p className="text-body-sm font-medium leading-5 text-text-primary">
+              <p className="text-body-sm-strong leading-5 text-text-primary">
                 Risk accepted
                 {expiryLabel ? ` · ${expiryLabel}` : ''}
                 {acceptance.approverName ? ` · ${acceptance.approverName}` : ''}
@@ -1396,7 +1396,7 @@ function MainPolicyCard({
   return (
     <Card title="Violated policy" icon={<Policy />} padding="none">
       <div className="min-w-0 py-3">
-        <div className="truncate text-body font-medium text-text-primary">{policyName}</div>
+        <div className="truncate text-body-strong text-text-primary">{policyName}</div>
         {description && (
           /* Two lines, then clamp — enough for a full policy sentence in a 320px
              rail without letting a long one push the card open. `title` keeps the
@@ -1578,7 +1578,7 @@ function MainViolationPage({
         <div className="min-w-0">
           {/* Active: pending + risk accepted. History: risk accepted only. Removals → audit. */}
           <section>
-            <h2 className="mb-3 text-h5 font-semibold text-text-primary">
+            <h2 className="mb-3 text-h5 text-text-primary">
               Violated Access Combinations Within the Policy{' '}
               <span className="font-normal tabular-nums text-text-tertiary">
                 ({rules.length})
@@ -1624,7 +1624,7 @@ function MainViolationPage({
                   <span className="grid h-10 w-10 place-items-center rounded-full bg-[var(--ds-color-status-success-subtle)] text-[var(--ds-color-status-success-fg)]">
                     <CheckCircleOutlined sx={{ fontSize: 22 }} />
                   </span>
-                  <p className="text-body-sm font-semibold text-text-primary">
+                  <p className="text-body-sm-strong text-text-primary">
                     All Access Combination Violations Resolved
                   </p>
                   <p className="max-w-md text-caption leading-5 text-text-secondary">
@@ -1634,7 +1634,7 @@ function MainViolationPage({
                   <button
                     type="button"
                     onClick={() => onTab('history')}
-                    className="mt-1 text-caption font-medium text-text-link hover:underline"
+                    className="mt-1 text-caption-strong text-text-link hover:underline"
                   >
                     View review timeline
                   </button>
@@ -1692,7 +1692,7 @@ function MainUserCard({
         <button
           type="button"
           onClick={onViewDetails}
-          className="text-caption font-medium text-text-link hover:underline"
+          className="text-caption-strong text-text-link hover:underline"
         >
           User details
         </button>
@@ -1702,7 +1702,7 @@ function MainUserCard({
       <div className="flex items-center gap-3 py-3">
         <Avatar name={review.userName} size="md" shape="circle" />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-body font-medium text-text-primary">{review.userName}</div>
+          <div className="truncate text-body-strong text-text-primary">{review.userName}</div>
           <div className="truncate text-caption text-text-secondary">{review.userEmail}</div>
         </div>
       </div>
@@ -1773,7 +1773,7 @@ function RemoveAccessColumns({
     <div className="flex min-h-0 flex-1">
       <section className="flex min-h-0 min-w-0 w-[60%] flex-col bg-subtle/40">
         <div className="mb-0 shrink-0 px-5 pb-4 pt-5">
-          <h2 className="text-h5 font-semibold text-text-primary">
+          <h2 className="text-h5 text-text-primary">
             Select Access to revoke{' '}
             <span className="font-normal tabular-nums text-text-tertiary">
               ({removalSelection.size}/{accessList.length} selected)
@@ -1791,7 +1791,7 @@ function RemoveAccessColumns({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="text-body font-semibold text-text-primary">Smart Suggestion</div>
+                      <div className="text-body-strong text-text-primary">Smart Suggestion</div>
                       <p className="mt-0.5 text-caption leading-5 text-text-secondary">
                         {/* Verb agrees with the count: "1 revocation resolves" / "2 revocations resolve". */}
                         {fastest.length} revocation{fastest.length === 1 ? '' : 's'}{' '}
@@ -1802,7 +1802,7 @@ function RemoveAccessColumns({
                       <button
                         type="button"
                         onClick={handleUndoApplyAll}
-                        className="shrink-0 rounded-md px-2 py-1 text-body-sm font-semibold text-[var(--ds-color-status-info-fg)] transition-colors hover:bg-surface"
+                        className="shrink-0 rounded-md px-2 py-1 text-body-sm-strong text-[var(--ds-color-status-info-fg)] transition-colors hover:bg-surface"
                       >
                         Undo
                       </button>
@@ -1811,7 +1811,7 @@ function RemoveAccessColumns({
                         type="button"
                         onClick={handleApplyAll}
                         disabled={suggestionFullyApplied}
-                        className="shrink-0 rounded-md px-2 py-1 text-body-sm font-semibold text-[var(--ds-color-status-info-fg)] transition-colors hover:bg-surface disabled:cursor-default disabled:opacity-50"
+                        className="shrink-0 rounded-md px-2 py-1 text-body-sm-strong text-[var(--ds-color-status-info-fg)] transition-colors hover:bg-surface disabled:cursor-default disabled:opacity-50"
                       >
                         Apply all
                       </button>
@@ -1840,7 +1840,7 @@ function RemoveAccessColumns({
                             variant="subtle"
                             appearance="logo"
                           />
-                          <span className="font-medium">{access?.name ?? f.accessId}</span>
+                          <span className="font-emphasis">{access?.name ?? f.accessId}</span>
                           <span
                             className={[
                               'tabular-nums',
@@ -1873,7 +1873,7 @@ function RemoveAccessColumns({
                 label: (
                   <>
                     <span className="text-text-tertiary">{a.appName}</span>{' '}
-                    <span className="font-medium text-text-primary">{a.name}</span>{' '}
+                    <span className="font-emphasis text-text-primary">{a.name}</span>{' '}
                     {/* Beside the entitlement, so it reads as belonging to the name
                         rather than to the row. */}
                     <AccessDetailsTip access={a} insideControl />
@@ -1897,7 +1897,7 @@ function RemoveAccessColumns({
               aria-hidden
               className="pointer-events-none absolute inset-x-0 bottom-full h-14 bg-gradient-to-b from-transparent to-subtle/40"
             />
-            <div className="mb-1.5 text-body-sm font-medium text-text-primary">
+            <div className="mb-1.5 text-body-sm-strong text-text-primary">
               Justification{' '}
               <span className="font-normal text-text-tertiary">(min. 10 words)</span>
             </div>
@@ -1972,7 +1972,7 @@ function AcceptRiskColumns({
     <div className="flex min-h-0 flex-1">
       <section className="flex min-h-0 min-w-0 w-[60%] flex-col bg-subtle/40">
         <div className="shrink-0 px-5 pb-4 pt-5">
-          <h2 className="text-h5 font-semibold text-text-primary">
+          <h2 className="text-h5 text-text-primary">
             Justify risk acceptance for pending access combinations{' '}
             <span className="font-normal tabular-nums text-text-tertiary">({pendingRules.length})</span>
           </h2>
@@ -1984,7 +1984,7 @@ function AcceptRiskColumns({
               <span className="grid h-11 w-11 place-items-center rounded-full bg-[var(--ds-color-status-success-subtle)] text-[var(--ds-color-status-success-fg)]">
                 <CheckCircleOutlined sx={{ fontSize: 24 }} />
               </span>
-              <div className="text-body font-semibold text-text-primary">No further action needed here</div>
+              <div className="text-body-strong text-text-primary">No further action needed here</div>
               <p className="text-body-sm text-text-secondary">
                 Every violated access combination will resolve by removing access. Continue to preview and submit.
               </p>
@@ -2064,7 +2064,7 @@ function AcceptRiskRuleCard({
     <div className="rounded-lg border border-border bg-surface">
       <div className="px-3.5 pt-3.5 pb-3">
         <div className="mb-2 flex items-center gap-2 text-caption">
-          <span className="font-semibold text-text-primary">{rule.code}</span>
+          <span className="font-emphasis text-text-primary">{rule.code}</span>
           <span className="ml-auto shrink-0">
             <RuleStatusPill status="will-accept" />
           </span>
@@ -2076,7 +2076,7 @@ function AcceptRiskRuleCard({
             const staged = stagedAccessIds.has(aid);
             return (
               <React.Fragment key={`${aid}-${idx}`}>
-                {idx > 0 && <span className="text-caption font-semibold text-text-tertiary">AND</span>}
+                {idx > 0 && <span className="text-caption-strong text-text-tertiary">AND</span>}
                 <AccessChip access={a} danger={staged} />
               </React.Fragment>
             );
@@ -2088,7 +2088,7 @@ function AcceptRiskRuleCard({
         {/* Date + time are one decision, so they share a single label. The time is
             fixed-width — it never needs to grow — and the date takes the slack. */}
         <div>
-          <div className="mb-1.5 text-body-sm font-medium text-text-primary">Valid until</div>
+          <div className="mb-1.5 text-body-sm-strong text-text-primary">Valid until</div>
           <div className="flex items-start gap-2">
             {/* The shared heading above is not a `<label for>`, so each control
                 carries its own accessible name. */}
@@ -2111,7 +2111,7 @@ function AcceptRiskRuleCard({
           </div>
         </div>
         <div>
-          <div className="mb-1.5 text-body-sm font-medium text-text-primary">
+          <div className="mb-1.5 text-body-sm-strong text-text-primary">
             Justification{' '}
             <span className="font-normal text-text-tertiary">(min. 10 words)</span>
           </div>
@@ -2183,7 +2183,7 @@ function PreviewSubmitColumns({
     return (
       <div key={rule.id} className="rounded-lg border border-border bg-surface p-3">
         <div className="mb-2 flex items-center gap-2 text-caption">
-          <span className="font-semibold text-text-primary">{rule.code}</span>
+          <span className="font-emphasis text-text-primary">{rule.code}</span>
           <span className="ml-auto shrink-0">
             <RuleStatusPill status={accepted ? 'will-accept' : 'will-resolve'} />
           </span>
@@ -2197,7 +2197,7 @@ function PreviewSubmitColumns({
             return (
               <React.Fragment key={aid}>
                 {idx > 0 && (
-                  <span className="text-caption font-semibold text-text-tertiary">AND</span>
+                  <span className="text-caption-strong text-text-tertiary">AND</span>
                 )}
                 <AccessChip access={a} danger={revoking} />
               </React.Fragment>
@@ -2223,7 +2223,7 @@ function PreviewSubmitColumns({
                 )}
               </span>
               <div className="min-w-0 flex-1 space-y-1.5">
-                <p className="text-body-sm font-medium leading-5 text-text-primary">{actionLabel}</p>
+                <p className="text-body-sm-strong leading-5 text-text-primary">{actionLabel}</p>
                 {detail.justification.trim() && (
                   <p className="border-t border-border-subtle pt-1.5 text-caption leading-5 text-text-secondary">
                     {detail.justification}
@@ -2249,7 +2249,7 @@ function PreviewSubmitColumns({
             beside the thing it edits. `shrink-0` keeps it above the scroll area, so it
             stays reachable no matter how long the plan runs. */}
         <div className="flex shrink-0 items-center justify-between gap-3 px-5 pb-4 pt-5">
-          <h2 className="text-h5 font-semibold text-text-primary">Preview</h2>
+          <h2 className="text-h5 text-text-primary">Preview</h2>
           <Button variant="secondary" startIcon={<EditOutlined />} onClick={onEdit}>
             Edit
           </Button>
@@ -2259,7 +2259,7 @@ function PreviewSubmitColumns({
           {!allResolved && (
             <div
               role="status"
-              className="mb-5 rounded-xl border border-[var(--ds-color-status-warning-border)] bg-[var(--ds-color-status-warning-subtle)] px-4 py-3 text-body-sm font-medium text-[var(--ds-color-status-warning-fg)]"
+              className="mb-5 rounded-xl border border-[var(--ds-color-status-warning-border)] bg-[var(--ds-color-status-warning-subtle)] px-4 py-3 text-body-sm-strong text-[var(--ds-color-status-warning-fg)]"
             >
               {pendingRules.length} access combination{pendingRules.length === 1 ? '' : 's'} still
               pending. Go back to resolve {pendingRules.length === 1 ? 'it' : 'them'} before
@@ -2268,13 +2268,13 @@ function PreviewSubmitColumns({
           )}
 
           <div className="mb-6">
-            <h3 className="mb-3 text-overline font-semibold uppercase text-text-tertiary">
+            <h3 className="mb-3 text-overline uppercase text-text-tertiary">
               User access that will be revoked{' '}
               <span className="tabular-nums">({accessToRemove.length})</span>
             </h3>
             {accessToRemove.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-8 text-center">
-                <p className="text-body-sm font-medium text-text-primary">No access will be removed</p>
+                <p className="text-body-sm-strong text-text-primary">No access will be removed</p>
                 <p className="mt-1 text-caption text-text-secondary">
                   Remaining combinations are resolved by accepting risk.
                 </p>
@@ -2297,7 +2297,7 @@ function PreviewSubmitColumns({
                       <div className="flex min-w-0 flex-1 items-center gap-1.5 text-body-sm">
                         <span className="min-w-0 truncate">
                           <span className="text-text-tertiary">{a.appName}</span>{' '}
-                          <span className="font-medium text-text-primary">{a.name}</span>
+                          <span className="font-emphasis text-text-primary">{a.name}</span>
                         </span>
                         <AccessDetailsTip access={a} />
                         {/* Danger intent, matching how this access is marked everywhere
@@ -2322,7 +2322,7 @@ function PreviewSubmitColumns({
           <div>
             {removedRules.length > 0 && (
               <div className="mb-5">
-                <h4 className="mb-3 text-overline font-semibold uppercase text-text-tertiary">
+                <h4 className="mb-3 text-overline uppercase text-text-tertiary">
                   Will resolve by revoking access{' '}
                   <span className="tabular-nums">({removedRules.length})</span>
                 </h4>
@@ -2332,7 +2332,7 @@ function PreviewSubmitColumns({
 
             {acceptedRules.length > 0 && (
               <div className="mb-5">
-                <h4 className="mb-3 text-overline font-semibold uppercase text-text-tertiary">
+                <h4 className="mb-3 text-overline uppercase text-text-tertiary">
                   Will resolve by accepting risk{' '}
                   <span className="tabular-nums">({acceptedRules.length})</span>
                 </h4>
@@ -2354,7 +2354,7 @@ function PreviewSubmitColumns({
         <div className="ds-scroll min-h-0 flex-1 overflow-y-auto px-5 py-5">
           <div className="space-y-6">
             <div>
-              <h2 className="text-h5 font-semibold text-text-primary">
+              <h2 className="text-h5 text-text-primary">
                 Resolution overview{' '}
                 <span className="font-normal tabular-nums text-text-tertiary">
                   ({resolvedCount}/{rules.length})
@@ -2371,7 +2371,7 @@ function PreviewSubmitColumns({
               <dl className="rounded-lg border border-border-subtle bg-surface px-3">
                 <div className="flex items-baseline justify-between gap-3 py-3">
                   <dt className="min-w-0 text-body-sm text-text-secondary">Access to revoke</dt>
-                  <dd className="text-body font-semibold tabular-nums text-text-primary">
+                  <dd className="text-body-strong tabular-nums text-text-primary">
                     {accessToRemove.length}
                   </dd>
                 </div>
@@ -2383,7 +2383,7 @@ function PreviewSubmitColumns({
                 className="rounded-lg border border-border-subtle bg-surface px-3 py-3"
                 aria-label="Resolution mix"
               >
-                <h3 className="text-body-sm font-semibold text-text-primary">
+                <h3 className="text-body-sm-strong text-text-primary">
                   Resolution methods
                 </h3>
                 <div
@@ -2421,7 +2421,7 @@ function PreviewSubmitColumns({
                         />
                         Will resolve by revoking access
                       </dt>
-                      <dd className="text-body font-semibold tabular-nums text-text-primary">
+                      <dd className="text-body-strong tabular-nums text-text-primary">
                         {resolvedByRevoke}
                       </dd>
                     </div>
@@ -2435,7 +2435,7 @@ function PreviewSubmitColumns({
                         />
                         Will accept as risk
                       </dt>
-                      <dd className="text-body font-semibold tabular-nums text-text-primary">
+                      <dd className="text-body-strong tabular-nums text-text-primary">
                         {resolvedByAccept}
                       </dd>
                     </div>
@@ -2448,7 +2448,7 @@ function PreviewSubmitColumns({
               <dl>
                 <div className="flex items-baseline justify-between gap-3 border-b border-border-subtle py-3">
                   <dt className="min-w-0 text-body-sm text-text-secondary">Still pending</dt>
-                  <dd className="text-body font-semibold tabular-nums text-text-primary">
+                  <dd className="text-body-strong tabular-nums text-text-primary">
                     {pendingRules.length}
                   </dd>
                 </div>

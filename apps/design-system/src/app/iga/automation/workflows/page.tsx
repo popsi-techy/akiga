@@ -89,7 +89,7 @@ export default function WorkflowsListPage() {
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-subtle text-icon-brand">
             <AccountTreeOutlined sx={{ fontSize: 18 }} />
           </span>
-          <span className="font-medium text-text-primary">{r.name}</span>
+          <span className="text-body-sm-strong text-text-primary">{r.name}</span>
         </div>
       ),
     },
@@ -128,7 +128,7 @@ export default function WorkflowsListPage() {
   return (
     <div className="flex h-full flex-col">
       <div className="mb-5 shrink-0">
-        <h1 className="text-h2 font-bold text-text-primary">Workflows</h1>
+        <h1 className="text-h2 text-text-primary">Workflows</h1>
         <p className="mt-1 text-body text-text-secondary">
           Event-driven lifecycle automation — compose filters, entity assignment, notifications, and
           branching to automate identity onboarding.

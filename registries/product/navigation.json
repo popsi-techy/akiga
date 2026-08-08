@@ -32,7 +32,6 @@
       { "id": "certifications", "label": "Access Certification", "route": "/iga/certifications", "icon": "campaign", "personas": ["administrator", "auditor"] }
     ]},
     { "group": "administration", "label": "Administration", "items": [
-      { "id": "risk", "label": "SoD Violations", "route": "/iga/risk", "icon": "warning", "personas": ["administrator", "auditor"] },
       { "id": "license-governance", "label": "License Governance", "route": "/iga/license-governance", "icon": "card_membership", "personas": ["administrator", "auditor"] },
       { "id": "emergency", "label": "Emergency Access", "route": "/iga/emergency", "icon": "key", "personas": ["administrator"] },
       { "id": "provisioning-tasks", "label": "Provisioning Tasks", "route": "/iga/provisioning-tasks", "icon": "playlist_add_check", "personas": ["administrator"] }
@@ -62,10 +61,7 @@
       "items": [
         { "id": "reviewer-dashboard", "label": "Dashboard", "route": "/iga/reviewer/dashboard", "icon": "dashboard" },
         { "id": "review-requests", "label": "Review Requests", "route": "/iga/reviewer/review-requests", "icon": "task", "requiresAction": true },
-        { "id": "sod-resolution", "label": "SoD Resolution", "route": "/iga/reviewer/sod-resolution", "icon": "balance" },
-        { "id": "sod-resolution-v2", "label": "SoD Resolution V2", "route": "/iga/reviewer/sod-resolution-v2", "icon": "rule" },
-        { "id": "sod-resolution-v3", "label": "SoD Policy Violation V3", "route": "/iga/reviewer/sod-resolution-v3", "icon": "policy" },
-        { "id": "sod-resolution-v4", "label": "SoD Resolution V4", "route": "/iga/reviewer/sod-resolution-v4", "icon": "fact_check" }
+        { "id": "sod-resolution-v3", "label": "SoD Policy Violation V3", "route": "/iga/reviewer/sod-resolution-v3", "icon": "policy" }
       ]
     },
     "endUser": {

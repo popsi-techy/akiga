@@ -75,7 +75,7 @@ function ConfigRow({
         .join(' ')}
     >
       <div className="flex min-w-0 items-center gap-1.5">
-        <span className="text-body-sm font-medium text-text-primary">
+        <span className="text-body-sm-strong text-text-primary">
           {label}
           {required ? <span className="text-danger">*</span> : null}
         </span>
@@ -198,14 +198,14 @@ export function AdvancedConfigurationTab({ eaId }: { eaId: string }) {
   return (
     <div className="ds-scroll h-full overflow-y-auto pr-0.5">
       <div className="mb-5 flex items-center justify-between gap-4">
-        <h2 className="text-h5 font-semibold text-text-primary">Advanced Configuration</h2>
+        <h2 className="text-h5 text-text-primary">Advanced Configuration</h2>
         <Button onClick={save} disabled={!dirty}>
           Save
         </Button>
       </div>
 
       <section className="mb-8">
-        <h3 className="mb-3 text-body font-semibold text-text-primary">General</h3>
+        <h3 className="mb-3 text-body-strong text-text-primary">General</h3>
         <div className="grid gap-3 md:grid-cols-2">
           <ConfigRow
             label="Risk Score"
@@ -277,12 +277,12 @@ export function AdvancedConfigurationTab({ eaId }: { eaId: string }) {
       </section>
 
       <section>
-        <h3 className="mb-3 text-body font-semibold text-text-primary">Time</h3>
+        <h3 className="mb-3 text-body-strong text-text-primary">Time</h3>
         <div className="rounded-lg bg-subtle p-4">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-1.5">
-                <h4 className="text-body-sm font-semibold text-text-primary">Access schedule</h4>
+                <h4 className="text-body-sm-strong text-text-primary">Access schedule</h4>
                 <Tooltip
                   title="Timezone, days, and daily window when this emergency access may be requested."
                   placement="top"
@@ -318,7 +318,7 @@ export function AdvancedConfigurationTab({ eaId }: { eaId: string }) {
             />
 
             <div>
-              <p className="mb-1.5 text-body-sm font-medium text-text-primary">
+              <p className="mb-1.5 text-body-sm-strong text-text-primary">
                 Daily access window
               </p>
               <div className="flex items-center gap-2">

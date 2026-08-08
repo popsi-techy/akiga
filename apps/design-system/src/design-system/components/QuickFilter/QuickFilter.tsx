@@ -48,7 +48,7 @@ export function QuickFilter<T extends string = string>({
             aria-pressed={active}
             onClick={() => onChange(active ? null : opt.value)}
             className={[
-              'inline-flex items-center gap-1.5 rounded-pill border font-medium transition-colors',
+              'inline-flex items-center gap-1.5 rounded-pill border font-emphasis transition-colors',
               dims,
               active
                 ? 'border-brand bg-surface text-text-primary'

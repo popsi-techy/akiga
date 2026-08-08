@@ -26,7 +26,7 @@ export default function FoundationsOverview() {
           <Link key={href} href={href} className="group">
             <Card className="h-full p-5 transition-shadow group-hover:shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-h5 font-semibold text-text-primary">{label}</span>
+                <span className="text-h5 text-text-primary">{label}</span>
                 <span className="text-text-brand transition-transform group-hover:translate-x-0.5">→</span>
               </div>
               <p className="mt-1.5 text-body-sm leading-5 text-text-secondary">{desc}</p>

@@ -83,7 +83,7 @@ export function Avatar({
     <span
       className={[
         // `text-brand` is brand.primary #EB5424 — see the accessibility note above.
-        'inline-flex shrink-0 items-center justify-center bg-brand-subtle font-semibold text-brand',
+        'inline-flex shrink-0 items-center justify-center bg-brand-subtle font-emphasis text-brand',
         shapeClass,
         className,
       ]
@@ -120,7 +120,7 @@ export function AvatarGroup({ names, max = 4, size = 'sm' }: AvatarGroupProps) {
       ))}
       {overflow > 0 && (
         <span
-          className="inline-flex items-center justify-center rounded-avatar bg-subtle font-semibold text-text-secondary ring-2 ring-surface"
+          className="inline-flex items-center justify-center rounded-avatar bg-subtle font-emphasis text-text-secondary ring-2 ring-surface"
           style={{ width: box, height: box, fontSize: font, marginLeft: -8 }}
         >
           +{overflow}

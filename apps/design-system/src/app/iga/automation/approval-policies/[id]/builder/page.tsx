@@ -299,7 +299,7 @@ export default function ApprovalPolicyBuilderPage() {
             />
             <span className="relative z-[1] flex w-[130px] flex-col items-center gap-1 px-1 text-center">
               <span className="grid h-9 w-9 place-items-center rounded-full" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 18 }} /></span>
-              <span className="text-body-sm font-medium leading-tight text-text-primary">{displayTitle}</span>
+              <span className="text-body-sm-strong leading-tight text-text-primary">{displayTitle}</span>
               <span className="text-caption leading-tight text-text-secondary">{paths} condition{paths !== 1 ? 's' : ''}</span>
               {complete ? (
                 <CheckCircleOutlined sx={{ fontSize: 16, color: 'var(--ds-color-status-success-fg)' }} titleAccess="Complete" />
@@ -331,7 +331,7 @@ export default function ApprovalPolicyBuilderPage() {
             className={['inline-flex items-center gap-2.5 rounded-pill border bg-surface px-4 py-2 text-left transition-all duration-150', selected ? 'shadow-sm' : 'border-border hover:border-border-strong hover:shadow-sm'].join(' ')}
           >
             <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 16 }} /></span>
-            <span className="text-body font-medium text-text-primary">{displayTitle}</span>
+            <span className="text-body-strong text-text-primary">{displayTitle}</span>
           </button>
           <button
             type="button"
@@ -370,7 +370,7 @@ export default function ApprovalPolicyBuilderPage() {
             <Icon sx={{ fontSize: 18 }} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-body font-medium leading-tight text-text-primary">{displayTitle}</span>
+            <span className="block truncate text-body-strong leading-tight text-text-primary">{displayTitle}</span>
             {(!dense || node.type === 'parallelBranch' || node.type === 'notification' || node.type === 'approvalLevel') && (
               <span className="mt-1 block truncate text-caption leading-tight text-text-secondary">{summary}</span>
             )}
@@ -412,7 +412,7 @@ export default function ApprovalPolicyBuilderPage() {
                 <PersonOutline sx={{ fontSize: 16 }} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-body-sm font-medium leading-tight text-text-primary">Fallback Approver</span>
+                <span className="block truncate text-body-sm-strong leading-tight text-text-primary">Fallback Approver</span>
                 <span className="mt-0.5 block truncate text-caption leading-tight text-text-secondary">{fallbackEmail}</span>
               </span>
             </button>
@@ -449,7 +449,7 @@ export default function ApprovalPolicyBuilderPage() {
             <PersonOutline sx={{ fontSize: 16 }} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-body-sm font-medium leading-tight text-text-primary">Fallback Approver</span>
+            <span className="block truncate text-body-sm-strong leading-tight text-text-primary">Fallback Approver</span>
             <span className="mt-0.5 block truncate text-caption leading-tight text-text-secondary">{email}</span>
           </span>
         </button>
@@ -477,7 +477,7 @@ export default function ApprovalPolicyBuilderPage() {
           <PersonAddAltOutlined sx={{ fontSize: 18 }} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-body font-medium text-text-primary">{doc.policyName}</span>
+          <span className="block truncate text-body-strong text-text-primary">{doc.policyName}</span>
           <span className="mt-0.5 block truncate text-caption text-text-secondary">
             {doc.description || 'Add description'}
           </span>
@@ -497,7 +497,7 @@ export default function ApprovalPolicyBuilderPage() {
     return (
       <div className="-mx-8 -my-6 grid h-[calc(100%+3rem)] place-items-center bg-canvas">
         <div className="text-center">
-          <div className="text-h5 font-semibold text-text-primary">Policy not found</div>
+          <div className="text-h5 text-text-primary">Policy not found</div>
           <p className="mt-1 text-body-sm text-text-secondary">This policy may have been deleted.</p>
           <div className="mt-4">
             <Button variant="secondary" onClick={() => router.push('/iga/automation/approval-policies')}>
@@ -518,7 +518,7 @@ export default function ApprovalPolicyBuilderPage() {
             <ArrowBackOutlined sx={{ fontSize: 20 }} />
           </button>
           <Avatar name={doc?.policyName ?? 'Policy'} initials={(doc?.policyName ?? 'P').charAt(0).toUpperCase()} size="sm" />
-          <span className="text-h5 font-semibold text-text-primary">{doc?.policyName ?? '…'}</span>
+          <span className="text-h5 text-text-primary">{doc?.policyName ?? '…'}</span>
           {doc && (
             <StatusChip intent={doc.status === 'active' ? 'success' : 'neutral'} label={doc.status === 'active' ? 'Active' : 'Draft'} />
           )}
@@ -549,7 +549,7 @@ export default function ApprovalPolicyBuilderPage() {
         {paletteOpen ? (
           <div className="flex w-[248px] shrink-0 flex-col border-r border-border bg-surface">
             <div className="flex shrink-0 items-center justify-between px-4 py-3">
-              <span className="text-caption font-semibold uppercase tracking-wider text-text-tertiary">Components</span>
+              <span className="text-caption-strong uppercase tracking-wider text-text-tertiary">Components</span>
               <button type="button" onClick={() => setPaletteOpen(false)} aria-label="Collapse components" className="grid h-6 w-6 place-items-center rounded text-icon hover:bg-surface-hover">
                 <KeyboardDoubleArrowLeft sx={{ fontSize: 18 }} />
               </button>
@@ -557,7 +557,7 @@ export default function ApprovalPolicyBuilderPage() {
             <div className="ds-scroll flex-1 overflow-y-auto px-3 pb-4">
               {(['Tasks', 'Branching', 'Flow Control'] as const).map((section) => (
                 <div key={section} className="mb-3">
-                  <div className="mb-1.5 px-1 text-caption font-semibold uppercase tracking-wide text-text-tertiary">{section}</div>
+                  <div className="mb-1.5 px-1 text-caption-strong uppercase tracking-wide text-text-tertiary">{section}</div>
                   <div className="space-y-2">
                     {PALETTE_ORDER.filter((k) => NODE_META[k].section === section).map((kind) => {
                       const Icon = ICONS[NODE_META[kind].icon] ?? PersonOutline;
@@ -568,7 +568,7 @@ export default function ApprovalPolicyBuilderPage() {
                           draggable
                           onDragStart={(e) => { e.dataTransfer.setData('text/kind', kind); setDraggingKind(kind); }}
                           onDragEnd={() => setDraggingKind(null)}
-                          className="group flex cursor-grab items-center gap-2.5 rounded-lg border border-border bg-canvas px-2.5 py-2 text-body-sm font-medium text-text-primary transition-all hover:border-border-strong hover:shadow-sm active:cursor-grabbing"
+                          className="group flex cursor-grab items-center gap-2.5 rounded-lg border border-border bg-canvas px-2.5 py-2 text-body-sm-strong text-text-primary transition-all hover:border-border-strong hover:shadow-sm active:cursor-grabbing"
                         >
                           <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md" style={{ backgroundColor: tile.bg, color: tile.fg }}>
                             <Icon sx={{ fontSize: 17 }} />
@@ -728,7 +728,7 @@ export default function ApprovalPolicyBuilderPage() {
             <span className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-subtle text-icon">
               <HistoryOutlined sx={{ fontSize: 24 }} />
             </span>
-            <div className="text-body font-medium text-text-primary">No versions yet</div>
+            <div className="text-body-strong text-text-primary">No versions yet</div>
             <p className="mx-auto mt-1 max-w-[240px] text-caption text-text-secondary">
               Durable version history is planned. For now, activating a policy publishes the current draft.
             </p>
@@ -774,10 +774,10 @@ function ConfigPanel({
             onChange={(e) => onPatchNode(node.id, { name: e.target.value })}
             aria-label="Step name"
             title="Rename this step"
-            className="-ml-1 min-w-0 max-w-full truncate rounded border border-transparent bg-transparent px-1 py-0.5 text-body-sm font-medium text-text-primary placeholder:text-text-primary transition-colors [field-sizing:content] hover:border-border focus:border-brand focus:outline-none"
+            className="-ml-1 min-w-0 max-w-full truncate rounded border border-transparent bg-transparent px-1 py-0.5 text-body-sm-strong text-text-primary placeholder:text-text-primary transition-colors [field-sizing:content] hover:border-border focus:border-brand focus:outline-none"
           />
         ) : (
-          <span className="min-w-0 truncate text-body-sm font-medium text-text-primary">{title}</span>
+          <span className="min-w-0 truncate text-body-sm-strong text-text-primary">{title}</span>
         )}
         <div className="ml-auto flex shrink-0 items-center gap-2">
           {node &&

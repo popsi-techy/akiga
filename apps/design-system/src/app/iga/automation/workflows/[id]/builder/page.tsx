@@ -276,7 +276,7 @@ export default function WorkflowBuilderPage() {
             <span style={selected ? { borderColor: tile.fg } : undefined} className={['absolute left-1/2 top-1/2 h-[132px] w-[132px] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-2xl border bg-surface transition-all duration-150', selected ? 'shadow-sm' : 'border-border group-hover:border-border-strong'].join(' ')} />
             <span className="relative z-[1] flex w-[130px] flex-col items-center gap-1 px-1 text-center">
               <span className="grid h-9 w-9 place-items-center rounded-full" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 18 }} /></span>
-              <span className="text-body-sm font-medium leading-tight text-text-primary">{displayTitle}</span>
+              <span className="text-body-sm-strong leading-tight text-text-primary">{displayTitle}</span>
               <span className="text-caption leading-tight text-text-secondary">{paths} condition{paths !== 1 ? 's' : ''}</span>
               {complete ? (
                 <CheckCircleOutlined sx={{ fontSize: 16, color: 'var(--ds-color-status-success-fg)' }} titleAccess="Complete" />
@@ -309,18 +309,18 @@ export default function WorkflowBuilderPage() {
             {/* card 1 — criteria + entities */}
             <div className="overflow-hidden rounded-lg border border-border bg-surface">
               <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-                <span className="shrink-0 text-micro font-bold uppercase tracking-wide text-text-tertiary">Criteria</span>
+                <span className="shrink-0 text-micro uppercase tracking-wide text-text-tertiary">Criteria</span>
                 <span className="inline-flex min-w-0 items-center gap-1 rounded-pill bg-subtle px-2 py-0.5 text-caption text-text-secondary">
                   <TuneOutlined sx={{ fontSize: 13 }} className="shrink-0" />
                   {critValid ? <ConditionPreviewLabel {...ruleParts(critRules[0])} /> : <span className="truncate">No additional criteria</span>}
                 </span>
-                {critValid && critRules.length > 1 && <span className="shrink-0 rounded-pill bg-subtle px-1.5 py-0.5 text-caption font-semibold text-text-secondary">+{critRules.length - 1}</span>}
+                {critValid && critRules.length > 1 && <span className="shrink-0 rounded-pill bg-subtle px-1.5 py-0.5 text-caption-strong text-text-secondary">+{critRules.length - 1}</span>}
               </div>
               <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedId(node.id); setConfigOpen(true); }} className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-surface-hover">
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 18 }} /></span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
-                    <span className="text-body font-medium leading-tight text-text-primary">{displayTitle}</span>
+                    <span className="text-body-strong leading-tight text-text-primary">{displayTitle}</span>
                     {complete ? <CheckCircleOutlined sx={{ fontSize: 15, color: 'var(--ds-color-status-success-fg)' }} /> : <WarningAmberOutlined sx={{ fontSize: 15, color: 'var(--ds-color-status-warning-fg)' }} />}
                   </span>
                   <span className="mt-0.5 block truncate text-caption text-text-secondary">{entSummary}</span>
@@ -338,17 +338,17 @@ export default function WorkflowBuilderPage() {
                 const chip = (item: { id: string; name: string; appName?: string }) =>
                   item.appName ? (
                     <span key={item.id} className="inline-flex max-w-[170px] items-center gap-1 rounded-md border border-border bg-subtle py-1 pl-1 pr-2 text-caption">
-                      <span className="grid h-4 w-4 shrink-0 place-items-center rounded bg-surface text-micro font-semibold text-text-secondary">{item.appName.charAt(0).toUpperCase()}</span>
+                      <span className="grid h-4 w-4 shrink-0 place-items-center rounded bg-surface text-micro text-text-secondary">{item.appName.charAt(0).toUpperCase()}</span>
                       <span className="truncate">
-                        <span className="text-text-tertiary">{item.appName}</span> <span className="font-medium text-text-primary">{item.name}</span>
+                        <span className="text-text-tertiary">{item.appName}</span> <span className="font-emphasis text-text-primary">{item.name}</span>
                       </span>
                     </span>
                   ) : (
-                    <span key={item.id} className="inline-flex max-w-[140px] items-center rounded-md border border-border bg-subtle px-2 py-1 text-caption font-medium text-text-primary">
+                    <span key={item.id} className="inline-flex max-w-[140px] items-center rounded-md border border-border bg-subtle px-2 py-1 text-caption-strong text-text-primary">
                       <span className="truncate">{item.name}</span>
                     </span>
                   );
-                const more = (n: number) => <span className="inline-flex shrink-0 items-center rounded-md border border-border bg-subtle px-1.5 py-1 text-caption font-semibold text-text-secondary">+{n}</span>;
+                const more = (n: number) => <span className="inline-flex shrink-0 items-center rounded-md border border-border bg-subtle px-1.5 py-1 text-caption-strong text-text-secondary">+{n}</span>;
                 const open = (e: React.MouseEvent | React.KeyboardEvent) => { e.stopPropagation(); setSelectedId(node.id); setConfigOpen(true); };
                 return (
                   <div role="button" tabIndex={0} onClick={open} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(e); } }} className="cursor-pointer focus-visible:outline-none">
@@ -367,7 +367,7 @@ export default function WorkflowBuilderPage() {
                         <div className="rounded-lg border border-border">
                           {sections.map((s, i) => (
                             <div key={s.key} className={[i > 0 ? 'border-t border-border' : '', 'px-3 py-2.5'].join(' ')}>
-                              <div className="mb-1.5 text-micro font-semibold uppercase tracking-wide text-text-tertiary">{s.label}</div>
+                              <div className="mb-1.5 text-micro uppercase tracking-wide text-text-tertiary">{s.label}</div>
                               <div className="flex flex-wrap items-center gap-1.5">
                                 {s.items.slice(0, 3).map((it) => chip(it))}
                                 {s.items.length > 3 && more(s.items.length - 3)}
@@ -389,7 +389,7 @@ export default function WorkflowBuilderPage() {
                   <button type="button" onClick={(e) => { e.stopPropagation(); setPolicyNodeId(node.id); }} className="flex min-w-0 flex-1 items-center gap-2.5 text-left">
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand-subtle text-brand"><ShieldOutlined sx={{ fontSize: 17 }} /></span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-body font-medium text-text-primary">{c.approvalPolicyName}</span>
+                      <span className="block truncate text-body-strong text-text-primary">{c.approvalPolicyName}</span>
                       <span className="block text-caption text-text-secondary">Approval policy</span>
                     </span>
                   </button>
@@ -401,7 +401,7 @@ export default function WorkflowBuilderPage() {
                 <button type="button" onClick={(e) => { e.stopPropagation(); setPolicyNodeId(node.id); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-surface-hover">
                   <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-dashed border-border text-icon"><AddIcon sx={{ fontSize: 17 }} /></span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-body font-medium text-text-primary">Attach Approval Policy</span>
+                    <span className="block text-body-strong text-text-primary">Attach Approval Policy</span>
                     <span className="block text-caption text-text-secondary">Optional · click to select</span>
                   </span>
                 </button>
@@ -442,9 +442,9 @@ export default function WorkflowBuilderPage() {
             className={['inline-flex max-w-[360px] items-center gap-2.5 rounded-pill border bg-surface px-4 py-2 text-left transition-all duration-150', selected ? 'shadow-sm' : 'border-border hover:border-border-strong hover:shadow-sm'].join(' ')}
           >
             <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 16 }} /></span>
-            <span className="shrink-0 text-body font-medium text-text-primary">{displayTitle}</span>
+            <span className="shrink-0 text-body-strong text-text-primary">{displayTitle}</span>
             {sideLabel && (
-              <span className={['min-w-0 truncate text-body-sm font-medium', sideLabel === 'Not set' ? 'text-text-tertiary' : 'text-text-secondary'].join(' ')}>{sideLabel}</span>
+              <span className={['min-w-0 truncate text-body-sm-strong', sideLabel === 'Not set' ? 'text-text-tertiary' : 'text-text-secondary'].join(' ')}>{sideLabel}</span>
             )}
           </button>
           <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(node.id); }} aria-label={`Delete ${meta.title}`} className="absolute -right-2 -top-2 hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid">
@@ -473,7 +473,7 @@ export default function WorkflowBuilderPage() {
             <div className="flex w-full items-center gap-3 px-4 py-3">
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 18 }} /></span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-body font-medium leading-tight text-text-primary">{displayTitle}</span>
+                <span className="block truncate text-body-strong leading-tight text-text-primary">{displayTitle}</span>
                 <span className="mt-1 block truncate text-caption leading-tight text-text-secondary">{blockSummary(node)}</span>
               </span>
               {complete ? (
@@ -489,7 +489,7 @@ export default function WorkflowBuilderPage() {
                   {rules.map((r, i) => (
                     <React.Fragment key={r.id}>
                       {i > 0 && (
-                        <span className="inline-flex shrink-0 items-center rounded-md bg-[var(--ds-color-status-info-subtle)] px-2 py-1 text-caption font-semibold uppercase tracking-wide text-[var(--ds-color-status-info-fg)]">
+                        <span className="inline-flex shrink-0 items-center rounded-md bg-[var(--ds-color-status-info-subtle)] px-2 py-1 text-caption-strong uppercase tracking-wide text-[var(--ds-color-status-info-fg)]">
                           {cond.combinator}
                         </span>
                       )}
@@ -517,7 +517,7 @@ export default function WorkflowBuilderPage() {
         >
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 18 }} /></span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-body font-medium leading-tight text-text-primary">{displayTitle}</span>
+            <span className="block truncate text-body-strong leading-tight text-text-primary">{displayTitle}</span>
             {(!dense || node.type === 'multisplitBranch' || node.type === 'notification') && <span className="mt-1 block truncate text-caption leading-tight text-text-secondary">{blockSummary(node)}</span>}
           </span>
           {complete ? (
@@ -555,7 +555,7 @@ export default function WorkflowBuilderPage() {
             <EventIcon sx={{ fontSize: 18 }} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-body font-medium text-text-primary">
+            <span className="block truncate text-body-strong text-text-primary">
               {doc.event.label}
             </span>
             <span className="mt-0.5 block truncate text-caption text-text-secondary">
@@ -582,7 +582,7 @@ export default function WorkflowBuilderPage() {
     return (
       <div className="-mx-8 -my-6 grid h-[calc(100%+3rem)] place-items-center bg-canvas">
         <div className="text-center">
-          <div className="text-h5 font-semibold text-text-primary">Workflow not found</div>
+          <div className="text-h5 text-text-primary">Workflow not found</div>
           <div className="mt-4"><Button variant="secondary" onClick={() => router.push('/iga/automation/workflows')}>Back to Workflows</Button></div>
         </div>
       </div>
@@ -596,7 +596,7 @@ export default function WorkflowBuilderPage() {
         <div className="flex items-center gap-3">
           <button type="button" onClick={goBack} aria-label="Back to Workflows" className="grid h-8 w-8 place-items-center rounded-md text-icon hover:bg-surface-hover"><ArrowBackOutlined sx={{ fontSize: 20 }} /></button>
           <Avatar name={doc?.name ?? 'Workflow'} initials={(doc?.name ?? 'W').charAt(0).toUpperCase()} size="sm" />
-          <span className="text-h5 font-semibold text-text-primary">{doc?.name ?? '…'}</span>
+          <span className="text-h5 text-text-primary">{doc?.name ?? '…'}</span>
           {doc && <StatusChip intent={doc.status === 'active' ? 'success' : 'neutral'} label={doc.status === 'active' ? 'Active' : 'Draft'} />}
           {dirty && <span className="text-caption text-text-tertiary">Unsaved changes</span>}
         </div>
@@ -654,7 +654,7 @@ export default function WorkflowBuilderPage() {
                           onDragEnd={() => setDraggingKind(null)}
                           aria-disabled={disabled}
                           className={[
-                            'group flex items-center gap-2.5 rounded-lg border border-border bg-canvas px-2.5 py-2 text-body-sm font-medium text-text-primary transition-all',
+                            'group flex items-center gap-2.5 rounded-lg border border-border bg-canvas px-2.5 py-2 text-body-sm-strong text-text-primary transition-all',
                             disabled
                               ? 'cursor-not-allowed opacity-50'
                               : 'cursor-grab hover:border-border-strong hover:shadow-sm active:cursor-grabbing',
@@ -693,7 +693,7 @@ export default function WorkflowBuilderPage() {
                     if (kinds.length === 0) return null;
                     return (
                       <div key={section} className="mb-3">
-                        <div className="mb-1.5 px-1 text-caption font-semibold uppercase tracking-wide text-text-tertiary">
+                        <div className="mb-1.5 px-1 text-caption-strong uppercase tracking-wide text-text-tertiary">
                           {section}
                         </div>
                         <div className="space-y-2">
@@ -716,7 +716,7 @@ export default function WorkflowBuilderPage() {
                                 onDragEnd={() => setDraggingKind(null)}
                                 aria-disabled={!enabled}
                                 className={[
-                                  'group flex items-center gap-2.5 rounded-lg border border-border bg-canvas px-2.5 py-2 text-body-sm font-medium text-text-primary transition-all',
+                                  'group flex items-center gap-2.5 rounded-lg border border-border bg-canvas px-2.5 py-2 text-body-sm-strong text-text-primary transition-all',
                                   enabled
                                     ? 'cursor-grab hover:border-border-strong hover:shadow-sm active:cursor-grabbing'
                                     : 'cursor-not-allowed opacity-50',
@@ -838,7 +838,7 @@ export default function WorkflowBuilderPage() {
       <Drawer open={versionsOpen} onClose={() => setVersionsOpen(false)} title="Version history" subtitle="Published revisions of this workflow." icon={<HistoryOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}>
         <div className="grid h-full place-items-center">
           <div className="text-center">
-            <div className="text-body font-medium text-text-primary">No versions yet</div>
+            <div className="text-body-strong text-text-primary">No versions yet</div>
             <p className="mx-auto mt-1 max-w-[240px] text-caption text-text-secondary">Durable version history is planned.</p>
           </div>
         </div>
@@ -881,10 +881,10 @@ function WfConfigPanel({
             onChange={(e) => onPatchNode(node.id, { name: e.target.value })}
             aria-label="Block name"
             title="Rename this block"
-            className="-ml-1 min-w-0 max-w-full truncate rounded border border-transparent bg-transparent px-1 py-0.5 text-body-sm font-medium text-text-primary placeholder:text-text-primary transition-colors [field-sizing:content] hover:border-border focus:border-brand focus:outline-none"
+            className="-ml-1 min-w-0 max-w-full truncate rounded border border-transparent bg-transparent px-1 py-0.5 text-body-sm-strong text-text-primary placeholder:text-text-primary transition-colors [field-sizing:content] hover:border-border focus:border-brand focus:outline-none"
           />
         ) : (
-          <span className="min-w-0 truncate text-body-sm font-medium text-text-primary">{title}</span>
+          <span className="min-w-0 truncate text-body-sm-strong text-text-primary">{title}</span>
         )}
         <div className="ml-auto flex shrink-0 items-center gap-2">
           {node && (complete ? <StatusChip intent="success" label="Configured" /> : <StatusChip intent="warning" label="Incomplete" />)}
@@ -899,7 +899,7 @@ function WfConfigPanel({
             {doc?.event ? (
               <>
                 <div>
-                  <div className="mb-1.5 text-body-sm font-medium text-text-primary">Event type</div>
+                  <div className="mb-1.5 text-body-sm-strong text-text-primary">Event type</div>
                   <p className="text-body-sm text-text-secondary">
                     {WORKFLOW_EVENT_META[doc.event.type].label} — placed from the Events palette.
                   </p>

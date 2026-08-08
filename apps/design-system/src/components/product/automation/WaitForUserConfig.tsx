@@ -48,7 +48,7 @@ export function WaitForUserConfig({
           </div>
         )}
         <div className="flex items-center justify-between gap-3">
-          <span className="text-body-sm font-medium text-text-primary">Unlimited retries</span>
+          <span className="text-body-sm-strong text-text-primary">Unlimited retries</span>
           <Switch
             size="sm"
             checked={config.unlimitedRetries}
@@ -95,7 +95,7 @@ export function WaitForUserConfig({
               <AddIcon sx={{ fontSize: 18 }} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-body-sm font-medium text-text-primary">
+              <span className="block text-body-sm-strong text-text-primary">
                 {selectedApps.length ? 'Edit IAM connections' : 'Select IAM connections'}
               </span>
               {summary && <span className="block truncate text-caption text-text-secondary">{summary}</span>}
@@ -107,13 +107,13 @@ export function WaitForUserConfig({
               {selectedApps.slice(0, 2).map((a) => (
                 <span
                   key={a.id}
-                  className="inline-flex max-w-[140px] items-center rounded-md border border-border bg-subtle px-2 py-1 text-caption font-medium text-text-primary"
+                  className="inline-flex max-w-[140px] items-center rounded-md border border-border bg-subtle px-2 py-1 text-caption-strong text-text-primary"
                 >
                   <span className="truncate">{a.name}</span>
                 </span>
               ))}
               {selectedApps.length > 2 && (
-                <span className="inline-flex shrink-0 items-center rounded-md border border-border bg-subtle px-1.5 py-1 text-caption font-semibold text-text-secondary">
+                <span className="inline-flex shrink-0 items-center rounded-md border border-border bg-subtle px-1.5 py-1 text-caption-strong text-text-secondary">
                   +{selectedApps.length - 2}
                 </span>
               )}

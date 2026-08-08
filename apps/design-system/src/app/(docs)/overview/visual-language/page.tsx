@@ -12,7 +12,7 @@ export default function VisualLanguagePage() {
       <Section title="The essence" description="Five words that describe the intended feel.">
         <div className="flex flex-wrap gap-2">
           {['Enterprise', 'Professional', 'Minimal', 'Calm density', 'Trustworthy'].map((w) => (
-            <span key={w} className="rounded-pill border border-border bg-surface px-3 py-1 text-body-sm font-medium text-text-primary">
+            <span key={w} className="rounded-pill border border-border bg-surface px-3 py-1 text-body-sm-strong text-text-primary">
               {w}
             </span>
           ))}
@@ -30,7 +30,7 @@ export default function VisualLanguagePage() {
             ['Product nav', 'Dark slate #1E2C38 sidebar (in the IGA product shell).'],
           ].map(([k, v], i) => (
             <div key={i} className="flex flex-col gap-1 px-5 py-3 sm:flex-row sm:gap-4">
-              <div className="w-40 shrink-0 font-medium text-text-primary">{k}</div>
+              <div className="w-40 shrink-0 font-emphasis text-text-primary">{k}</div>
               <div className="text-text-secondary">{v}</div>
             </div>
           ))}

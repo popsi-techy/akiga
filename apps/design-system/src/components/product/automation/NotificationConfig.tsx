@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { typography } from '@/design-system/tokens/tokens';
 import MuiDialog from '@mui/material/Dialog';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -28,7 +29,7 @@ export function NotificationConfig({ config, onChange }: { config: NConfig; onCh
 
   return (
     <div className="space-y-3">
-      <div className="text-caption font-semibold uppercase tracking-[0.07em] text-text-tertiary">Channels</div>
+      <div className="text-caption-strong uppercase tracking-[0.07em] text-text-tertiary">Channels</div>
       {(['email', 'slack'] as const).map((key) => {
         const ch = config[key];
         const Icon = key === 'email' ? MailOutline : ChatOutlined;
@@ -38,7 +39,7 @@ export function NotificationConfig({ config, onChange }: { config: NConfig; onCh
               <Icon sx={{ fontSize: 18 }} />
             </span>
             <div className="min-w-0 flex-1">
-              <div className="text-body-sm font-medium capitalize text-text-primary">{key}</div>
+              <div className="text-body-sm-strong capitalize text-text-primary">{key}</div>
               <div className="truncate text-caption text-text-secondary">
                 {ch.enabled ? ch.template.name || 'No template selected' : 'Off'}
               </div>
@@ -111,7 +112,7 @@ function ChannelEditor({
   return (
     <MuiDialog open onClose={onClose} PaperProps={{ sx: { width: 640, maxWidth: '94vw', borderRadius: 'var(--ds-radius-xl)' } }}>
       <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
-        <div className="text-h5 font-semibold capitalize text-text-primary">Configure {channel}</div>
+        <div className="text-h5 capitalize text-text-primary">Configure {channel}</div>
         <button type="button" onClick={onClose} aria-label="Close" className="grid h-8 w-8 place-items-center rounded-md text-icon hover:bg-surface-hover">
           <CloseIcon sx={{ fontSize: 20 }} />
         </button>
@@ -137,7 +138,7 @@ function ChannelEditor({
 
         <div>
           <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-body-sm font-medium text-text-primary">Body</span>
+            <span className="text-body-sm-strong text-text-primary">Body</span>
             <Button variant="secondary" size="sm" startIcon={<DataObjectOutlined />} onClick={(e) => setVarAnchor(e.currentTarget)}>
               Insert variable
             </Button>
@@ -145,7 +146,7 @@ function ChannelEditor({
           <Input aria-label="Body" size="sm" multiline minRows={6} value={tpl.body} onChange={(e) => setTpl({ ...tpl, body: e.target.value })} />
           <Menu anchorEl={varAnchor} open={Boolean(varAnchor)} onClose={() => setVarAnchor(null)}>
             {TEMPLATE_VARIABLES.map((v) => (
-              <MenuItem key={v.token} onClick={() => insertVar(v.token)} sx={{ fontSize: '13px' }}>
+              <MenuItem key={v.token} onClick={() => insertVar(v.token)} sx={{ fontSize: typography.bodySm.fontSize }}>
                 {v.label} <span className="ml-2 text-text-tertiary">{v.token}</span>
               </MenuItem>
             ))}

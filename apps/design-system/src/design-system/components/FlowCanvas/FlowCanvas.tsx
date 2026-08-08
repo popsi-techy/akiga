@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { typography } from '../../tokens/tokens';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
@@ -119,7 +120,7 @@ function endsFlow(node: FlowNodeLike, isTerminal?: (n: FlowNodeLike) => boolean)
 /** Start / End terminal markers — soft-blue pills with a leading glyph. */
 function Pill({ label, icon }: { label: string; icon: React.ReactNode }) {
   return (
-    <div className="inline-flex items-center gap-2 rounded-pill bg-[#CFE5FC] px-4 py-2 text-body-sm font-semibold text-text-primary shadow-xs">
+    <div className="inline-flex items-center gap-2 rounded-pill bg-[#CFE5FC] px-4 py-2 text-body-sm-strong text-text-primary shadow-xs">
       <span className="flex text-[var(--ds-color-status-info-solid)]">{icon}</span>
       {label}
     </div>
@@ -161,7 +162,7 @@ function AddComponentCard({ loc, hint }: { loc: FlowInsertLoc; hint?: string }) 
         <span className="grid h-11 w-11 place-items-center rounded-full bg-brand-subtle text-brand">
           <AddIcon sx={{ fontSize: 22 }} />
         </span>
-        <span className="text-body font-semibold text-text-primary">{hint ?? 'Add component'}</span>
+        <span className="text-body-strong text-text-primary">{hint ?? 'Add component'}</span>
         <span className="text-caption text-text-tertiary">Drag from the sidebar or click to insert</span>
       </button>
       <Menu
@@ -181,7 +182,7 @@ function AddComponentCard({ loc, hint }: { loc: FlowInsertLoc; hint?: string }) 
               onInsert(loc, p.kind);
               setAnchor(null);
             }}
-            sx={{ fontSize: '13px' }}
+            sx={{ fontSize: typography.bodySm.fontSize }}
           >
             {p.icon && <ListItemIcon sx={{ minWidth: 30, color: 'var(--ds-color-icon-default)' }}>{p.icon}</ListItemIcon>}
             {p.label}
@@ -224,7 +225,7 @@ function Connector({ loc }: { loc: FlowInsertLoc }) {
         // Drop ghost — a dashed preview of the component being dragged.
         <div className="ds-node-in pointer-events-none flex w-[320px] items-center gap-2.5 rounded-xl border-2 border-dashed border-border-strong bg-subtle px-4 py-3 text-text-secondary">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center">{ghost.icon}</span>
-          <span className="text-body font-medium">{ghost.label}</span>
+          <span className="text-body-strong">{ghost.label}</span>
         </div>
       ) : (
         <>
@@ -266,7 +267,7 @@ function Connector({ loc }: { loc: FlowInsertLoc }) {
               onInsert(loc, p.kind);
               setAnchor(null);
             }}
-            sx={{ fontSize: '13px' }}
+            sx={{ fontSize: typography.bodySm.fontSize }}
           >
             {p.icon && <ListItemIcon sx={{ minWidth: 30, color: 'var(--ds-color-icon-default)' }}>{p.icon}</ListItemIcon>}
             {p.label}
@@ -370,7 +371,7 @@ function BranchTier({
                 {renderBranchLabel ? (
                   renderBranchLabel(br, node)
                 ) : (
-                  <div className="rounded-pill bg-subtle px-3 py-1 text-caption font-medium text-text-secondary">{br.label}</div>
+                  <div className="rounded-pill bg-subtle px-3 py-1 text-caption-strong text-text-secondary">{br.label}</div>
                 )}
               </div>
               <SequenceView seq={br.seq} path={[...path, { nodeId: node.id, branchId: br.id }]} sealed={br.sealed} branch={br} node={node} />
@@ -492,7 +493,7 @@ export function FlowCanvas({
       <div className="absolute bottom-4 left-4 flex items-center gap-1 rounded-lg border border-border bg-surface px-2 py-1.5 shadow-md">
         {onViewChange && (
           <>
-            <div className="flex items-center rounded-md bg-subtle p-0.5 text-caption font-medium">
+            <div className="flex items-center rounded-md bg-subtle p-0.5 text-caption-strong">
               {(['outline', 'detailed'] as const).map((v) => (
                 <button
                   key={v}

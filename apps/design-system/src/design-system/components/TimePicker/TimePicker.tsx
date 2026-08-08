@@ -77,7 +77,7 @@ function Column({
 
   return (
     <div className="flex min-w-0 flex-col">
-      <div className="px-2 pb-1 text-micro font-semibold uppercase tracking-[0.07em] text-text-tertiary">
+      <div className="px-2 pb-1 text-micro uppercase tracking-[0.07em] text-text-tertiary">
         {label}
       </div>
       <div
@@ -98,7 +98,7 @@ function Column({
               className={[
                 'mb-0.5 block w-full rounded-md px-3 py-1.5 text-left text-body-sm tabular-nums transition-colors',
                 on
-                  ? 'bg-brand font-medium text-brand-on'
+                  ? 'bg-brand font-emphasis text-brand-on'
                   : 'text-text-primary hover:bg-surface-hover',
               ].join(' ')}
             >

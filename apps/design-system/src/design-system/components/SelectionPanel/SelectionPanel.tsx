@@ -41,14 +41,14 @@ export function SelectionPanel({
 
   return (
     <div className="flex h-full flex-col">
-      <h3 className="mb-3 shrink-0 text-h5 font-semibold text-text-primary">{title}</h3>
+      <h3 className="mb-3 shrink-0 text-h5 text-text-primary">{title}</h3>
 
       {n === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-subtle text-icon">
             <HighlightAltOutlined sx={{ fontSize: 24 }} />
           </span>
-          <div className="text-body font-medium text-text-primary">{emptyTitle}</div>
+          <div className="text-body-strong text-text-primary">{emptyTitle}</div>
           <p className="max-w-[220px] text-caption leading-5 text-text-secondary">{emptyMessage}</p>
         </div>
       ) : (
@@ -60,7 +60,7 @@ export function SelectionPanel({
             <button
               type="button"
               onClick={onClearAll}
-              className="text-body-sm font-medium text-text-brand hover:underline"
+              className="text-body-sm-strong text-text-brand hover:underline"
             >
               Clear all
             </button>

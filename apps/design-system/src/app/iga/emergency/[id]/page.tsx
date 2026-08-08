@@ -61,7 +61,7 @@ function TabPlaceholder({ label }: { label: string }) {
   return (
     <Card className="h-full">
       <div className="flex h-full flex-col items-center justify-center gap-1 py-16 text-center">
-        <div className="text-h5 font-semibold text-text-primary">{label}</div>
+        <div className="text-h5 text-text-primary">{label}</div>
         <p className="max-w-sm text-body-sm text-text-secondary">
           This section isn’t built yet. It will reuse the same tables, cards, and forms already in
           the Design System.
@@ -85,7 +85,7 @@ function OverviewTab({ ea }: { ea: EADetail }) {
               <ListRow key={s.id}>
                 <Avatar name={s.name} size="sm" shape="circle" />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-body font-medium text-text-primary">{s.name}</div>
+                  <div className="truncate text-body-strong text-text-primary">{s.name}</div>
                   <div className="truncate text-caption text-text-secondary">{s.subtitle}</div>
                 </div>
                 {s.ongoing ? (
@@ -158,7 +158,7 @@ function OwnersTab({ ea }: { ea: EADetail }) {
       render: (o) => (
         <div className="flex items-center gap-3">
           <Avatar name={o.name} size="sm" />
-          <span className="font-medium text-text-primary">{o.name}</span>
+          <span className="text-body-sm-strong text-text-primary">{o.name}</span>
         </div>
       ),
     },
@@ -174,7 +174,7 @@ function OwnersTab({ ea }: { ea: EADetail }) {
       render: (o) => (
         <div className="flex items-center gap-3">
           <Avatar name={o.name} size="sm" />
-          <span className="font-medium text-text-primary">{o.name}</span>
+          <span className="text-body-sm-strong text-text-primary">{o.name}</span>
         </div>
       ),
     },
@@ -332,7 +332,7 @@ export default function EmergencyAccessDetailPage() {
   if (!ea) {
     return (
       <div className="mx-auto max-w-2xl py-16 text-center">
-        <h1 className="text-h3 font-bold text-text-primary">Emergency access not found</h1>
+        <h1 className="text-h3 text-text-primary">Emergency access not found</h1>
         <p className="mt-2 text-body text-text-secondary">This item doesn’t exist or was removed.</p>
         <div className="mt-4 flex justify-center">
           <Link href="/iga/emergency">
@@ -352,7 +352,7 @@ export default function EmergencyAccessDetailPage() {
             <Avatar name={ea.name} initials={ea.initial} size="md" />
             <div>
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-h3 font-bold leading-tight text-text-primary">{ea.name}</h1>
+                <h1 className="text-h3 leading-tight text-text-primary">{ea.name}</h1>
                 {ea.risk && <StatusChip intent={ea.risk.intent} dot={false} label={ea.risk.label} />}
                 <StatusChip intent={ea.status.intent} label={ea.status.label} />
               </div>

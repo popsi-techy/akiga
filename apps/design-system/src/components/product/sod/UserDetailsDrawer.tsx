@@ -17,7 +17,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start gap-4 border-b border-border px-5 py-3.5 last:border-0">
       <span className="w-40 shrink-0 text-body-sm text-text-secondary">{label}</span>
-      <span className="min-w-0 flex-1 text-body-sm font-medium text-text-primary">{value}</span>
+      <span className="min-w-0 flex-1 text-body-sm-strong text-text-primary">{value}</span>
     </div>
   );
 }
@@ -29,7 +29,7 @@ function AccessRow({ icon, title, subtitle, right }: { icon: React.ReactNode; ti
     <div className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-0">
       <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-subtle text-icon">{icon}</span>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-body-sm font-medium text-text-primary">{title}</div>
+        <div className="truncate text-body-sm-strong text-text-primary">{title}</div>
         {subtitle && <div className="truncate text-caption text-text-secondary">{subtitle}</div>}
       </div>
       {right && <div className="shrink-0">{right}</div>}

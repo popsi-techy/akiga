@@ -57,8 +57,8 @@ export default function ProductSidebar() {
   };
 
   const railBase = 'flex items-center gap-3 rounded-md text-body-sm transition-colors';
-  const activeCls = 'bg-white/10 font-semibold text-white';
-  const inactiveCls = 'font-medium text-white/70 hover:bg-white/5 hover:text-white';
+  const activeCls = 'bg-white/10 font-emphasis text-white';
+  const inactiveCls = 'font-emphasis text-white/70 hover:bg-white/5 hover:text-white';
 
   /** A leaf link on the dark rail. `sub` indents it beneath an expanded group. */
   const LeafLink = ({ leaf, sub = false, compact = false }: { leaf: IgaNavLeaf; sub?: boolean; compact?: boolean }) => {
@@ -82,7 +82,7 @@ export default function ProductSidebar() {
           <>
             <span className="flex-1 truncate">{leaf.label}</span>
             {leaf.badge != null && (
-              <span className="rounded-pill bg-brand px-1.5 py-0.5 text-micro font-semibold text-brand-on">{leaf.badge}</span>
+              <span className="rounded-pill bg-brand px-1.5 py-0.5 text-micro text-brand-on">{leaf.badge}</span>
             )}
           </>
         )}
@@ -115,7 +115,7 @@ export default function ProductSidebar() {
               onMouseLeave={scheduleClose}
               className="fixed ml-1.5 w-[212px] rounded-lg border border-border bg-surface p-1.5 shadow-lg"
             >
-              <div className="px-2 py-1 text-caption font-semibold uppercase tracking-wider text-text-tertiary">{parent.label}</div>
+              <div className="px-2 py-1 text-caption-strong uppercase tracking-wider text-text-tertiary">{parent.label}</div>
               <ul className="flex flex-col">
                 {parent.children.map((child) => {
                   const ChildIcon = child.icon;
@@ -127,7 +127,7 @@ export default function ProductSidebar() {
                         onClick={() => setFlyout(null)}
                         className={[
                           'flex items-center gap-2.5 rounded-md px-2 py-1.5 text-body-sm transition-colors',
-                          active ? 'bg-brand-subtle font-medium text-text-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary',
+                          active ? 'bg-brand-subtle font-emphasis text-text-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary',
                         ].join(' ')}
                       >
                         <ChildIcon sx={{ fontSize: 17 }} />
@@ -150,7 +150,7 @@ export default function ProductSidebar() {
           type="button"
           onClick={() => toggleGroup(parent.id)}
           aria-expanded={isOpen}
-          className={['flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-body-sm transition-colors', hasActive ? 'font-semibold text-white' : inactiveCls].join(' ')}
+          className={['flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-body-sm transition-colors', hasActive ? 'font-emphasis text-white' : inactiveCls].join(' ')}
         >
           <span className="flex shrink-0">
             <Icon sx={{ fontSize: 19 }} />
@@ -179,8 +179,8 @@ export default function ProductSidebar() {
     >
       {/* Brand */}
       <Link href="/" className={['flex h-16 shrink-0 items-center gap-2.5', collapsed ? 'justify-center px-0' : 'px-5'].join(' ')}>
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand text-h5 font-bold text-brand-on">I</span>
-        {!collapsed && <span className="text-h5 font-bold text-white">IGA</span>}
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand text-h5 text-brand-on">I</span>
+        {!collapsed && <span className="text-h5 text-white">IGA</span>}
       </Link>
 
       {/* Collapse / expand toggle — circular chevron straddling the right edge, just
@@ -205,7 +205,7 @@ export default function ProductSidebar() {
           <div key={section.title ?? `s${si}`} className={['mb-2', section.title ? 'mt-3' : ''].join(' ')}>
             {section.divider && <div className="mx-3 mb-3 mt-1 border-t border-white/10" />}
             {section.title && (
-              <div className={['pb-1 pt-1 text-micro font-semibold uppercase tracking-[0.08em] text-white/50', collapsed ? 'sr-only' : 'px-3'].join(' ')}>
+              <div className={['pb-1 pt-1 text-micro uppercase tracking-[0.08em] text-white/50', collapsed ? 'sr-only' : 'px-3'].join(' ')}>
                 {section.title}
               </div>
             )}

@@ -94,7 +94,7 @@ export function RadioCardGroup({
               </span>
             )}
             <span className={layout === 'inline' ? 'min-w-0' : 'min-w-0 flex-1'}>
-              <span className="block text-body-sm font-medium text-text-primary">{opt.label}</span>
+              <span className="block text-body-sm-strong text-text-primary">{opt.label}</span>
               {opt.description && (
                 <span className="mt-0.5 block text-caption leading-4 text-text-secondary">{opt.description}</span>
               )}

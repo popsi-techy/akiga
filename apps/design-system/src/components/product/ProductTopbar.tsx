@@ -110,11 +110,11 @@ export default function ProductTopbar() {
           <React.Fragment key={i}>
             <NavigateNextOutlined sx={{ fontSize: 18, color: 'var(--ds-color-text-disabled)' }} />
             {c.href ? (
-              <Link href={c.href} className="font-medium text-text-link hover:underline">
+              <Link href={c.href} className="font-emphasis text-text-link hover:underline">
                 {c.label}
               </Link>
             ) : (
-              <span className="font-medium text-text-primary">{c.label}</span>
+              <span className="font-emphasis text-text-primary">{c.label}</span>
             )}
           </React.Fragment>
         ))}
@@ -123,7 +123,7 @@ export default function ProductTopbar() {
       <div className="flex items-center gap-2.5">
         <Link
           href="/"
-          className="rounded-pill border border-border px-3 py-1 text-caption font-medium text-text-secondary hover:bg-surface-hover"
+          className="rounded-pill border border-border px-3 py-1 text-caption-strong text-text-secondary hover:bg-surface-hover"
         >
           Design System
         </Link>
@@ -158,7 +158,7 @@ export default function ProductTopbar() {
           MenuListProps={{ sx: { py: 0.5 } }}
           PaperProps={{ sx: { mt: 1, width: 268, borderRadius: 'var(--ds-radius-lg)', border: '1px solid var(--ds-color-border-default)', boxShadow: 'var(--ds-elevation-lg)' } }}
         >
-          <div className="px-3 pb-1.5 pt-1 text-caption font-semibold uppercase tracking-[0.07em] text-text-tertiary">
+          <div className="px-3 pb-1.5 pt-1 text-caption-strong uppercase tracking-[0.07em] text-text-tertiary">
             Switch console
           </div>
           {PERSONAS.map((p) => {
@@ -180,7 +180,7 @@ export default function ProductTopbar() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
-                    <span className="text-body-sm font-medium text-text-primary">{p.label}</span>
+                    <span className="text-body-sm-strong text-text-primary">{p.label}</span>
                     {active && <CheckIcon sx={{ fontSize: 15, color: 'var(--ds-color-icon-brand)' }} />}
                   </span>
                   <span className="mt-0.5 block whitespace-normal text-caption leading-4 text-text-secondary">
@@ -215,18 +215,18 @@ export default function ProductTopbar() {
           <div className="flex items-center gap-2.5 px-3 pb-2.5 pt-1.5">
             <Avatar name={ACCOUNT.name} initials={ACCOUNT.name.trim().charAt(0).toUpperCase()} size="md" />
             <div className="min-w-0">
-              <div className="truncate text-body-sm font-semibold text-text-primary">{ACCOUNT.name}</div>
+              <div className="truncate text-body-sm-strong text-text-primary">{ACCOUNT.name}</div>
               <div className="truncate text-caption text-text-secondary">{ACCOUNT.email}</div>
             </div>
           </div>
           <Divider sx={{ borderColor: 'var(--ds-color-border-default)' }} />
           <MenuItem onClick={() => openSettings('profile')} sx={{ borderRadius: 'var(--ds-radius-md)', mx: 0.5, mt: 0.5, my: 0.25, py: 0.9, gap: 1.25 }}>
             <PersonOutline sx={{ fontSize: 19, color: 'var(--ds-color-icon-default)' }} />
-            <span className="text-body-sm font-medium text-text-primary">Profile settings</span>
+            <span className="text-body-sm-strong text-text-primary">Profile settings</span>
           </MenuItem>
           <MenuItem onClick={() => openSettings('appearance')} sx={{ borderRadius: 'var(--ds-radius-md)', mx: 0.5, my: 0.25, py: 0.9, gap: 1.25 }}>
             <TuneOutlined sx={{ fontSize: 19, color: 'var(--ds-color-icon-default)' }} />
-            <span className="text-body-sm font-medium text-text-primary">Preferences</span>
+            <span className="text-body-sm-strong text-text-primary">Preferences</span>
           </MenuItem>
           <Divider sx={{ borderColor: 'var(--ds-color-border-default)', my: 0.5 }} />
           <MenuItem
@@ -237,7 +237,7 @@ export default function ProductTopbar() {
             sx={{ borderRadius: 'var(--ds-radius-md)', mx: 0.5, mb: 0.5, my: 0.25, py: 0.9, gap: 1.25 }}
           >
             <LogoutOutlined sx={{ fontSize: 19, color: 'var(--ds-color-status-danger-fg)' }} />
-            <span className="text-body-sm font-medium text-[var(--ds-color-status-danger-fg)]">Log out</span>
+            <span className="text-body-sm-strong text-[var(--ds-color-status-danger-fg)]">Log out</span>
           </MenuItem>
         </Menu>
       </div>

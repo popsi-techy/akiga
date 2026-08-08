@@ -29,7 +29,7 @@ export default function TabsDocs() {
             <Tabs items={items} value={tab} onChange={setTab} aria-label="Emergency access details" />
           </div>
           <div className="px-5 py-6 text-body text-text-secondary">
-            Active tab: <span className="font-medium text-text-primary">{tab}</span>
+            Active tab: <span className="font-emphasis text-text-primary">{tab}</span>
           </div>
         </div>
       </Section>

@@ -13,11 +13,11 @@ export function PageHeader({
   return (
     <header className="mb-8 max-w-3xl">
       {eyebrow && (
-        <div className="mb-2 text-caption font-semibold uppercase tracking-wider text-text-brand">
+        <div className="mb-2 text-caption-strong uppercase tracking-wider text-text-brand">
           {eyebrow}
         </div>
       )}
-      <h1 className="text-h1 font-bold leading-9 tracking-tight text-text-primary">
+      <h1 className="text-h1 leading-9 tracking-tight text-text-primary">
         {title}
       </h1>
       {description && (
@@ -39,7 +39,7 @@ export function Section({
 }) {
   return (
     <section className="mb-12">
-      <h2 className="mb-1 text-h4 font-semibold text-text-primary">{title}</h2>
+      <h2 className="mb-1 text-h4 text-text-primary">{title}</h2>
       {description && <p className="mb-4 text-body text-text-secondary">{description}</p>}
       <div className={description ? '' : 'mt-4'}>{children}</div>
     </section>
@@ -88,7 +88,7 @@ export function Swatch({
         className={`h-16 w-full rounded-md ${ring ? 'ring-1 ring-inset ring-border' : ''}`}
         style={{ background: value }}
       />
-      <div className="mt-2 text-body-sm font-medium text-text-primary">{name}</div>
+      <div className="mt-2 text-body-sm-strong text-text-primary">{name}</div>
       {sub && <div className="text-caption text-text-tertiary">{sub}</div>}
       <div className="mt-0.5 font-mono text-caption uppercase text-text-secondary">{value}</div>
     </div>
@@ -105,7 +105,7 @@ export function Ramp({
 }) {
   return (
     <div className="mb-6">
-      <div className="mb-2 text-body-sm font-semibold text-text-primary">{name}</div>
+      <div className="mb-2 text-body-sm-strong text-text-primary">{name}</div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11">
         {Object.entries(ramp).map(([step, value]) => (
           <Swatch key={step} value={value} name={step} ring />
@@ -155,7 +155,7 @@ export function Example({
 }) {
   return (
     <div className="mb-4">
-      <div className="mb-2 text-caption font-medium text-text-tertiary">{label}</div>
+      <div className="mb-2 text-caption-strong text-text-tertiary">{label}</div>
       <Preview>{children}</Preview>
     </div>
   );
@@ -173,7 +173,7 @@ export function PropsTable({
         <thead>
           <tr className="border-b border-border bg-subtle">
             {['Prop', 'Type', 'Default', 'Description'].map((h) => (
-              <th key={h} className="px-4 py-2.5 font-semibold text-text-secondary">
+              <th key={h} className="px-4 py-2.5 font-emphasis text-text-secondary">
                 {h}
               </th>
             ))}
@@ -183,7 +183,7 @@ export function PropsTable({
           {rows.map((r) => (
             <tr key={r.name} className="border-b border-border last:border-0">
               <td className="px-4 py-2.5 align-top">
-                <span className="font-mono text-caption font-medium text-text-primary">{r.name}</span>
+                <span className="font-mono text-caption-strong text-text-primary">{r.name}</span>
               </td>
               <td className="px-4 py-2.5 align-top">
                 <span className="font-mono text-caption text-text-brand">{r.type}</span>
@@ -205,7 +205,7 @@ export function DoDont({ dos, donts }: { dos: string[]; donts: string[] }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <Card className="p-4">
-        <div className="mb-2 flex items-center gap-1.5 text-body-sm font-semibold text-success">
+        <div className="mb-2 flex items-center gap-1.5 text-body-sm-strong text-success">
           ✓ Do
         </div>
         <ul className="space-y-1.5 text-body-sm text-text-secondary">
@@ -215,7 +215,7 @@ export function DoDont({ dos, donts }: { dos: string[]; donts: string[] }) {
         </ul>
       </Card>
       <Card className="p-4">
-        <div className="mb-2 flex items-center gap-1.5 text-body-sm font-semibold text-danger">
+        <div className="mb-2 flex items-center gap-1.5 text-body-sm-strong text-danger">
           ✕ Don’t
         </div>
         <ul className="space-y-1.5 text-body-sm text-text-secondary">
@@ -242,7 +242,7 @@ export function TokenTable({
         <thead>
           <tr className="border-b border-border bg-subtle">
             {head.map((h) => (
-              <th key={h} className="px-4 py-2.5 font-semibold text-text-secondary">
+              <th key={h} className="px-4 py-2.5 font-emphasis text-text-secondary">
                 {h}
               </th>
             ))}

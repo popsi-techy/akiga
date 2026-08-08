@@ -3,6 +3,7 @@
 import * as React from 'react';
 import MuiTabs from '@mui/material/Tabs';
 import MuiTab from '@mui/material/Tab';
+import { typography } from '../../tokens/tokens';
 
 /**
  * Tabs — section navigation matching the product: a 2px brand underline with the
@@ -50,8 +51,11 @@ export function Tabs({ items, value, onChange, 'aria-label': ariaLabel, noBorder
           paddingInline: 0,
           marginRight: '24px',
           textTransform: 'none',
-          fontSize: '14px',
-          fontWeight: 400,
+          // From the scale, not literals: a tab label is `body` (14/400). Selection is
+          // marked by colour and the indicator, never by weight, so labels never shift
+          // width as the selection moves.
+          fontSize: typography.body.fontSize,
+          fontWeight: typography.body.fontWeight,
           color: 'var(--ds-color-text-secondary)',
           '&:hover': { color: 'var(--ds-color-text-primary)' },
           // Same orange as the indicator — see the accessibility note above.

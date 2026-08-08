@@ -67,7 +67,7 @@ export function AccountSettingsModal({
       <div className="flex h-full min-h-0">
         {/* nav pane */}
         <aside className="flex w-[224px] shrink-0 flex-col border-r border-border bg-subtle/50 p-3">
-          <div className="px-2 pb-2 pt-1 text-caption font-semibold uppercase tracking-[0.07em] text-text-tertiary">Settings</div>
+          <div className="px-2 pb-2 pt-1 text-caption-strong uppercase tracking-[0.07em] text-text-tertiary">Settings</div>
           <NavList
             ariaLabel="Settings sections"
             items={NAV.map((n) => ({ id: n.id, label: n.label, icon: n.icon }))}
@@ -104,7 +104,7 @@ function SettingsGroup({ title, description, children, divider = true }: { title
   return (
     <div className={['grid gap-x-8 gap-y-4 py-6 md:grid-cols-[minmax(0,200px)_minmax(0,1fr)]', divider ? 'border-b border-border' : ''].join(' ')}>
       <div>
-        <h3 className="text-body font-semibold text-text-primary">{title}</h3>
+        <h3 className="text-body-strong text-text-primary">{title}</h3>
         <p className="mt-1 text-body-sm leading-5 text-text-secondary">{description}</p>
       </div>
       <div className="min-w-0">{children}</div>
@@ -129,14 +129,14 @@ function ProfileSection({
 }) {
   return (
     <>
-      <h2 className="mb-1 text-h5 font-semibold text-text-primary">Profile</h2>
+      <h2 className="mb-1 text-h5 text-text-primary">Profile</h2>
       <p className="mb-5 text-body-sm text-text-secondary">Manage your identity and how you appear across the console.</p>
 
       {/* identity banner */}
       <div className="mb-6 flex items-center gap-3 rounded-xl border border-border bg-subtle px-4 py-3">
         <Avatar name={user.name} initials={user.name.trim().charAt(0).toUpperCase()} size="md" />
         <div className="min-w-0">
-          <div className="truncate text-h5 font-semibold text-text-primary">{user.name}</div>
+          <div className="truncate text-h5 text-text-primary">{user.name}</div>
           <div className="truncate text-body-sm text-text-secondary">
             {[user.email, user.jobTitle, user.department].filter(Boolean).join(' · ')}
           </div>
@@ -145,7 +145,7 @@ function ProfileSection({
 
       {/* heading + actions */}
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-h5 font-semibold text-text-primary">Basic Information</h2>
+        <h2 className="text-h5 text-text-primary">Basic Information</h2>
         <div className="flex items-center gap-1.5">
           <button
             type="button"
@@ -187,7 +187,7 @@ function ProfileSection({
 function AppearanceSection({ theme, onTheme }: { theme: 'light' | 'dark' | 'system'; onTheme: (t: 'light' | 'dark' | 'system') => void }) {
   return (
     <>
-      <h2 className="mb-1 text-h5 font-semibold text-text-primary">Appearance</h2>
+      <h2 className="mb-1 text-h5 text-text-primary">Appearance</h2>
       <p className="mb-2 text-body-sm text-text-secondary">Personalize how the console looks on this device.</p>
 
       <SettingsGroup title="Theme" description="Choose a light or dark interface, or match your device setting." divider={false}>

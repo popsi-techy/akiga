@@ -60,7 +60,7 @@ export default function IconographyPage() {
               <span className="flex h-9 w-9 items-center justify-center rounded-md bg-brand-subtle">
                 <Icon sx={{ fontSize: 20, color: 'var(--ds-color-brand-primary)' }} />
               </span>
-              <span className="text-body-sm font-medium text-text-primary">{label}</span>
+              <span className="text-body-sm-strong text-text-primary">{label}</span>
             </Card>
           ))}
         </div>

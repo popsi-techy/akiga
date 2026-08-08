@@ -64,7 +64,7 @@ export function EntityCatalogDrawer({
   const filteredEnts = entRows.filter((e) => e.name.toLowerCase().includes(q) || e.description.toLowerCase().includes(q) || e.appName.toLowerCase().includes(q));
 
   const entColumns: Column<EntRow>[] = [
-    { id: 'name', header: 'Entitlement', sortable: true, value: (r) => r.name, render: (r) => (<div><div className="font-medium text-text-primary">{r.name}</div><div className="text-caption text-text-tertiary">{r.appName}</div></div>) },
+    { id: 'name', header: 'Entitlement', sortable: true, value: (r) => r.name, render: (r) => (<div><div className="text-body-sm-strong text-text-primary">{r.name}</div><div className="text-caption text-text-tertiary">{r.appName}</div></div>) },
     { id: 'description', header: 'Description', render: (r) => <span className="text-text-secondary">{r.description}</span> },
     { id: 'risk', header: 'Risk score', align: 'right', sortable: true, value: (r) => r.risk, render: (r) => <RiskScoreChip score={r.risk} /> },
   ];
@@ -78,7 +78,7 @@ export function EntityCatalogDrawer({
         label: (
           <>
             <span className="text-text-tertiary">{a.name}</span>{' '}
-            <span className="font-medium text-text-primary">baseline access</span>
+            <span className="text-body-sm-strong text-text-primary">baseline access</span>
           </>
         ),
       })),
@@ -90,7 +90,7 @@ export function EntityCatalogDrawer({
         label: (
           <>
             <span className="text-text-tertiary">{e.appName}</span>{' '}
-            <span className="font-medium text-text-primary">{e.name}</span>
+            <span className="text-body-sm-strong text-text-primary">{e.name}</span>
           </>
         ),
       })),
@@ -138,7 +138,7 @@ export function EntityCatalogDrawer({
       <div className="flex h-full">
         <div className="flex min-w-0 flex-1 flex-col px-6 py-5">
           <div className="mb-4 flex shrink-0 flex-col gap-3">
-            <div className="flex self-start rounded-md bg-subtle p-0.5 text-caption font-medium">
+            <div className="flex self-start rounded-md bg-subtle p-0.5 text-caption-strong">
               <TabBtn id="apps" label="Apps" count={appSel.size} />
               <TabBtn id="entitlements" label="Entitlements" count={entSel.length} />
             </div>
@@ -159,7 +159,7 @@ export function EntityCatalogDrawer({
                   <button key={a.id} type="button" onClick={() => toggleApp(a.id)} className={['flex flex-col gap-2 rounded-xl border p-3 text-left transition-colors', on ? 'border-brand bg-surface' : 'border-border bg-surface hover:border-border-strong'].join(' ')}>
                     <div className="flex items-center gap-2.5">
                       <Avatar name={a.name} size="sm" />
-                      <span className="min-w-0 flex-1 truncate text-body-sm font-semibold text-text-primary">{a.name}</span>
+                      <span className="min-w-0 flex-1 truncate text-body-sm-strong text-text-primary">{a.name}</span>
                       {/* The card itself is the control — box only, no nested input. */}
                       <Checkbox checked={on} presentational />
                     </div>
@@ -171,7 +171,7 @@ export function EntityCatalogDrawer({
           ) : appSel.size === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-subtle text-icon"><AppsOutlined sx={{ fontSize: 24 }} /></span>
-              <div className="text-body font-medium text-text-primary">Select apps first</div>
+              <div className="text-body-strong text-text-primary">Select apps first</div>
               <p className="max-w-[240px] text-caption leading-5 text-text-secondary">Choose one or more apps on the Apps tab to see their entitlements here.</p>
             </div>
           ) : (

@@ -259,7 +259,7 @@ export function AccessGraph({ columns, emptyMessage }: AccessGraphProps) {
               {live.map((c, i) => (
                 <span
                   key={c.id}
-                  className="absolute bottom-1.5 truncate pr-3 text-caption font-semibold uppercase tracking-wider text-text-tertiary"
+                  className="absolute bottom-1.5 truncate pr-3 text-caption-strong uppercase tracking-wider text-text-tertiary"
                   style={{ left: colX(i) * zoom, maxWidth: COL_W * zoom }}
                 >
                   {c.label}
@@ -311,14 +311,14 @@ export function AccessGraph({ columns, emptyMessage }: AccessGraphProps) {
                     <span className="flex w-full items-center gap-2.5">
                       {p.node.leading}
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-body font-semibold text-text-primary">{p.node.label}</span>
+                        <span className="block truncate text-body-strong text-text-primary">{p.node.label}</span>
                         {p.node.sublabel && (
                           <span className="block truncate text-body-sm text-text-secondary">{p.node.sublabel}</span>
                         )}
                       </span>
                       {p.node.trailing ??
                         (p.node.count != null ? (
-                          <span className="shrink-0 text-body-sm font-semibold tabular-nums text-text-secondary">
+                          <span className="shrink-0 text-body-sm-strong tabular-nums text-text-secondary">
                             {p.node.count}
                           </span>
                         ) : null)}
@@ -328,7 +328,7 @@ export function AccessGraph({ columns, emptyMessage }: AccessGraphProps) {
                         {p.node.tags.map((t) => (
                           <span
                             key={t}
-                            className="rounded border border-border bg-subtle px-1.5 py-0.5 text-caption font-medium text-text-secondary"
+                            className="rounded border border-border bg-subtle px-1.5 py-0.5 text-caption-strong text-text-secondary"
                           >
                             {t}
                           </span>

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { typography } from '../../tokens/tokens';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -140,14 +141,14 @@ export function DataTable<Row extends { id: string }>({
   const colSpan = columns.length + (selectable ? 1 : 0);
   const headCellSx = {
     fontWeight: 400, // normal-weight headers (not bold) — matches product design
-    fontSize: '13px',
+    fontSize: typography.bodySm.fontSize,
     color: 'var(--ds-color-text-secondary)',
     backgroundColor: 'var(--ds-color-background-subtle)', // faint grey header band
     borderBottom: '1px solid var(--ds-color-border-default)',
     whiteSpace: 'nowrap' as const,
   };
   const bodyCellSx = {
-    fontSize: '13px',
+    fontSize: typography.bodySm.fontSize,
     color: 'var(--ds-color-text-primary)',
     borderBottom: '1px solid var(--ds-color-border-default)',
   };
@@ -232,7 +233,7 @@ export function DataTable<Row extends { id: string }>({
               <TableRow>
                 <TableCell colSpan={colSpan} sx={{ ...bodyCellSx, borderBottom: 'none' }}>
                   <div className="flex flex-col items-center justify-center gap-1 py-12 text-center">
-                    <div className="text-body font-semibold text-text-primary">{emptyTitle}</div>
+                    <div className="text-body-strong text-text-primary">{emptyTitle}</div>
                     <div className="max-w-sm text-body-sm text-text-secondary">{emptyMessage}</div>
                   </div>
                 </TableCell>
@@ -289,7 +290,7 @@ export function DataTable<Row extends { id: string }>({
             sx={{
               height: 34,
               minWidth: 72,
-              fontSize: '13px',
+              fontSize: typography.bodySm.fontSize,
               color: 'var(--ds-color-text-primary)',
               borderRadius: 'var(--ds-radius-md)',
               '& .MuiSelect-select': { paddingY: '6px', paddingLeft: '12px' },
@@ -298,7 +299,7 @@ export function DataTable<Row extends { id: string }>({
               '& .MuiSelect-icon': { color: 'var(--ds-color-icon-default)' },
             }}
             MenuProps={{
-              PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: '13px' } } },
+              PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: typography.bodySm.fontSize } } },
             }}
           >
             {rowsPerPageOptions.map((n) => (

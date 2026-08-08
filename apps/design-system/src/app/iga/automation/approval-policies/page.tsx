@@ -89,7 +89,7 @@ export default function ApprovalPoliciesListPage() {
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-subtle text-icon-brand">
             <RuleOutlined sx={{ fontSize: 18 }} />
           </span>
-          <span className="font-medium text-text-primary">{r.policyName}</span>
+          <span className="text-body-sm-strong text-text-primary">{r.policyName}</span>
         </div>
       ),
     },
@@ -121,7 +121,7 @@ export default function ApprovalPoliciesListPage() {
   return (
     <div className="flex h-full flex-col">
       <div className="mb-5 shrink-0">
-        <h1 className="text-h2 font-bold text-text-primary">Approval Policies</h1>
+        <h1 className="text-h2 text-text-primary">Approval Policies</h1>
         <p className="mt-1 text-body text-text-secondary">
           Reusable approval workflows for access requests — compose approval levels, parallel
           approvals, notifications, and conditional routing.

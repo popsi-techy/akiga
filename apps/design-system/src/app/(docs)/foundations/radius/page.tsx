@@ -19,7 +19,7 @@ export default function RadiusPage() {
                 style={{ borderRadius: value }}
               />
               <div className="text-center">
-                <div className="text-body-sm font-medium text-text-primary">{key}</div>
+                <div className="text-body-sm-strong text-text-primary">{key}</div>
                 <div className="font-mono text-caption text-text-tertiary">{value}</div>
               </div>
             </Card>

@@ -73,7 +73,7 @@ export function AccessTrail({
                   {step.icon}
                 </span>
               )}
-              <span className="truncate text-body-sm font-medium text-text-primary transition-colors group-hover:text-text-brand">
+              <span className="truncate text-body-sm-strong text-text-primary transition-colors group-hover:text-text-brand">
                 {step.label}
               </span>
             </button>

@@ -90,7 +90,7 @@ export default function ReviewRequestDetailPage() {
     return (
       <div className="-mx-8 -my-6 grid h-[calc(100%+3rem)] place-items-center bg-canvas">
         <div className="text-center">
-          <div className="text-h5 font-semibold text-text-primary">Request not found</div>
+          <div className="text-h5 text-text-primary">Request not found</div>
           <div className="mt-4">
             <Button variant="secondary" onClick={() => router.push(LIST_HREF)}>
               Back to Review Requests
@@ -110,13 +110,13 @@ export default function ReviewRequestDetailPage() {
       <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border bg-canvas px-5 py-4 shadow-xs">
         <div className="flex min-w-0 flex-wrap items-center gap-3">
           <Avatar name={request.reference} initials={request.reference.replace(/\D/g, '').slice(0, 2) || 'AR'} size="sm" />
-          <span className="text-h5 font-semibold text-text-primary">{request.reference}</span>
+          <span className="text-h5 text-text-primary">{request.reference}</span>
           <RequestStatusChip status={request.status} />
           <StatusChip intent="neutral" label={request.approvalStage ?? 'Manager Approval Stage'} />
         </div>
         {pending && (
           <div className="flex shrink-0 flex-col items-end gap-2">
-            <span className="text-body-sm font-medium text-text-primary">
+            <span className="text-body-sm-strong text-text-primary">
               {timeRemainingDetail(request.dueAt)} Remaining
             </span>
             <div className="w-[140px]">
@@ -147,7 +147,7 @@ export default function ReviewRequestDetailPage() {
           {pending ? (
             <>
               <div className="flex min-h-0 flex-1 flex-col gap-1.5">
-                <span className="text-caption font-medium uppercase tracking-wide text-text-secondary">
+                <span className="text-caption-strong uppercase tracking-wide text-text-secondary">
                   Provide justification*
                 </span>
                 <Input
@@ -185,17 +185,17 @@ function RequestedForSection({ request }: { request: AccessRequest }) {
         <div className="flex items-center gap-3 px-4 py-4">
           <Avatar name={request.requestedForName} initials={request.requestedForName.charAt(0)} size="md" />
           <div className="min-w-0 flex-1">
-            <div className="text-body font-medium text-text-primary">{request.requestedForName}</div>
+            <div className="text-body-strong text-text-primary">{request.requestedForName}</div>
             <div className="text-body-sm text-text-secondary">{request.requestedForEmail}</div>
           </div>
-          <button type="button" className="shrink-0 text-body-sm font-medium text-brand hover:underline">
+          <button type="button" className="shrink-0 text-body-sm-strong text-brand hover:underline">
             User Details
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-2 border-t border-border bg-subtle px-4 py-3 text-body-sm">
           <span className="text-text-secondary">Requested By:</span>
           <Avatar name={request.requestedByName} initials={request.requestedByName.charAt(0)} size="sm" />
-          <span className="font-medium text-text-primary">{request.requestedByName}</span>
+          <span className="font-emphasis text-text-primary">{request.requestedByName}</span>
           {request.requestedByTitle && (
             <>
               <span className="text-text-tertiary">·</span>
@@ -220,7 +220,7 @@ function RequestedItemSection({ request }: { request: AccessRequest }) {
           <div className="flex items-center gap-3 border-b border-border bg-subtle px-4 py-4">
             <AppIcon app={request.appName} size={40} variant="surface" />
             <div className="min-w-0">
-              <div className="text-body font-medium text-text-primary">{request.appName}</div>
+              <div className="text-body-strong text-text-primary">{request.appName}</div>
               {request.itemDescription && (
                 <div className="text-body-sm text-text-secondary">{request.itemDescription}</div>
               )}
@@ -239,7 +239,7 @@ function RequestedItemSection({ request }: { request: AccessRequest }) {
                 </MetaInset>
               )}
               <MetaInset label="Access Duration:">
-                <span className="inline-flex items-center gap-1 text-body-sm font-medium text-text-primary">
+                <span className="inline-flex items-center gap-1 text-body-sm-strong text-text-primary">
                   <ScheduleOutlined sx={{ fontSize: 18 }} className="text-icon" />
                   {durationLabel(request)}
                 </span>
@@ -260,7 +260,7 @@ function ItemPrimaryRow({ request }: { request: AccessRequest }) {
       <div className="flex items-start gap-3">
         <AppIcon app={request.appName} size={36} variant="surface" />
         <div className="min-w-0">
-          <div className="text-body font-medium text-text-primary">{request.itemName}</div>
+          <div className="text-body-strong text-text-primary">{request.itemName}</div>
           {request.itemDescription && (
             <p className="mt-1 text-body-sm text-text-secondary">{request.itemDescription}</p>
           )}
@@ -281,12 +281,12 @@ function ItemPrimaryRow({ request }: { request: AccessRequest }) {
         <Icon sx={{ fontSize: 18 }} />
       </span>
       <div className="min-w-0">
-        <div className="text-body font-medium text-text-primary">{request.itemName}</div>
+        <div className="text-body-strong text-text-primary">{request.itemName}</div>
         {request.itemDescription && (
           <p className="mt-1 text-body-sm text-text-secondary">{request.itemDescription}</p>
         )}
         {request.roleCode && (
-          <span className="mt-1 inline-block rounded-md bg-subtle px-2 py-0.5 text-caption font-medium text-text-secondary">
+          <span className="mt-1 inline-block rounded-md bg-subtle px-2 py-0.5 text-caption-strong text-text-secondary">
             {request.roleCode}
           </span>
         )}
@@ -311,13 +311,13 @@ function JustificationInset({ text }: { text: string }) {
 
   return (
     <div className="mt-4 rounded-md border border-border-subtle bg-subtle px-2.5 py-2">
-      <div className="text-micro font-semibold uppercase tracking-wide text-text-secondary">Justification</div>
+      <div className="text-micro uppercase tracking-wide text-text-secondary">Justification</div>
       <p className="mt-1 text-body-sm leading-relaxed text-text-primary">{shown}</p>
       {long && (
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="mt-1 text-caption font-medium text-brand hover:underline"
+          className="mt-1 text-caption-strong text-brand hover:underline"
         >
           {expanded ? 'Show less' : 'Read more'}
         </button>
@@ -354,7 +354,7 @@ function RecommendationCard({
           <CheckOutlined sx={{ fontSize: 12 }} />
         </span>
         <div className="min-w-0">
-          <div className="text-body font-medium text-text-primary">{recommendationTitle(request.recommendation)}</div>
+          <div className="text-body-strong text-text-primary">{recommendationTitle(request.recommendation)}</div>
           <p className="mt-1 text-body-sm leading-relaxed text-text-secondary">{request.recommendationSummary}</p>
         </div>
       </div>
@@ -373,7 +373,7 @@ function DecisionSummary({ request }: { request: AccessRequest }) {
         </div>
         <div>
           <span className="text-text-secondary">Decided by </span>
-          <span className="font-medium text-text-primary">{request.decision.decidedBy}</span>
+          <span className="font-emphasis text-text-primary">{request.decision.decidedBy}</span>
           <span className="text-text-secondary"> on {formatRequestDateTime(request.decision.decidedAt)}</span>
         </div>
         <p className="leading-relaxed text-text-primary">{request.decision.justification}</p>

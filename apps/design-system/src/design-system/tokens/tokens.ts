@@ -109,8 +109,11 @@ export const color = {
     danger: { fg: p.red[600], solid: p.red[600], fill: p.red[550], subtle: p.red[50], border: p.red[200], onSolid: p.white },
     neutral: { fg: p.ink[500], solid: p.neutral[1000], fill: p.ink[50], subtle: p.neutral[100], border: p.neutral[1000], onSolid: p.ink[800] },
   },
-  // Risk-score tiers map onto the `status` roles above (Critical→danger, High→warning,
-  // Medium→info, Low→neutral) via RiskScoreChip — no separate risk palette.
+  // Risk-score tiers map onto the `status` roles above via RiskScoreChip — no separate
+  // risk palette. One hue per level so severity reads as a ramp:
+  //   Low → info (blue) · Medium → warning (yellow) · High → caution (orange) · Critical → danger (red)
+  // Low is info, not neutral or success: grey says "no data" and green says "all clear",
+  // but a low score is a real measurement. See docs/product/07-experience/visual-language.md §5.2.
 } as const;
 
 /* ------------------------------------------------------------------ *
@@ -136,13 +139,41 @@ export const typography = {
   h3: { fontSize: '1.25rem', lineHeight: '1.75rem', fontWeight: fontWeight.semibold, letterSpacing: '-0.01em' }, // 20/28
   h4: { fontSize: '1.125rem', lineHeight: '1.625rem', fontWeight: fontWeight.semibold, letterSpacing: '0' }, // 18/26
   h5: { fontSize: '1rem', lineHeight: '1.5rem', fontWeight: fontWeight.semibold, letterSpacing: '0' }, // 16/24
+  /* Card title — 15/20 regular. An owner-set style: it sits between h5 (16/600) and
+   * body (14/400) so a rail card's heading names its contents without competing with
+   * the page's own headings. Off the modular scale on purpose; named here so it is a
+   * type choice rather than an arbitrary `text-[15px]` at one call site. */
+  cardTitle: { fontSize: '0.9375rem', lineHeight: '1.25rem', fontWeight: fontWeight.regular, letterSpacing: '0' }, // 15/20
   bodyLg: { fontSize: '1rem', lineHeight: '1.5rem', fontWeight: fontWeight.regular, letterSpacing: '0' }, // 16/24
   body: { fontSize: '0.875rem', lineHeight: '1.25rem', fontWeight: fontWeight.regular, letterSpacing: '0' }, // 14/20 (base)
-  bodyMedium: { fontSize: '0.875rem', lineHeight: '1.25rem', fontWeight: fontWeight.medium, letterSpacing: '0' },
   bodySm: { fontSize: '0.8125rem', lineHeight: '1.125rem', fontWeight: fontWeight.regular, letterSpacing: '0' }, // 13/18
   caption: { fontSize: '0.75rem', lineHeight: '1rem', fontWeight: fontWeight.regular, letterSpacing: '0' }, // 12/16
+
+  /* --- Emphasis pairs -------------------------------------------------
+   * Each body size has exactly ONE emphasised partner, and it steps to 600,
+   * not 500. In DM Sans the 400 -> 500 delta is ~1.7% of width: at 12-14px it
+   * is not a perceptible step, so a "medium" row title read as plain body and
+   * the hierarchy silently collapsed. 400 -> 600 reads.
+   *
+   * These replace the ad-hoc `text-body-sm font-medium` style of pairing. A
+   * size class now carries its own weight, so emphasis is a *type choice*,
+   * never a weight utility bolted on at the call site. */
+  // MEDIUM (500) — the soft step. Reads as emphasis at 15px and up; at 12-14px the
+  // 400 -> 500 delta is ~1.7% of width in DM Sans and barely registers. Use it when
+  // you want a label to sit *slightly* above its neighbours without the firmness of
+  // 600 — a field value beside its label, say. If the emphasis has to be obvious at
+  // small sizes, reach for `-strong`.
+  bodyMedium: { fontSize: '0.875rem', lineHeight: '1.25rem', fontWeight: fontWeight.medium, letterSpacing: '0' }, // 14/20
+  bodySmMedium: { fontSize: '0.8125rem', lineHeight: '1.125rem', fontWeight: fontWeight.medium, letterSpacing: '0' }, // 13/18
+  captionMedium: { fontSize: '0.75rem', lineHeight: '1rem', fontWeight: fontWeight.medium, letterSpacing: '0' }, // 12/16
+
+  // STRONG (600) — the firm step. The default choice for emphasis in dense UI: a row's
+  // primary line against its secondary, a field value, a chip label.
+  bodyStrong: { fontSize: '0.875rem', lineHeight: '1.25rem', fontWeight: fontWeight.semibold, letterSpacing: '0' }, // 14/20
+  bodySmStrong: { fontSize: '0.8125rem', lineHeight: '1.125rem', fontWeight: fontWeight.semibold, letterSpacing: '0' }, // 13/18
+  captionStrong: { fontSize: '0.75rem', lineHeight: '1rem', fontWeight: fontWeight.semibold, letterSpacing: '0' }, // 12/16
   overline: { fontSize: '0.75rem', lineHeight: '1rem', fontWeight: fontWeight.semibold, letterSpacing: '0.06em', textTransform: 'uppercase' as const }, // 12/16
-  micro: { fontSize: '0.625rem', lineHeight: '0.875rem', fontWeight: fontWeight.regular, letterSpacing: '0' }, // 10/14 — badge initials, tiny eyebrows
+  micro: { fontSize: '0.625rem', lineHeight: '0.875rem', fontWeight: fontWeight.semibold, letterSpacing: '0' }, // 10/14 — badge initials, tiny eyebrows
   stat: { fontSize: '1.5rem', lineHeight: '1.75rem', fontWeight: fontWeight.bold, letterSpacing: '-0.01em' }, // 24/28 — KPI / metric numerals
 } as const;
 

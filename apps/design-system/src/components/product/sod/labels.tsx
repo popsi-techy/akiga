@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { AppIcon, StatusChip, type StatusIntent } from '@ds/components';
-import type { Severity, ReviewStatus, ReviewerStatus, AccessType } from '@/data/sod-types';
+import type { Severity, ReviewerStatus, AccessType } from '@/data/sod-types';
 
 /** The DS union rather than a local copy — a duplicate silently misses new intents
  *  (it had no `caution`, so severity could not reach the orange step). */
@@ -27,18 +27,6 @@ const SEV_INTENT: Record<Severity, Intent> = {
 
 export function SeverityChip({ severity, score }: { severity: Severity; score?: number }) {
   return <StatusChip intent={SEV_INTENT[severity]} dot={false} label={score != null ? `${cap(severity)} (${score})` : cap(severity)} />;
-}
-
-export const STATUS_META: Record<ReviewStatus, { label: string; intent: Intent }> = {
-  unassigned: { label: 'Unassigned', intent: 'neutral' },
-  assigned: { label: 'Assigned', intent: 'info' },
-  inProgress: { label: 'In Progress', intent: 'warning' },
-  completed: { label: 'Completed', intent: 'success' },
-  overdue: { label: 'Overdue', intent: 'danger' },
-};
-export function StatusPill({ status }: { status: ReviewStatus }) {
-  const m = STATUS_META[status];
-  return <StatusChip intent={m.intent} label={m.label} />;
 }
 
 export const REVIEWER_STATUS_META: Record<ReviewerStatus, { label: string; intent: Intent }> = {
@@ -113,7 +101,7 @@ export function AppBadge({
   return (
     <span
       className={[
-        'inline-flex shrink-0 items-center justify-center rounded-md text-caption font-semibold text-text-secondary',
+        'inline-flex shrink-0 items-center justify-center rounded-md text-caption-strong text-text-secondary',
         variant === 'surface' ? 'bg-surface' : 'bg-subtle',
       ].join(' ')}
       style={{ width: size, height: size }}

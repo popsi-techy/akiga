@@ -109,6 +109,13 @@ Ordering principles when they conflict:
 
 ## 4. Design Philosophy
 
+> **Before writing any UI, read [`docs/product/07-experience/visual-language.md`](./docs/product/07-experience/visual-language.md).**
+> This section governs the *provenance* of visual values (tokens, theming, a11y, states). It does not
+> say what the product should look like — the visual language does, and it is binding: the
+> protagonist rule, the surface ladder, the type hierarchy, the colour budget, density, motion, the
+> screen archetypes, and the protocol for building from a screenshot. Everything here can pass while
+> a screen is still badly designed; §11 of that document is the review that catches it.
+
 - **Tokens are the atoms.** Nothing visual is hardcoded. Color, spacing, typography, radius,
   elevation, and motion come from tokens. If a value isn't a token yet, the correct move is to
   add a token — not to inline a literal.
@@ -206,6 +213,18 @@ Non-negotiables:
 
 **The rule in one sentence:** *If it's new and real, it is born in the Design System, fully
 documented and recorded, before the IGA product is allowed to use it.*
+
+**Before the first line of UI, and again before calling it done.** Reuse answers *what to build
+with*; it does not answer *what it should look like*. So the workflow above is bracketed by the
+visual language ([`docs/product/07-experience/visual-language.md`](./docs/product/07-experience/visual-language.md)):
+
+- **Before implementing** — name the screen's protagonist (§2) and pick its archetype (§8). Building
+  from a screenshot or mockup? Follow §9: read the reference back in three bullets first, reproduce
+  its structure, convert every visual atom to our tokens and components.
+- **For anything net-new** — produce two directions as quick static mocks and choose between them
+  before building the real thing.
+- **Before calling it done** — run the §11 review pass and report what is weak, in the same spirit as
+  the contrast gate. "It renders and passes contrast" is not a design review.
 
 **The Spike escape hatch:** genuine exploration is allowed, but only in a clearly-labeled,
 throwaway spike that MUST NOT be merged into the product. To ship, its outcome must be

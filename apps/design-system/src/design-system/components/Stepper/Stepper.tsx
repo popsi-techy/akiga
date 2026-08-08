@@ -62,7 +62,7 @@ export function Stepper({ steps, current, onStepClick, showBack = true }: Steppe
               >
                 <span
                   className={[
-                    'grid h-6 w-6 shrink-0 place-items-center rounded-full text-caption font-semibold transition-colors',
+                    'grid h-6 w-6 shrink-0 place-items-center rounded-full text-caption-strong transition-colors',
                     complete
                       ? 'bg-[var(--ds-color-status-success-fill)] text-white'
                       : active
@@ -75,7 +75,7 @@ export function Stepper({ steps, current, onStepClick, showBack = true }: Steppe
                 <span
                   className={[
                     'whitespace-nowrap text-body-sm',
-                    active || complete ? 'font-medium text-text-primary' : 'text-text-secondary',
+                    active || complete ? 'font-emphasis text-text-primary' : 'text-text-secondary',
                   ].join(' ')}
                 >
                   {step.label}

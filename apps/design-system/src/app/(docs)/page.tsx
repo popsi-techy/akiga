@@ -33,7 +33,7 @@ export default function Home() {
             ['Tokens are the atoms', 'Nothing visual is hardcoded — it comes from a token.'],
           ].map(([t, d]) => (
             <Card key={t} className="p-5">
-              <div className="text-body font-semibold text-text-primary">{t}</div>
+              <div className="text-body-strong text-text-primary">{t}</div>
               <p className="mt-1.5 text-body-sm leading-5 text-text-secondary">{d}</p>
             </Card>
           ))}
@@ -46,7 +46,7 @@ export default function Home() {
             <Link key={f.href} href={f.href} className="group">
               <Card className="p-5 transition-shadow group-hover:shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-body font-semibold text-text-primary">{f.label}</span>
+                  <span className="text-body-strong text-text-primary">{f.label}</span>
                   <span className="text-text-brand transition-transform group-hover:translate-x-0.5">→</span>
                 </div>
                 <p className="mt-1 text-body-sm text-text-secondary">{f.desc}</p>
@@ -61,7 +61,7 @@ export default function Home() {
           <p className="text-body leading-6 text-text-secondary">
             The Design System and the IGA Product evolve together. When a screen needs a new
             component, pattern, token, or guideline, it is{' '}
-            <span className="font-medium text-text-primary">added here first</span>, documented,
+            <span className="font-emphasis text-text-primary">added here first</span>, documented,
             and then used in the product — never the other way around.
           </p>
         </Card>

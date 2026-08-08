@@ -4,18 +4,15 @@
  * shared-access impact) used by both consoles. Screens depend on these, never
  * on the store directly.
  */
-import { sodReviewSeed, accessById, sodAppById, CURRENT_REVIEWER, sodReviewers, riskApprovers } from './sod-seed';
+import { sodReviewSeed, accessById, sodAppById, CURRENT_REVIEWER } from './sod-seed';
 import { buildSubmittedAuditPayload, clearedByRemoval } from './sod-audit';
 import type {
   SodReview,
   SodRule,
-  ViolationRow,
   MyReviewRow,
-  ReviewStatus,
   ReviewerStatus,
   AcceptedRisk,
   AuditEntry,
-  Person,
 } from './sod-types';
 
 const STORE_KEY = 'iga.sodReviews.v1';
@@ -59,7 +56,7 @@ function writeStore(s: Store) {
 }
 
 // ---- reference data ---------------------------------------------------
-export { sodReviewers, riskApprovers, CURRENT_REVIEWER, accessById };
+export { CURRENT_REVIEWER, accessById };
 export const getAccess = (id: string) => accessById[id];
 export const getSodApp = (id: string) => sodAppById[id];
 
@@ -96,15 +93,7 @@ export function progressOf(review: SodReview): Progress {
   const pending = total - resolved - accepted;
   return { total, resolved, accepted, pending, pct: total ? Math.round(((resolved + accepted) / total) * 100) : 100 };
 }
-export function riskReduction(review: SodReview): { original: number; projected: number; reducedPct: number } {
-  const { total, pending } = progressOf(review);
-  const projected = total ? Math.round(review.riskScore * (pending / total)) : 0;
-  return { original: review.riskScore, projected, reducedPct: Math.round((1 - (total ? pending / total : 0)) * 100) };
-}
 /** Rules a given access still participates in (pending only). */
-export function impactOf(review: SodReview, accessId: string): SodRule[] {
-  return review.rules.filter((r) => ruleState(review, r) === 'pending' && r.accessIds.includes(accessId));
-}
 /** Greedy minimum-removal set that clears every pending rule (AND semantics). */
 export function fastestPath(review: SodReview): { accessId: string; count: number }[] {
   const pending = review.rules.filter((r) => ruleState(review, r) === 'pending');
@@ -150,34 +139,10 @@ export function reviewerStatusOf(review: SodReview): ReviewerStatus {
   const hasWork = review.removedAccessIds.length > 0 || Object.keys(review.acceptedRules).length > 0 || review.overallJustification.trim().length > 0;
   return hasWork ? 'inProgress' : 'notStarted';
 }
-/** Admin status with overdue normalization. */
-export function effectiveStatus(review: SodReview): ReviewStatus {
-  if (review.status === 'completed' || review.submission) return 'completed';
-  if (!review.assignedReviewerId) return 'unassigned';
-  if (review.dueDate && new Date(review.dueDate).getTime() < Date.now() && !review.submission) return 'overdue';
-  return reviewerStatusOf(review) === 'inProgress' ? 'inProgress' : 'assigned';
-}
 
 // ---- reads ------------------------------------------------------------
 export function getReview(id: string): SodReview | null {
   return readStore().reviews[id] ?? null;
-}
-export function listViolations(): ViolationRow[] {
-  return Object.values(readStore().reviews)
-    .map((r) => ({
-      id: r.id,
-      userName: r.userName,
-      userEmail: r.userEmail,
-      policyNames: r.policyNames,
-      ruleCount: r.rules.length,
-      riskScore: r.riskScore,
-      severity: r.severity,
-      assignedReviewerName: r.assignedReviewerName,
-      status: effectiveStatus(r),
-      dueDate: r.dueDate,
-      updatedAt: r.updatedAt,
-    }))
-    .sort((a, b) => b.riskScore - a.riskScore);
 }
 export function detectedAtOf(review: SodReview): string {
   return review.audit.find((e) => e.action === 'Violation detected')?.at ?? review.createdAt;
@@ -232,39 +197,6 @@ function audit(
   ];
 }
 
-export function unassignReviewer(id: string): SodReview | null {
-  const r = getReview(id);
-  if (!r || !r.assignedReviewerId) return r;
-  return save({
-    ...r,
-    assignedReviewerId: undefined,
-    assignedReviewerName: undefined,
-    assignedAt: undefined,
-    dueDate: undefined,
-    status: 'unassigned',
-    audit: audit(r, 'Reviewer unlinked', `Unassigned ${r.assignedReviewerName ?? 'reviewer'}`, 'Admin'),
-  });
-}
-
-export function assignReviewer(id: string, reviewer: Person, dueDate?: string): SodReview | null {
-  const r = getReview(id);
-  if (!r) return null;
-  const nextDue = dueDate ?? r.dueDate;
-  return save({
-    ...r,
-    assignedReviewerId: reviewer.id,
-    assignedReviewerName: reviewer.name,
-    assignedAt: nowIso(),
-    ...(nextDue ? { dueDate: nextDue } : {}),
-    status: 'assigned',
-    audit: audit(
-      r,
-      r.assignedReviewerId ? 'Reviewer reassigned' : 'Reviewer assigned',
-      nextDue ? `Assigned to ${reviewer.name}, due ${nextDue}` : `Assigned to ${reviewer.name}`,
-      'Admin',
-    ),
-  });
-}
 
 /** Persist staged reviewer decisions (draft). */
 export function saveReviewState(
@@ -289,15 +221,4 @@ export function submitReview(id: string, overallJustification: string): SodRevie
     status: 'completed',
     audit: audit(r, 'Review submitted', `Reference ${reference}`, undefined, buildSubmittedAuditPayload(withState, reference)),
   });
-}
-
-/** Convenience for the workspace: append a decision audit line as it happens. */
-export function logDecision(
-  id: string,
-  action: string,
-  detail: string,
-  payload?: AuditEntry['payload'],
-): void {
-  const r = getReview(id);
-  if (r) save({ ...r, audit: audit(r, action, detail, undefined, payload) });
 }

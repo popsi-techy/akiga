@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { typography } from '../../tokens/tokens';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 
@@ -70,7 +71,7 @@ export function Select({
         <label
           id={labelId}
           htmlFor={fieldId}
-          className="mb-1.5 block text-body-sm font-medium text-text-primary"
+          className="mb-1.5 block text-body-sm-strong text-text-primary"
         >
           {label}
           {required && (
@@ -107,10 +108,10 @@ export function Select({
                 return options.find((o) => o.value === selected)?.label ?? String(selected);
               }
             : undefined,
-          MenuProps: { PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: '14px' } } } },
+          MenuProps: { PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: typography.body.fontSize } } } },
         }}
         sx={{
-          '& .MuiInputBase-root': { borderRadius: radius, fontSize: '14px', backgroundColor: 'var(--ds-color-surface-default)' },
+          '& .MuiInputBase-root': { borderRadius: radius, fontSize: typography.body.fontSize, backgroundColor: 'var(--ds-color-surface-default)' },
           ...(attached && {
             // Drop the shared edge — the neighbour already draws it, and two 1px
             // borders meeting would read as a 2px seam down the middle.
@@ -123,7 +124,7 @@ export function Select({
             paddingTop: size === 'sm' ? '8px' : '10px',
             paddingBottom: size === 'sm' ? '8px' : '10px',
           },
-          '& .MuiFormHelperText-root': { marginLeft: 0, marginTop: '6px', fontSize: '12px' },
+          '& .MuiFormHelperText-root': { marginLeft: 0, marginTop: '6px', fontSize: typography.caption.fontSize },
         }}
       >
         {options.map((o) => (

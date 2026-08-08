@@ -117,7 +117,7 @@ function GroupEditor({
   return (
     <div className={depth > 0 ? 'rounded-md border border-border bg-subtle/40 p-3' : ''}>
       <div className="mb-2 flex items-center gap-2">
-        <div className="inline-flex rounded-md bg-subtle p-0.5 text-caption font-medium">
+        <div className="inline-flex rounded-md bg-subtle p-0.5 text-caption-strong">
           {(['AND', 'OR'] as const).map((c) => (
             <button
               key={c}

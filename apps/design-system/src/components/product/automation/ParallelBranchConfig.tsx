@@ -37,10 +37,10 @@ const FALLBACK_APPROVER_RESOLUTION_OPTIONS: { value: FallbackApproverResolution;
 ];
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <div className="mb-2.5 text-caption font-semibold uppercase tracking-[0.07em] text-text-tertiary">{children}</div>;
+  return <div className="mb-2.5 text-caption-strong uppercase tracking-[0.07em] text-text-tertiary">{children}</div>;
 }
 function FieldLabelSm({ children }: { children: React.ReactNode }) {
-  return <div className="mb-1.5 text-body-sm font-medium text-text-secondary">{children}</div>;
+  return <div className="mb-1.5 text-body-sm-strong text-text-secondary">{children}</div>;
 }
 
 export function ParallelBranchConfig({ config, onChange }: { config: ParallelConfig; onChange: (next: ParallelConfig) => void }) {
@@ -141,7 +141,7 @@ export function ParallelBranchConfig({ config, onChange }: { config: ParallelCon
         {/* Fallback — same model as Approval Level; applies to all parallel approvers. */}
         <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <span className="text-body-sm font-medium text-text-primary">Add fallback</span>
+            <span className="text-body-sm-strong text-text-primary">Add fallback</span>
             <Tooltip title="If any approver does not approve, the request is sent to this approver." placement="top">
               <span
                 tabIndex={0}

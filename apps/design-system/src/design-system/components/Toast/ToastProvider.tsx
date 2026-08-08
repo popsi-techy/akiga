@@ -80,7 +80,7 @@ function ToastCard({ item, onClose }: { item: ToastItem; onClose: (id: number) =
       <Icon sx={{ fontSize: 20, color: solid, marginTop: '1px', flexShrink: 0 }} />
       <div className="min-w-0 flex-1">
         {item.title && (
-          <div className="text-body font-semibold leading-5 text-text-primary">{item.title}</div>
+          <div className="text-body-strong leading-5 text-text-primary">{item.title}</div>
         )}
         <div className="text-body leading-5 text-text-primary">{item.message}</div>
       </div>

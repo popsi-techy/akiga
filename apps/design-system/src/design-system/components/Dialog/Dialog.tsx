@@ -51,7 +51,7 @@ export function Dialog({
     >
       <div className="p-6">
         {icon && <div className="mb-3">{icon}</div>}
-        <h2 id={titleId} className="text-h4 font-semibold leading-6 text-text-primary">
+        <h2 id={titleId} className="text-h4 leading-6 text-text-primary">
           {title}
         </h2>
         {children && (

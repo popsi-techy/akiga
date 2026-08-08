@@ -25,7 +25,7 @@ export default function SelectionPanelDocs() {
       render: (p) => (
         <div className="flex items-center gap-3">
           <Avatar name={p.name} size="sm" />
-          <span className="font-medium text-text-primary">{p.name}</span>
+          <span className="text-body-sm-strong text-text-primary">{p.name}</span>
         </div>
       ),
     },

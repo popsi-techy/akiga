@@ -81,7 +81,7 @@ export function DonutChart({
         {(centerValue != null || centerLabel != null) && (
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             {centerValue != null && (
-              <div className="text-h2 font-bold leading-7 text-text-primary">{centerValue}</div>
+              <div className="text-h2 leading-7 text-text-primary">{centerValue}</div>
             )}
             {centerLabel != null && <div className="text-caption text-text-secondary">{centerLabel}</div>}
           </div>
@@ -94,7 +94,7 @@ export function DonutChart({
             <li key={i} className="flex items-center gap-2 text-body-sm">
               <span className="h-2.5 w-2.5 shrink-0 rounded-pill" style={{ background: seg.color }} />
               <span className="flex-1 truncate text-text-secondary">{seg.label}</span>
-              <span className="font-medium text-text-primary">{seg.value}</span>
+              <span className="font-emphasis text-text-primary">{seg.value}</span>
             </li>
           ))}
         </ul>

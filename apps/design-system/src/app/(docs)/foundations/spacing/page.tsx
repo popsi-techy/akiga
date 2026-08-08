@@ -34,7 +34,7 @@ export default function SpacingPage() {
           ].map(([label, val, token]) => (
             <Card key={label as string} className="flex items-center justify-between p-4">
               <div>
-                <div className="text-body-sm font-medium text-text-primary">{label}</div>
+                <div className="text-body-sm-strong text-text-primary">{label}</div>
                 <div className="text-caption text-text-tertiary">{val}</div>
               </div>
               {token}

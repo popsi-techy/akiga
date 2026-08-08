@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { typography } from '../../tokens/tokens';
 import MuiMenu from '@mui/material/Menu';
 import MuiMenuItem from '@mui/material/MenuItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
@@ -79,7 +80,7 @@ export function Menu({ items, trigger, ariaLabel = 'Actions' }: MenuProps) {
                 close();
               }}
               sx={{
-                fontSize: '13px',
+                fontSize: typography.bodySm.fontSize,
                 paddingY: '7px',
                 color: item.danger ? 'var(--ds-color-status-danger-fg)' : 'var(--ds-color-text-primary)',
                 '&:hover': {
