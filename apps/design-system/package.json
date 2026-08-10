@@ -5,13 +5,14 @@
   "description": "The Design System — a polished application with its own navigation, documentation, tokens, components, and patterns.",
   "scripts": {
     "dev": "next dev -p 3001",
-    "prebuild": "npm run check:contrast && npm run check:type",
+    "prebuild": "npm run check:contrast && npm run check:type && npm run check:icons",
     "build": "next build",
     "start": "next start -p 3001",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "check:contrast": "tsx scripts/check-contrast.ts",
     "check:type": "tsx scripts/check-typography.ts",
+    "check:icons": "tsx scripts/check-icons.ts",
     "check:a11y": "npm run check:contrast"
   },
   "dependencies": {

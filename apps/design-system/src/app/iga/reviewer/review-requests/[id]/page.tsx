@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import PersonOutline from '@mui/icons-material/PersonOutline';
+import Person from '@mui/icons-material/Person';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import BadgeOutlined from '@mui/icons-material/BadgeOutlined';
 import ScheduleOutlined from '@mui/icons-material/ScheduleOutlined';
@@ -180,7 +180,7 @@ export default function ReviewRequestDetailPage() {
 
 function RequestedForSection({ request }: { request: AccessRequest }) {
   return (
-    <Card title="Requested For" icon={<PersonOutline />} padding="none">
+    <Card title="Requested For" icon={<Person />} padding="none">
       <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface">
         <div className="flex items-center gap-3 px-4 py-4">
           <Avatar name={request.requestedForName} initials={request.requestedForName.charAt(0)} size="md" />

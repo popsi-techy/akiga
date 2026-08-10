@@ -98,6 +98,7 @@ export default function FlowCanvasDocs() {
             { name: 'view / onViewChange', type: "'outline' | 'detailed'", description: 'Density toggle (passed to renderCard as `dense`).' },
             { name: 'onUndo / onRedo / canUndo / canRedo', type: '() => void / boolean', description: 'Wire the host’s history stack to the toolbar.' },
             { name: 'onClearSelection', type: '() => void', description: 'Called when the empty canvas is clicked.' },
+            { name: 'readOnly', type: 'boolean', default: 'false', description: 'Drop every authoring affordance — no quick-insert, no drop targets — so the same canvas can render a flow as a preview.' },
           ]}
         />
       </Section>
@@ -109,6 +110,7 @@ export default function FlowCanvasDocs() {
             'Keep node cards in renderCard so each builder styles its own domain.',
             'Use headerCard for the fixed first card (Policy card / Event card).',
             'Wire onUndo/onRedo to the host document history.',
+            'Use readOnly to preview a saved flow — same geometry as the builder, so nothing moves when you switch to editing.',
           ]}
           donts={[
             'Don’t embed the full canvas inside a drawer — it’s a dedicated builder surface.',

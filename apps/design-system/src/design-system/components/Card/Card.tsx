@@ -12,10 +12,18 @@ export interface CardProps {
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
   /**
-   * Leading icon shown before the title. Prefer a **filled** MUI icon (not Outlined).
-   * Sized to 15px by the header; color defaults to `text-icon` /
-   * `--ds-color-icon-default` via the wrapper — pass an uncolored icon. Override
+   * Leading icon shown before the title. **Must be a filled MUI icon — never an
+   * `Outlined`/`Outline` one.** The header forces it to 15px, and at that size an
+   * outlined glyph is a ~1px grey stroke that reads as a smudge beside a 15px
+   * title, where its filled twin reads as a mark. The two are near-identical in an
+   * icon picker at 24px, so the mistake is invisible until it ships — which is why
+   * `npm run check:icons` fails the build on it.
+   *
+   * Colour comes from the `text-icon` wrapper — pass an uncoloured icon. Override
    * only when a status/brand accent is intentional.
+   *
+   * @example icon={<Person />}    // ✓ filled
+   * @example icon={<PersonOutline />}  // ✗ blocked by check:icons
    */
   icon?: React.ReactNode;
   /** Right-aligned header content (e.g. a Button, menu, or filter). */

@@ -82,7 +82,7 @@
         "hoverElevate"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/card/page.tsx",
-      "notes": "Header uses 15px regular title + 15px filled icon. padding=none keeps a horizontal content gutter so flush-list dividers stay inset. See ADR-0009."
+      "notes": "Header uses 15px regular title + 15px filled icon. padding=none keeps a horizontal content gutter so flush-list dividers stay inset. See ADR-0009. The header icon MUST be a FILLED MUI icon: the header forces 15px, where an outlined 1px stroke reads as a smudge. `npm run check:icons` fails the build on any Outlined icon passed to a Card."
     },
     {
       "name": "Checkbox",
@@ -201,17 +201,19 @@
       "extends": null,
       "variants": [
         "outline",
-        "detailed"
+        "detailed",
+        "readOnly"
       ],
       "states": [
         "default",
         "node-selected",
         "drag-over",
         "empty",
-        "zoomed"
+        "zoomed",
+        "read-only"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/flow-canvas/page.tsx",
-      "notes": "The Automation builders’ derived-layout graph for a *sequence* (ADR-0007: custom, zero-dependency). Recursive sequence/branch model rendered top-down with fan-out/merge connectors, connector drop-targets and quick-insert. For a *network*, use RelationshipCanvas."
+      "notes": "The Automation builders’ derived-layout graph for a *sequence* (ADR-0007: custom, zero-dependency). Recursive sequence/branch model rendered top-down with fan-out/merge connectors, connector drop-targets and quick-insert. For a *network*, use RelationshipCanvas. `readOnly` renders a saved flow as a preview with no authoring affordances — used by the Approval Policy detail page, so preview and builder are the same picture."
     },
     {
       "name": "InfoRow",

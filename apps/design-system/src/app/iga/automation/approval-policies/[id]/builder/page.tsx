@@ -33,6 +33,7 @@ import {
   type FlowInsertLoc,
 } from '@ds/components';
 import { getApprovalPolicy, updateApprovalPolicy } from '@/data/approval-policies';
+import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import {
   APPROVER_TYPE_LABEL,
   type ApprovalPolicy,
@@ -139,6 +140,8 @@ export default function ApprovalPolicyBuilderPage() {
   const [draggingKind, setDraggingKind] = React.useState<string | null>(null);
 
   const doc = hist?.doc ?? null;
+  /** The builder is opened from a policy's detail page, so back returns there. */
+  const detailHref = `/iga/automation/approval-policies/${params.id}`;
 
   React.useEffect(() => {
     const p = getApprovalPolicy(params.id);
@@ -150,6 +153,18 @@ export default function ApprovalPolicyBuilderPage() {
   }, [params.id]);
 
   const dirty = doc != null && JSON.stringify(doc) !== savedSnapshot;
+
+  // Mirrors the SoD workspace trail: the editor is a step *inside* the policy,
+  // so the crumb keeps the policy itself reachable in one click.
+  useSetBreadcrumbs(
+    doc
+      ? [
+          { label: 'Approval Policies', href: '/iga/automation/approval-policies' },
+          { label: doc.policyName, href: detailHref },
+          { label: 'Workflow builder' },
+        ]
+      : null,
+  );
 
   // warn on tab close / refresh while dirty
   React.useEffect(() => {
@@ -266,7 +281,7 @@ export default function ApprovalPolicyBuilderPage() {
 
   const goBack = () => {
     if (dirty) setBackConfirm(true);
-    else router.push('/iga/automation/approval-policies');
+    else router.push(detailHref);
   };
 
   // ---- render helpers ---------------------------------------------------
@@ -514,7 +529,7 @@ export default function ApprovalPolicyBuilderPage() {
       {/* header */}
       <div className="flex shrink-0 items-center justify-between border-b border-border bg-canvas px-5 py-2.5">
         <div className="flex items-center gap-3">
-          <button type="button" onClick={goBack} aria-label="Back to Approval Policies" className="grid h-8 w-8 place-items-center rounded-md text-icon hover:bg-surface-hover">
+          <button type="button" onClick={goBack} aria-label="Back to policy details" className="grid h-8 w-8 place-items-center rounded-md text-icon hover:bg-surface-hover">
             <ArrowBackOutlined sx={{ fontSize: 20 }} />
           </button>
           <Avatar name={doc?.policyName ?? 'Policy'} initials={(doc?.policyName ?? 'P').charAt(0).toUpperCase()} size="sm" />
@@ -710,7 +725,7 @@ export default function ApprovalPolicyBuilderPage() {
         tone="danger"
         confirmLabel="Discard"
         cancelLabel="Keep editing"
-        onConfirm={() => router.push('/iga/automation/approval-policies')}
+        onConfirm={() => router.push(detailHref)}
       >
         You have unsaved changes to this policy. Leaving now will discard them.
       </Dialog>

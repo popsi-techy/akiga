@@ -79,6 +79,12 @@ export interface FlowCanvasProps {
   draggingKind?: string | null;
   /** Marks a node as flow-terminating (e.g. Exit): nothing connects below it. */
   isTerminal?: (node: FlowNodeLike) => boolean;
+  /**
+   * Render the flow without any authoring affordances — no quick-insert "+",
+   * no drop targets, no empty-state add card. The same layout, zoom and cards as
+   * the builder, so a preview and its editor are the same picture.
+   */
+  readOnly?: boolean;
 }
 
 interface Ctx {
@@ -91,6 +97,7 @@ interface Ctx {
   dense: boolean;
   dragKind: string | null;
   isTerminal?: (node: FlowNodeLike) => boolean;
+  readOnly: boolean;
 }
 const CanvasContext = React.createContext<Ctx | null>(null);
 const useCtx = () => {
@@ -132,9 +139,21 @@ function Pill({ label, icon }: { label: string; icon: React.ReactNode }) {
  * dashed drop target that also opens the quick-insert menu on click.
  */
 function AddComponentCard({ loc, hint }: { loc: FlowInsertLoc; hint?: string }) {
-  const { palette, onInsert } = useCtx();
+  const { palette, onInsert, readOnly } = useCtx();
   const [over, setOver] = React.useState(false);
   const [anchor, setAnchor] = React.useState<HTMLElement | null>(null);
+
+  // A read-only canvas with nothing to show says so, rather than inviting an
+  // insertion it cannot accept.
+  if (readOnly) {
+    return (
+      <div className="ds-node-in flex w-[320px] flex-col items-center gap-1 rounded-xl border border-dashed border-border bg-surface px-8 py-7 text-center">
+        <span className="text-body-strong text-text-primary">No steps yet</span>
+        <span className="text-caption text-text-tertiary">{hint ?? 'This flow has not been built.'}</span>
+      </div>
+    );
+  }
+
   return (
     <>
       <button
@@ -195,12 +214,24 @@ function AddComponentCard({ loc, hint }: { loc: FlowInsertLoc; hint?: string }) 
 
 /** Connector between two positions — vertical line + quick-insert "+" + drop target. */
 function Connector({ loc }: { loc: FlowInsertLoc }) {
-  const { palette, onInsert, dragKind } = useCtx();
+  const { palette, onInsert, dragKind, readOnly } = useCtx();
   const [over, setOver] = React.useState(false);
   const [anchor, setAnchor] = React.useState<HTMLElement | null>(null);
 
   const open = Boolean(anchor);
   const ghost = dragKind ? palette.find((p) => p.kind === dragKind) : undefined;
+
+  // Read-only: the connector still draws the line that joins two steps, but it
+  // stops being a target. Keeping the same height means a preview and its
+  // builder render at identical geometry — the flow does not reflow when you
+  // switch between reading it and editing it.
+  if (readOnly) {
+    return (
+      <div className="relative flex h-9 min-w-[40px] items-center justify-center">
+        <div className="h-full w-0.5 bg-border-strong" />
+      </div>
+    );
+  }
   // Only the hovered slot opens to receive the drop — dragging never shifts the
   // whole canvas, so there's no jump when a drag begins.
   return (
@@ -420,6 +451,7 @@ export function FlowCanvas({
   emptyHint = 'Add component',
   draggingKind,
   isTerminal,
+  readOnly = false,
 }: FlowCanvasProps) {
   const [zoom, setZoom] = React.useState(1);
   const viewportRef = React.useRef<HTMLDivElement>(null);
@@ -451,7 +483,7 @@ export function FlowCanvas({
     return () => vp.removeEventListener('wheel', handleWheel);
   }, []);
 
-  const ctx: Ctx = { renderCard, palette, onInsert, renderBranchLabel, renderSealedBody, renderBetweenTiers, dense, dragKind: draggingKind ?? null, isTerminal };
+  const ctx: Ctx = { renderCard, palette, onInsert, renderBranchLabel, renderSealedBody, renderBetweenTiers, dense, dragKind: draggingKind ?? null, isTerminal, readOnly };
   // The flow ends (no End pill) only when the last root node is an Exit or every lane
   // of its branch tier exits — otherwise the branches merge and continue into End.
   const rootExits = root.length > 0 && endsFlow(root[root.length - 1], isTerminal);

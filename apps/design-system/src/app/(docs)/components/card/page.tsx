@@ -85,7 +85,7 @@ export default function CardDocs() {
               name: 'icon',
               type: 'ReactNode',
               description:
-                'Leading filled icon before the title (prefer MUI filled, not Outlined). Card sizes it to 15px and colors it text-icon unless you pass a status/brand accent.',
+                'Leading filled icon before the title — MUI filled, never Outlined. Card sizes it to 15px and colors it text-icon unless you pass a status/brand accent. Enforced by npm run check:icons.',
             },
             { name: 'action', type: 'ReactNode', description: 'Right-aligned header slot (button, menu, filter).' },
             { name: 'footer', type: 'ReactNode', description: 'Footer content under a top divider.' },
@@ -110,7 +110,7 @@ export default function CardDocs() {
             'Reserve raised for cards that must pop (e.g. a hovered/selected card).',
             'Use the header slot for a title + one action.',
             'Use padding="none" for flush lists — omit horizontal padding on rows; Card supplies the gutter.',
-            'Use filled MUI icons in the header (Card sizes them to 15px).',
+            'Use filled MUI icons in the header — Person, not PersonOutline (Card sizes them to 15px).',
             'Leave header icons uncolored so they inherit the Design System icon color.',
           ]}
           donts={[
@@ -118,7 +118,7 @@ export default function CardDocs() {
             'Don’t nest multiple raised cards.',
             'Don’t hardcode borders/radius — the card owns them.',
             'Don’t put more than one primary action in the header.',
-            'Don’t use Outlined icons or set a custom fontSize on Card header icons.',
+            'Don’t use Outlined icons here — at 15px the stroke reads as a smudge, and check:icons fails the build on it.',
             'Don’t brand-tint every card header icon — reserve color for status meaning.',
           ]}
         />

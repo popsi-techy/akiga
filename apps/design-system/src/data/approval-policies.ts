@@ -5,12 +5,13 @@
  * Screens depend on these functions, never on localStorage or the seed directly.
  */
 import { approvalPolicySeed } from './seed';
+import { approvalPolicyFlows } from './approval-policy-flows';
 import type { ApprovalPolicy, ApprovalPolicyRow } from './automation-types';
 import { migrateRoot } from '@/lib/policy-tree';
 
 const STORE_KEY = 'iga.approvalPolicies.v1';
 /** Bump to top-up existing stores with newly-added seed policies (non-destructive). */
-const SEED_VERSION = 2;
+const SEED_VERSION = 3;
 
 interface Store {
   version?: number;
@@ -19,9 +20,15 @@ interface Store {
 
 const hasWindow = () => typeof window !== 'undefined';
 
+/** A seeded policy plus the flow authored for it (see `approval-policy-flows.ts`). */
+function seedPolicy(p: ApprovalPolicy): ApprovalPolicy {
+  const flow = approvalPolicyFlows[p.id];
+  return structuredClone({ ...p, root: flow ?? p.root });
+}
+
 function seedStore(): Store {
   const policies: Record<string, ApprovalPolicy> = {};
-  for (const p of approvalPolicySeed) policies[p.id] = structuredClone(p);
+  for (const p of approvalPolicySeed) policies[p.id] = seedPolicy(p);
   return { version: SEED_VERSION, policies };
 }
 
@@ -42,9 +49,16 @@ function readStore(): Store {
     }
     // One-time, non-destructive top-up: when the seed version advances, add any
     // missing sample policies so stale stores gain them without losing user edits.
+    // A stored seed policy with an *empty* flow also adopts its authored one —
+    // an empty root means nothing was ever built there, so there is no user work
+    // to lose, and a policy with no steps has nothing to preview or run.
     if (parsed.version !== SEED_VERSION) {
       for (const p of approvalPolicySeed) {
-        if (!parsed.policies[p.id]) parsed.policies[p.id] = structuredClone(p);
+        const stored = parsed.policies[p.id];
+        if (!stored) parsed.policies[p.id] = seedPolicy(p);
+        else if ((stored.root?.length ?? 0) === 0 && approvalPolicyFlows[p.id]) {
+          stored.root = structuredClone(approvalPolicyFlows[p.id]);
+        }
       }
       parsed.version = SEED_VERSION;
       window.localStorage.setItem(STORE_KEY, JSON.stringify(parsed));

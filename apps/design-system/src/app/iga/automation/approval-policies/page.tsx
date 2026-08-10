@@ -6,6 +6,7 @@ import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import RuleOutlined from '@mui/icons-material/RuleOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
+import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import {
   DataTable,
@@ -60,6 +61,9 @@ export default function ApprovalPoliciesListPage() {
       (status === 'all' || r.status === status),
   );
 
+  /** A policy opens on its detail page — flow preview + run history. Editing is
+      a deliberate second step from there, not what a row click means. */
+  const openDetail = (id: string) => router.push(`/iga/automation/approval-policies/${id}`);
   const openBuilder = (id: string) => router.push(`/iga/automation/approval-policies/${id}/builder`);
 
   const handleCreate = () => {
@@ -110,7 +114,8 @@ export default function ApprovalPoliciesListPage() {
       render: (r) => (
         <Menu
           items={[
-            { label: 'Open', icon: <EditOutlined sx={{ fontSize: 18 }} />, onClick: () => openBuilder(r.id) },
+            { label: 'Open', icon: <VisibilityOutlined sx={{ fontSize: 18 }} />, onClick: () => openDetail(r.id) },
+            { label: 'Edit workflow', icon: <EditOutlined sx={{ fontSize: 18 }} />, onClick: () => openBuilder(r.id) },
             { label: 'Delete', icon: <DeleteOutline sx={{ fontSize: 18 }} />, danger: true, divider: true, onClick: () => setDeleteTarget(r) },
           ]}
         />
@@ -160,7 +165,7 @@ export default function ApprovalPoliciesListPage() {
           columns={columns}
           rows={filtered}
           loading={rows === null}
-          onRowClick={(r) => openBuilder(r.id)}
+          onRowClick={(r) => openDetail(r.id)}
           fillHeight
           defaultRowsPerPage={8}
           rowsPerPageOptions={[8, 16, 24]}
