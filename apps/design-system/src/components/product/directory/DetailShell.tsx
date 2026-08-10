@@ -7,15 +7,20 @@ import { Tabs, Button, DataTable, InfoRow, InfoRowGroup, type TabItem, type Colu
 /** Re-export DS InfoRow helpers for Directory detail Information cards. */
 export { InfoRow, InfoRowGroup };
 
-/** Sticky bleed header (avatar + title + chips + description + back link) + tabs +
-    a fill-height content region — the shared frame for every Directory detail page. */
+/**
+ * Sticky bleed header (avatar + title + chips + description + actions) + tabs +
+ * a fill-height content region — the shared frame for every Directory detail page.
+ *
+ * There is no back link: the app frame's breadcrumb already sits directly above
+ * this header and names the list it came from, so a second way back was the same
+ * navigation stated twice, four pixels apart.
+ */
 export function DetailShell({
   avatar,
   title,
   chips,
   description,
-  backHref,
-  backLabel,
+  actions,
   tabs,
   tab,
   onTab,
@@ -25,8 +30,12 @@ export function DetailShell({
   title: string;
   chips?: React.ReactNode;
   description?: string;
-  backHref: string;
-  backLabel: string;
+  /**
+   * Right-aligned header actions — buttons and a trailing Menu, the same slot the
+   * Emergency Access detail carries. Keep it to one or two buttons plus the menu;
+   * anything more belongs on the tab that owns it.
+   */
+  actions?: React.ReactNode;
   tabs: TabItem[];
   tab: string;
   onTab: (v: string) => void;
@@ -34,11 +43,8 @@ export function DetailShell({
 }) {
   return (
     <div className="flex h-full flex-col">
-      <div className="shrink-0 -mx-8 -mt-6 border-b border-border bg-canvas px-8 pt-4">
-        <Link href={backHref} className="text-caption-strong text-text-secondary transition-colors hover:text-text-primary">
-          ← {backLabel}
-        </Link>
-        <div className="mb-4 mt-2 flex flex-wrap items-start justify-between gap-4">
+      <div className="shrink-0 -mx-8 -mt-6 border-b border-border bg-canvas px-8 pt-5">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             {avatar}
             <div className="min-w-0">
@@ -49,6 +55,7 @@ export function DetailShell({
               {description && <p className="mt-0.5 max-w-2xl text-body-sm text-text-secondary">{description}</p>}
             </div>
           </div>
+          {actions != null && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
         </div>
         <Tabs items={tabs} value={tab} onChange={onTab} noBorder aria-label={`${title} details`} />
       </div>

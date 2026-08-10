@@ -40,8 +40,6 @@ export default function GovernanceGroupDetailPage() {
       avatar={<EntityAvatar kind="governance-group" name={group.name} size="md" />}
       title={group.name}
       description={group.description}
-      backHref="/iga/directory/governance-groups"
-      backLabel="Governance Groups"
       tabs={TABS}
       tab={tab}
       onTab={setTab}

@@ -2,6 +2,8 @@
 
 import * as React from 'react';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
+import PersonOutline from '@mui/icons-material/PersonOutline';
+import GroupsOutlined from '@mui/icons-material/GroupsOutlined';
 import FilterListOutlined from '@mui/icons-material/FilterListOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import PersonAddAltOutlined from '@mui/icons-material/PersonAddAltOutlined';
@@ -9,14 +11,22 @@ import {
   DataTable,
   Avatar,
   Button,
+  Card,
   Input,
   Drawer,
+  NavList,
   SelectionPanel,
   Menu,
   useToast,
   type Column,
 } from '@ds/components';
-import { listUserIdentities, resolvePeople, type UserIdentityRow } from '@/data/directory';
+import {
+  listGoverningGroups,
+  listUserIdentities,
+  resolvePeople,
+  type GovernanceGroupRow,
+  type UserIdentityRow,
+} from '@/data/directory';
 import { getOwners, setOwners, type OwnedEntityType } from '@/data/entity-owners';
 
 /**
@@ -40,6 +50,14 @@ export function EntityOwnersTab({
 }) {
   const toast = useToast();
   const lower = label.toLowerCase();
+  /**
+   * Ownership has two shapes, and the rail is how you switch between them: named
+   * individuals, and the Governance Groups whose charter covers this entity. One
+   * merged table would hide the distinction that matters at audit — who personally
+   * answers for this, versus which body does.
+   */
+  const [view, setView] = React.useState<'individual' | 'groups'>('individual');
+  const groups = listGoverningGroups(entityType, entityId);
   // Render seed defaults on the server; sync from the store after mount (no hydration mismatch).
   const [ownerIds, setOwnerIds] = React.useState<string[]>(seedOwnerIds);
   React.useEffect(() => {
@@ -130,8 +148,47 @@ export function EntityOwnersTab({
     { id: 'email', header: 'Email', sortable: true, value: (o) => o.email, render: (o) => <span className="text-text-secondary">{o.email}</span> },
   ];
 
+  const groupColumns: Column<GovernanceGroupRow>[] = [
+    {
+      id: 'name',
+      header: 'Governance Group',
+      sortable: true,
+      value: (g) => g.name,
+      render: (g) => (
+        <div className="flex items-center gap-3">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-subtle text-icon">
+            <GroupsOutlined sx={{ fontSize: 18 }} />
+          </span>
+          <div className="min-w-0">
+            <div className="truncate text-body-sm-strong text-text-primary">{g.name}</div>
+            <div className="truncate text-caption text-text-secondary">{g.description}</div>
+          </div>
+        </div>
+      ),
+    },
+    { id: 'members', header: 'Members', align: 'right', width: 120, sortable: true, value: (g) => g.reviewerCount, render: (g) => <span className="text-body-sm tabular-nums text-text-primary">{g.reviewerCount}</span> },
+  ];
+
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="grid h-full gap-5 lg:grid-cols-[264px_minmax(0,1fr)]">
+      {/* 264px, not Emergency Access's 248: the Card gutter eats ~58px of the track,
+          which left "Governance Groups" truncated. Vertical padding only — Card's
+          `none` already supplies the horizontal gutter. */}
+      <Card padding="none" className="h-full">
+        <div className="py-2">
+          <NavList
+            ariaLabel="Owner type"
+            value={view}
+            onChange={(id) => setView(id as 'individual' | 'groups')}
+            items={[
+              { id: 'individual', icon: <PersonOutline sx={{ fontSize: 18 }} />, label: `Individual ${label}s`, count: ownerIds.length },
+              { id: 'groups', icon: <GroupsOutlined sx={{ fontSize: 18 }} />, label: 'Governance Groups', count: groups.length },
+            ]}
+          />
+        </div>
+      </Card>
+
+      <div className="flex h-full min-h-0 flex-col">
       <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
         <div className="w-full max-w-sm">
           <Input placeholder="Search" value={search} onChange={(e) => setSearch(e.target.value)} startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />} />
@@ -139,21 +196,34 @@ export function EntityOwnersTab({
         <Button variant="secondary" startIcon={<FilterListOutlined />} onClick={() => toast.info('Filters coming soon')}>
           Filter
         </Button>
-        <div className="ml-auto">
-          <Button startIcon={<AddIcon />} onClick={openAdd}>
-            Add {label}s
-          </Button>
-        </div>
+        {view === 'individual' && (
+          <div className="ml-auto">
+            <Button startIcon={<AddIcon />} onClick={openAdd}>
+              Add {label}s
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="min-h-0 flex-1">
-        <DataTable<UserIdentityRow>
-          columns={columns}
-          rows={owners}
-          fillHeight
-          emptyTitle={`No ${lower}s`}
-          emptyMessage={emptyHint ?? `Add ${lower}s to govern this entity.`}
-        />
+        {view === 'individual' ? (
+          <DataTable<UserIdentityRow>
+            columns={columns}
+            rows={owners}
+            fillHeight
+            emptyTitle={`No ${lower}s`}
+            emptyMessage={emptyHint ?? `Add ${lower}s to govern this entity.`}
+          />
+        ) : (
+          <DataTable<GovernanceGroupRow>
+            columns={groupColumns}
+            rows={groups.filter((g) => g.name.toLowerCase().includes(search.toLowerCase()))}
+            fillHeight
+            emptyTitle="No governance groups"
+            emptyMessage="No Governance Group lists this entity in its charter. Group ownership is assigned on the group."
+          />
+        )}
+      </div>
       </div>
 
       <Drawer

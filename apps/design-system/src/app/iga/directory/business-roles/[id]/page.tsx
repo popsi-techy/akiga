@@ -41,8 +41,6 @@ export default function BusinessRoleDetailPage() {
       title={role.name}
       chips={<RiskScoreChip score={role.risk} />}
       description={role.description}
-      backHref="/iga/directory/business-roles"
-      backLabel="Business Roles"
       tabs={TABS}
       tab={tab}
       onTab={setTab}

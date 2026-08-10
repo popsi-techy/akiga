@@ -39,8 +39,6 @@ export default function TechnicalRoleDetailPage() {
       title={role.name}
       chips={<RiskScoreChip score={role.risk} />}
       description={role.description}
-      backHref="/iga/directory/technical-roles"
-      backLabel="Technical Roles"
       tabs={TABS}
       tab={tab}
       onTab={setTab}

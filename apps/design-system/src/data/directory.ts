@@ -143,6 +143,32 @@ const toEntRow = (e: FlatEntitlement): EntitlementRow => ({
 export function resolvePeople(ids: string[]): UserIdentityRow[] {
   return ids.map((id) => identityById.get(id)).filter(Boolean).map((u) => toUserRow(u as SeedUserIdentity));
 }
+
+/**
+ * The Governance Groups that own a given entity — the group side of ownership,
+ * alongside the individual owners in the entity-owners store.
+ *
+ * Group ownership is authored on the group (`ownedApplicationIds` and friends)
+ * rather than on the entity, so this reads the relationship from the group end.
+ * That is deliberate: a group's charter lists what it governs, and inverting it
+ * per entity here keeps the seed with one owner of the fact.
+ */
+export function listGoverningGroups(
+  entityType: 'application' | 'entitlement' | 'technical-role' | 'business-role' | 'governance-group',
+  entityId: string,
+): GovernanceGroupRow[] {
+  const field = {
+    application: 'ownedApplicationIds',
+    entitlement: 'ownedEntitlementIds',
+    'technical-role': 'ownedTechnicalRoleIds',
+    'business-role': 'ownedBusinessRoleIds',
+    'governance-group': null,
+  }[entityType] as 'ownedApplicationIds' | 'ownedEntitlementIds' | 'ownedTechnicalRoleIds' | 'ownedBusinessRoleIds' | null;
+  if (!field) return [];
+  return governanceGroups
+    .filter((g) => g[field].includes(entityId))
+    .map((g) => ({ id: g.id, name: g.name, description: g.description, reviewerCount: g.reviewerIds.length }));
+}
 export function resolveEntitlements(ids: string[]): EntitlementRow[] {
   return ids.map((id) => entById.get(id)).filter(Boolean).map((e) => toEntRow(e as FlatEntitlement));
 }

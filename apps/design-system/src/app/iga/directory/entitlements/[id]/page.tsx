@@ -40,8 +40,6 @@ export default function EntitlementDetailPage() {
       title={entitlement.name}
       chips={<RiskScoreChip score={entitlement.risk} />}
       description={entitlement.description}
-      backHref="/iga/directory/entitlements"
-      backLabel="Entitlements"
       tabs={TABS}
       tab={tab}
       onTab={setTab}

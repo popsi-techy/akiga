@@ -52,8 +52,6 @@ export default function UserIdentityDetailPage() {
         </>
       }
       description={`${identity.jobTitle} · ${identity.department}`}
-      backHref="/iga/directory/user-identities"
-      backLabel="User Identities"
       tabs={TABS}
       tab={tab}
       onTab={setTab}

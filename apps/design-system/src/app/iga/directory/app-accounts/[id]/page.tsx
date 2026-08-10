@@ -35,8 +35,6 @@ export default function AppAccountDetailPage() {
       title={account.accountName}
       chips={account.identityId === null ? <StatusChip intent="warning" label="Orphan" /> : undefined}
       description={`${applicationName} account`}
-      backHref="/iga/directory/app-accounts"
-      backLabel="App Accounts"
       tabs={TABS}
       tab={tab}
       onTab={setTab}
