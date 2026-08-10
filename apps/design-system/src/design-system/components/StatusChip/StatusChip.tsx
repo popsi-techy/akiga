@@ -39,8 +39,11 @@ export function StatusChip({
   return (
     <span
       /* Height comes from the `caption` type step (12/16) — no `leading-*`
-         override, so the chip stays 22px and tracks the scale if it changes. */
-      className="inline-flex items-center gap-1.5 rounded-pill px-2 py-0.5 text-caption-strong"
+         override, so the chip stays 22px and tracks the scale if it changes.
+         `whitespace-nowrap` because a chip is a single mark: as a flex item in a
+         tight cell it would otherwise shrink and wrap its label onto a second
+         line, silently making one table row taller than its neighbours. */
+      className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill px-2 py-0.5 text-caption-strong"
       style={style}
     >
       {dot && (

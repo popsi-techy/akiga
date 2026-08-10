@@ -37,6 +37,7 @@ import CampaignOutlined from '@mui/icons-material/CampaignOutlined';
 import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined';
 import BusinessOutlined from '@mui/icons-material/BusinessOutlined';
 import LaptopOutlined from '@mui/icons-material/LaptopOutlined';
+import SchemaOutlined from '@mui/icons-material/SchemaOutlined';
 import navData from '@registries/navigation.json';
 import { myWork } from '@/data/seed';
 import type { Persona } from '@/lib/persona';
@@ -150,6 +151,7 @@ const ICONS: Record<string, ComponentType<{ sx?: object }>> = {
   business: BusinessOutlined,
   person: PersonOutline,
   laptop: LaptopOutlined,
+  schema: SchemaOutlined,
 };
 const iconFor = (name: string) => ICONS[name] ?? DashboardOutlined;
 

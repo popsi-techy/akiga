@@ -92,6 +92,9 @@ export type { MeterProps, MeterTone } from './Meter/Meter';
 export { RichTextEditor, plainText } from './RichTextEditor/RichTextEditor';
 export type { RichTextEditorProps } from './RichTextEditor/RichTextEditor';
 
+export { RelationshipCanvas } from './RelationshipCanvas/RelationshipCanvas';
+export type { RelationshipCanvasProps, CanvasNode, CanvasEdge } from './RelationshipCanvas/RelationshipCanvas';
+
 export { FlowCanvas } from './FlowCanvas/FlowCanvas';
 export type {
   FlowCanvasProps,

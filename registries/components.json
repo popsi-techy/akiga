@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "note": "Normative inventory of Design System components. Prefer extending an entry over inventing a parallel control.",
+  "note": "Normative inventory of Design System components. Prefer extending an entry over inventing a parallel control. Every entry has a docs page; the sidebar (src/lib/navigation.ts) and the /components index group them by the job they do.",
   "components": [
     {
       "name": "AppIcon",
@@ -15,7 +15,7 @@
         "logo",
         "letter-fallback"
       ],
-      "docs": null,
+      "docs": "apps/design-system/src/app/(docs)/components/app-icon/page.tsx",
       "notes": "Brand logos via Simple Icons (CC0) when the app name matches the catalog (SAP, Salesforce, AWS, Google); otherwise first-letter tile. Product AppBadge appearance=\"logo\" consumes this. Used first on SoD Resolution V3."
     },
     {
@@ -39,6 +39,31 @@
       "notes": "soft = rounded-square for lists; circle = profile cards with grey outline + 2px surface gap. See ADR-0009."
     },
     {
+      "name": "Button",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Button/Button.tsx",
+      "extends": "@mui/material/Button",
+      "variants": [
+        "primary",
+        "secondary",
+        "tertiary",
+        "danger",
+        "sm",
+        "md",
+        "lg"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus-visible",
+        "active",
+        "disabled",
+        "loading"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/button/page.tsx",
+      "notes": "One primary per screen (visual-language §5.1). Heights are fixed per size — sm 36 / md 40 / lg 48 — so every control of the same size lines up in a toolbar. A disabled primary keeps a tooltip explaining what unblocks it."
+    },
+    {
       "name": "Card",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/Card/Card.tsx",
@@ -60,19 +85,473 @@
       "notes": "Header uses 15px regular title + 15px filled icon. padding=none keeps a horizontal content gutter so flush-list dividers stay inset. See ADR-0009."
     },
     {
+      "name": "Checkbox",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Checkbox/Checkbox.tsx",
+      "extends": null,
+      "variants": [
+        "brand",
+        "danger",
+        "presentational"
+      ],
+      "states": [
+        "unchecked",
+        "checked",
+        "indeterminate",
+        "disabled",
+        "focus-visible"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/checkbox/page.tsx",
+      "notes": "The unchecked outline uses border.control, the token added for exactly this: WCAG 1.4.11 asks 3:1 on a control boundary and the hairline borders cannot reach it. Prefer the `label` prop over wrapping in a <label>, which would leave the text dead."
+    },
+    {
+      "name": "DataTable",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/DataTable/DataTable.tsx",
+      "extends": "@mui/material/Table",
+      "variants": [
+        "fillHeight",
+        "selectable",
+        "paginated"
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "sorted",
+        "row-selected",
+        "row-hover"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/data-table/page.tsx",
+      "notes": "fillHeight takes the remaining height and scrolls its own body with a sticky header and pinned pagination — the page itself never scrolls on a list screen. Give text cells an explicit width, or a long string will push the trailing columns off screen."
+    },
+    {
+      "name": "DatePicker",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/DatePicker/DatePicker.tsx",
+      "extends": null,
+      "variants": [
+        "sm",
+        "md"
+      ],
+      "states": [
+        "empty",
+        "selected",
+        "open",
+        "out-of-range",
+        "disabled"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/date-picker/page.tsx",
+      "notes": "Replaces <input type=\"date\">, whose field text, icon and popup are unthemable browser chrome. Value is YYYY-MM-DD and is parsed as a string, never through Date — constructing a Date from it lands on the previous day west of Greenwich. formatDateShort is exported for read-only display."
+    },
+    {
+      "name": "Dialog",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Dialog/Dialog.tsx",
+      "extends": "@mui/material/Dialog",
+      "variants": [
+        "default",
+        "danger"
+      ],
+      "states": [
+        "closed",
+        "open"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/dialog/page.tsx",
+      "notes": "A question and its consequence, nothing more. tone=\"danger\" for destructive confirmations. If it needs form fields, it is a Modal."
+    },
+    {
+      "name": "DonutChart",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/DonutChart/DonutChart.tsx",
+      "extends": null,
+      "variants": [
+        "default"
+      ],
+      "states": [
+        "default",
+        "empty",
+        "single-segment"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/donut-chart/page.tsx",
+      "notes": "SVG part-to-whole breakdown. Categorical colour only; do not reuse the status ramp for categories."
+    },
+    {
+      "name": "Drawer",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Drawer/Drawer.tsx",
+      "extends": "@mui/material/Drawer",
+      "variants": [
+        "default",
+        "disablePadding"
+      ],
+      "states": [
+        "closed",
+        "open",
+        "with-footer",
+        "scrolled"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/drawer/page.tsx",
+      "notes": "Right-anchored panel for long forms and browsing surfaces where the page behind still matters. Use Modal for a short centered form, Dialog for a confirm. elevation.lg."
+    },
+    {
+      "name": "FlowCanvas",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/FlowCanvas/FlowCanvas.tsx",
+      "extends": null,
+      "variants": [
+        "outline",
+        "detailed"
+      ],
+      "states": [
+        "default",
+        "node-selected",
+        "drag-over",
+        "empty",
+        "zoomed"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/flow-canvas/page.tsx",
+      "notes": "The Automation builders’ derived-layout graph for a *sequence* (ADR-0007: custom, zero-dependency). Recursive sequence/branch model rendered top-down with fan-out/merge connectors, connector drop-targets and quick-insert. For a *network*, use RelationshipCanvas."
+    },
+    {
       "name": "InfoRow",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/InfoRow/InfoRow.tsx",
       "extends": null,
       "variants": [
-        "plain",
-        "with-icon"
+        "default"
       ],
       "states": [
         "default"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/info-row/page.tsx",
-      "notes": "Table-like label/value rows via InfoRowGroup \u2014 values share one left edge. Do not right-align or hug the label."
+      "notes": "Table-like label/value rows via InfoRowGroup — values share one left edge. Do not right-align or hug the label."
+    },
+    {
+      "name": "Input",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Input/Input.tsx",
+      "extends": "@mui/material/TextField",
+      "variants": [
+        "sm",
+        "md",
+        "multiline"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "filled",
+        "error",
+        "disabled",
+        "read-only"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/input/page.tsx",
+      "notes": "Shares the control-height scale with Select, DatePicker, TimePicker and Button. Error is driven by the presence of the `error` message, not a separate boolean."
+    },
+    {
+      "name": "Menu",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Menu/Menu.tsx",
+      "extends": "@mui/material/Menu",
+      "variants": [
+        "default",
+        "danger-item"
+      ],
+      "states": [
+        "closed",
+        "open",
+        "hover",
+        "disabled-item"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/menu/page.tsx",
+      "notes": "The ⋮ row-actions dropdown. Destructive items take the danger role and should confirm before acting."
+    },
+    {
+      "name": "Meter",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Meter/Meter.tsx",
+      "extends": null,
+      "variants": [
+        "brand",
+        "success",
+        "warning",
+        "danger",
+        "sm",
+        "md"
+      ],
+      "states": [
+        "empty",
+        "partial",
+        "full"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/meter/page.tsx",
+      "notes": "Tones resolve to the status *fill* roles, not the text roles: a bar is a graphical object under WCAG 1.4.11, and the text roles read heavy as a solid block. Always show the number in text as well — the bar is the shape, not the value."
+    },
+    {
+      "name": "Modal",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Modal/Modal.tsx",
+      "extends": "@mui/material/Dialog",
+      "variants": [
+        "default",
+        "no-close"
+      ],
+      "states": [
+        "closed",
+        "open",
+        "with-footer",
+        "scrolled"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/modal/page.tsx",
+      "notes": "Centered counterpart to Drawer, for short forms and rich decisions. Body scrolls; the panel caps at 85vh. showClose=false when dismissing without deciding would leave things inconsistent — the footer must then offer a way back. elevation.xl."
+    },
+    {
+      "name": "NavCard",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/NavCard/NavCard.tsx",
+      "extends": null,
+      "variants": [
+        "default"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus-visible",
+        "with-count",
+        "with-tags"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/nav-card/page.tsx",
+      "notes": "Launcher card for landing pages that route into a section. The whole card is one target — never nest interactive elements inside. Counts format with a fixed locale so server and client render the same string."
+    },
+    {
+      "name": "NavList",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/NavList/NavList.tsx",
+      "extends": null,
+      "variants": [
+        "default"
+      ],
+      "states": [
+        "default",
+        "active",
+        "hover",
+        "with-count"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/nav-list/page.tsx",
+      "notes": "Vertical in-panel section switcher, reported as role=tablist. Use over Tabs when labels are long, the set may grow, or each item carries a count. Supplies no chrome of its own — put it inside a bordered panel."
+    },
+    {
+      "name": "QuickFilter",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/QuickFilter/QuickFilter.tsx",
+      "extends": null,
+      "variants": [
+        "sm",
+        "md"
+      ],
+      "states": [
+        "none-selected",
+        "selected",
+        "hover",
+        "with-count"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/quick-filter/page.tsx",
+      "notes": "Standalone single-select filter chips where null means \"show all\", and clicking the active chip clears it. Chip height follows the shared control scale (sm 36 / md 40) so it lines up with the Input beside it in a table toolbar."
+    },
+    {
+      "name": "RadioCardGroup",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/RadioCardGroup/RadioCardGroup.tsx",
+      "extends": null,
+      "variants": [
+        "default"
+      ],
+      "states": [
+        "default",
+        "selected",
+        "hover",
+        "focus-visible",
+        "disabled"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/radio-card-group/page.tsx",
+      "notes": "Single-choice selector as icon + label cards. Use when the options need explanation; a bare Select when they do not."
+    },
+    {
+      "name": "RelationshipCanvas",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/RelationshipCanvas/RelationshipCanvas.tsx",
+      "extends": null,
+      "variants": [
+        "columns",
+        "focus-dimming",
+        "fullscreen"
+      ],
+      "states": [
+        "default",
+        "node-selected",
+        "edge-selected",
+        "dimmed",
+        "hover",
+        "empty",
+        "panning",
+        "fullscreen"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/relationship-canvas/page.tsx",
+      "notes": "Layered relationship graph (ADR-0010). Complement to FlowCanvas: that renders a sequence top-down, this renders a typed network as left-to-right columns. Owns column layout, barycenter crossing reduction, bezier edge routing with collision-suppressed labels, zoom/pan/fit, selection and dimming. Custom and zero-dependency for the same reason as FlowCanvas (ADR-0007) — layout is derived, not user-positioned. Frames `frameNodeId` at a legible scale rather than shrinking a wide graph to fit. First consumed by the Governance Model."
+    },
+    {
+      "name": "RichTextEditor",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/RichTextEditor/RichTextEditor.tsx",
+      "extends": null,
+      "variants": [
+        "default"
+      ],
+      "states": [
+        "empty-placeholder",
+        "focused",
+        "formatted"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/rich-text-editor/page.tsx",
+      "notes": "Uncontrolled contentEditable — writing value back each keystroke would reset the caret. Emits HTML via onChange; use the exported plainText() for emptiness and length validation, since an \"empty\" editor still contains markup."
+    },
+    {
+      "name": "SegmentedControl",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/SegmentedControl/SegmentedControl.tsx",
+      "extends": null,
+      "variants": [
+        "sm",
+        "md",
+        "fullWidth"
+      ],
+      "states": [
+        "default",
+        "selected",
+        "hover"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/segmented-control/page.tsx",
+      "notes": "A connected track where exactly one segment is always on — there is no cleared state. If the control needs one, it is a QuickFilter. Cap at four segments; past that use a Select."
+    },
+    {
+      "name": "Select",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Select/Select.tsx",
+      "extends": "@mui/material/TextField",
+      "variants": [
+        "sm",
+        "md",
+        "attached-start",
+        "attached-end"
+      ],
+      "states": [
+        "default",
+        "open",
+        "selected",
+        "placeholder",
+        "error",
+        "disabled"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/select/page.tsx",
+      "notes": "Matched to Input so the two align in a form row. Pass ariaLabel when the visible label sits outside the component — otherwise the combobox announces only its value."
+    },
+    {
+      "name": "SelectableList",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/SelectableList/SelectableList.tsx",
+      "extends": null,
+      "variants": [
+        "outlined",
+        "plain",
+        "brand",
+        "danger"
+      ],
+      "states": [
+        "default",
+        "selected",
+        "disabled",
+        "empty"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/selectable-list/page.tsx",
+      "notes": "Multi-select rows with leading visual, description and trailing content. variant=\"plain\" exists so the list can sit inside an already-bordered panel without becoming a card inside a card. tone=\"danger\" for access about to be revoked."
+    },
+    {
+      "name": "SelectionPanel",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/SelectionPanel/SelectionPanel.tsx",
+      "extends": null,
+      "variants": [
+        "default"
+      ],
+      "states": [
+        "empty",
+        "populated",
+        "grouped"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/selection-panel/page.tsx",
+      "notes": "The \"what you selected\" side panel for multi-select drawers. Pairs with SelectableList when the selection grows long enough to lose track of."
+    },
+    {
+      "name": "StatTile",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/StatTile/StatTile.tsx",
+      "extends": null,
+      "variants": [
+        "brand",
+        "info",
+        "success",
+        "warning",
+        "danger",
+        "neutral"
+      ],
+      "states": [
+        "default",
+        "hoverElevate",
+        "with-hint"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/stat-tile/page.tsx",
+      "notes": "KPI tile — label, value, icon in a tinted rounded square. The icon is graphical (WCAG 1.4.11, 3:1) so brand-orange on tint is fine. The only \"resting\" shadow permitted in the system."
+    },
+    {
+      "name": "StatusChip",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/StatusChip/StatusChip.tsx",
+      "extends": null,
+      "variants": [
+        "info",
+        "success",
+        "warning",
+        "caution",
+        "danger",
+        "neutral",
+        "subtle",
+        "solid"
+      ],
+      "states": [
+        "with-dot",
+        "no-dot"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/status-chip/page.tsx",
+      "notes": "The ONE intent→colour mapping. `caution` is the orange fourth step added so High and Medium stop sharing yellow. Risk scores render through RiskScoreChip (dot=false), never a local pill. whitespace-nowrap: a chip is a single mark and must never wrap its label."
+    },
+    {
+      "name": "Stepper",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Stepper/Stepper.tsx",
+      "extends": null,
+      "variants": [
+        "default",
+        "no-back"
+      ],
+      "states": [
+        "complete",
+        "current",
+        "upcoming",
+        "clickable"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/stepper/page.tsx",
+      "notes": "Steps keep their number throughout, so \"step 2\" means the same thing on every screen. showBack=false on a step that owns its own way back (a final review with an explicit Edit). Cap at four steps."
     },
     {
       "name": "Switch",
@@ -91,6 +570,79 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/components/switch/page.tsx",
       "notes": "Contained thumb inside pill track; brand fill when on. Do not use raw MUI Switch in product code."
+    },
+    {
+      "name": "Tabs",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Tabs/Tabs.tsx",
+      "extends": "@mui/material/Tabs",
+      "variants": [
+        "default",
+        "noBorder"
+      ],
+      "states": [
+        "default",
+        "selected",
+        "hover",
+        "disabled",
+        "with-count"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/tabs/page.tsx",
+      "notes": "Selection is marked by colour and a 2px indicator, never by weight, so labels never shift width as the selection moves. Every tab needs its own empty state."
+    },
+    {
+      "name": "TimePicker",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/TimePicker/TimePicker.tsx",
+      "extends": null,
+      "variants": [
+        "sm",
+        "md"
+      ],
+      "states": [
+        "default",
+        "open",
+        "disabled"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/time-picker/page.tsx",
+      "notes": "12-hour display over a 24-hour HH:MM value, so storage never depends on display. Three short columns (hour · minute · period) instead of one long Select of every slot. formatTime12 is exported for read-only display."
+    },
+    {
+      "name": "Toast",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Toast/ToastProvider.tsx",
+      "extends": null,
+      "variants": [
+        "success",
+        "error",
+        "warning",
+        "info"
+      ],
+      "states": [
+        "entering",
+        "visible",
+        "depleting",
+        "leaving"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/toast/page.tsx",
+      "notes": "Transient feedback with a depleting progress bar, provided through ToastProvider/useToast. Every mutation gives feedback; a toast is not a substitute for an inline error on a field."
+    },
+    {
+      "name": "Tooltip",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Tooltip/Tooltip.tsx",
+      "extends": "@mui/material/Tooltip",
+      "variants": [
+        "label",
+        "card"
+      ],
+      "states": [
+        "hidden",
+        "hover",
+        "focus"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/tooltip/page.tsx",
+      "notes": "label = dark contextual text for a few words; card = light surface panel for rich content, with no arrow (a bordered arrow cannot meet a bordered panel cleanly). The child must forward a ref. A tooltip is never the accessible name — pair with aria-label."
     }
   ]
 }

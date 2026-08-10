@@ -13,6 +13,7 @@ how they change over time. An AI cannot correctly design a form, table, or workf
 | `data-dictionary.md` | **Attribute-level reference across all entities.** Aggregates each entity's fields (name, type, required, description) into one queryable dictionary — the basis for every form and table later. |
 | `lifecycle-state-machines.md` | **States and legal transitions** for each stateful entity (access request, certification, account, JML). The backbone of status chips, filters, and workflows. Mirrored in `lifecycle-states.json`. |
 | `integrations.md` | **The conceptual connector/source-system model** (HR system, directory, applications). Even though no real integrations are built, the domain assumes them. Mirrored in `integrations.json`. |
+| `governance-model.md` | **The governance layer above the Directory** — how structure, access, policies, ownership and controls connect, the typed relationship vocabulary, the derived findings, and the surface that reads it. See ADR-0010. |
 
 ## Entities (current set)
 
@@ -23,6 +24,10 @@ how they change over time. An AI cannot correctly design a form, table, or workf
 **Process & governance:** `group` · `access-request` · `approval-policy` · `workflow` ·
 `certification` · `sod-policy` · `risk` · `emergency-access` ·
 `joiner-mover-leaver (lifecycle event)`
+
+**Governance model (see `governance-model.md`):** `department` · `location` ·
+`birthright-policy` · `governance-role` · `approval-hierarchy` · `delegation` ·
+`escalation-rule` · `governance-finding`
 
 > Every entity here has an `entities.json` entry, and every relationship an edge in
 > `relationships.json`. Attributes belong in the entity file **and** the data dictionary.

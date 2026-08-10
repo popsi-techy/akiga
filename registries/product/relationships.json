@@ -46,6 +46,31 @@
     { "from": "lifecycle-event", "to": "identity", "type": "has-one", "label": "affects" },
     { "from": "connector", "to": "application", "type": "belongs-to", "label": "connects" },
     { "from": "risk-factor", "to": "entitlement", "type": "scores", "label": "contributes to risk of" },
-    { "from": "audit-event", "to": "identity", "type": "has-one", "label": "performed by (actor)" }
+    { "from": "audit-event", "to": "identity", "type": "has-one", "label": "performed by (actor)" },
+
+    { "from": "department", "to": "location", "type": "has-many", "label": "operates in" },
+    { "from": "department", "to": "business-role", "type": "has-many", "label": "assigned through" },
+    { "from": "department", "to": "identity", "type": "has-one", "label": "headed by" },
+    { "from": "business-role", "to": "technical-role", "type": "has-many", "label": "inherited from" },
+    { "from": "business-role", "to": "application", "type": "has-many", "label": "assigned through" },
+    { "from": "technical-role", "to": "application", "type": "has-many", "label": "assigned through" },
+    { "from": "application", "to": "approval-policy", "type": "has-many", "label": "governed by" },
+    { "from": "application", "to": "birthright-policy", "type": "has-many", "label": "governed by" },
+    { "from": "application", "to": "sod-policy", "type": "has-many", "label": "protected by" },
+    { "from": "application", "to": "identity", "type": "has-many", "label": "reviewed by (access review owner)" },
+    { "from": "application", "to": "governance-role", "type": "has-many", "label": "enforced by" },
+    { "from": "birthright-policy", "to": "entitlement", "type": "has-many", "label": "grants" },
+    { "from": "birthright-policy", "to": "department", "type": "has-many", "label": "applies to" },
+    { "from": "birthright-policy", "to": "identity", "type": "has-many", "label": "owned by" },
+    { "from": "approval-policy", "to": "approval-hierarchy", "type": "has-one", "label": "approved by" },
+    { "from": "approval-policy", "to": "delegation", "type": "has-many", "label": "delegated to" },
+    { "from": "approval-policy", "to": "escalation-rule", "type": "has-many", "label": "escalates to" },
+    { "from": "approval-hierarchy", "to": "identity", "type": "has-many", "label": "approved by (per level)" },
+    { "from": "sod-policy", "to": "governance-role", "type": "has-many", "label": "enforced by" },
+    { "from": "sod-policy", "to": "department", "type": "has-many", "label": "applies to" },
+    { "from": "delegation", "to": "identity", "type": "has-one", "label": "delegated to" },
+    { "from": "escalation-rule", "to": "identity", "type": "has-many", "label": "escalates to" },
+    { "from": "governance-role", "to": "governance-group", "type": "has-one", "label": "held by" },
+    { "from": "governance-finding", "to": "application", "type": "belongs-to", "label": "found on" }
   ]
 }

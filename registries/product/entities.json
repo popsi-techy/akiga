@@ -386,6 +386,137 @@
         { "name": "status", "type": "enum", "values": ["unread", "read", "dismissed"], "required": true },
         { "name": "createdAt", "type": "datetime", "required": true }
       ]
+    },
+    {
+      "id": "department",
+      "name": "Department",
+      "definition": "An organizational unit that people belong to and that access is scoped by. Departments are the entry point of the Governance Model: roles, policies, and applications are all reachable from the unit they serve.",
+      "owner": "administrator",
+      "stateful": true,
+      "states": ["active", "inactive"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "description", "type": "string", "required": false },
+        { "name": "headId", "type": "ref:identity", "required": true },
+        { "name": "headcount", "type": "number", "required": false },
+        { "name": "locationIds", "type": "ref:location[]", "required": false },
+        { "name": "riskScore", "type": "number", "required": false }
+      ]
+    },
+    {
+      "id": "location",
+      "name": "Geographical Location",
+      "definition": "A site or country the organization operates in. Locations scope access the way departments do, and carry the regulatory constraints (data residency, statutory reporting) that make the same access riskier in one place than another.",
+      "owner": "administrator",
+      "stateful": true,
+      "states": ["active", "inactive"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "site", "type": "string", "required": false },
+        { "name": "region", "type": "string", "required": false },
+        { "name": "headcount", "type": "number", "required": false },
+        { "name": "note", "type": "string", "required": false }
+      ]
+    },
+    {
+      "id": "birthright-policy",
+      "name": "Birthright Policy",
+      "definition": "A rule that provisions access automatically on assignment, such as day-one access for a joiner or access that follows a move into a department or location. Unlike an approval policy it decides nothing at request time; it grants without being asked.",
+      "owner": "administrator",
+      "stateful": true,
+      "states": ["draft", "active", "inactive"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "description", "type": "string", "required": false },
+        { "name": "ownerIds", "type": "ref:identity[]", "required": true },
+        { "name": "departmentIds", "type": "ref:department[]", "required": false },
+        { "name": "locationIds", "type": "ref:location[]", "required": false },
+        { "name": "grantsEntitlementIds", "type": "ref:entitlement[]", "required": true },
+        { "name": "status", "type": "enum", "values": ["draft", "active", "inactive"], "required": true },
+        { "name": "usersCovered", "type": "number", "required": false }
+      ]
+    },
+    {
+      "id": "governance-role",
+      "name": "Governance Role",
+      "definition": "A named accountability in the governance model: Application Owner, Access Review Owner, Policy Owner, Approval Owner, Security Governance, Compliance Auditor. A Governance Role is staffed by a Governance Group and states what its holders answer for.",
+      "owner": "administrator",
+      "stateful": true,
+      "states": ["active", "inactive"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "description", "type": "string", "required": false },
+        { "name": "governanceGroupId", "type": "ref:governance-group", "required": true },
+        { "name": "responsibilities", "type": "string[]", "required": false },
+        { "name": "riskScore", "type": "number", "required": false }
+      ]
+    },
+    {
+      "id": "approval-hierarchy",
+      "name": "Approval Hierarchy",
+      "definition": "The ordered chain of approvers a request travels for one approval policy. Each level names an approver type, an SLA, a fallback, and where it escalates, so the question of who approves a request has a single inspectable answer.",
+      "owner": "administrator",
+      "stateful": true,
+      "states": ["complete", "broken"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "policyId", "type": "ref:approval-policy", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "levels", "type": "object[]", "required": true },
+        { "name": "health", "type": "enum", "values": ["complete", "broken"], "required": false }
+      ]
+    },
+    {
+      "id": "delegation",
+      "name": "Delegation",
+      "definition": "A temporary transfer of approval authority from one identity to another, bounded by a scope and an expiry. A delegation without an expiry is a governance gap: the authority never returns to its owner.",
+      "owner": "manager",
+      "stateful": true,
+      "states": ["active", "expired"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "fromId", "type": "ref:identity", "required": true },
+        { "name": "toId", "type": "ref:identity", "required": true },
+        { "name": "scope", "type": "string", "required": true },
+        { "name": "validUntil", "type": "date", "required": false },
+        { "name": "status", "type": "enum", "values": ["active", "expired"], "required": true }
+      ]
+    },
+    {
+      "id": "escalation-rule",
+      "name": "Escalation Rule",
+      "definition": "What happens when an approval level does not act in time: an ordered set of timeouts and the approver each one moves the decision to, plus a terminal action for when the last level also fails to act.",
+      "owner": "administrator",
+      "stateful": true,
+      "states": ["active", "inactive"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "levels", "type": "object[]", "required": true },
+        { "name": "terminalAction", "type": "enum", "values": ["auto-reject", "hold", "none"], "required": true }
+      ]
+    },
+    {
+      "id": "governance-finding",
+      "name": "Governance Finding",
+      "definition": "A gap detected in the governance model: a missing owner, a broken approval chain, an unmanaged delegation, an uncontrolled application. Findings are derived from the model rather than authored, so they cannot drift from what the data says.",
+      "owner": "administrator",
+      "stateful": true,
+      "states": ["open", "resolved"],
+      "attributes": [
+        { "name": "id", "type": "id", "required": true },
+        { "name": "kind", "type": "enum", "values": ["missing-owner", "missing-review-owner", "missing-policy-owner", "broken-approval-chain", "unmanaged-delegation", "expired-delegation", "escalation-gap", "sod-conflict", "orphaned-policy", "uncontrolled-application", "conflicting-ownership"], "required": true },
+        { "name": "severity", "type": "enum", "values": ["low", "medium", "high", "critical"], "required": true },
+        { "name": "entityId", "type": "id", "required": true },
+        { "name": "title", "type": "string", "required": true },
+        { "name": "impact", "type": "object[]", "required": false },
+        { "name": "ownerId", "type": "ref:identity", "required": false },
+        { "name": "action", "type": "string", "required": true }
+      ]
     }
   ]
 }

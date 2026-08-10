@@ -37,8 +37,10 @@
       { "id": "provisioning-tasks", "label": "Provisioning Tasks", "route": "/iga/provisioning-tasks", "icon": "playlist_add_check", "personas": ["administrator"] }
     ]},
     { "group": "analytics", "label": "Analytics", "items": [
+      { "id": "governance-explorer", "label": "Governance Explorer", "route": "/iga/governance-explorer", "icon": "schema", "personas": ["administrator", "auditor"] },
       { "id": "reports", "label": "Reports", "route": "/iga/reports", "icon": "assessment", "personas": ["auditor", "administrator"] },
-      { "id": "audit-logs", "label": "Audit Logs", "route": "/iga/audit", "icon": "history", "personas": ["auditor", "administrator"] },
+      { "id": "audit-logs", "label": "Audit Logs", "route": "/iga/audit", "icon": "history", "personas": ["auditor", "administrator"] },
+
       { "id": "peer-groups", "label": "Peer Groups", "route": "/iga/peer-groups", "icon": "hub", "personas": ["auditor", "administrator"] }
     ]},
     { "group": "settings", "divider": true, "items": [

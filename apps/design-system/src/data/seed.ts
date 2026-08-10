@@ -205,26 +205,70 @@ export const catalogApps: { id: string; name: string; description: string; owner
     { id: 'ent-aws-power', name: 'PowerUserAccess', description: 'Full access except IAM management.', risk: 68, ownerIds: ['o-liam'] },
     { id: 'ent-aws-ro', name: 'ReadOnlyAccess', description: 'View-only across AWS resources.', risk: 22, ownerIds: ['o-nathan'] },
   ] },
+  // `ownerIds: []` below is deliberate, not an oversight: SAP is the seeded
+  // ownership gap the Governance Model reports as a finding.
+  { id: 'app-sap', name: 'SAP S/4HANA Finance', description: 'Core finance, accounting, and procurement system.', ownerIds: [], entitlements: [
+    { id: 'ent-sap-pay', name: 'Payment Release', description: 'Release outgoing vendor payments.', risk: 85, ownerIds: [] },
+    { id: 'ent-sap-journal', name: 'Journal Post', description: 'Post journal entries to the general ledger.', risk: 68, ownerIds: ['o-hana'] },
+    { id: 'ent-sap-vendor', name: 'Vendor Maintain', description: 'Create and edit vendor master data.', risk: 60, ownerIds: ['o-hana'] },
+    { id: 'ent-sap-report', name: 'Finance Reporting', description: 'Read-only access to finance reports.', risk: 18, ownerIds: ['o-hana'] },
+  ] },
+  { id: 'app-workday', name: 'Workday', description: 'Core HR, payroll, and workforce records.', ownerIds: ['o-emily'], entitlements: [
+    { id: 'ent-wday-admin', name: 'HR Administrator', description: 'Administer worker records and organizational structure.', risk: 76, ownerIds: ['o-emily'] },
+    { id: 'ent-wday-comp', name: 'Compensation Analyst', description: 'View and model compensation data.', risk: 58, ownerIds: ['o-emily'] },
+    { id: 'ent-wday-ess', name: 'Employee Self-Service', description: 'View and update your own worker profile.', risk: 6, ownerIds: ['o-emily'] },
+  ] },
+  { id: 'app-servicenow', name: 'ServiceNow', description: 'IT service management, change, and request fulfilment.', ownerIds: ['o-henry'], entitlements: [
+    { id: 'ent-snow-admin', name: 'Platform Admin', description: 'Full administration of the ServiceNow instance.', risk: 82, ownerIds: ['o-henry'] },
+    { id: 'ent-snow-change', name: 'Change Approver', description: 'Approve normal and emergency change requests.', risk: 54, ownerIds: ['o-grace'] },
+    { id: 'ent-snow-fulfiller', name: 'Fulfiller', description: 'Work and resolve assigned service tickets.', risk: 28, ownerIds: ['o-grace'] },
+  ] },
+  { id: 'app-snowflake', name: 'Snowflake', description: 'Cloud data warehouse for analytics workloads.', ownerIds: ['o-nathan'], entitlements: [
+    { id: 'ent-flake-acct', name: 'ACCOUNTADMIN', description: 'Highest-privilege role in the Snowflake account.', risk: 92, ownerIds: ['o-nathan'] },
+    { id: 'ent-flake-sys', name: 'SYSADMIN', description: 'Create and manage warehouses, databases, and schemas.', risk: 70, ownerIds: ['o-nathan'] },
+    { id: 'ent-flake-read', name: 'Analyst Read', description: 'Query curated analytics datasets.', risk: 24, ownerIds: ['o-nathan'] },
+  ] },
+  { id: 'app-netsuite', name: 'NetSuite', description: 'Billing, revenue, and subsidiary accounting.', ownerIds: ['o-hana'], entitlements: [
+    { id: 'ent-ns-controller', name: 'Controller', description: 'Close periods and post adjusting entries.', risk: 74, ownerIds: ['o-hana'] },
+    { id: 'ent-ns-ap', name: 'AP Clerk', description: 'Enter supplier bills and payment runs.', risk: 46, ownerIds: ['o-hana'] },
+    { id: 'ent-ns-viewer', name: 'Financial Viewer', description: 'Read-only access to financial records.', risk: 14, ownerIds: ['o-hana'] },
+  ] },
+  { id: 'app-jira', name: 'Jira', description: 'Work tracking for product and engineering teams.', ownerIds: ['o-sofia'], entitlements: [
+    { id: 'ent-jira-admin', name: 'Site Admin', description: 'Administer the Jira site, users, and permissions.', risk: 64, ownerIds: ['o-sofia'] },
+    { id: 'ent-jira-project', name: 'Project Admin', description: 'Configure workflows and boards for a project.', risk: 38, ownerIds: ['o-sofia'] },
+    { id: 'ent-jira-contrib', name: 'Contributor', description: 'Create, comment on, and transition issues.', risk: 12, ownerIds: ['o-sofia'] },
+  ] },
 ];
 
 export const technicalRoles: { id: string; name: string; description: string; risk: number; entitlementIds: string[]; memberIds: string[]; ownerIds: string[] }[] = [
   { id: 'tr-eng-baseline', name: 'Engineering Baseline', description: 'Standard tooling for engineers', risk: 25, entitlementIds: ['ent-gh-write', 'ent-okta-user'], memberIds: ['o-frank', 'o-sofia', 'o-priya'], ownerIds: ['o-priya'] },
   { id: 'tr-devops', name: 'DevOps Access', description: 'CI/CD and infrastructure access', risk: 74, entitlementIds: ['ent-aws-power', 'ent-gh-maintain', 'ent-aws-admin'], memberIds: ['o-frank', 'o-liam', 'o-marcus'], ownerIds: ['o-liam'] },
   { id: 'tr-data', name: 'Data Platform', description: 'Warehouse and BI access', risk: 56, entitlementIds: ['ent-aws-ro', 'ent-sf-service'], memberIds: ['o-nathan', 'o-bob'], ownerIds: ['o-nathan'] },
+  { id: 'tr-sap-fin', name: 'SAP Finance Operations', description: 'Ledger posting and payment release in SAP', risk: 78, entitlementIds: ['ent-sap-journal', 'ent-sap-pay', 'ent-sap-vendor'], memberIds: ['o-bob', 'o-hana'], ownerIds: ['o-hana'] },
+  { id: 'tr-workday-hr', name: 'Workday HR Administration', description: 'Worker records and organizational structure', risk: 66, entitlementIds: ['ent-wday-admin', 'ent-wday-comp'], memberIds: ['o-emily'], ownerIds: ['o-emily'] },
+  { id: 'tr-sf-admin', name: 'Salesforce Administration', description: 'Org configuration and user management', risk: 70, entitlementIds: ['ent-sf-admin'], memberIds: ['o-bob'], ownerIds: ['o-henry'] },
+  { id: 'tr-itsm', name: 'ITSM Operations', description: 'Change approval and request fulfilment', risk: 44, entitlementIds: ['ent-snow-change', 'ent-snow-fulfiller'], memberIds: ['o-grace', 'o-henry'], ownerIds: ['o-henry'] },
+  { id: 'tr-analytics', name: 'Analytics Platform', description: 'Warehouse administration and curated datasets', risk: 52, entitlementIds: ['ent-flake-sys', 'ent-flake-read'], memberIds: ['o-nathan'], ownerIds: ['o-nathan'] },
 ];
 export const businessRoles: { id: string; name: string; description: string; risk: number; technicalRoleIds: string[]; entitlementIds: string[]; memberIds: string[]; ownerIds: string[] }[] = [
   { id: 'br-sales-rep', name: 'Sales Representative', description: 'Apps for the sales org', risk: 30, technicalRoleIds: ['tr-eng-baseline'], entitlementIds: ['ent-sf-sales'], memberIds: ['o-daniel', 'o-bob', 'o-hana'], ownerIds: ['o-henry'] },
   { id: 'br-support', name: 'Support Agent', description: 'Customer support toolset', risk: 28, technicalRoleIds: ['tr-data'], entitlementIds: ['ent-sf-service'], memberIds: ['o-grace'], ownerIds: ['o-henry'] },
-  { id: 'br-finance', name: 'Finance Analyst', description: 'Finance systems bundle', risk: 62, technicalRoleIds: ['tr-data'], entitlementIds: ['ent-aws-ro', 'ent-sf-sales'], memberIds: ['o-bob', 'o-hana'], ownerIds: ['o-bob'] },
+  { id: 'br-finance', name: 'Finance Analyst', description: 'Finance systems bundle', risk: 62, technicalRoleIds: ['tr-data', 'tr-sap-fin'], entitlementIds: ['ent-aws-ro', 'ent-sf-sales', 'ent-sap-report'], memberIds: ['o-bob', 'o-hana'], ownerIds: ['o-bob'] },
+  // `ownerIds: []` is deliberate — the seeded business-role ownership gap.
+  { id: 'br-controller', name: 'Financial Controller', description: 'Period close, payment release, and statutory reporting', risk: 80, technicalRoleIds: ['tr-sap-fin'], entitlementIds: ['ent-ns-controller'], memberIds: ['o-hana'], ownerIds: [] },
+  { id: 'br-hr-generalist', name: 'HR Generalist', description: 'Worker lifecycle and people operations', risk: 34, technicalRoleIds: ['tr-workday-hr'], entitlementIds: ['ent-wday-ess'], memberIds: ['o-emily'], ownerIds: ['o-emily'] },
+  { id: 'br-security-analyst', name: 'Security Analyst', description: 'Threat monitoring and access investigation', risk: 68, technicalRoleIds: ['tr-devops'], entitlementIds: ['ent-okta-ro'], memberIds: ['o-catherine'], ownerIds: ['o-catherine'] },
+  { id: 'br-cloud-engineer', name: 'Cloud Engineer', description: 'Infrastructure build and operations', risk: 72, technicalRoleIds: ['tr-devops', 'tr-eng-baseline'], entitlementIds: ['ent-aws-power'], memberIds: ['o-liam', 'o-frank'], ownerIds: ['o-liam'] },
+  { id: 'br-service-desk', name: 'IT Service Desk', description: 'First-line support and request fulfilment', risk: 30, technicalRoleIds: ['tr-itsm'], entitlementIds: ['ent-snow-fulfiller'], memberIds: ['o-grace'], ownerIds: ['o-henry'] },
 ];
 
 /** Governance groups — reviewers/owners that govern access. `members` = reviewer count. */
 export const governanceGroups: { id: string; name: string; description: string; members: number; reviewerIds: string[]; ownedApplicationIds: string[]; ownedEntitlementIds: string[]; ownedTechnicalRoleIds: string[]; ownedBusinessRoleIds: string[] }[] = [
-  { id: 'gg-secops', name: 'Security Operations', description: 'Owns privileged access and reviews security-sensitive entitlements.', members: 2, reviewerIds: ['o-catherine', 'o-marcus'], ownedApplicationIds: ['app-okta'], ownedEntitlementIds: ['ent-okta-admin', 'ent-aws-admin'], ownedTechnicalRoleIds: ['tr-devops'], ownedBusinessRoleIds: [] },
-  { id: 'gg-it-admins', name: 'IT Administrators', description: 'Owns infrastructure applications and administrator access.', members: 2, reviewerIds: ['o-marcus', 'o-henry'], ownedApplicationIds: ['app-aws'], ownedEntitlementIds: ['ent-aws-power'], ownedTechnicalRoleIds: ['tr-devops'], ownedBusinessRoleIds: [] },
-  { id: 'gg-compliance', name: 'Compliance Team', description: 'Reviews access for regulatory compliance.', members: 2, reviewerIds: ['o-olivia', 'o-catherine'], ownedApplicationIds: [], ownedEntitlementIds: ['ent-sf-admin'], ownedTechnicalRoleIds: [], ownedBusinessRoleIds: ['br-finance'] },
-  { id: 'gg-app-owners', name: 'Application Owners', description: 'Owns business applications and their role bundles.', members: 3, reviewerIds: ['o-henry', 'o-priya', 'o-bob'], ownedApplicationIds: ['app-salesforce', 'app-github'], ownedEntitlementIds: [], ownedTechnicalRoleIds: ['tr-eng-baseline'], ownedBusinessRoleIds: ['br-sales-rep', 'br-support'] },
-  { id: 'gg-finance', name: 'Finance Approvers', description: 'Approves and owns finance-system access.', members: 2, reviewerIds: ['o-bob', 'o-hana'], ownedApplicationIds: [], ownedEntitlementIds: ['ent-sf-sales'], ownedTechnicalRoleIds: [], ownedBusinessRoleIds: ['br-finance'] },
+  { id: 'gg-secops', name: 'Security Operations', description: 'Owns privileged access and reviews security-sensitive entitlements.', members: 2, reviewerIds: ['o-catherine', 'o-marcus'], ownedApplicationIds: ['app-okta'], ownedEntitlementIds: ['ent-okta-admin', 'ent-aws-admin', 'ent-flake-acct'], ownedTechnicalRoleIds: ['tr-devops'], ownedBusinessRoleIds: ['br-security-analyst'] },
+  { id: 'gg-it-admins', name: 'IT Administrators', description: 'Owns infrastructure applications and administrator access.', members: 2, reviewerIds: ['o-marcus', 'o-henry'], ownedApplicationIds: ['app-aws', 'app-servicenow'], ownedEntitlementIds: ['ent-aws-power', 'ent-snow-admin'], ownedTechnicalRoleIds: ['tr-devops', 'tr-itsm'], ownedBusinessRoleIds: ['br-service-desk'] },
+  { id: 'gg-compliance', name: 'Compliance Team', description: 'Reviews access for regulatory compliance.', members: 2, reviewerIds: ['o-olivia', 'o-catherine'], ownedApplicationIds: [], ownedEntitlementIds: ['ent-sf-admin'], ownedTechnicalRoleIds: [], ownedBusinessRoleIds: ['br-finance', 'br-controller'] },
+  { id: 'gg-app-owners', name: 'Application Owners', description: 'Owns business applications and their role bundles.', members: 3, reviewerIds: ['o-henry', 'o-priya', 'o-bob'], ownedApplicationIds: ['app-salesforce', 'app-github', 'app-jira'], ownedEntitlementIds: [], ownedTechnicalRoleIds: ['tr-eng-baseline', 'tr-sf-admin'], ownedBusinessRoleIds: ['br-sales-rep', 'br-support'] },
+  { id: 'gg-finance', name: 'Finance Approvers', description: 'Approves and owns finance-system access.', members: 2, reviewerIds: ['o-bob', 'o-hana'], ownedApplicationIds: ['app-netsuite'], ownedEntitlementIds: ['ent-sf-sales', 'ent-sap-pay'], ownedTechnicalRoleIds: ['tr-sap-fin'], ownedBusinessRoleIds: ['br-finance'] },
 ];
 
 /** App Accounts — a User Identity's login within an application (identityId null = orphan). */
@@ -258,6 +302,23 @@ export const appAccounts: SeedAppAccount[] = [
   { id: 'aa-hana-sf', accountName: 'hana.kim@acme.com', email: 'hana.kim@acme.com', applicationId: 'app-salesforce', identityId: 'o-hana', entitlementIds: ['ent-sf-sales'] },
   { id: 'aa-orphan-sf', accountName: 'svc-integration', email: 'integration@acme.com', applicationId: 'app-salesforce', identityId: null, entitlementIds: ['ent-sf-service'] },
   { id: 'aa-orphan-aws', accountName: 'legacy-admin', email: '', applicationId: 'app-aws', identityId: null, entitlementIds: ['ent-aws-power'] },
+  { id: 'aa-hana-sap', accountName: 'HKIM', email: 'hana.kim@acme.com', applicationId: 'app-sap', identityId: 'o-hana', entitlementIds: ['ent-sap-journal', 'ent-sap-pay'] },
+  { id: 'aa-bob-sap', accountName: 'BSMITH', email: 'bob.smith@acme.com', applicationId: 'app-sap', identityId: 'o-bob', entitlementIds: ['ent-sap-journal', 'ent-sap-vendor'] },
+  { id: 'aa-olivia-sap', accountName: 'OMARTIN', email: 'olivia.martin@acme.com', applicationId: 'app-sap', identityId: 'o-olivia', entitlementIds: ['ent-sap-report'] },
+  { id: 'aa-orphan-sap', accountName: 'BATCH_POST', email: '', applicationId: 'app-sap', identityId: null, entitlementIds: ['ent-sap-journal'] },
+  { id: 'aa-emily-workday', accountName: 'emily.davis', email: 'emily.davis@acme.com', applicationId: 'app-workday', identityId: 'o-emily', entitlementIds: ['ent-wday-admin', 'ent-wday-comp'] },
+  { id: 'aa-priya-workday', accountName: 'priya.sharma', email: 'priya.sharma@acme.com', applicationId: 'app-workday', identityId: 'o-priya', entitlementIds: ['ent-wday-ess'] },
+  { id: 'aa-daniel-workday', accountName: 'daniel.white', email: 'daniel.white@acme.com', applicationId: 'app-workday', identityId: 'o-daniel', entitlementIds: ['ent-wday-ess'] },
+  { id: 'aa-henry-snow', accountName: 'henry.taylor', email: 'henry.taylor@acme.com', applicationId: 'app-servicenow', identityId: 'o-henry', entitlementIds: ['ent-snow-admin'] },
+  { id: 'aa-grace-snow', accountName: 'grace.lee', email: 'grace.lee@acme.com', applicationId: 'app-servicenow', identityId: 'o-grace', entitlementIds: ['ent-snow-change', 'ent-snow-fulfiller'] },
+  { id: 'aa-marcus-snow', accountName: 'marcus.lee', email: 'marcus.lee@acme.com', applicationId: 'app-servicenow', identityId: 'o-marcus', entitlementIds: ['ent-snow-fulfiller'] },
+  { id: 'aa-nathan-flake', accountName: 'NGREEN', email: 'nathan.green@acme.com', applicationId: 'app-snowflake', identityId: 'o-nathan', entitlementIds: ['ent-flake-acct', 'ent-flake-sys'] },
+  { id: 'aa-bob-flake', accountName: 'BSMITH', email: 'bob.smith@acme.com', applicationId: 'app-snowflake', identityId: 'o-bob', entitlementIds: ['ent-flake-read'] },
+  { id: 'aa-hana-netsuite', accountName: 'hana.kim', email: 'hana.kim@acme.com', applicationId: 'app-netsuite', identityId: 'o-hana', entitlementIds: ['ent-ns-controller'] },
+  { id: 'aa-bob-netsuite', accountName: 'bob.smith', email: 'bob.smith@acme.com', applicationId: 'app-netsuite', identityId: 'o-bob', entitlementIds: ['ent-ns-ap'] },
+  { id: 'aa-sofia-jira', accountName: 'sofia.rossi', email: 'sofia.rossi@acme.com', applicationId: 'app-jira', identityId: 'o-sofia', entitlementIds: ['ent-jira-admin'] },
+  { id: 'aa-frank-jira', accountName: 'frank.wilson', email: 'frank.wilson@acme.com', applicationId: 'app-jira', identityId: 'o-frank', entitlementIds: ['ent-jira-project'] },
+  { id: 'aa-priya-jira', accountName: 'priya.sharma', email: 'priya.sharma@acme.com', applicationId: 'app-jira', identityId: 'o-priya', entitlementIds: ['ent-jira-contrib'] },
 ];
 
 /** People directory — candidates for "Add Owners". The full canonical people set. */

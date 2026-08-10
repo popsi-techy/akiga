@@ -1,0 +1,101 @@
+/* RelationshipCanvas — the viewport, the transformed plane, and edge styling.
+   Geometry lives in the component (it has to measure); everything here is the
+   part that is cheaper and steadier as CSS: the grain of the working surface,
+   the grab cursor, and the edge/label state transitions. */
+
+.viewport {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--ds-color-background-subtle);
+  /* A 20px dot grid — the only decoration on the surface, and it is structural:
+     it makes panning legible. Two colour stops, both greyscale (§5.2). */
+  background-image: radial-gradient(var(--ds-color-border-default) 1px, transparent 1px);
+  background-size: 20px 20px;
+  cursor: grab;
+  touch-action: none;
+}
+.viewport:focus-visible {
+  outline: 2px solid var(--ds-color-border-focus);
+  outline-offset: -2px;
+}
+.panning {
+  cursor: grabbing;
+}
+
+/* The transformed plane. `transform-origin: 0 0` keeps pan maths in plane
+   coordinates: screen = plane * scale + offset, with no centre correction. */
+.plane {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+/* Only a programmatic move (fit, reset, focus) animates. A drag must track the
+   pointer exactly, so the component drops this class while panning. */
+.planeAnimated {
+  transition: transform var(--ds-motion-duration-slower) var(--ds-motion-easing-decelerate);
+}
+
+.edgeLayer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.edge {
+  fill: none;
+  stroke: var(--ds-color-border-strong);
+  stroke-width: 1.5;
+  transition:
+    stroke var(--ds-motion-duration-fast) var(--ds-motion-easing-standard),
+    stroke-width var(--ds-motion-duration-fast) var(--ds-motion-easing-standard),
+    opacity var(--ds-motion-duration-base) var(--ds-motion-easing-standard);
+}
+/* Wide transparent twin of each path — the actual pointer/focus target, so a
+   1.5px line does not demand 1.5px of aim. */
+.edgeHit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 16;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+.edgeHit:focus-visible {
+  outline: none;
+}
+.edgeHit:focus-visible + .edge,
+.edgeActive {
+  stroke: var(--ds-color-brand-primary);
+  stroke-width: 2;
+}
+.edgeDimmed {
+  opacity: 0.24;
+}
+/* A relationship that is not currently in force reads as provisional, not as a
+   different kind of relationship — same colour, broken stroke. */
+.edgeInactive {
+  stroke-dasharray: 4 4;
+}
+
+.edgeLabel {
+  pointer-events: none;
+  user-select: none;
+}
+.edgeLabelDimmed {
+  opacity: 0.3;
+}
+
+.node {
+  position: absolute;
+  transition:
+    opacity var(--ds-motion-duration-base) var(--ds-motion-easing-standard),
+    transform var(--ds-motion-duration-base) var(--ds-motion-easing-standard);
+}
+.nodeDimmed {
+  opacity: 0.32;
+}
