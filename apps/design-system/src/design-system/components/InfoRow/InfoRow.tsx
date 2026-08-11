@@ -10,8 +10,21 @@ import * as React from 'react';
 export interface InfoRowProps {
   label: string;
   value: React.ReactNode;
-  /** Optional leading icon (inherits `text-icon`). */
-  icon?: React.ReactNode;
+  /**
+   * Leading icon — **required**, and outlined at 18px (`sx={{ fontSize: 18 }}`).
+   * It inherits `icon.subtle` (#808B9E), so pass an uncoloured icon. Subtle, not
+   * `icon.default`: the icon column is a scan aid, and at 18px beside a
+   * `body-sm` label it should locate the row without competing with the value
+   * that the row exists to show. 3.44:1 on both surface and canvas — above the
+   * 3:1 WCAG 1.4.11 floor for non-text content.
+   *
+   * Required rather than optional because a group of these is a scan target: the
+   * icon column is what lets the eye find "Owners" without reading four labels,
+   * and one row missing its icon breaks the column for every row above and below
+   * it. `icon={null}` is not an escape hatch — if a row has no meaningful icon,
+   * the row probably belongs in a different card.
+   */
+  icon: React.ReactNode;
   /** Applied to the row (e.g. `px-4` when not inside a DS Card gutter). */
   className?: string;
 }
@@ -28,7 +41,7 @@ export function InfoRow({ label, value, icon, className = '' }: InfoRowProps) {
         .join(' ')}
     >
       <div role="cell" className="flex min-w-0 items-center gap-2.5 py-3 text-body-sm text-text-secondary">
-        {icon != null && <span className="shrink-0 text-icon">{icon}</span>}
+        {icon != null && <span className="shrink-0 text-icon-subtle">{icon}</span>}
         <span className="whitespace-nowrap">{label}</span>
       </div>
       <div

@@ -12,6 +12,7 @@ import {
   formatRequestDate,
   formatRequestDateTime,
 } from '@/data/access-requests';
+import { infoIcon } from '@/components/product/directory';
 import {
   RequestStatusChip,
   RequestTypeChip,
@@ -84,13 +85,13 @@ export function ReviewRequestQuickDrawer({
     >
       <div className="space-y-5">
         <InfoRowGroup>
-          <InfoRow label="Request type" value={<RequestTypeChip type={request.type} />} />
-          <InfoRow label="Requested item" value={request.itemName} />
-          <InfoRow label="Access duration" value={durationText} />
-          <InfoRow label="Requested for" value={request.requestedForName} />
-          <InfoRow label="Requested by" value={request.requestedByName} />
-          <InfoRow label="Submitted on" value={formatRequestDateTime(request.submittedAt)} />
-          <InfoRow label="Status" value={<RequestStatusChip status={request.status} />} />
+          <InfoRow icon={infoIcon.type} label="Request type" value={<RequestTypeChip type={request.type} />} />
+          <InfoRow icon={infoIcon.item} label="Requested item" value={request.itemName} />
+          <InfoRow icon={infoIcon.duration} label="Access duration" value={durationText} />
+          <InfoRow icon={infoIcon.person} label="Requested for" value={request.requestedForName} />
+          <InfoRow icon={infoIcon.person} label="Requested by" value={request.requestedByName} />
+          <InfoRow icon={infoIcon.submitted} label="Submitted on" value={formatRequestDateTime(request.submittedAt)} />
+          <InfoRow icon={infoIcon.status} label="Status" value={<RequestStatusChip status={request.status} />} />
         </InfoRowGroup>
 
         <div

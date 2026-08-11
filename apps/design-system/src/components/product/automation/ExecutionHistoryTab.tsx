@@ -14,6 +14,7 @@ import CheckCircle from '@mui/icons-material/CheckCircle';
 import History from '@mui/icons-material/History';
 import HistoryOutlined from '@mui/icons-material/HistoryOutlined';
 import { Avatar, Card, InfoRow, InfoRowGroup, StatusChip } from '@ds/components';
+import { infoIcon } from '@/components/product/directory';
 import {
   listRuns,
   runStats,
@@ -262,14 +263,14 @@ function RunDetail({ run }: { run: ApprovalRun }) {
 
         <Card title="Run details" icon={<History />} padding="none">
           <InfoRowGroup>
-            <InfoRow label="Outcome" value={<StatusChip intent={o.intent} label={o.label} />} />
-            <InfoRow label="Triggered by" value={run.trigger} />
-            <InfoRow label="Requested by" value={runUserName(run.requesterId)} />
-            <InfoRow label="Access for" value={runUserName(run.targetUserId)} />
-            <InfoRow label="Started" value={`${formatDate(run.startedAt)} ${formatTime(run.startedAt)}`} />
-            <InfoRow label="Completed" value={run.completedAt ? `${formatDate(run.completedAt)} ${formatTime(run.completedAt)}` : 'Still running'} />
-            <InfoRow label="Duration" value={run.duration ?? '—'} />
-            <InfoRow label="Steps" value={String(run.steps.length)} />
+            <InfoRow icon={infoIcon.outcome} label="Outcome" value={<StatusChip intent={o.intent} label={o.label} />} />
+            <InfoRow icon={infoIcon.trigger} label="Triggered by" value={run.trigger} />
+            <InfoRow icon={infoIcon.person} label="Requested by" value={runUserName(run.requesterId)} />
+            <InfoRow icon={infoIcon.person} label="Access for" value={runUserName(run.targetUserId)} />
+            <InfoRow icon={infoIcon.started} label="Started" value={`${formatDate(run.startedAt)} ${formatTime(run.startedAt)}`} />
+            <InfoRow icon={infoIcon.completed} label="Completed" value={run.completedAt ? `${formatDate(run.completedAt)} ${formatTime(run.completedAt)}` : 'Still running'} />
+            <InfoRow icon={infoIcon.duration} label="Duration" value={run.duration ?? '—'} />
+            <InfoRow icon={infoIcon.steps} label="Steps" value={String(run.steps.length)} />
           </InfoRowGroup>
         </Card>
       </div>

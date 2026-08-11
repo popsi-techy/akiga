@@ -15,6 +15,7 @@ import {
   RiskScoreChip,
   accountColumns,
   roleColumns,
+  infoIcon,
 } from '@/components/product/directory';
 
 const STATUS: Record<IdentityStatus, { label: string; intent: StatusIntent }> = {
@@ -60,18 +61,18 @@ export default function UserIdentityDetailPage() {
         <div className="grid gap-5 lg:grid-cols-2">
           <Card title="Information" padding="none">
             <InfoRowGroup>
-              <InfoRow label="Email" value={identity.email} />
-              <InfoRow label="Job Title" value={identity.jobTitle} />
-              <InfoRow label="Department" value={identity.department} />
-              <InfoRow label="Status" value={<StatusChip intent={status.intent} label={status.label} />} />
-              <InfoRow label="Risk Score" value={<RiskScoreChip score={identity.riskScore} />} />
+              <InfoRow icon={infoIcon.email} label="Email" value={identity.email} />
+              <InfoRow icon={infoIcon.jobTitle} label="Job Title" value={identity.jobTitle} />
+              <InfoRow icon={infoIcon.department} label="Department" value={identity.department} />
+              <InfoRow icon={infoIcon.status} label="Status" value={<StatusChip intent={status.intent} label={status.label} />} />
+              <InfoRow icon={infoIcon.risk} label="Risk Score" value={<RiskScoreChip score={identity.riskScore} />} />
             </InfoRowGroup>
           </Card>
           <Card title="Access Summary" padding="none">
             <InfoRowGroup>
-              <InfoRow label="App Accounts" value={accounts.length} />
-              <InfoRow label="Technical Roles" value={technicalRoles.length} />
-              <InfoRow label="Business Roles" value={businessRoles.length} />
+              <InfoRow icon={infoIcon.account} label="App Accounts" value={accounts.length} />
+              <InfoRow icon={infoIcon.technicalRole} label="Technical Roles" value={technicalRoles.length} />
+              <InfoRow icon={infoIcon.businessRole} label="Business Roles" value={businessRoles.length} />
             </InfoRowGroup>
           </Card>
         </div>

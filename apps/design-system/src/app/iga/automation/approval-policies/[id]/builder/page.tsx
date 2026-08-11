@@ -120,6 +120,8 @@ const SECTION_TILE: Record<string, { bg: string; fg: string }> = {
   'Flow Control': { bg: '#E4F6EF', fg: '#0EA47A' }, // teal
 };
 const tileFor = (section: string) => SECTION_TILE[section] ?? { bg: 'var(--ds-color-surface-hover)', fg: 'var(--ds-color-icon-default)' };
+/** Section order — shared by the sidebar palette and the canvas quick-insert menu. */
+const PALETTE_SECTIONS = ['Tasks', 'Branching', 'Flow Control'] as const;
 
 type Hist = { doc: ApprovalPolicy; past: ApprovalPolicy[]; future: ApprovalPolicy[] };
 
@@ -314,7 +316,7 @@ export default function ApprovalPolicyBuilderPage() {
             />
             <span className="relative z-[1] flex w-[130px] flex-col items-center gap-1 px-1 text-center">
               <span className="grid h-9 w-9 place-items-center rounded-full" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 18 }} /></span>
-              <span className="text-body-sm-strong leading-tight text-text-primary">{displayTitle}</span>
+              <span className="text-body-sm-medium leading-tight text-text-primary">{displayTitle}</span>
               <span className="text-caption leading-tight text-text-secondary">{paths} condition{paths !== 1 ? 's' : ''}</span>
               {complete ? (
                 <CheckCircleOutlined sx={{ fontSize: 16, color: 'var(--ds-color-status-success-fg)' }} titleAccess="Complete" />
@@ -346,7 +348,7 @@ export default function ApprovalPolicyBuilderPage() {
             className={['inline-flex items-center gap-2.5 rounded-pill border bg-surface px-4 py-2 text-left transition-all duration-150', selected ? 'shadow-sm' : 'border-border hover:border-border-strong hover:shadow-sm'].join(' ')}
           >
             <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 16 }} /></span>
-            <span className="text-body-strong text-text-primary">{displayTitle}</span>
+            <span className="text-body-medium text-text-primary">{displayTitle}</span>
           </button>
           <button
             type="button"
@@ -385,7 +387,7 @@ export default function ApprovalPolicyBuilderPage() {
             <Icon sx={{ fontSize: 18 }} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-body-strong leading-tight text-text-primary">{displayTitle}</span>
+            <span className="block truncate text-body-medium leading-tight text-text-primary">{displayTitle}</span>
             {(!dense || node.type === 'parallelBranch' || node.type === 'notification' || node.type === 'approvalLevel') && (
               <span className="mt-1 block truncate text-caption leading-tight text-text-secondary">{summary}</span>
             )}
@@ -409,7 +411,7 @@ export default function ApprovalPolicyBuilderPage() {
         </button>
         {showFallbackChip && (
           <>
-            <div className="h-5 w-px bg-border-strong" aria-hidden />
+            <div className="h-5 w-0.5 border-l-2 border-border-strong" aria-hidden />
             <button
               type="button"
               onClick={(e) => {
@@ -427,7 +429,7 @@ export default function ApprovalPolicyBuilderPage() {
                 <PersonOutline sx={{ fontSize: 16 }} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-body-sm-strong leading-tight text-text-primary">Fallback Approver</span>
+                <span className="block truncate text-body-sm-medium leading-tight text-text-primary">Fallback Approver</span>
                 <span className="mt-0.5 block truncate text-caption leading-tight text-text-secondary">{fallbackEmail}</span>
               </span>
             </button>
@@ -446,7 +448,7 @@ export default function ApprovalPolicyBuilderPage() {
     const tile = tileFor(NODE_META[node.type].section);
     return (
       <div className="flex flex-col items-center">
-        <div className="h-5 w-px bg-border-strong" aria-hidden />
+        <div className="h-5 w-0.5 border-l-2 border-border-strong" aria-hidden />
         <button
           type="button"
           onClick={(e) => {
@@ -464,7 +466,7 @@ export default function ApprovalPolicyBuilderPage() {
             <PersonOutline sx={{ fontSize: 16 }} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-body-sm-strong leading-tight text-text-primary">Fallback Approver</span>
+            <span className="block truncate text-body-sm-medium leading-tight text-text-primary">Fallback Approver</span>
             <span className="mt-0.5 block truncate text-caption leading-tight text-text-secondary">{email}</span>
           </span>
         </button>
@@ -492,7 +494,10 @@ export default function ApprovalPolicyBuilderPage() {
           <PersonAddAltOutlined sx={{ fontSize: 18 }} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-body-strong text-text-primary">{doc.policyName}</span>
+          {/* `body-medium`, not `-strong`: this card names the policy you are already
+              inside (it is in the page header too), so it is context. The steps below
+              are the protagonist and carry the 600. */}
+          <span className="block truncate text-body-medium text-text-primary">{doc.policyName}</span>
           <span className="mt-0.5 block truncate text-caption text-text-secondary">
             {doc.description || 'Add description'}
           </span>
@@ -501,11 +506,16 @@ export default function ApprovalPolicyBuilderPage() {
     );
   };
 
-  const palette = PALETTE_ORDER.map((kind) => ({
-    kind,
-    label: NODE_META[kind].title,
-    icon: React.createElement(ICONS[NODE_META[kind].icon] ?? PersonOutline, { sx: { fontSize: 18 } }),
-  }));
+  // Ordered by section so the quick-insert menu groups exactly like the sidebar.
+  const palette = PALETTE_SECTIONS.flatMap((section) =>
+    PALETTE_ORDER.filter((kind) => NODE_META[kind].section === section).map((kind) => ({
+      kind,
+      label: NODE_META[kind].title,
+      icon: React.createElement(ICONS[NODE_META[kind].icon] ?? PersonOutline, { sx: { fontSize: 17 } }),
+      section,
+      tile: tileFor(section),
+    })),
+  );
 
   // ---- states -----------------------------------------------------------
   if (loaded && !doc) {
@@ -570,7 +580,7 @@ export default function ApprovalPolicyBuilderPage() {
               </button>
             </div>
             <div className="ds-scroll flex-1 overflow-y-auto px-3 pb-4">
-              {(['Tasks', 'Branching', 'Flow Control'] as const).map((section) => (
+              {PALETTE_SECTIONS.map((section) => (
                 <div key={section} className="mb-3">
                   <div className="mb-1.5 px-1 text-caption-strong uppercase tracking-wide text-text-tertiary">{section}</div>
                   <div className="space-y-2">

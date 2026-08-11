@@ -15,6 +15,7 @@ import {
   applicationColumns,
   entitlementColumns,
   roleColumns,
+  infoIcon,
 } from '@/components/product/directory';
 
 const TABS: TabItem[] = [
@@ -48,11 +49,11 @@ export default function GovernanceGroupDetailPage() {
         <div className="grid gap-5 lg:grid-cols-2">
           <Card title="Information" padding="none">
             <InfoRowGroup>
-              <InfoRow label="Reviewers" value={reviewers.length} />
-              <InfoRow label="Owned Applications" value={ownedApplications.length} />
-              <InfoRow label="Owned Entitlements" value={ownedEntitlements.length} />
-              <InfoRow label="Owned Technical Roles" value={ownedTechnicalRoles.length} />
-              <InfoRow label="Owned Business Roles" value={ownedBusinessRoles.length} />
+              <InfoRow icon={infoIcon.reviewer} label="Reviewers" value={reviewers.length} />
+              <InfoRow icon={infoIcon.application} label="Owned Applications" value={ownedApplications.length} />
+              <InfoRow icon={infoIcon.entitlement} label="Owned Entitlements" value={ownedEntitlements.length} />
+              <InfoRow icon={infoIcon.technicalRole} label="Owned Technical Roles" value={ownedTechnicalRoles.length} />
+              <InfoRow icon={infoIcon.businessRole} label="Owned Business Roles" value={ownedBusinessRoles.length} />
             </InfoRowGroup>
           </Card>
         </div>

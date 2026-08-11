@@ -4,7 +4,7 @@
  * shared-access impact) used by both consoles. Screens depend on these, never
  * on the store directly.
  */
-import { sodReviewSeed, accessById, sodAppById, CURRENT_REVIEWER } from './sod-seed';
+import { sodReviewSeed, accessById, sodAppById, CURRENT_REVIEWER, sodReviewers } from './sod-seed';
 import { buildSubmittedAuditPayload, clearedByRemoval } from './sod-audit';
 import type {
   SodReview,
@@ -56,7 +56,7 @@ function writeStore(s: Store) {
 }
 
 // ---- reference data ---------------------------------------------------
-export { CURRENT_REVIEWER, accessById };
+export { CURRENT_REVIEWER, sodReviewers, accessById };
 export const getAccess = (id: string) => accessById[id];
 export const getSodApp = (id: string) => sodAppById[id];
 
@@ -197,6 +197,51 @@ function audit(
   ];
 }
 
+
+/**
+ * Assign — or reassign — the reviewer who owns this violation.
+ *
+ * This is not a label: `listMyReviews` filters on `assignedReviewerId`, so the
+ * assignment is what actually routes the violation into that person's SoD queue.
+ * It is audited (the actor is whoever is doing the assigning, not the assignee)
+ * so the Review Timeline shows how the review reached its current owner.
+ */
+export function assignReviewer(id: string, reviewer: { id: string; name: string }): SodReview | null {
+  const r = getReview(id);
+  if (!r) return null;
+  // Re-picking the same person is not a reassignment — don't write an audit line for it.
+  if (r.assignedReviewerId === reviewer.id) return r;
+  const previous = r.assignedReviewerName;
+  return save({
+    ...r,
+    assignedReviewerId: reviewer.id,
+    assignedReviewerName: reviewer.name,
+    audit: audit(
+      r,
+      previous ? 'Reviewer reassigned' : 'Reviewer assigned',
+      previous ? `Reassigned from ${previous} to ${reviewer.name}` : `Assigned to ${reviewer.name}`,
+      CURRENT_REVIEWER.name,
+    ),
+  });
+}
+
+/**
+ * Clear the reviewer, returning the violation to the unassigned pool.
+ *
+ * The inverse of {@link assignReviewer}, and just as consequential: it removes
+ * the violation from that person's queue, so it is audited with who was dropped
+ * rather than a bare "unassigned".
+ */
+export function unassignReviewer(id: string): SodReview | null {
+  const r = getReview(id);
+  if (!r) return null;
+  if (!r.assignedReviewerId) return r; // already unassigned — nothing to record
+  const previous = r.assignedReviewerName ?? 'the previous reviewer';
+  const next = { ...r, audit: audit(r, 'Reviewer removed', `Removed ${previous}`, CURRENT_REVIEWER.name) };
+  delete next.assignedReviewerId;
+  delete next.assignedReviewerName;
+  return save(next);
+}
 
 /** Persist staged reviewer decisions (draft). */
 export function saveReviewState(

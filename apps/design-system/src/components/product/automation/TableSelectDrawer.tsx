@@ -14,9 +14,14 @@ export interface TableSelectRow {
 }
 
 /**
- * Wide two-pane multi-select drawer: a searchable table (select-all · name ·
- * description · optional risk) on the left, the running selection on the right —
- * the "Add Owners"-style pattern reused for roles, entitlements, and connections.
+ * Wide two-pane select drawer: a searchable, paginated table on the left, the
+ * running selection on the right — the "Add Owners"-style pattern reused for
+ * roles, entitlements, connections, and (in `single` mode) reviewers.
+ *
+ * `selectionMode="single"` turns the checkboxes into radios and the panel into a
+ * single-slot preview. It stays one component rather than two because everything
+ * around the control — search, pagination, the selection panel, the footer — is
+ * identical; only the arity differs, and that is what `DataTable` already models.
  */
 export function TableSelectDrawer({
   open,
@@ -25,11 +30,14 @@ export function TableSelectDrawer({
   subtitle,
   icon,
   nameHeader,
+  descriptionHeader = 'Description',
   entity,
   rows,
   selectedIds,
   onApply,
   showRisk = true,
+  selectionMode = 'multiple',
+  confirmLabel,
 }: {
   open: boolean;
   onClose: () => void;
@@ -37,13 +45,20 @@ export function TableSelectDrawer({
   subtitle?: string;
   icon?: React.ReactNode;
   nameHeader: string;
+  /** Header for the second column — it is not always a description (e.g. "Email"). @default 'Description' */
+  descriptionHeader?: string;
   entity: string; // singular, e.g. "technical role"
   rows: TableSelectRow[];
   selectedIds: string[];
   onApply: (ids: string[]) => void;
   /** Show the risk-score column. @default true */
   showRisk?: boolean;
+  /** `'single'` — radios, no select-all, one row at a time. @default 'multiple' */
+  selectionMode?: 'single' | 'multiple';
+  /** Footer verb. Defaults to "Add" (multiple) or "Select" (single). */
+  confirmLabel?: string;
 }) {
+  const single = selectionMode === 'single';
   const [sel, setSel] = React.useState<string[]>(selectedIds);
   const [query, setQuery] = React.useState('');
 
@@ -59,7 +74,7 @@ export function TableSelectDrawer({
 
   const columns: Column<TableSelectRow>[] = [
     { id: 'name', header: nameHeader, sortable: true, value: (r) => r.name, render: (r) => <span className="text-body-sm-strong text-text-primary">{r.name}</span> },
-    { id: 'description', header: 'Description', render: (r) => <span className="text-text-secondary">{r.description}</span> },
+    { id: 'description', header: descriptionHeader, sortable: single, value: (r) => r.description, render: (r) => <span className="text-text-secondary">{r.description}</span> },
     ...(showRisk
       ? [
           {
@@ -74,8 +89,11 @@ export function TableSelectDrawer({
       : []),
   ];
 
-  const selectedItems = rows.filter((r) => sel.includes(r.id)).map((r) => ({ id: r.id, label: r.name }));
+  const selectedItems = rows
+    .filter((r) => sel.includes(r.id))
+    .map((r) => ({ id: r.id, label: r.name, sublabel: single ? r.description : undefined }));
   const plural = (n: number) => `${n} ${entity}${n === 1 ? '' : 's'} selected`;
+  const verb = confirmLabel ?? (single ? 'Select' : 'Add');
 
   return (
     <Drawer
@@ -89,7 +107,9 @@ export function TableSelectDrawer({
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button disabled={sel.length === 0} onClick={() => { onApply(sel); onClose(); }}>Add {sel.length ? `(${sel.length})` : ''}</Button>
+          <Button disabled={sel.length === 0} onClick={() => { onApply(sel); onClose(); }}>
+            {verb}{!single && sel.length ? ` (${sel.length})` : ''}
+          </Button>
         </>
       }
     >
@@ -103,10 +123,11 @@ export function TableSelectDrawer({
               columns={columns}
               rows={filtered}
               selectable
+              selectionMode={selectionMode}
               selectedIds={sel}
               onSelectionChange={setSel}
               fillHeight
-              defaultRowsPerPage={25}
+              defaultRowsPerPage={single ? 10 : 25}
               emptyTitle="No matches"
               emptyMessage="Try a different search."
             />
@@ -118,9 +139,13 @@ export function TableSelectDrawer({
             items={selectedItems}
             onRemove={(id) => setSel((prev) => prev.filter((x) => x !== id))}
             onClearAll={() => setSel([])}
-            countLabel={plural}
+            countLabel={single ? () => '1 selected' : plural}
             emptyTitle="Nothing selected"
-            emptyMessage="Select rows from the list and they’ll appear here."
+            emptyMessage={
+              single
+                ? `Choose a ${entity} from the list and it’ll appear here.`
+                : 'Select rows from the list and they’ll appear here.'
+            }
           />
         </div>
       </div>

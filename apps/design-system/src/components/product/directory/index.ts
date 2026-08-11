@@ -1,6 +1,8 @@
 export { RiskScoreChip, RiskDot } from './RiskScoreChip';
 export { EntityAvatar, type EntityKind } from './EntityAvatar';
 export { EntityOwnersTab } from './EntityOwnersTab';
+export { ApplicationApprovalPolicyTab } from './ApplicationApprovalPolicyTab';
 export { DetailShell, DetailNotFound, InfoRow, InfoRowGroup, RelationTable } from './DetailShell';
+export { infoIcon, type InfoIconName } from './infoIcons';
 export { DirectoryListPage } from './DirectoryListPage';
 export { entitlementColumns, applicationColumns, accountColumns, peopleColumns, roleColumns } from './relationColumns';

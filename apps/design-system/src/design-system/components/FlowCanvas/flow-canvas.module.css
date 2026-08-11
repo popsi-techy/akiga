@@ -1,6 +1,8 @@
 /* FlowCanvas connector geometry — pure-CSS derived tree (fan-out / merge).
    A horizontal "bus" is drawn as top/bottom borders on each lane (trimmed to
    center on the outermost lanes) plus vertical stems.
+   Every line is 2px in `border-strong`; the dot grid behind them is `border-default`
+   so the grain never matches the plumbing. Corner radii come from the radius scale.
    Lane width is content-driven: a small ELSE / APPROVED pill stays compact;
    a lane with a 320px card or a nested branch sprawl grows to fit.
    Vertical connectors only run through empty stretch below content (`.spacer`),
@@ -36,7 +38,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--ds-color-border-strong);
+  border-top: 2px solid var(--ds-color-border-strong);
 }
 /* outer lanes: the elbow (bus + rounded corner + full vertical stem) is drawn as a
    single bordered box, so the corner reads as one continuous stroke. The straight
@@ -45,25 +47,26 @@
   left: calc(50% - 1px);
   right: 0;
   height: 20px;
-  background: none;
   border-top: 2px solid var(--ds-color-border-strong);
   border-left: 2px solid var(--ds-color-border-strong);
-  border-top-left-radius: 10px;
+  border-top-left-radius: var(--ds-radius-md);
 }
 .lane:last-child::before {
   left: 0;
   right: calc(50% - 1px);
   height: 20px;
-  background: none;
   border-top: 2px solid var(--ds-color-border-strong);
   border-right: 2px solid var(--ds-color-border-strong);
-  border-top-right-radius: 10px;
+  border-top-right-radius: var(--ds-radius-md);
 }
 .lane:only-child::before {
   display: none;
 }
 
-/* merge bus (bottom edge of the lanes row) — straight for inner lanes */
+/* merge bus (bottom edge of the lanes row) — straight for inner lanes.
+   Draws on `border-bottom`, matching the edge it sits on: the outer-lane rules
+   below grow this box to 20px to form the elbow, so a `border-top` here would
+   float 20px above the bus and paint a second horizontal line across the tier. */
 .lane::after {
   content: '';
   position: absolute;
@@ -71,25 +74,23 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--ds-color-border-strong);
+  border-bottom: 2px solid var(--ds-color-border-strong);
 }
 .lane:first-child::after {
   left: calc(50% - 1px);
   right: 0;
   height: 20px;
-  background: none;
   border-bottom: 2px solid var(--ds-color-border-strong);
   border-left: 2px solid var(--ds-color-border-strong);
-  border-bottom-left-radius: 10px;
+  border-bottom-left-radius: var(--ds-radius-md);
 }
 .lane:last-child::after {
   left: 0;
   right: calc(50% - 1px);
   height: 20px;
-  background: none;
   border-bottom: 2px solid var(--ds-color-border-strong);
   border-right: 2px solid var(--ds-color-border-strong);
-  border-bottom-right-radius: 10px;
+  border-bottom-right-radius: var(--ds-radius-md);
 }
 .lane:only-child::after {
   display: none;
@@ -104,13 +105,13 @@
 .laneStemTop {
   width: 2px;
   height: 20px;
-  background: var(--ds-color-border-strong);
+  border-left: 2px solid var(--ds-color-border-strong);
   flex: none;
 }
 .laneStemBottom {
   width: 2px;
   height: 20px;
-  background: var(--ds-color-border-strong);
+  border-left: 2px solid var(--ds-color-border-strong);
   flex: none;
   margin-top: auto;
 }
@@ -121,12 +122,12 @@
 .lane:last-child .laneStemTop,
 .lane:first-child .laneStemBottom,
 .lane:last-child .laneStemBottom {
-  background: transparent;
+  border-left-color: transparent;
 }
 
 .stem {
   width: 2px;
-  background: var(--ds-color-border-strong);
+  border-left: 2px solid var(--ds-color-border-strong);
   flex: none;
 }
 
@@ -138,8 +139,8 @@
   align-self: center;
   width: 2px;
   min-height: 0;
-  background: var(--ds-color-border-strong);
+  border-left: 2px solid var(--ds-color-border-strong);
 }
 .laneTerminal .spacer {
-  background: none;
+  border-left-color: transparent;
 }

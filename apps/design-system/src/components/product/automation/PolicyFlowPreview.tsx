@@ -119,7 +119,7 @@ export function PolicyFlowPreview({ policy }: { policy: ApprovalPolicy }) {
             <span className="grid h-9 w-9 place-items-center rounded-full" style={{ backgroundColor: tile.bg, color: tile.fg }}>
               <Icon sx={{ fontSize: 18 }} />
             </span>
-            <span className="text-body-sm-strong leading-tight text-text-primary">{title}</span>
+            <span className="text-body-sm-medium leading-tight text-text-primary">{title}</span>
             <span className="text-caption leading-tight text-text-secondary">
               {paths} condition{paths !== 1 ? 's' : ''}
             </span>
@@ -134,7 +134,7 @@ export function PolicyFlowPreview({ policy }: { policy: ApprovalPolicy }) {
           <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md" style={{ backgroundColor: tile.bg, color: tile.fg }}>
             <Icon sx={{ fontSize: 16 }} />
           </span>
-          <span className="text-body-strong text-text-primary">{title}</span>
+          <span className="text-body-medium text-text-primary">{title}</span>
         </div>
       );
     }
@@ -145,7 +145,7 @@ export function PolicyFlowPreview({ policy }: { policy: ApprovalPolicy }) {
           <Icon sx={{ fontSize: 18 }} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-body-strong leading-tight text-text-primary">{title}</span>
+          <span className="block truncate text-body-medium leading-tight text-text-primary">{title}</span>
           {!dense && <span className="mt-1 block truncate text-caption leading-tight text-text-secondary">{summary}</span>}
         </span>
       </div>
@@ -158,7 +158,9 @@ export function PolicyFlowPreview({ policy }: { policy: ApprovalPolicy }) {
         <RuleOutlined sx={{ fontSize: 18 }} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-body-strong text-text-primary">{policy.policyName}</span>
+        {/* Matches the builder's header card exactly — a preview and its editor are
+            the same picture. */}
+        <span className="block truncate text-body-medium text-text-primary">{policy.policyName}</span>
         <span className="mt-0.5 block truncate text-caption text-text-secondary">
           {policy.description || 'No description'}
         </span>

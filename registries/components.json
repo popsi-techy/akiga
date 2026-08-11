@@ -105,6 +105,23 @@
       "notes": "The unchecked outline uses border.control, the token added for exactly this: WCAG 1.4.11 asks 3:1 on a control boundary and the hairline borders cannot reach it. Prefer the `label` prop over wrapping in a <label>, which would leave the text dead."
     },
     {
+      "name": "Radio",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Radio/Radio.tsx",
+      "extends": null,
+      "variants": [
+        "presentational"
+      ],
+      "states": [
+        "unselected",
+        "selected",
+        "disabled",
+        "focus-visible"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/radio/page.tsx",
+      "notes": "The single-choice partner to Checkbox, sharing its 18px metrics and the border.control token so single- and multi-select tables align on the same optical column. A radio never un-checks itself, so onChange reports selection rather than a toggle. Consumed by DataTable selectionMode=\"single\"."
+    },
+    {
       "name": "DataTable",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/DataTable/DataTable.tsx",
@@ -112,6 +129,7 @@
       "variants": [
         "fillHeight",
         "selectable",
+        "single-select",
         "paginated"
       ],
       "states": [
@@ -227,7 +245,7 @@
         "default"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/info-row/page.tsx",
-      "notes": "Table-like label/value rows via InfoRowGroup — values share one left edge. Do not right-align or hug the label."
+      "notes": "Table-like label/value rows via InfoRowGroup — values share one left edge. Do not right-align or hug the label. `icon` is REQUIRED (TypeScript-enforced): a group of these is a scan column, and one row without an icon breaks it for every row around it. Product code sources icons from the shared `infoIcon` vocabulary (components/product/directory/infoIcons.tsx), which reuses the sidebar icon for each noun."
     },
     {
       "name": "Input",

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import SchemaOutlined from '@mui/icons-material/SchemaOutlined';
-import ContentCopyOutlined from '@mui/icons-material/ContentCopyOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined';
 import Info from '@mui/icons-material/Info';
@@ -21,9 +20,11 @@ import {
   RelationTable,
   EntityAvatar,
   EntityOwnersTab,
+  ApplicationApprovalPolicyTab,
   RiskScoreChip,
   accountColumns,
   entitlementColumns,
+  infoIcon,
 } from '@/components/product/directory';
 import { getGovEntity, findingsFor, explorerRow, displayName } from '@/data/governance';
 import type { GovFinding } from '@/data/governance-types';
@@ -34,6 +35,7 @@ const TABS: TabItem[] = [
   { value: 'overview', label: 'Overview' },
   { value: 'accounts', label: 'App Accounts' },
   { value: 'entitlements', label: 'Entitlements' },
+  { value: 'approval', label: 'Approval Policy' },
   { value: 'owners', label: 'Owners' },
 ];
 
@@ -118,28 +120,31 @@ function OverviewTab({ detail }: { detail: Detail }) {
           <div className="space-y-5">
             <Card title="Information" icon={<Info />} padding="none">
               <InfoRowGroup>
-                <InfoRow label="App Accounts" value={String(accounts.length)} />
+                <InfoRow icon={infoIcon.account} label="App Accounts" value={String(accounts.length)} />
                 <InfoRow
+                  icon={infoIcon.orphanAccount}
                   label="Orphan Accounts"
                   value={
                     orphans > 0 ? <StatusChip intent="warning" label={`${orphans} orphaned`} /> : <span>0</span>
                   }
                 />
-                <InfoRow label="Entitlements" value={String(entitlements.length)} />
-                <InfoRow label="Users" value={String(gov?.metrics.find((m) => m.label === 'Users')?.value ?? '—')} />
-                <InfoRow label="Owners" value={String(app.ownerIds.length)} />
+                <InfoRow icon={infoIcon.entitlement} label="Entitlements" value={String(entitlements.length)} />
+                <InfoRow icon={infoIcon.people} label="Users" value={String(gov?.metrics.find((m) => m.label === 'Users')?.value ?? '—')} />
+                <InfoRow icon={infoIcon.owner} label="Owners" value={String(app.ownerIds.length)} />
               </InfoRowGroup>
             </Card>
 
             <Card title="Governance" icon={<Shield />} padding="none">
               <InfoRowGroup>
                 <InfoRow
+                  icon={infoIcon.risk}
                   label="Risk Score"
                   value={gov ? <RiskScoreChip score={gov.risk} /> : <span>—</span>}
                 />
-                <InfoRow label="Departments" value={scope(gov?.departmentIds ?? [])} />
-                <InfoRow label="Locations" value={scope(gov?.locationIds ?? [])} />
+                <InfoRow icon={infoIcon.department} label="Departments" value={scope(gov?.departmentIds ?? [])} />
+                <InfoRow icon={infoIcon.location} label="Locations" value={scope(gov?.locationIds ?? [])} />
                 <InfoRow
+                  icon={infoIcon.reviewer}
                   label="Access Review Owner"
                   value={
                     people(row?.ownership.reviewers ?? []) ?? (
@@ -148,6 +153,7 @@ function OverviewTab({ detail }: { detail: Detail }) {
                   }
                 />
                 <InfoRow
+                  icon={infoIcon.policy}
                   label="Governing Policies"
                   value={
                     row && row.controls.birthright + row.controls.approval + row.controls.sod > 0
@@ -207,9 +213,10 @@ export default function ApplicationDetailPage() {
               Governance Model
             </Button>
           </Link>
+          {/* No Duplicate: an application is a connector to a real external system,
+              not a document. Copying the record would claim a second Okta exists. */}
           <Menu
             items={[
-              { label: 'Duplicate', icon: <ContentCopyOutlined sx={{ fontSize: 18 }} />, onClick: () => toast.info('Duplicated'), divider: true },
               { label: 'Delete', icon: <DeleteOutline sx={{ fontSize: 18 }} />, danger: true, onClick: () => toast.error('Delete is not available in this prototype') },
             ]}
           />
@@ -244,6 +251,7 @@ export default function ApplicationDetailPage() {
           emptyMessage="This application exposes no entitlements yet."
         />
       )}
+      {tab === 'approval' && <ApplicationApprovalPolicyTab applicationId={app.id} />}
       {tab === 'owners' && (
         <EntityOwnersTab
           entityType="application"

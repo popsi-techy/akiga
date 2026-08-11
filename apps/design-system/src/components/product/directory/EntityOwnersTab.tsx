@@ -171,21 +171,21 @@ export function EntityOwnersTab({
 
   return (
     <div className="grid h-full gap-5 lg:grid-cols-[264px_minmax(0,1fr)]">
-      {/* 264px, not Emergency Access's 248: the Card gutter eats ~58px of the track,
-          which left "Governance Groups" truncated. Vertical padding only — Card's
-          `none` already supplies the horizontal gutter. */}
-      <Card padding="none" className="h-full">
-        <div className="py-2">
-          <NavList
-            ariaLabel="Owner type"
-            value={view}
-            onChange={(id) => setView(id as 'individual' | 'groups')}
-            items={[
-              { id: 'individual', icon: <PersonOutline sx={{ fontSize: 18 }} />, label: `Individual ${label}s`, count: ownerIds.length },
-              { id: 'groups', icon: <GroupsOutlined sx={{ fontSize: 18 }} />, label: 'Governance Groups', count: groups.length },
-            ]}
-          />
-        </div>
+      {/* padding="sm" (16px), not "none": `none` keeps a 20px gutter meant for flush
+          rows with dividers, and stacking it with a wrapper and the item's own px-3
+          pushed the label 42px off the card edge. NavList items are self-padded, so
+          the container just needs to clear them — the app sidebar uses the same
+          12–16px rhythm. */}
+      <Card padding="sm" className="h-full">
+        <NavList
+          ariaLabel="Owner type"
+          value={view}
+          onChange={(id) => setView(id as 'individual' | 'groups')}
+          items={[
+            { id: 'individual', icon: <PersonOutline sx={{ fontSize: 18 }} />, label: `Individual ${label}s`, count: ownerIds.length },
+            { id: 'groups', icon: <GroupsOutlined sx={{ fontSize: 18 }} />, label: 'Governance Groups', count: groups.length },
+          ]}
+        />
       </Card>
 
       <div className="flex h-full min-h-0 flex-col">

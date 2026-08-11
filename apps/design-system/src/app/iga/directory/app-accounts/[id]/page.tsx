@@ -13,6 +13,7 @@ import {
   RelationTable,
   EntityAvatar,
   entitlementColumns,
+  infoIcon,
 } from '@/components/product/directory';
 
 const TABS: TabItem[] = [
@@ -44,6 +45,7 @@ export default function AppAccountDetailPage() {
           <Card title="Information" padding="none">
             <InfoRowGroup>
               <InfoRow
+                icon={infoIcon.application}
                 label="Application"
                 value={
                   <Link href={`/iga/directory/applications/${account.applicationId}`} className="text-text-link hover:underline">
@@ -52,6 +54,7 @@ export default function AppAccountDetailPage() {
                 }
               />
               <InfoRow
+                icon={infoIcon.person}
                 label="Owner (User Identity)"
                 value={
                   account.identityId && identityName ? (
@@ -63,8 +66,8 @@ export default function AppAccountDetailPage() {
                   )
                 }
               />
-              <InfoRow label="Email" value={account.email || '—'} />
-              <InfoRow label="Entitlements" value={entitlements.length} />
+              <InfoRow icon={infoIcon.email} label="Email" value={account.email || '—'} />
+              <InfoRow icon={infoIcon.entitlement} label="Entitlements" value={entitlements.length} />
             </InfoRowGroup>
           </Card>
         </div>

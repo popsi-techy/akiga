@@ -158,7 +158,7 @@ export function AutoResolveBody({
   return (
     <div className="flex flex-col items-center">
       {/* short stem down from the lane label, matching the canvas connector colour */}
-      <div className="h-5 w-px bg-border-strong" />
+      <div className="h-5 w-0.5 border-l-2 border-border-strong" />
       {detail ? (
         <>
           <div
@@ -170,7 +170,7 @@ export function AutoResolveBody({
           >
             <span className="truncate">{detail}</span>
           </div>
-          <div className="h-5 w-px bg-border-strong" />
+          <div className="h-5 w-0.5 border-l-2 border-border-strong" />
         </>
       ) : null}
       <div

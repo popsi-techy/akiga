@@ -12,16 +12,25 @@ import Person from '@mui/icons-material/Person';
 import WatchLater from '@mui/icons-material/WatchLater';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
+import AssignmentInd from '@mui/icons-material/AssignmentInd';
+import PersonAddAltOutlined from '@mui/icons-material/PersonAddAltOutlined';
+import ManageAccountsOutlined from '@mui/icons-material/ManageAccountsOutlined';
+import PersonRemoveOutlined from '@mui/icons-material/PersonRemoveOutlined';
+import IconButton from '@mui/material/IconButton';
 import CircularProgress from '@mui/material/CircularProgress';
-import { Avatar, Button, Card, Checkbox, DatePicker, InfoRow, InfoRowGroup, Input, QuickFilter, SelectableList, StatusChip, Stepper, Tabs, TimePicker, Tooltip, useToast } from '@ds/components';
+import { Avatar, Button, Card, Checkbox, DatePicker, InfoRow, InfoRowGroup, Input, Menu, QuickFilter, SelectableList, StatusChip, Stepper, Tabs, TimePicker, Tooltip, useToast } from '@ds/components';
 import {
   getReview,
   getAccess,
   saveReviewState,
   submitReview,
+  assignReviewer,
+  unassignReviewer,
+  sodReviewers,
   fastestPath,
   clearedByRemoval,
 } from '@/data/sod';
+import { TableSelectDrawer } from '@/components/product/automation/TableSelectDrawer';
 import { V3_STORE_KEY, V3_STEP_KEY, v3ReviewerStatus } from '@/data/sod-resolution-v3-store';
 import { policyById } from '@/data/sod-seed';
 import type { SodReview, SodAccess, SodRule, AcceptedRisk, Severity } from '@/data/sod-types';
@@ -31,6 +40,7 @@ import { RuleStatusPill, ruleAccessText, type RuleUiStatus } from '@/components/
 import { UserDetailsDrawer } from '@/components/product/sod/UserDetailsDrawer';
 import { DecisionHistoryTimeline } from '@/components/product/sod/DecisionHistory';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
+import { infoIcon } from '@/components/product/directory';
 
 // V3 keeps its policy-level resolution in its own store, decoupled from the shared
 // access-centric sod review store. Resolution is RULE-LEVEL and accumulates across
@@ -1024,6 +1034,19 @@ function SodResolutionV3WorkspacePageInner() {
       {!workspaceOpen ? (
         <MainViolationPage
           review={review}
+          onAssignReviewer={(reviewer) => {
+            const updated = assignReviewer(review.id, reviewer);
+            if (!updated) return;
+            setReview(updated);
+            toast.success(`Assigned to ${reviewer.name}`);
+          }}
+          onRemoveReviewer={() => {
+            const removed = review.assignedReviewerName;
+            const updated = unassignReviewer(review.id);
+            if (!updated) return;
+            setReview(updated);
+            toast.success(removed ? `${removed} removed` : 'Reviewer removed');
+          }}
           policyName={policyName}
           description={policy?.description}
           rules={mainListRules}
@@ -1410,7 +1433,7 @@ function MainPolicyCard({
         )}
       </div>
       <InfoRowGroup>
-        <InfoRow label="Risk score" value={<SeverityChip severity={severity} score={riskScore} />} />
+        <InfoRow icon={infoIcon.risk} label="Risk score" value={<SeverityChip severity={severity} score={riskScore} />} />
       </InfoRowGroup>
     </Card>
   );
@@ -1524,6 +1547,8 @@ function MainViolationPage({
   tab,
   onTab,
   onViewDetails,
+  onAssignReviewer,
+  onRemoveReviewer,
 }: {
   review: SodReview;
   policyName: string;
@@ -1538,6 +1563,8 @@ function MainViolationPage({
   tab: MainTab;
   onTab: (t: MainTab) => void;
   onViewDetails: () => void;
+  onAssignReviewer: (reviewer: { id: string; name: string }) => void;
+  onRemoveReviewer: () => void;
 }) {
   const [search, setSearch] = React.useState('');
   const pending = counts.pending;
@@ -1671,6 +1698,12 @@ function MainViolationPage({
             riskScore={review.riskScore}
           />
           <MainUserCard review={review} onViewDetails={onViewDetails} />
+          <MainReviewerCard
+            review={review}
+            readOnly={readOnly}
+            onAssign={onAssignReviewer}
+            onRemove={onRemoveReviewer}
+          />
         </aside>
       </div>
     </div>
@@ -1707,10 +1740,131 @@ function MainUserCard({
         </div>
       </div>
       <InfoRowGroup>
-        <InfoRow label="Job title" value={review.userTitle ?? '—'} />
-        <InfoRow label="Department" value={review.userDepartment ?? '—'} />
+        <InfoRow icon={infoIcon.jobTitle} label="Job title" value={review.userTitle ?? '—'} />
+        <InfoRow icon={infoIcon.department} label="Department" value={review.userDepartment ?? '—'} />
       </InfoRowGroup>
     </Card>
+  );
+}
+
+/**
+ * Rail card naming the reviewer who owns this violation.
+ *
+ * Assignment is real routing, not a label: `listMyReviews` filters on
+ * `assignedReviewerId`, so picking someone here puts the violation in their SoD
+ * queue. Unassigned is therefore a state worth showing loudly — an unowned
+ * violation is one nobody is working — so the empty state is a prompt to act
+ * rather than a dash. Once the review is submitted the card goes read-only:
+ * reassigning finished work would rewrite who is accountable for it.
+ */
+function MainReviewerCard({
+  review,
+  readOnly,
+  onAssign,
+  onRemove,
+}: {
+  review: SodReview;
+  readOnly: boolean;
+  onAssign: (reviewer: { id: string; name: string }) => void;
+  onRemove: () => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const assigned = review.assignedReviewerId
+    ? sodReviewers.find((r) => r.id === review.assignedReviewerId)
+    : undefined;
+  // Fall back to the stored name: a reviewer could be assigned and later leave
+  // the roster, and the card must still say who owns the review.
+  const name = assigned?.name ?? review.assignedReviewerName;
+  // You cannot review your own violation — segregation of duties applies to the
+  // resolution too, not just the access being resolved.
+  const candidates = sodReviewers.filter((r) => r.email !== review.userEmail);
+
+  return (
+    <>
+      <Card
+        title="Assigned reviewer"
+        icon={<AssignmentInd />}
+        action={
+          // Reassign is the common action, so it gets its own one-click button.
+          // Remove is destructive and rare, so it stays behind the ⋮ — one
+          // deliberate extra step, and it keeps the two from being a mis-click
+          // apart. The button mirrors Menu's own trigger (MUI IconButton size
+          // "small", 18px icon in icon.default) so the pair matches exactly.
+          !readOnly && name ? (
+            <div className="flex items-center">
+              <Tooltip title="Reassign reviewer">
+                <IconButton size="small" aria-label="Reassign reviewer" onClick={() => setOpen(true)}>
+                  <ManageAccountsOutlined sx={{ fontSize: 18, color: 'var(--ds-color-icon-default)' }} />
+                </IconButton>
+              </Tooltip>
+              <Menu
+                ariaLabel="More reviewer actions"
+                items={[
+                  {
+                    // Menu renders icons with `color: inherit`, so this picks up
+                    // the danger tone from the item rather than needing its own.
+                    label: 'Remove reviewer',
+                    icon: <PersonRemoveOutlined sx={{ fontSize: 18 }} />,
+                    danger: true,
+                    onClick: onRemove,
+                  },
+                ]}
+              />
+            </div>
+          ) : undefined
+        }
+        padding="none"
+      >
+        {name ? (
+          <div className="flex items-center gap-3 py-3">
+            <Avatar name={name} size="md" shape="circle" />
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-body-strong text-text-primary">{name}</div>
+              <div className="truncate text-caption text-text-secondary">{assigned?.email ?? '—'}</div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-subtle text-icon">
+              <PersonAddAltOutlined sx={{ fontSize: 20 }} />
+            </span>
+            <p className="text-body-sm-strong text-text-primary">No reviewer assigned</p>
+            <p className="text-caption leading-5 text-text-secondary">
+              {readOnly
+                ? 'This review was completed without a named reviewer.'
+                : 'Assign someone to put this violation in their SoD queue.'}
+            </p>
+            {!readOnly && (
+              <div className="mt-1">
+                <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>
+                  Assign reviewer
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </Card>
+
+      <TableSelectDrawer
+        open={open}
+        onClose={() => setOpen(false)}
+        title={name ? 'Reassign reviewer' : 'Assign reviewer'}
+        subtitle={`Violations for ${review.userName}`}
+        icon={<PersonAddAltOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
+        selectionMode="single"
+        nameHeader="Name"
+        descriptionHeader="Email"
+        entity="reviewer"
+        showRisk={false}
+        rows={candidates.map((r) => ({ id: r.id, name: r.name, description: r.email ?? '—' }))}
+        selectedIds={review.assignedReviewerId ? [review.assignedReviewerId] : []}
+        onApply={(ids) => {
+          const picked = candidates.find((r) => r.id === ids[0]);
+          if (picked) onAssign({ id: picked.id, name: picked.name });
+        }}
+        confirmLabel={name ? 'Reassign' : 'Assign'}
+      />
+    </>
   );
 }
 

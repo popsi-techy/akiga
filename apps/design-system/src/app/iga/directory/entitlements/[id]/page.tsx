@@ -15,6 +15,7 @@ import {
   RiskScoreChip,
   accountColumns,
   roleColumns,
+  infoIcon,
 } from '@/components/product/directory';
 
 const TABS: TabItem[] = [
@@ -48,12 +49,12 @@ export default function EntitlementDetailPage() {
         <div className="grid gap-5 lg:grid-cols-2">
           <Card title="Information" padding="none">
             <InfoRowGroup>
-              <InfoRow label="Application" value={entitlement.applicationName} />
-              <InfoRow label="Risk Score" value={<RiskScoreChip score={entitlement.risk} />} />
-              <InfoRow label="Owners" value={entitlement.ownerIds.length} />
-              <InfoRow label="App Accounts" value={accounts.length} />
-              <InfoRow label="Technical Roles" value={technicalRoles.length} />
-              <InfoRow label="Business Roles" value={businessRoles.length} />
+              <InfoRow icon={infoIcon.application} label="Application" value={entitlement.applicationName} />
+              <InfoRow icon={infoIcon.risk} label="Risk Score" value={<RiskScoreChip score={entitlement.risk} />} />
+              <InfoRow icon={infoIcon.owner} label="Owners" value={entitlement.ownerIds.length} />
+              <InfoRow icon={infoIcon.account} label="App Accounts" value={accounts.length} />
+              <InfoRow icon={infoIcon.technicalRole} label="Technical Roles" value={technicalRoles.length} />
+              <InfoRow icon={infoIcon.businessRole} label="Business Roles" value={businessRoles.length} />
             </InfoRowGroup>
           </Card>
         </div>

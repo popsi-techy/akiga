@@ -27,6 +27,7 @@ const groups: { title: string; description: string; items: [string, string, stri
       ['Input', '/components/input', 'Text field — labels, states, adornments.'],
       ['Select', '/components/select', 'Single-choice dropdown, matched to Input.'],
       ['Checkbox', '/components/checkbox', 'The 18px box — checked, mixed, brand or danger tone.'],
+      ['Radio', '/components/radio', 'The 18px dot — single choice, in lists and table rows.'],
       ['Switch', '/components/switch', 'On/off toggle — contained thumb inside a pill track.'],
       ['Date Picker', '/components/date-picker', 'Themed month grid — replaces the native date input.'],
       ['Time Picker', '/components/time-picker', '12-hour field over a 24-hour value, three columns.'],

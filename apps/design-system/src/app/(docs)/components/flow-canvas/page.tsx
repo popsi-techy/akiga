@@ -75,9 +75,9 @@ export default function FlowCanvasDocs() {
             root={root}
             renderCard={renderCard}
             palette={[
-              { kind: 'approval', label: 'Approval Level', icon: <PersonOutline sx={{ fontSize: 18 }} /> },
-              { kind: 'notify', label: 'Notification', icon: <MailOutline sx={{ fontSize: 18 }} /> },
-              { kind: 'branch', label: 'Conditional Branch', icon: <AccountTreeOutlined sx={{ fontSize: 18 }} /> },
+              { kind: 'approval', label: 'Approval Level', icon: <PersonOutline sx={{ fontSize: 17 }} />, section: 'Tasks', tile: { bg: '#E8F1FE', fg: '#2E7CF6' } },
+              { kind: 'notify', label: 'Notification', icon: <MailOutline sx={{ fontSize: 17 }} />, section: 'Tasks', tile: { bg: '#E8F1FE', fg: '#2E7CF6' } },
+              { kind: 'branch', label: 'Conditional Branch', icon: <AccountTreeOutlined sx={{ fontSize: 17 }} />, section: 'Branching', tile: { bg: '#FFF1E3', fg: '#F59E0B' } },
             ]}
             onInsert={onInsert}
             onClearSelection={() => setSelected(null)}
@@ -93,7 +93,7 @@ export default function FlowCanvasDocs() {
             { name: 'root', type: 'FlowNodeLike[]', description: 'The sequence to render (each node may carry `branches`).' },
             { name: 'renderCard', type: '(node, { dense }) => ReactNode', description: 'Render a node’s card — the consumer wires selection/delete.' },
             { name: 'headerCard', type: '({ dense }) => ReactNode', description: 'Optional fixed card between Start and the root (e.g. the Policy card).' },
-            { name: 'palette', type: 'PaletteEntry[]', description: 'Kinds offered in the connector quick-insert menu.' },
+            { name: 'palette', type: 'PaletteEntry[]', description: 'Kinds offered in the quick-insert menu. Give each entry a `section` and `tile` to group them under overline headings with the same icon tiles as the sidebar palette; omit both for a flat list.' },
             { name: 'onInsert', type: '(loc, kind) => void', description: 'Fired on drop or quick-insert. `loc` = { path, index }.' },
             { name: 'view / onViewChange', type: "'outline' | 'detailed'", description: 'Density toggle (passed to renderCard as `dense`).' },
             { name: 'onUndo / onRedo / canUndo / canRedo', type: '() => void / boolean', description: 'Wire the host’s history stack to the toolbar.' },

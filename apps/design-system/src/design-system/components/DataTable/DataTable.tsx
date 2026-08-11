@@ -10,6 +10,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableSortLabel from '@mui/material/TableSortLabel';
 import { Checkbox } from '../Checkbox/Checkbox';
+import { Radio } from '../Radio/Radio';
 import Skeleton from '@mui/material/Skeleton';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
@@ -40,6 +41,14 @@ export interface DataTableProps<Row extends { id: string }> {
   columns: Column<Row>[];
   rows: Row[];
   selectable?: boolean;
+  /**
+   * `'single'` swaps the checkboxes for radios, drops the select-all header, and
+   * makes a pick replace the selection rather than add to it — so the control
+   * itself tells the user how many they may choose, before they try. Selection is
+   * still reported as an array (of length 0 or 1) so consumers keep one shape.
+   * @default 'multiple'
+   */
+  selectionMode?: 'single' | 'multiple';
   loading?: boolean;
   emptyTitle?: string;
   emptyMessage?: string;
@@ -61,6 +70,7 @@ export function DataTable<Row extends { id: string }>({
   columns,
   rows,
   selectable = false,
+  selectionMode = 'multiple',
   loading = false,
   emptyTitle = 'Nothing here yet',
   emptyMessage = 'When there is data to show, it will appear in this table.',
@@ -121,6 +131,7 @@ export function DataTable<Row extends { id: string }>({
     }
   };
 
+  const single = selectionMode === 'single';
   const pageIds = pagedRows.map((r) => r.id);
   const allOnPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
   const someOnPageSelected = pageIds.some((id) => selected.has(id));
@@ -133,6 +144,13 @@ export function DataTable<Row extends { id: string }>({
   };
 
   const toggleRow = (id: string) => {
+    // Single: the pick replaces the selection, and re-picking the current row is a
+    // no-op rather than a clear — a radio has no "off", you choose another instead.
+    if (single) {
+      if (selected.has(id)) return;
+      emitSelection(new Set([id]));
+      return;
+    }
     const next = new Set(selected);
     next.has(id) ? next.delete(id) : next.add(id);
     emitSelection(next);
@@ -169,13 +187,17 @@ export function DataTable<Row extends { id: string }>({
           <TableHead>
             <TableRow>
               {selectable && (
+                // Single-select keeps the column (so the rows still align) but has
+                // no select-all — there is nothing to select all of.
                 <TableCell padding="checkbox" sx={headCellSx}>
-                  <Checkbox
-                    checked={allOnPageSelected}
-                    indeterminate={!allOnPageSelected && someOnPageSelected}
-                    onChange={() => toggleAllOnPage()}
-                    ariaLabel="Select all rows on this page"
-                  />
+                  {!single && (
+                    <Checkbox
+                      checked={allOnPageSelected}
+                      indeterminate={!allOnPageSelected && someOnPageSelected}
+                      onChange={() => toggleAllOnPage()}
+                      ariaLabel="Select all rows on this page"
+                    />
+                  )}
                 </TableCell>
               )}
               {columns.map((col) => (
@@ -258,11 +280,19 @@ export function DataTable<Row extends { id: string }>({
                   >
                     {selectable && (
                       <TableCell padding="checkbox" sx={bodyCellSx} onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={isSelected}
-                          onChange={() => toggleRow(row.id)}
-                          ariaLabel={`Select row ${row.id}`}
-                        />
+                        {single ? (
+                          <Radio
+                            checked={isSelected}
+                            onChange={() => toggleRow(row.id)}
+                            ariaLabel={`Select row ${row.id}`}
+                          />
+                        ) : (
+                          <Checkbox
+                            checked={isSelected}
+                            onChange={() => toggleRow(row.id)}
+                            ariaLabel={`Select row ${row.id}`}
+                          />
+                        )}
                       </TableCell>
                     )}
                     {columns.map((col) => (

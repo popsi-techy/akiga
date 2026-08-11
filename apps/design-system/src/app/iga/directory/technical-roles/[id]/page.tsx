@@ -15,6 +15,7 @@ import {
   RiskScoreChip,
   peopleColumns,
   entitlementColumns,
+  infoIcon,
 } from '@/components/product/directory';
 
 const TABS: TabItem[] = [
@@ -47,10 +48,10 @@ export default function TechnicalRoleDetailPage() {
         <div className="grid gap-5 lg:grid-cols-2">
           <Card title="Information" padding="none">
             <InfoRowGroup>
-              <InfoRow label="Risk Score" value={<RiskScoreChip score={role.risk} />} />
-              <InfoRow label="Entitlements" value={entitlements.length} />
-              <InfoRow label="Assigned User Identities" value={members.length} />
-              <InfoRow label="Owners" value={role.ownerIds.length} />
+              <InfoRow icon={infoIcon.risk} label="Risk Score" value={<RiskScoreChip score={role.risk} />} />
+              <InfoRow icon={infoIcon.entitlement} label="Entitlements" value={entitlements.length} />
+              <InfoRow icon={infoIcon.people} label="Assigned User Identities" value={members.length} />
+              <InfoRow icon={infoIcon.owner} label="Owners" value={role.ownerIds.length} />
             </InfoRowGroup>
           </Card>
         </div>

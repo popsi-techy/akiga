@@ -196,20 +196,18 @@ function OwnersTab({ ea }: { ea: EADetail }) {
   ];
 
   return (
-    <div className="grid h-full gap-5 lg:grid-cols-[248px_1fr]">
+    <div className="grid h-full gap-5 lg:grid-cols-[264px_minmax(0,1fr)]">
       {/* Left: toggles inside a container */}
-      <Card padding="none" className="h-full">
-        <div className="p-2">
-          <NavList
-            ariaLabel="Owner type"
-            value={view}
-            onChange={(id) => setView(id as 'individual' | 'groups')}
-            items={[
-              { id: 'individual', icon: <PersonOutline sx={{ fontSize: 18 }} />, label: 'Individual Owners', count: ea.ownersCount },
-              { id: 'groups', icon: <GroupsOutlined sx={{ fontSize: 18 }} />, label: 'Governance Groups', count: ea.governanceGroupsCount },
-            ]}
-          />
-        </div>
+      <Card padding="sm" className="h-full">
+        <NavList
+          ariaLabel="Owner type"
+          value={view}
+          onChange={(id) => setView(id as 'individual' | 'groups')}
+          items={[
+            { id: 'individual', icon: <PersonOutline sx={{ fontSize: 18 }} />, label: 'Individual Owners', count: ea.ownersCount },
+            { id: 'groups', icon: <GroupsOutlined sx={{ fontSize: 18 }} />, label: 'Governance Groups', count: ea.governanceGroupsCount },
+          ]}
+        />
       </Card>
 
       {/* Right: toolbar + fill-height table */}

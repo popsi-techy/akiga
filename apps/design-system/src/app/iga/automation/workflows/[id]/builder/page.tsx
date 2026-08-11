@@ -77,6 +77,8 @@ const SECTION_TILE: Record<string, { bg: string; fg: string }> = {
   'Flow Control': { bg: '#E4F6EF', fg: '#0EA47A' }, // teal
 };
 const tileFor = (section: string) => SECTION_TILE[section] ?? { bg: 'var(--ds-color-surface-hover)', fg: 'var(--ds-color-icon-default)' };
+/** Section order — shared by the sidebar palette and the canvas quick-insert menu. */
+const PALETTE_SECTIONS = ['Filters', 'Tasks', 'Branching', 'Flow Control'] as const;
 
 function blockSummary(node: WorkflowNode): string {
   const c = node.config as Record<string, unknown> | undefined;
@@ -244,18 +246,27 @@ export default function WorkflowBuilderPage() {
   const goBack = () => (dirty ? setBackConfirm(true) : router.push('/iga/automation/workflows'));
 
   const allowedBlocks = paletteBlocksForEvent(doc?.event?.type);
+  // Grouped by section so the quick-insert menu reads like the sidebar palette.
+  // Before an event is chosen there is only one group, so it stays unlabelled.
   const blockPalette = doc?.event
-    ? allowedBlocks.map((kind) => ({
-        kind,
-        label: BLOCK_META[kind].title,
-        icon: React.createElement(ICONS[BLOCK_META[kind].icon] ?? FilterAltOutlined, {
-          sx: { fontSize: 18 },
-        }),
-      }))
+    ? PALETTE_SECTIONS.flatMap((section) =>
+        allowedBlocks
+          .filter((kind) => BLOCK_META[kind].section === section)
+          .map((kind) => ({
+            kind,
+            label: BLOCK_META[kind].title,
+            icon: React.createElement(ICONS[BLOCK_META[kind].icon] ?? FilterAltOutlined, {
+              sx: { fontSize: 17 },
+            }),
+            section,
+            tile: tileFor(section),
+          })),
+      )
     : EVENT_TYPES.map((type) => ({
         kind: type,
         label: WORKFLOW_EVENT_META[type].label,
-        icon: React.createElement(EVENT_ICONS[type], { sx: { fontSize: 18 } }),
+        icon: React.createElement(EVENT_ICONS[type], { sx: { fontSize: 17 } }),
+        tile: tileFor('Events'),
       }));
 
   const renderCard = (n: FlowNodeLike, { dense }: { dense: boolean }) => {
@@ -276,7 +287,7 @@ export default function WorkflowBuilderPage() {
             <span style={selected ? { borderColor: tile.fg } : undefined} className={['absolute left-1/2 top-1/2 h-[132px] w-[132px] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-2xl border bg-surface transition-all duration-150', selected ? 'shadow-sm' : 'border-border group-hover:border-border-strong'].join(' ')} />
             <span className="relative z-[1] flex w-[130px] flex-col items-center gap-1 px-1 text-center">
               <span className="grid h-9 w-9 place-items-center rounded-full" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 18 }} /></span>
-              <span className="text-body-sm-strong leading-tight text-text-primary">{displayTitle}</span>
+              <span className="text-body-sm-medium leading-tight text-text-primary">{displayTitle}</span>
               <span className="text-caption leading-tight text-text-secondary">{paths} condition{paths !== 1 ? 's' : ''}</span>
               {complete ? (
                 <CheckCircleOutlined sx={{ fontSize: 16, color: 'var(--ds-color-status-success-fg)' }} titleAccess="Complete" />
@@ -320,7 +331,7 @@ export default function WorkflowBuilderPage() {
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 18 }} /></span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
-                    <span className="text-body-strong leading-tight text-text-primary">{displayTitle}</span>
+                    <span className="text-body-medium leading-tight text-text-primary">{displayTitle}</span>
                     {complete ? <CheckCircleOutlined sx={{ fontSize: 15, color: 'var(--ds-color-status-success-fg)' }} /> : <WarningAmberOutlined sx={{ fontSize: 15, color: 'var(--ds-color-status-warning-fg)' }} />}
                   </span>
                   <span className="mt-0.5 block truncate text-caption text-text-secondary">{entSummary}</span>
@@ -389,7 +400,7 @@ export default function WorkflowBuilderPage() {
                   <button type="button" onClick={(e) => { e.stopPropagation(); setPolicyNodeId(node.id); }} className="flex min-w-0 flex-1 items-center gap-2.5 text-left">
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand-subtle text-brand"><ShieldOutlined sx={{ fontSize: 17 }} /></span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-body-strong text-text-primary">{c.approvalPolicyName}</span>
+                      <span className="block truncate text-body-medium text-text-primary">{c.approvalPolicyName}</span>
                       <span className="block text-caption text-text-secondary">Approval policy</span>
                     </span>
                   </button>
@@ -401,7 +412,7 @@ export default function WorkflowBuilderPage() {
                 <button type="button" onClick={(e) => { e.stopPropagation(); setPolicyNodeId(node.id); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-surface-hover">
                   <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-dashed border-border text-icon"><AddIcon sx={{ fontSize: 17 }} /></span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-body-strong text-text-primary">Attach Approval Policy</span>
+                    <span className="block text-body-medium text-text-primary">Attach Approval Policy</span>
                     <span className="block text-caption text-text-secondary">Optional · click to select</span>
                   </span>
                 </button>
@@ -442,7 +453,7 @@ export default function WorkflowBuilderPage() {
             className={['inline-flex max-w-[360px] items-center gap-2.5 rounded-pill border bg-surface px-4 py-2 text-left transition-all duration-150', selected ? 'shadow-sm' : 'border-border hover:border-border-strong hover:shadow-sm'].join(' ')}
           >
             <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 16 }} /></span>
-            <span className="shrink-0 text-body-strong text-text-primary">{displayTitle}</span>
+            <span className="shrink-0 text-body-medium text-text-primary">{displayTitle}</span>
             {sideLabel && (
               <span className={['min-w-0 truncate text-body-sm-strong', sideLabel === 'Not set' ? 'text-text-tertiary' : 'text-text-secondary'].join(' ')}>{sideLabel}</span>
             )}
@@ -473,7 +484,7 @@ export default function WorkflowBuilderPage() {
             <div className="flex w-full items-center gap-3 px-4 py-3">
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 18 }} /></span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-body-strong leading-tight text-text-primary">{displayTitle}</span>
+                <span className="block truncate text-body-medium leading-tight text-text-primary">{displayTitle}</span>
                 <span className="mt-1 block truncate text-caption leading-tight text-text-secondary">{blockSummary(node)}</span>
               </span>
               {complete ? (
@@ -517,7 +528,7 @@ export default function WorkflowBuilderPage() {
         >
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 18 }} /></span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-body-strong leading-tight text-text-primary">{displayTitle}</span>
+            <span className="block truncate text-body-medium leading-tight text-text-primary">{displayTitle}</span>
             {(!dense || node.type === 'multisplitBranch' || node.type === 'notification') && <span className="mt-1 block truncate text-caption leading-tight text-text-secondary">{blockSummary(node)}</span>}
           </span>
           {complete ? (
@@ -555,7 +566,9 @@ export default function WorkflowBuilderPage() {
             <EventIcon sx={{ fontSize: 18 }} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-body-strong text-text-primary">
+            {/* Context card, same role as the policy card in the approval builder —
+                one weight step below the steps it introduces. */}
+            <span className="block truncate text-body-medium text-text-primary">
               {doc.event.label}
             </span>
             <span className="mt-0.5 block truncate text-caption text-text-secondary">
@@ -687,7 +700,7 @@ export default function WorkflowBuilderPage() {
                       Place a lifecycle event before adding components.
                     </p>
                   )}
-                  {(['Filters', 'Tasks', 'Branching', 'Flow Control'] as const).map((section) => {
+                  {PALETTE_SECTIONS.map((section) => {
                     const visibleBlocks = doc?.event ? allowedBlocks : BLOCK_PALETTE;
                     const kinds = visibleBlocks.filter((k) => BLOCK_META[k].section === section);
                     if (kinds.length === 0) return null;

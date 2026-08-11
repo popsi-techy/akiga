@@ -1,10 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { typography } from '../../tokens/tokens';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import ListItemIcon from '@mui/material/ListItemIcon';
+import ListSubheader from '@mui/material/ListSubheader';
 import AddIcon from '@mui/icons-material/Add';
 import RadioButtonUnchecked from '@mui/icons-material/RadioButtonUnchecked';
 import Segment from '@mui/icons-material/Segment';
@@ -46,6 +45,95 @@ export interface PaletteEntry {
   kind: string;
   label: string;
   icon?: React.ReactNode;
+  /**
+   * Group heading, e.g. `'Tasks'`. Entries sharing a section are listed together
+   * under one overline; sections appear in the order they are first seen, so the
+   * quick-insert menu reads in the same order as the sidebar palette. Omit on
+   * every entry for a flat list.
+   */
+  section?: string;
+  /** Icon-tile colours, so an item looks the same here as in the sidebar. */
+  tile?: { bg: string; fg: string };
+}
+
+const NEUTRAL_TILE = { bg: 'var(--ds-color-surface-hover)', fg: 'var(--ds-color-icon-default)' };
+
+/**
+ * The quick-insert list, shared by the connector "+" and the empty-state card so
+ * the two can never drift. Items carry the same icon tile as the sidebar palette:
+ * the menu is a shortcut to the same components, and it should look like it.
+ */
+function PaletteMenu({
+  anchor,
+  onClose,
+  palette,
+  onPick,
+}: {
+  anchor: HTMLElement | null;
+  onClose: () => void;
+  palette: PaletteEntry[];
+  onPick: (kind: string) => void;
+}) {
+  // Preserve first-seen order rather than sorting: the consumer's palette order is
+  // the authored order, and the sidebar already presents it that way.
+  const sections: { title: string | null; items: PaletteEntry[] }[] = [];
+  for (const entry of palette) {
+    const title = entry.section ?? null;
+    const last = sections[sections.length - 1];
+    if (last && last.title === title) last.items.push(entry);
+    else sections.push({ title, items: [entry] });
+  }
+
+  return (
+    <Menu
+      anchorEl={anchor}
+      open={Boolean(anchor)}
+      onClose={onClose}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+      MenuListProps={{ dense: true, sx: { py: 0.5 } }}
+      PaperProps={{ sx: { minWidth: 248, borderRadius: 'var(--ds-radius-md)' } }}
+    >
+      {sections.flatMap((section, si) => [
+        section.title ? (
+          <ListSubheader
+            key={`h-${section.title}`}
+            disableSticky
+            // `overline` is the taxonomy token (§4 rule 4) — it names what kind of
+            // components these are, and carries no meaning you'd lose by removing it.
+            className="text-overline uppercase text-text-tertiary"
+            sx={{ lineHeight: '16px', px: 1.75, pt: si === 0 ? 1 : 1.5, pb: 0.75, bgcolor: 'transparent' }}
+          >
+            {section.title}
+          </ListSubheader>
+        ) : null,
+        ...section.items.map((p) => {
+          const tile = p.tile ?? NEUTRAL_TILE;
+          return (
+            <MenuItem
+              key={p.kind}
+              onClick={(e) => {
+                // Portals bubble through the React tree — stop this click from
+                // reaching the canvas viewport's clear-selection handler.
+                e.stopPropagation();
+                onPick(p.kind);
+                onClose();
+              }}
+              sx={{ gap: 1.25, px: 1.75, py: 0.75, borderRadius: 'var(--ds-radius-sm)', mx: 0.5 }}
+            >
+              <span
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-md"
+                style={{ backgroundColor: tile.bg, color: tile.fg }}
+              >
+                {p.icon}
+              </span>
+              <span className="text-body-sm-strong text-text-primary">{p.label}</span>
+            </MenuItem>
+          );
+        }),
+      ])}
+    </Menu>
+  );
 }
 
 export interface FlowCanvasProps {
@@ -184,30 +272,7 @@ function AddComponentCard({ loc, hint }: { loc: FlowInsertLoc; hint?: string }) 
         <span className="text-body-strong text-text-primary">{hint ?? 'Add component'}</span>
         <span className="text-caption text-text-tertiary">Drag from the sidebar or click to insert</span>
       </button>
-      <Menu
-        anchorEl={anchor}
-        open={Boolean(anchor)}
-        onClose={() => setAnchor(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
-        MenuListProps={{ dense: true }}
-        PaperProps={{ sx: { minWidth: 220, borderRadius: 'var(--ds-radius-md)' } }}
-      >
-        {palette.map((p) => (
-          <MenuItem
-            key={p.kind}
-            onClick={(e) => {
-              e.stopPropagation();
-              onInsert(loc, p.kind);
-              setAnchor(null);
-            }}
-            sx={{ fontSize: typography.bodySm.fontSize }}
-          >
-            {p.icon && <ListItemIcon sx={{ minWidth: 30, color: 'var(--ds-color-icon-default)' }}>{p.icon}</ListItemIcon>}
-            {p.label}
-          </MenuItem>
-        ))}
-      </Menu>
+      <PaletteMenu anchor={anchor} onClose={() => setAnchor(null)} palette={palette} onPick={(kind) => onInsert(loc, kind)} />
     </>
   );
 }
@@ -228,7 +293,7 @@ function Connector({ loc }: { loc: FlowInsertLoc }) {
   if (readOnly) {
     return (
       <div className="relative flex h-9 min-w-[40px] items-center justify-center">
-        <div className="h-full w-0.5 bg-border-strong" />
+        <div className="h-full w-0.5 border-l-2 border-border-strong" />
       </div>
     );
   }
@@ -256,11 +321,12 @@ function Connector({ loc }: { loc: FlowInsertLoc }) {
         // Drop ghost — a dashed preview of the component being dragged.
         <div className="ds-node-in pointer-events-none flex w-[320px] items-center gap-2.5 rounded-xl border-2 border-dashed border-border-strong bg-subtle px-4 py-3 text-text-secondary">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center">{ghost.icon}</span>
-          <span className="text-body-strong">{ghost.label}</span>
+          {/* Matches a node card's title weight — this is a preview of that card. */}
+          <span className="text-body-medium">{ghost.label}</span>
         </div>
       ) : (
         <>
-          <div className="h-full w-0.5 bg-border-strong transition-colors duration-150" />
+          <div className="h-full w-0.5 border-l-2 border-border-strong transition-colors duration-150" />
           <button
             type="button"
             onClick={(e) => {
@@ -279,32 +345,7 @@ function Connector({ loc }: { loc: FlowInsertLoc }) {
           </button>
         </>
       )}
-      <Menu
-        anchorEl={anchor}
-        open={Boolean(anchor)}
-        onClose={() => setAnchor(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
-        MenuListProps={{ dense: true }}
-        PaperProps={{ sx: { minWidth: 220, borderRadius: 'var(--ds-radius-md)' } }}
-      >
-        {palette.map((p) => (
-          <MenuItem
-            key={p.kind}
-            onClick={(e) => {
-              // Portals bubble through the React tree — stop this click from
-              // reaching the canvas viewport's clear-selection handler.
-              e.stopPropagation();
-              onInsert(loc, p.kind);
-              setAnchor(null);
-            }}
-            sx={{ fontSize: typography.bodySm.fontSize }}
-          >
-            {p.icon && <ListItemIcon sx={{ minWidth: 30, color: 'var(--ds-color-icon-default)' }}>{p.icon}</ListItemIcon>}
-            {p.label}
-          </MenuItem>
-        ))}
-      </Menu>
+      <PaletteMenu anchor={anchor} onClose={() => setAnchor(null)} palette={palette} onPick={(kind) => onInsert(loc, kind)} />
     </div>
   );
 }
@@ -494,7 +535,10 @@ export function FlowCanvas({
         ref={viewportRef}
         className="ds-scroll h-full overflow-auto bg-subtle"
         style={{
-          backgroundImage: 'radial-gradient(var(--ds-color-border-strong) 1px, transparent 1px)',
+          // The grain sits BEHIND the flow, so it uses `border-default` while the
+          // connectors use `border-strong`. Sharing one token made a dot and a
+          // connector the same value, and the plumbing stopped reading as structure.
+          backgroundImage: 'radial-gradient(var(--ds-color-border-default) 1px, transparent 1px)',
           backgroundSize: '20px 20px',
         }}
         onClick={() => onClearSelection?.()}

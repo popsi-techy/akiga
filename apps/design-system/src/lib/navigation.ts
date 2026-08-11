@@ -51,6 +51,7 @@ export const navigation: NavSection[] = [
       { label: 'Input', href: '/components/input', status: 'ready' },
       { label: 'Select', href: '/components/select', status: 'ready' },
       { label: 'Checkbox', href: '/components/checkbox', status: 'ready' },
+      { label: 'Radio', href: '/components/radio', status: 'ready' },
       { label: 'Switch', href: '/components/switch', status: 'ready' },
       { label: 'Date Picker', href: '/components/date-picker', status: 'ready' },
       { label: 'Time Picker', href: '/components/time-picker', status: 'ready' },

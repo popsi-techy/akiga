@@ -67,6 +67,8 @@ export type { TooltipProps } from './Tooltip/Tooltip';
 
 export { Checkbox } from './Checkbox/Checkbox';
 export type { CheckboxProps } from './Checkbox/Checkbox';
+export { Radio } from './Radio/Radio';
+export type { RadioProps } from './Radio/Radio';
 export { TimePicker, formatTime12 } from './TimePicker/TimePicker';
 export type { TimePickerProps } from './TimePicker/TimePicker';
 export { DatePicker, formatDateShort } from './DatePicker/DatePicker';
