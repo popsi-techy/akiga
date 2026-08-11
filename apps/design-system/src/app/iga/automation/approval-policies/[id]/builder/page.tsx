@@ -28,6 +28,7 @@ import {
   Dialog,
   Menu,
   FlowCanvas,
+  FlowStem,
   useToast,
   type FlowNodeLike,
   type FlowInsertLoc,
@@ -362,8 +363,8 @@ export default function ApprovalPolicyBuilderPage() {
       );
     }
 
-    // Approval Level: Fallback chip sits directly under the card (no branch tier).
-    // Parallel: chip is rendered between branch lanes and outcomes via renderBetweenTiers.
+    // Approval Level keeps outcome lanes in `branches` (not outcomeBranches), so the
+    // Fallback chip sits under the card with a FlowStem — Parallel uses renderBetweenTiers.
     const fb = node.type === 'approvalLevel' ? (node.config as ALConfig | undefined)?.fallback : undefined;
     const showFallbackChip = Boolean(fb?.enabled && fb.action === 'fallbackApprover' && (fb.approverEmail ?? '').trim());
     const fallbackEmail = (fb?.approverEmail ?? '').trim();
@@ -411,7 +412,7 @@ export default function ApprovalPolicyBuilderPage() {
         </button>
         {showFallbackChip && (
           <>
-            <div className="h-5 w-0.5 border-l-2 border-border-strong" aria-hidden />
+            <FlowStem height={20} />
             <button
               type="button"
               onClick={(e) => {
@@ -439,6 +440,8 @@ export default function ApprovalPolicyBuilderPage() {
     );
   };
 
+  /** Parallel only: Fallback chip between approver lanes and outcome fan-out.
+      Canvas draws the stems — do not add decorative borders here. */
   const renderFallbackBetweenTiers = (n: FlowNodeLike) => {
     const node = n as PolicyNode;
     if (node.type !== 'parallelBranch') return null;
@@ -447,30 +450,27 @@ export default function ApprovalPolicyBuilderPage() {
     if (!(fb?.enabled && fb.action === 'fallbackApprover' && email)) return null;
     const tile = tileFor(NODE_META[node.type].section);
     return (
-      <div className="flex flex-col items-center">
-        <div className="h-5 w-0.5 border-l-2 border-border-strong" aria-hidden />
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setSelectedId(node.id);
-            setConfigOpen(true);
-          }}
-          title="Open fallback configuration"
-          className="flex w-[240px] items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5 text-left transition-all duration-150 hover:border-border-strong hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setSelectedId(node.id);
+          setConfigOpen(true);
+        }}
+        title="Open fallback configuration"
+        className="flex w-[240px] items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5 text-left transition-all duration-150 hover:border-border-strong hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+      >
+        <span
+          className="grid h-7 w-7 shrink-0 place-items-center rounded-md"
+          style={{ backgroundColor: tile.bg, color: tile.fg }}
         >
-          <span
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-md"
-            style={{ backgroundColor: tile.bg, color: tile.fg }}
-          >
-            <PersonOutline sx={{ fontSize: 16 }} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-body-sm-medium leading-tight text-text-primary">Fallback Approver</span>
-            <span className="mt-0.5 block truncate text-caption leading-tight text-text-secondary">{email}</span>
-          </span>
-        </button>
-      </div>
+          <PersonOutline sx={{ fontSize: 16 }} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-body-sm-medium leading-tight text-text-primary">Fallback Approver</span>
+          <span className="mt-0.5 block truncate text-caption leading-tight text-text-secondary">{email}</span>
+        </span>
+      </button>
     );
   };
 
@@ -543,7 +543,19 @@ export default function ApprovalPolicyBuilderPage() {
             <ArrowBackOutlined sx={{ fontSize: 20 }} />
           </button>
           <Avatar name={doc?.policyName ?? 'Policy'} initials={(doc?.policyName ?? 'P').charAt(0).toUpperCase()} size="sm" />
-          <span className="text-h5 text-text-primary">{doc?.policyName ?? '…'}</span>
+          {/* Name owns the title weight; version is a qualifier — same baseline, quieter
+              type and colour — so “Version 1” never competes with the policy name. */}
+          <span className="flex min-w-0 items-baseline">
+            <span className="truncate text-h5 text-text-primary">{doc?.policyName ?? '…'}</span>
+            {doc && (
+              <>
+                <span className="mx-1.5 shrink-0 text-body text-text-disabled" aria-hidden>
+                  –
+                </span>
+                <span className="shrink-0 text-body text-text-tertiary">Version 1</span>
+              </>
+            )}
+          </span>
           {doc && (
             <StatusChip intent={doc.status === 'active' ? 'success' : 'neutral'} label={doc.status === 'active' ? 'Active' : 'Draft'} />
           )}

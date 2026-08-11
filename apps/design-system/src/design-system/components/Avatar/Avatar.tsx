@@ -10,7 +10,7 @@ import * as React from 'react';
  * every size.
  *
  * ACCESSIBILITY EXCEPTION, chosen by the product owner: that pairing is 3.33:1, which
- * fails WCAG AA for normal text (4.5:1), and avatar letters run 11–18px so the
+ * fails WCAG AA for normal text (4.5:1), and avatar letters run 12–24px so the
  * large-text allowance does not apply. The previous value, `brand.primaryActive`
  * (#9E3416), was 6.57:1. It is recorded as a waiver in `check-contrast.ts` so the
  * deviation is reported on every run rather than quietly regressing the guardrail.
@@ -34,11 +34,16 @@ export interface AvatarProps {
   initials?: string;
 }
 
+/**
+ * Box + letter. Soft avatars use `radius.avatar` (6px). The letter is half the
+ * box at md/lg so a single glyph reads as the mark rather than a caption inside
+ * a tile; smaller sizes stay slightly under half so 24/32 boxes don't feel cramped.
+ */
 const sizePx: Record<AvatarSize, { box: number; font: number }> = {
-  xs: { box: 24, font: 11 },
-  sm: { box: 32, font: 13 },
-  md: { box: 40, font: 15 },
-  lg: { box: 48, font: 18 },
+  xs: { box: 24, font: 12 },
+  sm: { box: 32, font: 16 },
+  md: { box: 40, font: 20 },
+  lg: { box: 48, font: 24 },
 };
 
 /** First letter of the name — avatars carry one character, never two. */

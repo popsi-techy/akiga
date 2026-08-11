@@ -43,16 +43,22 @@ export function DetailShell({
 }) {
   return (
     <div className="flex h-full flex-col">
-      <div className="shrink-0 -mx-8 -mt-6 border-b border-border bg-canvas px-8 pt-5">
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+      {/* Sticky identity band: 12px above the title block and 12px before the tabs —
+          enough air that the block doesn't kiss the topbar or the tab strip, tight
+          enough that the band reads as chrome rather than a second page header. */}
+      <div className="shrink-0 -mx-8 -mt-6 border-b border-border bg-canvas px-8 pt-3">
+        {/* items-center, not items-start: the identity block is two lines (~45px) and the
+            action row is one 36px control, so top-aligning left the buttons sitting ~9px
+            above the optical centre of the header. */}
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             {avatar}
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-h3 leading-tight text-text-primary">{title}</h1>
+                <h1 className="text-h4 text-text-primary">{title}</h1>
                 {chips}
               </div>
-              {description && <p className="mt-0.5 max-w-2xl text-body-sm text-text-secondary">{description}</p>}
+              {description && <p className="mt-px max-w-2xl text-body-sm text-text-secondary">{description}</p>}
             </div>
           </div>
           {actions != null && <div className="flex shrink-0 items-center gap-2">{actions}</div>}

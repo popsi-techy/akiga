@@ -13,13 +13,17 @@ import FitScreenIcon from '@mui/icons-material/FitScreen';
 import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
 import styles from './flow-canvas.module.css';
+import { buildEdgeModel, type EdgeModel } from './flowEdges';
+import { FlowStem } from './FlowStem';
+
+export { FlowStem } from './FlowStem';
 
 /**
  * FlowCanvas — the Automation builders' derived-layout graph (ADR-0007: custom,
- * zero-dependency). It renders a recursive sequence/branch model as a top-down
- * tree with fan-out/merge connectors, connector drop-targets + quick-insert, and
- * a floating toolbar (density, zoom/fit, undo/redo). It owns layout, zoom and
- * insertion affordances; the consumer owns node data, cards, and selection.
+ * zero-dependency). Cards and lanes lay out in the DOM; connectors are a
+ * measured SVG overlay (ResizeObserver → orthogonal paths), so fan-out / merge
+ * attaches to real anchors rather than CSS bus borders. It owns layout, zoom
+ * and insertion affordances; the consumer owns node data, cards, and selection.
  */
 export type FlowPathStep = { nodeId: string; branchId: string };
 export type FlowInsertLoc = { path: FlowPathStep[]; index: number };
@@ -30,8 +34,10 @@ export interface FlowBranchLike {
   seq: FlowNodeLike[];
   /** Sealed lanes (e.g. parallel approver slots) accept no inserted components. */
   sealed?: boolean;
-  /** Semantic role of the lane. `'outcome'` lanes (e.g. Approved/Rejected) are
-      terminal leaves: their tier fans out but does not merge/continue below. */
+  /**
+   * Semantic role of the lane. Merge behaviour is decided by whether every lane
+   * of the tier ends the flow (`tierTerminates`), not by this flag alone.
+   */
   kind?: string;
 }
 export interface FlowNodeLike {
@@ -152,7 +158,8 @@ export interface FlowCanvasProps {
       lane is open (e.g. Fallback SLA path under Approver Not Found). */
   renderSealedBody?: (branch: FlowBranchLike, node: FlowNodeLike) => React.ReactNode;
   /** Content between the first branch tier and outcomeBranches (e.g. Parallel's
-      Fallback chip between approver lanes and Approved/Rejected). */
+      Fallback chip between approver lanes and Approved/Rejected). The canvas
+      owns the stem above this content — do not draw one in the consumer. */
   renderBetweenTiers?: (node: FlowNodeLike) => React.ReactNode;
   onClearSelection?: () => void;
   view?: 'outline' | 'detailed';
@@ -186,6 +193,8 @@ interface Ctx {
   dragKind: string | null;
   isTerminal?: (node: FlowNodeLike) => boolean;
   readOnly: boolean;
+  /** Bump the edge remeasure after DOM that affects anchors mounts. */
+  requestMeasure: () => void;
 }
 const CanvasContext = React.createContext<Ctx | null>(null);
 const useCtx = () => {
@@ -277,33 +286,37 @@ function AddComponentCard({ loc, hint }: { loc: FlowInsertLoc; hint?: string }) 
   );
 }
 
-/** Connector between two positions — vertical line + quick-insert "+" + drop target. */
+/** Connector between two positions — hit target + quick-insert "+". The vertical
+    stroke is drawn by the SVG overlay via `data-flow-vseg`. */
 function Connector({ loc }: { loc: FlowInsertLoc }) {
-  const { palette, onInsert, dragKind, readOnly } = useCtx();
+  const { palette, onInsert, dragKind, readOnly, requestMeasure } = useCtx();
   const [over, setOver] = React.useState(false);
   const [anchor, setAnchor] = React.useState<HTMLElement | null>(null);
 
   const open = Boolean(anchor);
   const ghost = dragKind ? palette.find((p) => p.kind === dragKind) : undefined;
 
-  // Read-only: the connector still draws the line that joins two steps, but it
-  // stops being a target. Keeping the same height means a preview and its
-  // builder render at identical geometry — the flow does not reflow when you
-  // switch between reading it and editing it.
+  // Ghost open/close changes connector height — remeasure edges.
+  React.useEffect(() => {
+    requestMeasure();
+  }, [over, ghost, requestMeasure]);
+
+  // Read-only: the connector still reserves the join height, but it stops being
+  // a target. Keeping the same height means a preview and its builder render at
+  // identical geometry — the flow does not reflow when you switch between
+  // reading it and editing it.
   if (readOnly) {
-    return (
-      <div className="relative flex h-9 min-w-[40px] items-center justify-center">
-        <div className="h-full w-0.5 border-l-2 border-border-strong" />
-      </div>
-    );
+    return <div data-flow-vseg className={`relative flex h-9 min-w-[40px] items-center justify-center ${styles.vseg}`} />;
   }
   // Only the hovered slot opens to receive the drop — dragging never shifts the
   // whole canvas, so there's no jump when a drag begins.
   return (
     <div
+      data-flow-vseg
       className={[
         'group/conn relative flex min-w-[40px] items-center justify-center transition-[height] duration-150',
         over && ghost ? 'h-[68px]' : 'h-9',
+        styles.vseg,
       ].join(' ')}
       onDragOver={(e) => {
         e.preventDefault();
@@ -325,25 +338,22 @@ function Connector({ loc }: { loc: FlowInsertLoc }) {
           <span className="text-body-medium">{ghost.label}</span>
         </div>
       ) : (
-        <>
-          <div className="h-full w-0.5 border-l-2 border-border-strong transition-colors duration-150" />
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setAnchor(e.currentTarget);
-            }}
-            aria-label="Insert component"
-            className={[
-              'absolute grid h-[22px] w-[22px] place-items-center rounded-full border bg-surface shadow-xs transition-all duration-150',
-              open
-                ? 'scale-100 border-brand text-brand opacity-100'
-                : 'scale-90 border-border-strong text-icon opacity-0 hover:border-brand hover:text-brand group-hover/conn:scale-100 group-hover/conn:opacity-100',
-            ].join(' ')}
-          >
-            <AddIcon sx={{ fontSize: 14 }} />
-          </button>
-        </>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setAnchor(e.currentTarget);
+          }}
+          aria-label="Insert component"
+          className={[
+            'absolute grid h-[22px] w-[22px] place-items-center rounded-full border bg-surface shadow-xs transition-all duration-150',
+            open
+              ? 'scale-100 border-brand text-brand opacity-100'
+              : 'scale-90 border-border-strong text-icon opacity-0 hover:border-brand hover:text-brand group-hover/conn:scale-100 group-hover/conn:opacity-100',
+          ].join(' ')}
+        >
+          <AddIcon sx={{ fontSize: 14 }} />
+        </button>
       )}
       <PaletteMenu anchor={anchor} onClose={() => setAnchor(null)} palette={palette} onPick={(kind) => onInsert(loc, kind)} />
     </div>
@@ -377,9 +387,9 @@ function SequenceView({
     if (path.length === 0) {
       return (
         <div className="flex flex-col items-center">
-          <div className={styles.stem} style={{ height: 28 }} />
+          <FlowStem height={28} />
           <AddComponentCard loc={{ path, index: 0 }} hint={ghost} />
-          <div className={styles.stem} style={{ height: 28 }} />
+          <FlowStem height={28} />
         </div>
       );
     }
@@ -399,10 +409,10 @@ function SequenceView({
   return (
     <div className="flex flex-col items-center">
       {intro}
-      {seq.map((node, i) => (
-        <React.Fragment key={node.id}>
+      {seq.map((n, i) => (
+        <React.Fragment key={n.id}>
           <Connector loc={{ path, index: i }} />
-          <NodeBlock node={node} path={path} />
+          <NodeBlock node={n} path={path} />
         </React.Fragment>
       ))}
       {/* No trailing connector below a terminal (Exit) node — the flow ends there. */}
@@ -411,10 +421,8 @@ function SequenceView({
   );
 }
 
-/** One fan-out → lanes tier. `merges` (default) draws the bottom merge bus + stem so
-    the flow reconverges and continues below (conditional / parallel / outcome tiers).
-    Pass `merges={false}` only when every lane terminates (all lanes end in an Exit):
-    the lanes are leaves, so no merge and no line continues below the fan-out. */
+/** One fan-out → lanes tier. Layout pads reserve elbow room; the SVG overlay
+    draws the bus / stems from measured anchors. */
 function BranchTier({
   node,
   branches,
@@ -428,17 +436,21 @@ function BranchTier({
 }) {
   const { renderBranchLabel, isTerminal } = useCtx();
   return (
-    <>
-      <div className={styles.stem} style={{ height: 20 }} />
-      <div className={styles.lanesRow}>
+    <div data-flow-tier data-merges={merges ? 'true' : 'false'} className="flex flex-col items-center">
+      <div data-flow-lanes className={styles.lanesRow}>
         {branches.map((br) => {
           // A lane doesn't merge back when the tier itself is terminal (outcomes) or
           // the lane ends in a flow-ending node (Exit / an approval's outcomes): it
           // drops its continuous line + merge elbow so nothing flows below it.
           const laneTerminal = !merges || (br.seq.length > 0 && endsFlow(br.seq[br.seq.length - 1], isTerminal));
           return (
-            <div key={br.id} className={[styles.lane, laneTerminal ? styles.laneTerminal : ''].join(' ')}>
-              <div className={styles.laneStemTop} />
+            <div
+              key={br.id}
+              data-flow-lane
+              data-terminal={laneTerminal ? 'true' : 'false'}
+              className={styles.lane}
+            >
+              <div data-flow-lane-head className={styles.laneHead} />
               <div className="relative z-[1] mb-1.5 flex w-max max-w-full justify-center px-0.5">
                 {renderBranchLabel ? (
                   renderBranchLabel(br, node)
@@ -447,14 +459,22 @@ function BranchTier({
                 )}
               </div>
               <SequenceView seq={br.seq} path={[...path, { nodeId: node.id, branchId: br.id }]} sealed={br.sealed} branch={br} node={node} />
-              <div className={styles.spacer} />
-              {!laneTerminal && <div className={styles.laneStemBottom} />}
+              {/* Equalizer stem: SVG strokes this when the lane merges. Without it,
+                  empty/short lanes (e.g. ELSE) show only stubs under the label and
+                  at the merge bus — the flex gap stays blank. Terminal lanes omit
+                  the attribute so nothing hangs below a dead-end path. */}
+              <div
+                className={styles.spacer}
+                {...(!laneTerminal ? { 'data-flow-vseg': true } : {})}
+                aria-hidden
+              />
+              {!laneTerminal && <div data-flow-lane-foot className={styles.laneFoot} />}
             </div>
           );
         })}
       </div>
-      {merges && <div className={styles.stem} style={{ height: 20 }} />}
-    </>
+      {merges && <div data-flow-tier-exit className={styles.tierExit} />}
+    </div>
   );
 }
 
@@ -466,9 +486,25 @@ function NodeBlock({ node, path }: { node: FlowNodeLike; path: FlowPathStep[] })
   return (
     <div className="flex flex-col items-center">
       {renderCard(node, { dense })}
-      {branches.length > 0 && <BranchTier node={node} branches={branches} path={path} merges={!tierTerminates(branches, isTerminal)} />}
-      {between}
-      {outcomes.length > 0 && <BranchTier node={node} branches={outcomes} path={path} merges={!tierTerminates(outcomes, isTerminal)} />}
+      {branches.length > 0 && (
+        <>
+          <FlowStem height={20} />
+          <BranchTier node={node} branches={branches} path={path} merges={!tierTerminates(branches, isTerminal)} />
+        </>
+      )}
+      {between != null && between !== false && (
+        <div className="flex flex-col items-center">
+          {/* Canvas owns the stem into between-tier chrome (Fallback chip, etc.). */}
+          <FlowStem height={20} />
+          {between}
+        </div>
+      )}
+      {outcomes.length > 0 && (
+        <>
+          <FlowStem height={20} />
+          <BranchTier node={node} branches={outcomes} path={path} merges={!tierTerminates(outcomes, isTerminal)} />
+        </>
+      )}
     </div>
   );
 }
@@ -495,10 +531,39 @@ export function FlowCanvas({
   readOnly = false,
 }: FlowCanvasProps) {
   const [zoom, setZoom] = React.useState(1);
+  const [edges, setEdges] = React.useState<EdgeModel>({ width: 0, height: 0, paths: [] });
   const viewportRef = React.useRef<HTMLDivElement>(null);
   const stageRef = React.useRef<HTMLDivElement>(null);
-
+  const rafRef = React.useRef(0);
   const dense = view === 'outline';
+
+  const measure = React.useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      setEdges(buildEdgeModel(stageRef.current, zoom));
+    });
+  }, [zoom]);
+
+  const requestMeasure = React.useCallback(() => {
+    measure();
+  }, [measure]);
+
+  // Remeasure whenever the tree, density, or zoom changes, and whenever the
+  // stage's box size changes (lane width, sealed bodies, font load).
+  React.useLayoutEffect(() => {
+    measure();
+  }, [measure, root, dense, headerCard, renderSealedBody, renderBetweenTiers, renderBranchLabel, draggingKind]);
+
+  React.useEffect(() => {
+    const st = stageRef.current;
+    if (!st || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(st);
+    // Also watch the viewport — fit/scroll can change visible geometry.
+    const vp = viewportRef.current;
+    if (vp) ro.observe(vp);
+    return () => ro.disconnect();
+  }, [measure]);
 
   const fit = React.useCallback(() => {
     const vp = viewportRef.current;
@@ -524,7 +589,19 @@ export function FlowCanvas({
     return () => vp.removeEventListener('wheel', handleWheel);
   }, []);
 
-  const ctx: Ctx = { renderCard, palette, onInsert, renderBranchLabel, renderSealedBody, renderBetweenTiers, dense, dragKind: draggingKind ?? null, isTerminal, readOnly };
+  const ctx: Ctx = {
+    renderCard,
+    palette,
+    onInsert,
+    renderBranchLabel,
+    renderSealedBody,
+    renderBetweenTiers,
+    dense,
+    dragKind: draggingKind ?? null,
+    isTerminal,
+    readOnly,
+    requestMeasure,
+  };
   // The flow ends (no End pill) only when the last root node is an Exit or every lane
   // of its branch tier exits — otherwise the branches merge and continue into End.
   const rootExits = root.length > 0 && endsFlow(root[root.length - 1], isTerminal);
@@ -547,20 +624,32 @@ export function FlowCanvas({
           <div
             ref={stageRef}
             style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
-            className="flex flex-col items-center"
+            className={styles.stage}
           >
-            <CanvasContext.Provider value={ctx}>
-              <Pill label="Start" icon={<RadioButtonUnchecked sx={{ fontSize: 15 }} />} />
-              {headerCard && (
-                <>
-                  <div className={styles.stem} style={{ height: 28 }} />
-                  {headerCard({ dense })}
-                </>
-              )}
-              <SequenceView seq={root} path={[]} ghost={emptyHint} />
-              {/* When the flow ends in an Exit, don't render the End terminal. */}
-              {!rootExits && <Pill label="End" icon={<Segment sx={{ fontSize: 15 }} />} />}
-            </CanvasContext.Provider>
+            <svg
+              className={styles.edgeLayer}
+              width={edges.width || 1}
+              height={edges.height || 1}
+              aria-hidden
+            >
+              {edges.paths.map((d, i) => (
+                <path key={i} d={d} className={styles.edge} />
+              ))}
+            </svg>
+            <div className={styles.stack}>
+              <CanvasContext.Provider value={ctx}>
+                <Pill label="Start" icon={<RadioButtonUnchecked sx={{ fontSize: 15 }} />} />
+                {headerCard && (
+                  <>
+                    <FlowStem height={28} />
+                    {headerCard({ dense })}
+                  </>
+                )}
+                <SequenceView seq={root} path={[]} ghost={emptyHint} />
+                {/* When the flow ends in an Exit, don't render the End terminal. */}
+                {!rootExits && <Pill label="End" icon={<Segment sx={{ fontSize: 15 }} />} />}
+              </CanvasContext.Provider>
+            </div>
           </div>
         </div>
       </div>

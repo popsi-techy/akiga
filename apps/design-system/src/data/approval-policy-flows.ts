@@ -158,7 +158,8 @@ export const approvalPolicyFlows: Record<string, PolicyNode[]> = {
           overallRule: 'all',
           requiredApprovals: 2,
           sla: sla(1),
-          fallback: { enabled: true, action: 'notify' },
+          // Between-tier Fallback chip exercises FlowCanvas SVG merge → stem → fan-out.
+          fallback: { enabled: true, action: 'fallbackApprover', approverEmail: 'secops-fallback@acme.com' },
         }),
       ],
       [

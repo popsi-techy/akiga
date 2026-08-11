@@ -20,7 +20,7 @@ export default function TabsDocs() {
       <PageHeader
         eyebrow="Components"
         title="Tabs"
-        description="Section navigation for detail pages — an orange underline indicator with the active label in brand orange (an AA-safe darker orange as text; the vibrant underline is a UI graphic). Matches the product's detail-page tabs."
+        description="Section navigation for detail pages — an orange underline indicator with the active label in brand orange (an AA-safe darker orange as text; the vibrant underline is a UI graphic). A tab is 32px tall and owns its own height, so a tab band reads as a thin strip rather than a second header."
       />
 
       <Section title="Basic" description="Controlled value with optional counts.">
@@ -72,6 +72,7 @@ export default function TabsDocs() {
             'Don’t exceed ~7 tabs — reconsider the IA.',
             'Don’t hide destructive actions behind a tab.',
             'Don’t recolor the indicator — it’s the brand accent.',
+            'Don’t pad the band to change the tab height — a tab is 32px and owns it.',
           ]}
         />
         <p className="mt-3 text-body-sm text-text-tertiary">

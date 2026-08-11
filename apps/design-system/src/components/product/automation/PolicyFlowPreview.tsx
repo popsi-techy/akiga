@@ -8,11 +8,19 @@ import AccountTreeOutlined from '@mui/icons-material/AccountTreeOutlined';
 import SkipNext from '@mui/icons-material/SkipNext';
 import Logout from '@mui/icons-material/Logout';
 import RuleOutlined from '@mui/icons-material/RuleOutlined';
-import { FlowCanvas, type FlowNodeLike } from '@ds/components';
-import { APPROVER_TYPE_LABEL, type ApprovalPolicy, type ParallelConfig, type PolicyBranch, type PolicyNode, type ApprovalLevelConfig, type NotificationConfig } from '@/data/automation-types';
+import { FlowCanvas, FlowStem, type FlowBranchLike, type FlowNodeLike } from '@ds/components';
+import {
+  APPROVER_TYPE_LABEL,
+  type ApprovalPolicy,
+  type ParallelConfig,
+  type PolicyBranch,
+  type PolicyNode,
+  type ApprovalLevelConfig,
+  type NotificationConfig,
+} from '@/data/automation-types';
 import { NODE_META } from '@/lib/policy-tree';
 import { getUser, getGovernanceGroup } from '@/data/directory';
-import { LaneLabel, ConditionLaneLabel, ParallelLaneLabel, OUTCOME_TONE } from './LaneLabel';
+import { LaneLabel, ConditionLaneLabel, ParallelLaneLabel, AutoResolveBody, OUTCOME_TONE } from './LaneLabel';
 
 /**
  * Read-only render of an approval policy's flow.
@@ -20,8 +28,8 @@ import { LaneLabel, ConditionLaneLabel, ParallelLaneLabel, OUTCOME_TONE } from '
  * Deliberately the *same* canvas the builder uses, in `readOnly` mode, rather than
  * a second bespoke rendering: a preview that draws the flow differently from the
  * editor is a preview you cannot trust. Only the authoring affordances are gone —
- * geometry, cards and lane labels are identical, so pressing Edit changes what you
- * can do, never what you are looking at.
+ * geometry, cards, sealed bodies and between-tier chrome are identical, so pressing
+ * Edit changes what you can do, never what you are looking at.
  */
 
 const ICONS: Record<string, React.ComponentType<{ sx?: object }>> = {
@@ -139,17 +147,117 @@ export function PolicyFlowPreview({ policy }: { policy: ApprovalPolicy }) {
       );
     }
 
+    // Approval Level: Fallback chip under the card (outcomes live in `branches`).
+    const fb = node.type === 'approvalLevel' ? (node.config as ApprovalLevelConfig | undefined)?.fallback : undefined;
+    const showFallbackChip = Boolean(fb?.enabled && fb.action === 'fallbackApprover' && (fb.approverEmail ?? '').trim());
+    const fallbackEmail = (fb?.approverEmail ?? '').trim();
+
     return (
-      <div className="flex w-[320px] items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md" style={{ backgroundColor: tile.bg, color: tile.fg }}>
-          <Icon sx={{ fontSize: 18 }} />
+      <div className="flex flex-col items-center">
+        <div className="flex w-[320px] items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md" style={{ backgroundColor: tile.bg, color: tile.fg }}>
+            <Icon sx={{ fontSize: 18 }} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-body-medium leading-tight text-text-primary">{title}</span>
+            {!dense && <span className="mt-1 block truncate text-caption leading-tight text-text-secondary">{summary}</span>}
+          </span>
+        </div>
+        {showFallbackChip && (
+          <>
+            <FlowStem height={20} />
+            <div className="flex w-[240px] items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5">
+              <span
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-md"
+                style={{ backgroundColor: tile.bg, color: tile.fg }}
+              >
+                <PersonOutline sx={{ fontSize: 16 }} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-body-sm-medium leading-tight text-text-primary">Fallback Approver</span>
+                <span className="mt-0.5 block truncate text-caption leading-tight text-text-secondary">{fallbackEmail}</span>
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  /** Parallel only — same between-tier slot as the builder; canvas owns stems. */
+  const renderBetweenTiers = (n: FlowNodeLike) => {
+    const node = n as PolicyNode;
+    if (node.type !== 'parallelBranch') return null;
+    const fb = (node.config as ParallelConfig | undefined)?.fallback;
+    const email = (fb?.approverEmail ?? '').trim();
+    if (!(fb?.enabled && fb.action === 'fallbackApprover' && email)) return null;
+    const tile = tileFor(NODE_META[node.type].section);
+    return (
+      <div className="flex w-[240px] items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5">
+        <span
+          className="grid h-7 w-7 shrink-0 place-items-center rounded-md"
+          style={{ backgroundColor: tile.bg, color: tile.fg }}
+        >
+          <PersonOutline sx={{ fontSize: 16 }} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-body-medium leading-tight text-text-primary">{title}</span>
-          {!dense && <span className="mt-1 block truncate text-caption leading-tight text-text-secondary">{summary}</span>}
+          <span className="block truncate text-body-sm-medium leading-tight text-text-primary">Fallback Approver</span>
+          <span className="mt-0.5 block truncate text-caption leading-tight text-text-secondary">{email}</span>
         </span>
       </div>
     );
+  };
+
+  /** Same sealed/intro outcome bodies as the builder. */
+  const renderSealedBody = (b: FlowBranchLike, n: FlowNodeLike) => {
+    const br = b as unknown as PolicyBranch;
+    if (br.kind !== 'outcome') return null;
+    const cfg = (n as PolicyNode).config as ApprovalLevelConfig | ParallelConfig | undefined;
+
+    if (br.label === 'SLA Breached') {
+      if (cfg?.sla?.afterExpiry === 'createBranch') return null;
+      const approves = cfg?.sla?.afterExpiry === 'autoApprove';
+      return (
+        <AutoResolveBody
+          resolution={approves ? 'Auto Approve' : 'Auto Reject'}
+          tone={approves ? 'success' : 'danger'}
+        />
+      );
+    }
+
+    if (br.label === 'Approver Not Found') {
+      const action = cfg?.fallback?.action;
+      if (action === 'autoApprove') {
+        return <AutoResolveBody resolution="Auto Approve" tone="success" />;
+      }
+      if (action === 'autoReject') {
+        return <AutoResolveBody resolution="Auto Reject" tone="danger" />;
+      }
+      if (action === 'notify') {
+        return (
+          <AutoResolveBody
+            resolution="Notify"
+            tone="info"
+            icon={<MailOutline sx={{ fontSize: 16 }} />}
+          />
+        );
+      }
+      return null;
+    }
+
+    if (br.label === 'Fallback SLA Breached') {
+      if (cfg?.fallback?.approverResolution === 'createBranch') return null;
+      const res = cfg?.fallback?.approverResolution;
+      if (res === 'autoApprove') {
+        return <AutoResolveBody resolution="Auto Approve" tone="success" />;
+      }
+      if (res === 'autoReject') {
+        return <AutoResolveBody resolution="Auto Reject" tone="danger" />;
+      }
+      return <AutoResolveBody resolution="Select action" tone="neutral" />;
+    }
+
+    return null;
   };
 
   const policyCard = () => (
@@ -185,6 +293,8 @@ export function PolicyFlowPreview({ policy }: { policy: ApprovalPolicy }) {
         if (br.kind === 'parallelLane') return <ParallelLaneLabel label={br.label} approver={laneApprover[br.id]} />;
         return <LaneLabel text={br.label} />;
       }}
+      renderSealedBody={renderSealedBody}
+      renderBetweenTiers={renderBetweenTiers}
     />
   );
 }

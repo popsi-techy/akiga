@@ -152,17 +152,17 @@ export default function ApprovalPolicyDetailPage() {
   return (
     <div className="flex h-full flex-col">
       {/* Sticky top: identity + tabs, matching the emergency-access detail shell */}
-      <div className="-mx-8 -mt-6 shrink-0 border-b border-border bg-canvas px-8 pt-5">
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+      <div className="-mx-8 -mt-6 shrink-0 border-b border-border bg-canvas px-8 pt-3">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Avatar name={policy.policyName} initials={policy.policyName.charAt(0).toUpperCase()} size="md" />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-h3 leading-tight text-text-primary">{policy.policyName}</h1>
+                <h1 className="text-h4 text-text-primary">{policy.policyName}</h1>
                 <StatusChip intent={policy.status === 'active' ? 'success' : 'neutral'} label={policy.status === 'active' ? 'Active' : 'Draft'} />
                 {incomplete > 0 && <StatusChip intent="warning" label={`${incomplete} incomplete`} />}
               </div>
-              <p className="mt-0.5 max-w-2xl text-body-sm text-text-secondary">
+              <p className="mt-px max-w-2xl text-body-sm text-text-secondary">
                 {policy.description || 'No description.'}
               </p>
             </div>

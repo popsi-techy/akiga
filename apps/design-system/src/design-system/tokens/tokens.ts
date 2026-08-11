@@ -210,7 +210,7 @@ export const radius = {
   lg: '12px', //  cards
   xl: '16px', //  large cards / modals
   '2xl': '20px',
-  avatar: '10px', // softly rounded-square avatars (matches product design)
+  avatar: '6px', // soft rounded-square avatars (same step as radius.sm)
   pill: '9999px',
 } as const;
 
@@ -273,7 +273,7 @@ export const breakpoints = {
 export const layout = {
   sidebarWidth: '260px',
   sidebarCollapsedWidth: '72px',
-  topbarHeight: '64px',
+  topbarHeight: '56px',
   contentMaxWidth: '1440px',
 } as const;
 

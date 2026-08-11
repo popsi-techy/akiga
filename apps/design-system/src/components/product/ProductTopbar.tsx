@@ -97,8 +97,8 @@ export default function ProductTopbar() {
   };
 
   return (
-    <header className="sticky top-0 z-sticky flex h-16 shrink-0 items-center justify-between border-b border-border bg-canvas px-6">
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-body">
+    <header className="sticky top-0 z-sticky flex h-[var(--ds-layout-topbarHeight)] shrink-0 items-center justify-between border-b border-border bg-canvas px-6">
+      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-body-medium">
         <Link
           href={homeHref}
           aria-label="Home"
@@ -110,11 +110,11 @@ export default function ProductTopbar() {
           <React.Fragment key={i}>
             <NavigateNextOutlined sx={{ fontSize: 18, color: 'var(--ds-color-text-disabled)' }} />
             {c.href ? (
-              <Link href={c.href} className="font-emphasis text-text-link hover:underline">
+              <Link href={c.href} className="text-text-link hover:underline">
                 {c.label}
               </Link>
             ) : (
-              <span className="font-emphasis text-text-primary">{c.label}</span>
+              <span className="text-text-primary">{c.label}</span>
             )}
           </React.Fragment>
         ))}

@@ -344,17 +344,17 @@ export default function EmergencyAccessDetailPage() {
   return (
     <div className="flex h-full flex-col">
       {/* Sticky top: header + tabs, with a full-width line below */}
-      <div className="shrink-0 -mx-8 -mt-6 border-b border-border bg-canvas px-8 pt-5">
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+      <div className="shrink-0 -mx-8 -mt-6 border-b border-border bg-canvas px-8 pt-3">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Avatar name={ea.name} initials={ea.initial} size="md" />
             <div>
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-h3 leading-tight text-text-primary">{ea.name}</h1>
+                <h1 className="text-h4 text-text-primary">{ea.name}</h1>
                 {ea.risk && <StatusChip intent={ea.risk.intent} dot={false} label={ea.risk.label} />}
                 <StatusChip intent={ea.status.intent} label={ea.status.label} />
               </div>
-              <p className="mt-0.5 text-body-sm text-text-secondary">{ea.description}</p>
+              <p className="mt-px text-body-sm text-text-secondary">{ea.description}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

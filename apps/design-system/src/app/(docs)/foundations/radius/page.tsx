@@ -33,7 +33,7 @@ export default function RadiusPage() {
             [<Code key="a">md</Code>, 'Buttons, inputs, selects, small menus'],
             [<Code key="b">lg</Code>, 'Cards, list rows, table containers'],
             [<Code key="c">xl</Code>, 'Modals, drawers, large surfaces'],
-            [<Code key="d">avatar</Code>, 'Rounded-square avatars with initials'],
+            [<Code key="d">avatar</Code>, 'Rounded-square avatars with initials (6px — same step as sm)'],
             [<Code key="e">pill</Code>, 'Status chips, risk badges, toggles'],
           ].map(([t, use], i) => (
             <div key={i} className="flex items-center gap-4 px-5 py-3">

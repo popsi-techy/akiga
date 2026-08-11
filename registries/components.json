@@ -36,7 +36,7 @@
         "image"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/avatar/page.tsx",
-      "notes": "soft = rounded-square for lists; circle = profile cards with grey outline + 2px surface gap. See ADR-0009."
+      "notes": "soft = rounded-square (radius.avatar 6px) for lists; circle = profile cards with grey outline + 2px surface gap. Letter sizes: xs 12 / sm 16 / md 20 / lg 24. See ADR-0009."
     },
     {
       "name": "Button",
@@ -231,7 +231,7 @@
         "read-only"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/flow-canvas/page.tsx",
-      "notes": "The Automation builders’ derived-layout graph for a *sequence* (ADR-0007: custom, zero-dependency). Recursive sequence/branch model rendered top-down with fan-out/merge connectors, connector drop-targets and quick-insert. For a *network*, use RelationshipCanvas. `readOnly` renders a saved flow as a preview with no authoring affordances — used by the Approval Policy detail page, so preview and builder are the same picture."
+      "notes": "The Automation builders’ derived-layout graph for a *sequence* (ADR-0007: custom, zero-dependency). Cards/lanes in the DOM; connectors are a measured SVG overlay (ResizeObserver → orthogonal fan-out/merge/sequence). Export `FlowStem` for layout-only vertical joins — product code must not paint CSS stems. `renderBetweenTiers` slots chrome between a first branch tier and outcomeBranches. For a *network*, use RelationshipCanvas. `readOnly` renders a saved flow as a preview with no authoring affordances — used by the Approval Policy detail page, so preview and builder are the same picture."
     },
     {
       "name": "InfoRow",
@@ -608,7 +608,7 @@
         "with-count"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/tabs/page.tsx",
-      "notes": "Selection is marked by colour and a 2px indicator, never by weight, so labels never shift width as the selection moves. Every tab needs its own empty state."
+      "notes": "32px tall — the component owns the height (MUI's block padding is zeroed); never pad the band locally. Selection is marked by colour and a 1px indicator, never by weight, so labels never shift width as the selection moves. Every tab needs its own empty state."
     },
     {
       "name": "TimePicker",

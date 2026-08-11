@@ -1,6 +1,6 @@
 # ADR-0007: Build the Automation builder canvas as a custom, zero-dependency renderer
 
-- **Status:** Accepted
+- **Status:** Accepted — **Implemented** (measured SVG edge overlay shipped in Design System `FlowCanvas`)
 - **Date:** 2026-07-19
 - **Deciders:** Product owner + Design System / Frontend
 - **Tags:** architecture, design-system, automation, tooling, dependency
@@ -52,6 +52,11 @@ The real `FlowCanvas` DS component will render node cards in HTML/MUI (token-sty
 connectors with a **measured SVG overlay** (ResizeObserver → orthogonal connectors between
 measured node anchors), rather than the spike's pure-CSS bus borders. This keeps zero dependencies
 while giving pixel-accurate connectors and, if we want it, true children-centroid centering.
+
+**Implemented (2026-08):** `FlowCanvas` measures `data-flow-*` anchors on the stage and draws
+fan-out / merge / sequence paths in an SVG layer (`flowEdges.ts`). Product builders must not
+paint decorative CSS stems — use `FlowStem` or `renderBetweenTiers` so one stroke owner keeps
+joins continuous under zoom and asymmetric nesting.
 
 ## Consequences
 

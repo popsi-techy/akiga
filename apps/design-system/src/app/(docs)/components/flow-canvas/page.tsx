@@ -18,8 +18,10 @@ const SAMPLE: DemoNode[] = [
     id: 'b',
     kind: 'branch',
     branches: [
+      // Asymmetric nest: IF has a card, ELSE is empty — the lane spacer must
+      // still stroke a continuous stem down to the merge (empty-lane stem fix).
       { id: 'if', label: 'IF high risk', seq: [{ id: 'b1', kind: 'approval' } as DemoNode] },
-      { id: 'else', label: 'ELSE', seq: [{ id: 'b2', kind: 'notify' } as DemoNode] },
+      { id: 'else', label: 'ELSE', seq: [] },
     ],
   },
 ];
@@ -63,7 +65,7 @@ export default function FlowCanvasDocs() {
       <PageHeader
         eyebrow="Components"
         title="Flow Canvas"
-        description="The Automation builders' derived-layout graph (ADR-0007: custom, zero-dependency). Renders a recursive sequence/branch model as a top-down tree with fan-out/merge connectors, connector drop-targets + quick-insert, and a floating toolbar (density, zoom/fit, undo/redo). It owns layout, zoom, and insertion affordances; the consumer owns node data, cards, and selection."
+        description="The Automation builders' derived-layout graph (ADR-0007: custom, zero-dependency). Cards and lanes lay out in the DOM; connectors are a measured SVG overlay (ResizeObserver → orthogonal paths between anchors). Fan-out/merge, connector drop-targets + quick-insert, and a floating toolbar (density, zoom/fit, undo/redo). It owns layout, zoom, edges, and insertion affordances; the consumer owns node data, cards, and selection."
       />
 
       <Section
@@ -87,14 +89,41 @@ export default function FlowCanvasDocs() {
         </div>
       </Section>
 
+      <Section
+        title="SVG edge overlay"
+        description="Connectors are not CSS borders. The stage marks layout anchors (`data-flow-vseg`, lane heads/feet, tier exits); a ResizeObserver pass measures them into stage-local coordinates and draws orthogonal SVG paths (fan-out, merge, sequence). Strokes use `border-strong` at 2px with token radius elbows, snapped to half-pixels so zoom stays crisp."
+      >
+        <ul className="list-disc space-y-1.5 pl-5 text-body-sm text-text-secondary">
+          <li>
+            <strong className="text-text-primary">Sequence</strong> — vertical segments through connector slots and{' '}
+            <Code>FlowStem</Code> spacers (Start → cards → End).
+          </li>
+          <li>
+            <strong className="text-text-primary">Fan-out</strong> — trunk from the tier entry into a horizontal bus, then
+            down into each lane head.
+          </li>
+          <li>
+            <strong className="text-text-primary">Merge</strong> — lane feet into a bus, then down through the tier exit
+            (omitted when every lane terminates).
+          </li>
+          <li>
+            <strong className="text-text-primary">Between tiers</strong> — use{' '}
+            <Code>renderBetweenTiers</Code> for chrome between a first branch tier and{' '}
+            <Code>outcomeBranches</Code> (e.g. Fallback Approver). The canvas owns the stems.
+          </li>
+        </ul>
+      </Section>
+
       <Section title="Props">
         <PropsTable
           rows={[
-            { name: 'root', type: 'FlowNodeLike[]', description: 'The sequence to render (each node may carry `branches`).' },
+            { name: 'root', type: 'FlowNodeLike[]', description: 'The sequence to render (each node may carry `branches` / `outcomeBranches`).' },
             { name: 'renderCard', type: '(node, { dense }) => ReactNode', description: 'Render a node’s card — the consumer wires selection/delete.' },
             { name: 'headerCard', type: '({ dense }) => ReactNode', description: 'Optional fixed card between Start and the root (e.g. the Policy card).' },
             { name: 'palette', type: 'PaletteEntry[]', description: 'Kinds offered in the quick-insert menu. Give each entry a `section` and `tile` to group them under overline headings with the same icon tiles as the sidebar palette; omit both for a flat list.' },
             { name: 'onInsert', type: '(loc, kind) => void', description: 'Fired on drop or quick-insert. `loc` = { path, index }.' },
+            { name: 'renderSealedBody', type: '(branch, node) => ReactNode', description: 'Fixed content under a lane label (e.g. Auto Approve pill). Prefer FlowStem inside product bodies — never paint border stems.' },
+            { name: 'renderBetweenTiers', type: '(node) => ReactNode', description: 'Chrome between the first branch tier and outcomeBranches. Canvas draws stems above/below.' },
             { name: 'view / onViewChange', type: "'outline' | 'detailed'", description: 'Density toggle (passed to renderCard as `dense`).' },
             { name: 'onUndo / onRedo / canUndo / canRedo', type: '() => void / boolean', description: 'Wire the host’s history stack to the toolbar.' },
             { name: 'onClearSelection', type: '() => void', description: 'Called when the empty canvas is clicked.' },
@@ -109,10 +138,13 @@ export default function FlowCanvasDocs() {
             'Derive edges and layout from data — never let users draw or drag nodes.',
             'Keep node cards in renderCard so each builder styles its own domain.',
             'Use headerCard for the fixed first card (Policy card / Event card).',
+            'Use FlowStem (or let the canvas insert stems) for any vertical join — one stroke owner.',
+            'Put Parallel between-tier chrome (Fallback chip) in renderBetweenTiers; Approval Level chips may sit under the card with FlowStem when outcomes live in `branches`.',
             'Wire onUndo/onRedo to the host document history.',
             'Use readOnly to preview a saved flow — same geometry as the builder, so nothing moves when you switch to editing.',
           ]}
           donts={[
+            'Don’t draw decorative border-l / CSS stems in product code — they abut and break under zoom.',
             'Don’t embed the full canvas inside a drawer — it’s a dedicated builder surface.',
             'Don’t store selection inside the canvas; the host owns it.',
             'Don’t hand-position nodes or add manual edge handles.',
@@ -120,7 +152,7 @@ export default function FlowCanvasDocs() {
           ]}
         />
         <p className="mt-3 text-body-sm text-text-tertiary">
-          <Code>{`import { FlowCanvas } from '@ds/components';`}</Code>
+          <Code>{`import { FlowCanvas, FlowStem } from '@ds/components';`}</Code>
         </p>
       </Section>
     </>

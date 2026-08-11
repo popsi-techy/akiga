@@ -98,6 +98,7 @@ export { RelationshipCanvas } from './RelationshipCanvas/RelationshipCanvas';
 export type { RelationshipCanvasProps, CanvasNode, CanvasEdge } from './RelationshipCanvas/RelationshipCanvas';
 
 export { FlowCanvas } from './FlowCanvas/FlowCanvas';
+export { FlowStem } from './FlowCanvas/FlowStem';
 export type {
   FlowCanvasProps,
   FlowNodeLike,

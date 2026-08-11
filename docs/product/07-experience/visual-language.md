@@ -115,9 +115,9 @@ is a data console. Compactness is not permission to be flat.
 | `display` | 32 / 40 | 700 | Reserved. Marketing-scale moments only |
 | `h1` | 28 / 36 | 700 | Page title on padded pages |
 | `h2` | 24 / 32 | 700 | Rare — a major in-page division |
-| `h3` | 20 / 28 | 600 | Section heading |
-| `h4` | 18 / 26 | 600 | Canvas page title (the compact header) |
-| `h5` | 16 / 24 | 600 | Region and section headings |
+| `h3` | 20 / 28 | 600 | Section heading; empty-state titles |
+| `h4` | 18 / 26 | 600 | Object-detail page title |
+| `h5` | 16 / 24 | 600 | Region and section headings; canvas page title |
 | `card-title` | 15 / 20 | 400 | Rail card heading — names its contents without competing |
 | `body-lg` | 16 / 24 | 400 | Lead paragraph under a page title |
 | `body` | 14 / 20 | 400 | **Default.** Prose, tab labels |
@@ -177,7 +177,7 @@ Whichever you want, it is a **type role**, never a weight utility: say `body-med
 
 1. The product mark and active navigation item
 2. The **one** primary action on the screen
-3. Selection — selected row, selected tab (label + 2px indicator), selected node
+3. Selection — selected row, selected tab (label + 1px indicator), selected node
 4. Focus rings
 5. Identity tint — avatar background `#FFF4EE` with the letter in `#EB5424`
 6. Progress that is actively yours — the current step, the active edge in a graph
@@ -264,6 +264,8 @@ change the layout, or add a documented size to the DS.
 - **Between peer rows:** 0 (hairline) in tables; 4–8px when rows are cards.
 - **Inside a row:** 10–12px between the visual, the text block, and the trailing content.
 - **A label and its value:** 2–4px. They are one unit; anything more breaks the pair.
+  Object-detail **title → lead** is the one exception: **1px** (`mt-px`), so the
+  name and description read as a single block under the avatar.
 
 ### 6.4 Truncation
 
@@ -311,7 +313,7 @@ padding 24px top/bottom and 32px left/right.
 | Used by | list, object detail, landing, dashboard | builder, workspace, explorer, decision detail |
 | Frame | inherits the `<main>` padding | cancels it: `-mx-8 -my-6 h-[calc(100%+3rem)] flex flex-col` |
 | What scrolls | the page | nothing — only inner regions |
-| Title | `h2` (list) or `h3` (detail) | `h5` |
+| Title | `h2` (list) or `h4` (detail) | `h5` |
 
 **Page title by archetype — do not invent a fourth tier.** The product is consistent here; match
 it rather than reaching for `h1`, which is reserved and currently unused:
@@ -319,7 +321,7 @@ it rather than reaching for `h1`, which is reserved and currently unused:
 | Archetype | Title | Lead |
 |---|---|---|
 | Padded list / landing | `h2` 24/700 | `body` 14/400 secondary |
-| Padded object detail | `h3` 20/600 | `body-sm` 13/400 secondary |
+| Padded object detail | `h4` 18/600 | `body-sm` 13/400 secondary |
 | Canvas page (builder, workspace, detail) | `h5` 16/600 | `body-sm` 13/400, or none |
 
 A canvas title is deliberately the smallest of the three: its chrome is a thin bar and the work
@@ -337,7 +339,7 @@ surface below it is the protagonist.
 |  (gap 4)                                                       |
 |  body lead, secondary                                          |  20h
 |  (gap 20)                                                      |
-|  tabs (with counts)                                            |  42h
+|  tabs (with counts)                                            |  32h
 |  (gap 16)                                                      |
 |  [ search 384w ] [ filter ]                     [ export ]     |  36h
 |  (gap 16)                                                      |
@@ -352,7 +354,7 @@ surface below it is the protagonist.
 |---|---|
 | Title to lead | 4px. The lead is one sentence, `text-secondary` |
 | Lead to tabs | 20px |
-| Tabs band | 42px tall, 40px min tab height, 24px between labels |
+| Tabs band | 32px tall, 24px between labels. `Tab` owns the height — never pad it locally |
 | Toolbar | 36px controls (`size="sm"`); search capped at `max-w-sm` (384px) |
 | Toolbar to table | 16px |
 | Table | `fillHeight` — takes the rest and scrolls internally. **The page never scrolls** |
@@ -369,20 +371,20 @@ saying what will appear there and why it is empty.
 
 ```
 +-- main - pad 24 / 32 ------------------------------------------+
-|  < Back to Users                        caption-strong 12/600  |  16h
-|  (gap 10)                                                      |
-|  [avatar 40] h3 title  [chips]                    [actions]    |  25h
+|  sticky identity band - pad 12 top / 32 sides ------------------|
+|   [avatar 40] h4 title  [chips]                   [actions]    |  ~45h
 |               body-sm description, max-w-2xl                   |
-|  (gap 36)                                                      |
-|  tabs                                                          |  42h
-|  (gap 20)                                                      |
+|   (gap 12)                                                     |
+|   tabs                                                         |  32h
+|  (gap 20) — content region                                     |
 |  +-- 2-up grid - 550 + 550, gap 20 -------------------------+  |
 |  |  Card (framed) - header 15/400 - white inner panel       |  |
 |  +----------------------------------------------------------+  |
 +----------------------------------------------------------------+
 ```
 
-The back link is `caption-strong` text, not a button. Related entities live in tabs, never
+Breadcrumb lives in the app topbar, not in this band — a second “back” link would
+restate the same navigation four pixels below. Related entities live in tabs, never
 stacked down the page.
 
 ---
@@ -393,10 +395,10 @@ stacked down the page.
 
 ```
 +-- canvas - -mx-8 -my-6 - fills the frame, never scrolls -------+
-|  header band - pad 20 top/side, 0 bottom            ~122h      |
+|  header band - pad 20 top/side, 0 bottom            ~112h      |
 |   [avatar 40] h5 Title - qualifier  [status chip]  [primary]   |
 |   body-sm sub-line: what you can do here, in one sentence      |
-|   tabs                                              42h        |
+|   tabs                                              32h        |
 +----------------------------------------------------------------+
 |  +-- main column (scrolls) ------+  +-- rail 320-360 --------+ |
 |  |  h5 region heading + search   |  |  context Card          | |
@@ -547,7 +549,7 @@ was deliberately not copied and why. This is how a reference-built screen stays 
 - Don't put two primary buttons on one screen.
 - Don't introduce a second accent hue, a gradient, or a decorative illustration.
 - Don't invent a size, spacing value, radius, or colour that isn't a token.
-- Don't use `display`/`h1`/`h2` inside a canvas page — its header is `h4`.
+- Don't use `display`/`h1`/`h2` inside a canvas page — its header is `h5`.
 - Don't animate data, or anything on page load.
 - Don't let a design-system component's default height dictate a layout you know is wrong — fix the
   component, with a documented size.

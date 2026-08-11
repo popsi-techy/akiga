@@ -76,7 +76,7 @@ checks.push({
   waiver:
     "Owner's decision: every avatar renders its letter as brand.primary #EB5424 on " +
     'brand.subtle #FFF4EE = 3.33:1, below AA for normal text, and avatar letters are ' +
-    '11-18px so the large-text allowance does not apply. Accepted knowingly for visual ' +
+    '12-24px so the large-text allowance does not apply. Accepted knowingly for visual ' +
     'consistency. Mitigation: the avatar carries an aria-label with the full name, so no ' +
     'information depends on reading the letter. brand.primaryActive #9E3416 (6.57:1) is ' +
     'the compliant value if this is ever revisited.',
@@ -90,7 +90,7 @@ checks.push({
   waiver:
     "Owner's decision: the selected Tab label matches the underline at brand.primary " +
     '#EB5424 = 3.60:1 on white, below AA for its 14px regular type. This is the case ' +
-    'text.brand #C9441E (4.85:1) was introduced for. Mitigation: the 2px indicator and ' +
+    'text.brand #C9441E (4.85:1) was introduced for. Mitigation: the 1px indicator and ' +
     'aria-selected both mark the active tab, so selection never depends on the colour.',
 });
 checks.push({ label: 'text.inverse on sidebar', fg: color.text.inverse, bg: color.background.sidebar, min: AA_TEXT });

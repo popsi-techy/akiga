@@ -13,7 +13,7 @@ export default function AvatarDocs() {
         description="Identity mark for people and entities. Default soft shape is a rounded-square for lists and tables. Circle shape is the profile-card treatment — fully round with a brand-tint ring. Shows an image when available, otherwise a single letter in brand orange (#EB5424) on the brand tint (#FFF4EE) — one letter, one colour pair, every avatar. That pairing is 3.33:1, a deliberate sub-AA exception recorded as a waiver in check-contrast.ts; the aria-label carries the full name, so nothing depends on reading the letter."
       />
 
-      <Section title="Sizes">
+      <Section title="Sizes" description="Box · letter — xs 24/12 · sm 32/16 · md 40/20 · lg 48/24. Soft corners use radius.avatar (6px).">
         <Example label="xs · sm · md · lg">
           <Avatar name="Amelia Ford" size="xs" />
           <Avatar name="Amelia Ford" size="sm" />

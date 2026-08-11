@@ -112,6 +112,12 @@ const STEP_COLOR: Record<'success' | 'danger' | 'neutral' | 'warning' | 'info', 
  * One run in the left rail. Time leads, because that is what an operator scans
  * for: "what ran on Friday?". The outcome rides alongside as a dot rather than a
  * chip, so a column of twenty runs stays a column of times, not a wall of pills.
+ *
+ * Styled as the outlined single-choice card the product already uses to pick an
+ * owner (`RadioCardGroup appearance="outlined"`) — same radius, padding, gaps and
+ * selected treatment. `RadioCardGroup` itself can't render this row: an option is
+ * label + description + a 32px icon tile, and a run needs a baseline-aligned
+ * time/date pair, a status glyph and an SLA chip.
  */
 function RunRow({ run, active, onSelect }: { run: ApprovalRun; active: boolean; onSelect: () => void }) {
   const o = OUTCOME[run.outcome];
@@ -121,11 +127,14 @@ function RunRow({ run, active, onSelect }: { run: ApprovalRun; active: boolean; 
       onClick={onSelect}
       aria-current={active ? 'true' : undefined}
       className={[
-        'flex w-full items-start gap-3 border-l-2 px-3 py-2.5 text-left transition-colors',
-        active ? 'border-l-brand bg-surface-selected' : 'border-l-transparent hover:bg-surface-hover',
+        'flex w-full items-start gap-2.5 rounded-md px-3 py-2.5 text-left transition-colors',
+        active
+          ? 'border border-brand bg-surface'
+          : 'border border-border bg-surface hover:border-border-strong hover:bg-surface-hover',
+        'outline-none focus-visible:ring-2 focus-visible:ring-brand/30',
       ].join(' ')}
     >
-      <span className="mt-1 shrink-0" style={{ color: STEP_COLOR[o.intent === 'caution' ? 'warning' : o.intent] }}>
+      <span className="mt-0.5 shrink-0" style={{ color: STEP_COLOR[o.intent === 'caution' ? 'warning' : o.intent] }}>
         <o.Icon sx={{ fontSize: 16 }} />
       </span>
       <span className="min-w-0 flex-1">
@@ -315,9 +324,12 @@ export function ExecutionHistoryTab({ policyId }: { policyId: string }) {
 
   return (
     <div className="grid h-full gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
-      {/* Left: run list, newest first */}
+      {/* Left: run list, newest first. `padding="none"` already gives the panel a
+          20px content gutter (ADR-0009), so the header and the cards below add only
+          vertical rhythm — an extra px- here is what pushes a label 36px off the
+          panel edge. */}
       <Card padding="none" className="flex h-full min-h-0 flex-col">
-        <div className="shrink-0 border-b border-border px-4 py-3">
+        <div className="shrink-0 border-b border-border py-3">
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-body-sm-strong text-text-primary">Runs</span>
             <span className="text-caption tabular-nums text-text-tertiary">{stats.total} total</span>
@@ -332,7 +344,7 @@ export function ExecutionHistoryTab({ policyId }: { policyId: string }) {
             )}
           </div>
         </div>
-        <div className="ds-scroll min-h-0 flex-1 overflow-y-auto py-1">
+        <div className="ds-scroll min-h-0 flex-1 space-y-2 overflow-y-auto py-3">
           {runs.map((run) => (
             <RunRow key={run.id} run={run} active={run.id === selectedId} onSelect={() => setSelectedId(run.id)} />
           ))}

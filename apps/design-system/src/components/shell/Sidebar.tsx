@@ -31,7 +31,7 @@ export default function Sidebar() {
       {/* Brand */}
       <Link
         href="/"
-        className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-6"
+        className="flex h-[var(--ds-layout-topbarHeight)] shrink-0 items-center gap-2 border-b border-border px-6"
       >
         <span className="flex h-8 w-8 items-center justify-center rounded-md bg-brand text-h5 text-brand-on">
           a

@@ -23,11 +23,11 @@ export default function Topbar() {
   const [group, page] = useCrumbs(pathname);
 
   return (
-    <header className="sticky top-0 z-sticky flex h-16 items-center justify-between border-b border-border bg-canvas/95 px-8 backdrop-blur">
-      <div className="flex items-center gap-2 text-body-sm">
+    <header className="sticky top-0 z-sticky flex h-[var(--ds-layout-topbarHeight)] items-center justify-between border-b border-border bg-canvas/95 px-8 backdrop-blur">
+      <div className="flex items-center gap-2 text-body-sm-medium">
         <span className="text-text-tertiary">{group}</span>
         <span className="text-text-disabled">/</span>
-        <span className="font-emphasis text-text-primary">{page}</span>
+        <span className="text-text-primary">{page}</span>
       </div>
       <div className="flex items-center gap-3">
         <span className="rounded-pill border border-border bg-surface px-2.5 py-1 text-caption-strong text-text-secondary">

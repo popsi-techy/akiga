@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { FlowStem } from '@ds/components/FlowCanvas/FlowStem';
 import type { ConditionGroup } from '@/data/automation-types';
 import { isConditionGroupValid } from '@/lib/policy-tree';
 import { attributeLabel } from '@/data/attributes';
@@ -140,7 +141,8 @@ const BODY_TONE_CLASS: Record<LaneTone, string> = {
 
 /** Body of a sealed (or intro) outcome lane that auto-resolves — e.g. SLA /
     Approver Not Found set to Auto Approve. Optional `detail` (email) sits
-    above the resolution pill; optional `icon` leads the resolution label. */
+    above the resolution pill; optional `icon` leads the resolution label.
+    Stems use `FlowStem` so the SVG overlay owns every stroke (ADR-0007). */
 export function AutoResolveBody({
   resolution,
   detail,
@@ -157,8 +159,7 @@ export function AutoResolveBody({
   const ip = laneOpenProps(onOpen);
   return (
     <div className="flex flex-col items-center">
-      {/* short stem down from the lane label, matching the canvas connector colour */}
-      <div className="h-5 w-0.5 border-l-2 border-border-strong" />
+      <FlowStem height={20} />
       {detail ? (
         <>
           <div
@@ -170,7 +171,7 @@ export function AutoResolveBody({
           >
             <span className="truncate">{detail}</span>
           </div>
-          <div className="h-5 w-0.5 border-l-2 border-border-strong" />
+          <FlowStem height={20} />
         </>
       ) : null}
       <div

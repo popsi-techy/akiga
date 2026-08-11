@@ -1,14 +1,48 @@
-/* FlowCanvas connector geometry — pure-CSS derived tree (fan-out / merge).
-   A horizontal "bus" is drawn as top/bottom borders on each lane (trimmed to
-   center on the outermost lanes) plus vertical stems.
-   Every line is 2px in `border-strong`; the dot grid behind them is `border-default`
-   so the grain never matches the plumbing. Corner radii come from the radius scale.
-   Lane width is content-driven: a small ELSE / APPROVED pill stays compact;
-   a lane with a 320px card or a nested branch sprawl grows to fit.
-   Vertical connectors only run through empty stretch below content (`.spacer`),
-   not as a full-height spine through nested branches. */
+/* FlowCanvas layout — cards and lanes stay in the DOM; connectors are a
+   measured SVG overlay (ADR-0007). This file only sizes columns and reserves
+   the vertical pads the router expects (20px fan-out / merge elbows). */
 
-/* Each lane column sizes to its own content; row stays centered under the parent. */
+.stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* SVG sits under cards so pills/cards paint on top of the plumbing. */
+.edgeLayer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.edge {
+  fill: none;
+  stroke: var(--ds-color-border-strong);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Content above the edge layer. */
+.stack {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Layout-only vertical spacer; the SVG draws the stroke. */
+.vseg {
+  width: 2px;
+  flex: none;
+  align-self: center;
+}
+
 .lanesRow {
   display: grid;
   grid-auto-flow: column;
@@ -29,118 +63,22 @@
   padding: 0 20px;
 }
 
-/* fan-out bus (top edge of the lanes row) — straight for inner lanes.
-   Outer lanes use a 10px rounded elbow where the bus turns into a stem. */
-.lane::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  border-top: 2px solid var(--ds-color-border-strong);
-}
-/* outer lanes: the elbow (bus + rounded corner + full vertical stem) is drawn as a
-   single bordered box, so the corner reads as one continuous stroke. The straight
-   stem element is hidden on these lanes (below) to avoid drawing over the arc. */
-.lane:first-child::before {
-  left: calc(50% - 1px);
-  right: 0;
-  height: 20px;
-  border-top: 2px solid var(--ds-color-border-strong);
-  border-left: 2px solid var(--ds-color-border-strong);
-  border-top-left-radius: var(--ds-radius-md);
-}
-.lane:last-child::before {
-  left: 0;
-  right: calc(50% - 1px);
-  height: 20px;
-  border-top: 2px solid var(--ds-color-border-strong);
-  border-right: 2px solid var(--ds-color-border-strong);
-  border-top-right-radius: var(--ds-radius-md);
-}
-.lane:only-child::before {
-  display: none;
-}
-
-/* merge bus (bottom edge of the lanes row) — straight for inner lanes.
-   Draws on `border-bottom`, matching the edge it sits on: the outer-lane rules
-   below grow this box to 20px to form the elbow, so a `border-top` here would
-   float 20px above the bus and paint a second horizontal line across the tier. */
-.lane::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  border-bottom: 2px solid var(--ds-color-border-strong);
-}
-.lane:first-child::after {
-  left: calc(50% - 1px);
-  right: 0;
-  height: 20px;
-  border-bottom: 2px solid var(--ds-color-border-strong);
-  border-left: 2px solid var(--ds-color-border-strong);
-  border-bottom-left-radius: var(--ds-radius-md);
-}
-.lane:last-child::after {
-  left: 0;
-  right: calc(50% - 1px);
-  height: 20px;
-  border-bottom: 2px solid var(--ds-color-border-strong);
-  border-right: 2px solid var(--ds-color-border-strong);
-  border-bottom-right-radius: var(--ds-radius-md);
-}
-.lane:only-child::after {
-  display: none;
-}
-
-/* A terminal lane (ends in Exit) doesn't continue or merge: drop the merge bus
-   so nothing is drawn below its last node. */
-.laneTerminal::after {
-  display: none;
-}
-
-.laneStemTop {
+/* Fan-out / merge elbow pads — height matches the SVG router’s 20px drop. */
+.laneHead,
+.laneFoot,
+.tierExit {
   width: 2px;
   height: 20px;
-  border-left: 2px solid var(--ds-color-border-strong);
   flex: none;
-}
-.laneStemBottom {
-  width: 2px;
-  height: 20px;
-  border-left: 2px solid var(--ds-color-border-strong);
-  flex: none;
-  margin-top: auto;
-}
-/* On outer lanes the rounded elbow already draws the vertical stem — keep these
-   elements for layout height, but hide their straight line so it doesn't overlap
-   the arc. */
-.lane:first-child .laneStemTop,
-.lane:last-child .laneStemTop,
-.lane:first-child .laneStemBottom,
-.lane:last-child .laneStemBottom {
-  border-left-color: transparent;
+  align-self: center;
 }
 
-.stem {
-  width: 2px;
-  border-left: 2px solid var(--ds-color-border-strong);
-  flex: none;
-}
-
-/* Only the empty stretch below lane content draws a connector — never a full-height
-   spine through nested branches / approval outcomes (that looked like a useless
-   center line). When a sibling lane is taller, this spacer grows to keep the merge. */
+/* Equalize shorter lanes so merge feet share one baseline. When the lane merges,
+   BranchTier sets data-flow-vseg on this node so the SVG router paints the stem
+   through the flex gap (empty ELSE, short Approved, etc.). */
 .spacer {
   flex: 1 1 auto;
   align-self: center;
   width: 2px;
   min-height: 0;
-  border-left: 2px solid var(--ds-color-border-strong);
-}
-.laneTerminal .spacer {
-  border-left-color: transparent;
 }

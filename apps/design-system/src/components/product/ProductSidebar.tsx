@@ -178,7 +178,7 @@ export default function ProductSidebar() {
       aria-label="IGA navigation"
     >
       {/* Brand */}
-      <Link href="/" className={['flex h-16 shrink-0 items-center gap-2.5', collapsed ? 'justify-center px-0' : 'px-5'].join(' ')}>
+      <Link href="/" className={['flex h-[var(--ds-layout-topbarHeight)] shrink-0 items-center gap-2.5', collapsed ? 'justify-center px-0' : 'px-5'].join(' ')}>
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand text-h5 text-brand-on">I</span>
         {!collapsed && <span className="text-h5 text-white">IGA</span>}
       </Link>
@@ -191,7 +191,7 @@ export default function ProductSidebar() {
         aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
         title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
         className={[
-          'absolute right-0 top-[68px] z-raised grid h-7 w-7 translate-x-1/2 place-items-center rounded-full',
+          'absolute right-0 top-[60px] z-raised grid h-7 w-7 translate-x-1/2 place-items-center rounded-full',
           'border border-border bg-surface text-icon shadow-md transition-all duration-150',
           'hover:border-border-strong hover:text-text-primary focus-visible:opacity-100 focus-visible:outline-none',
           collapsed ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
