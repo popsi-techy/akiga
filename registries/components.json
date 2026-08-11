@@ -231,7 +231,7 @@
         "read-only"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/flow-canvas/page.tsx",
-      "notes": "The Automation builders’ derived-layout graph for a *sequence* (ADR-0007: custom, zero-dependency). Cards/lanes in the DOM; connectors are a measured SVG overlay (ResizeObserver → orthogonal fan-out/merge/sequence). Export `FlowStem` for layout-only vertical joins — product code must not paint CSS stems. `renderBetweenTiers` slots chrome between a first branch tier and outcomeBranches. For a *network*, use RelationshipCanvas. `readOnly` renders a saved flow as a preview with no authoring affordances — used by the Approval Policy detail page, so preview and builder are the same picture."
+      "notes": "The Automation builders’ derived-layout graph for a *sequence* (ADR-0007: custom, zero-dependency). Cards/lanes in the DOM; connectors are a measured SVG overlay (ResizeObserver → orthogonal fan-out/merge/sequence). Export `FlowStem` for layout-only vertical joins — product code must not paint CSS stems. `renderBetweenTiers` slots chrome between a first branch tier and outcomeBranches. `simulation` drives Test Run visuals (dim edges, node rings, animated success/danger trace). For a *network*, use RelationshipCanvas. `readOnly` renders a saved flow as a preview with no authoring affordances — used by the Approval Policy detail page, so preview and builder are the same picture."
     },
     {
       "name": "InfoRow",

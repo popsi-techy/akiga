@@ -213,3 +213,37 @@ export function buildEdgeModel(stage: HTMLElement | null, zoom: number): EdgeMod
     paths,
   };
 }
+
+/**
+ * Orthogonal polyline through an ordered list of simulation markers
+ * (`data-flow-sim-node`). Used for the Test Run trace overlay.
+ */
+export function buildSimTrace(stage: HTMLElement | null, zoom: number, nodeIds: string[]): string {
+  if (!stage || nodeIds.length < 2) return '';
+  const stageRect = stage.getBoundingClientRect();
+  const pts: Point[] = [];
+  for (const id of nodeIds) {
+    const el = stage.querySelector(`[data-flow-sim-node="${id}"]`);
+    if (!el) continue;
+    // Prefer bottom of prior / top of next feel: use center for a clean trunk.
+    pts.push(elPoint(el, stageRect, zoom, 'center'));
+  }
+  if (pts.length < 2) return '';
+
+  const parts: string[] = [];
+  parts.push(`M ${pts[0].x} ${pts[0].y}`);
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1];
+    const b = pts[i];
+    // Orthogonal: vertical then horizontal (or straight vertical when aligned).
+    if (Math.abs(a.x - b.x) < 0.5) {
+      parts.push(`V ${b.y}`);
+    } else if (Math.abs(a.y - b.y) < 0.5) {
+      parts.push(`H ${b.x}`);
+    } else {
+      const midY = snap((a.y + b.y) / 2);
+      parts.push(`V ${midY} H ${b.x} V ${b.y}`);
+    }
+  }
+  return parts.join(' ');
+}

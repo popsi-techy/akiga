@@ -97,7 +97,7 @@ export type { RichTextEditorProps } from './RichTextEditor/RichTextEditor';
 export { RelationshipCanvas } from './RelationshipCanvas/RelationshipCanvas';
 export type { RelationshipCanvasProps, CanvasNode, CanvasEdge } from './RelationshipCanvas/RelationshipCanvas';
 
-export { FlowCanvas } from './FlowCanvas/FlowCanvas';
+export { FlowCanvas, buildSimTrace } from './FlowCanvas/FlowCanvas';
 export { FlowStem } from './FlowCanvas/FlowStem';
 export type {
   FlowCanvasProps,
@@ -106,4 +106,6 @@ export type {
   FlowInsertLoc,
   FlowPathStep,
   PaletteEntry,
+  FlowSimulation,
+  SimNodeState,
 } from './FlowCanvas/FlowCanvas';

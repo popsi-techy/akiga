@@ -27,6 +27,70 @@
   stroke-linejoin: round;
 }
 
+/* Test-run mode: quiet the plumbing so the live trace reads as the signal. */
+.edgeDimmed {
+  stroke: var(--ds-color-border-default);
+  opacity: 0.45;
+}
+
+.edgeTrace {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 10 8;
+  animation: flowTraceCrawl var(--ds-motion-duration-slower) linear infinite;
+}
+
+.edgeTraceSuccess {
+  stroke: var(--ds-color-status-success-fg);
+}
+
+.edgeTraceDanger {
+  stroke: var(--ds-color-status-danger-fg);
+}
+
+@keyframes flowTraceCrawl {
+  to {
+    stroke-dashoffset: -36;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edgeTrace {
+    animation: none;
+    stroke-dasharray: none;
+  }
+}
+
+/* Simulation node chrome — ring around the card, not a floating badge. */
+.simNode {
+  border-radius: var(--ds-radius-lg);
+  transition:
+    box-shadow var(--ds-motion-duration-base) var(--ds-motion-easing-standard),
+    opacity var(--ds-motion-duration-base) var(--ds-motion-easing-standard);
+}
+
+.simPending {
+  opacity: 0.55;
+}
+
+.simActive {
+  box-shadow: 0 0 0 2px var(--ds-color-brand-primary);
+}
+
+.simPassed {
+  box-shadow: 0 0 0 2px var(--ds-color-status-success-border);
+}
+
+.simFailed {
+  box-shadow: 0 0 0 2px var(--ds-color-status-danger-border);
+}
+
+.simSkipped {
+  opacity: 0.4;
+}
+
 /* Content above the edge layer. */
 .stack {
   position: relative;

@@ -128,6 +128,7 @@ export default function FlowCanvasDocs() {
             { name: 'onUndo / onRedo / canUndo / canRedo', type: '() => void / boolean', description: 'Wire the host’s history stack to the toolbar.' },
             { name: 'onClearSelection', type: '() => void', description: 'Called when the empty canvas is clicked.' },
             { name: 'readOnly', type: 'boolean', default: 'false', description: 'Drop every authoring affordance — no quick-insert, no drop targets — so the same canvas can render a flow as a preview.' },
+            { name: 'simulation', type: 'FlowSimulation', description: 'Test-run visuals: dim base edges, ring node states (pending/active/passed/failed/skipped), and an animated orthogonal trace through `traceNodeIds` (`__start__` / node ids / `__end__`). Respects prefers-reduced-motion.' },
           ]}
         />
       </Section>
@@ -140,11 +141,13 @@ export default function FlowCanvasDocs() {
             'Use headerCard for the fixed first card (Policy card / Event card).',
             'Use FlowStem (or let the canvas insert stems) for any vertical join — one stroke owner.',
             'Put Parallel between-tier chrome (Fallback chip) in renderBetweenTiers; Approval Level chips may sit under the card with FlowStem when outcomes live in `branches`.',
+            'Drive Test Run from the host (plan + ticker); pass `simulation` + `readOnly` so the canvas owns measure/zoom for the trace.',
             'Wire onUndo/onRedo to the host document history.',
             'Use readOnly to preview a saved flow — same geometry as the builder, so nothing moves when you switch to editing.',
           ]}
           donts={[
             'Don’t draw decorative border-l / CSS stems in product code — they abut and break under zoom.',
+            'Don’t animate edges outside FlowCanvas — zoom/transform will drift.',
             'Don’t embed the full canvas inside a drawer — it’s a dedicated builder surface.',
             'Don’t store selection inside the canvas; the host owns it.',
             'Don’t hand-position nodes or add manual edge handles.',

@@ -6,6 +6,8 @@ import ArrowBackOutlined from '@mui/icons-material/ArrowBackOutlined';
 import SaveOutlined from '@mui/icons-material/SaveOutlined';
 import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
 import HistoryOutlined from '@mui/icons-material/HistoryOutlined';
+import PlayArrowOutlined from '@mui/icons-material/PlayArrowOutlined';
+import StopOutlined from '@mui/icons-material/StopOutlined';
 import KeyboardDoubleArrowLeft from '@mui/icons-material/KeyboardDoubleArrowLeft';
 import KeyboardDoubleArrowRight from '@mui/icons-material/KeyboardDoubleArrowRight';
 import CloseIcon from '@mui/icons-material/Close';
@@ -32,6 +34,8 @@ import {
   useToast,
   type FlowNodeLike,
   type FlowInsertLoc,
+  type FlowSimulation,
+  type SimNodeState,
 } from '@ds/components';
 import { getApprovalPolicy, updateApprovalPolicy } from '@/data/approval-policies';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
@@ -66,6 +70,8 @@ import { ConditionalBranchConfig } from '@/components/product/automation/Conditi
 import { ParallelBranchConfig } from '@/components/product/automation/ParallelBranchConfig';
 import { EmptyState } from '@/components/product/automation/config-kit';
 import { LaneLabel, ConditionLaneLabel, ParallelLaneLabel, AutoResolveBody, OUTCOME_TONE } from '@/components/product/automation/LaneLabel';
+import { TestRunBanner, TestRunPanel, type TestRunPhase } from '@/components/product/automation/TestRunPanel';
+import { buildTestRunPlan, type TestRunPlan } from '@/lib/policy-test-run';
 
 /** One-line summary shown on a node card. */
 function slaLabel(sla?: ALConfig['sla']): string {
@@ -143,6 +149,130 @@ export default function ApprovalPolicyBuilderPage() {
   const [draggingKind, setDraggingKind] = React.useState<string | null>(null);
 
   const doc = hist?.doc ?? null;
+
+  // ---- Test run (dummy simulation) ------------------------------------
+  const [testPhase, setTestPhase] = React.useState<TestRunPhase>('idle');
+  const [testPlan, setTestPlan] = React.useState<TestRunPlan | null>(null);
+  const [testRevealed, setTestRevealed] = React.useState(0);
+  const [testElapsed, setTestElapsed] = React.useState(0);
+  const [testTraceIds, setTestTraceIds] = React.useState<string[]>([]);
+  const [testNodeStates, setTestNodeStates] = React.useState<Record<string, SimNodeState>>({});
+  const [testTone, setTestTone] = React.useState<'success' | 'danger'>('success');
+  const runNonceRef = React.useRef(0);
+  const timersRef = React.useRef<number[]>([]);
+
+  const clearTestTimers = React.useCallback(() => {
+    timersRef.current.forEach((t) => window.clearTimeout(t));
+    timersRef.current = [];
+  }, []);
+
+  const exitTestRun = React.useCallback(() => {
+    clearTestTimers();
+    setTestPhase('idle');
+    setTestPlan(null);
+    setTestRevealed(0);
+    setTestElapsed(0);
+    setTestTraceIds([]);
+    setTestNodeStates({});
+    setTestTone('success');
+  }, [clearTestTimers]);
+
+  const startTestRun = React.useCallback(() => {
+    if (!doc) return;
+    clearTestTimers();
+    const want = runNonceRef.current % 2 === 0 ? 'passed' : 'failed';
+    runNonceRef.current += 1;
+    const plan = buildTestRunPlan(doc.root, want);
+    setTestPlan(plan);
+    setTestPhase('running');
+    setTestRevealed(0);
+    setTestElapsed(0);
+    setTestTone('success');
+    setConfigOpen(true);
+
+    const all = allNodes(doc.root);
+    const states: Record<string, SimNodeState> = { __start__: 'active' };
+    for (const n of all) states[n.id] = 'pending';
+    states.__end__ = 'pending';
+    setTestNodeStates(states);
+    setTestTraceIds(['__start__']);
+
+    let elapsed = 0;
+    let revealed = 0;
+    let visitIdx = 1;
+
+    const tickStep = () => {
+      if (revealed >= plan.steps.length) {
+        setTestNodeStates((prev) => {
+          const next = { ...prev };
+          for (const id of Object.keys(next)) {
+            if (id === plan.failedNodeId) next[id] = 'failed';
+            else if (next[id] === 'pending' || next[id] === 'active') {
+              next[id] = plan.visitOrder.includes(id) || id === '__start__' ? 'passed' : 'skipped';
+            }
+          }
+          if (plan.result === 'passed') next.__end__ = 'passed';
+          next.__start__ = 'passed';
+          return next;
+        });
+        setTestTraceIds(plan.visitOrder);
+        setTestTone(plan.result === 'failed' ? 'danger' : 'success');
+        setTestPhase('done');
+        return;
+      }
+
+      const step = plan.steps[revealed];
+      setTestNodeStates((prev) => {
+        const next = { ...prev };
+        for (const [id, st] of Object.entries(next)) {
+          if (st === 'active' && id !== step.nodeId) next[id] = 'passed';
+        }
+        next.__start__ = 'passed';
+        next[step.nodeId] = 'active';
+        return next;
+      });
+
+      const at = plan.visitOrder.indexOf(step.nodeId);
+      if (at >= 0) {
+        visitIdx = Math.max(visitIdx, at + 1);
+        setTestTraceIds(plan.visitOrder.slice(0, visitIdx));
+      }
+
+      const t = window.setTimeout(() => {
+        elapsed += step.durationMs;
+        setTestElapsed(elapsed);
+        revealed += 1;
+        setTestRevealed(revealed);
+        setTestNodeStates((prev) => ({
+          ...prev,
+          [step.nodeId]: step.status === 'failed' ? 'failed' : 'passed',
+        }));
+        if (step.status === 'failed') {
+          setTestTone('danger');
+          setTestTraceIds(plan.visitOrder.slice(0, plan.visitOrder.indexOf(step.nodeId) + 1));
+          setTestPhase('done');
+          return;
+        }
+        tickStep();
+      }, step.durationMs);
+      timersRef.current.push(t);
+    };
+
+    const startBeat = window.setTimeout(tickStep, 320);
+    timersRef.current.push(startBeat);
+  }, [doc, clearTestTimers]);
+
+  React.useEffect(() => () => clearTestTimers(), [clearTestTimers]);
+
+  const simulation: FlowSimulation | undefined =
+    testPhase === 'idle'
+      ? undefined
+      : {
+          active: true,
+          nodeStates: testNodeStates,
+          traceNodeIds: testTraceIds,
+          traceTone: testTone,
+        };
   /** The builder is opened from a policy's detail page, so back returns there. */
   const detailHref = `/iga/automation/approval-policies/${params.id}`;
 
@@ -562,6 +692,18 @@ export default function ApprovalPolicyBuilderPage() {
           {dirty && <span className="text-caption text-text-tertiary">Unsaved changes</span>}
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            startIcon={testPhase === 'running' ? <StopOutlined /> : <PlayArrowOutlined />}
+            onClick={() => {
+              if (testPhase === 'running') exitTestRun();
+              else startTestRun();
+            }}
+            disabled={!doc || (doc.root?.length ?? 0) === 0}
+            title={!doc?.root?.length ? 'Add steps before running a test' : undefined}
+          >
+            {testPhase === 'running' ? 'Stop' : testPhase === 'done' ? 'Run again' : 'Test run'}
+          </Button>
           <Button variant="secondary" startIcon={<HistoryOutlined />} onClick={() => setVersionsOpen(true)}>
             Versions
           </Button>
@@ -579,6 +721,15 @@ export default function ApprovalPolicyBuilderPage() {
           <Menu items={[{ label: 'Duplicate (soon)', onClick: () => toast.info('Duplicate coming soon') }, { label: 'Export JSON (soon)', onClick: () => toast.info('Export coming soon') }]} />
         </div>
       </div>
+
+      {testPhase !== 'idle' && (
+        <TestRunBanner
+          phase={testPhase}
+          result={testPlan?.result}
+          onExit={exitTestRun}
+          onStop={exitTestRun}
+        />
+      )}
 
       {/* body: palette · canvas · config */}
       <div className="flex min-h-0 flex-1">
@@ -712,14 +863,25 @@ export default function ApprovalPolicyBuilderPage() {
               onRedo={redo}
               canUndo={(hist?.past.length ?? 0) > 0}
               canRedo={(hist?.future.length ?? 0) > 0}
-              draggingKind={draggingKind}
+              draggingKind={testPhase === 'idle' ? draggingKind : null}
               isTerminal={(n) => (n as PolicyNode).type === 'exit'}
+              readOnly={testPhase !== 'idle'}
+              simulation={simulation}
             />
           )}
         </div>
 
-        {/* config */}
-        {configOpen ? (
+        {/* config — swapped for Test Run results while simulating */}
+        {testPhase !== 'idle' ? (
+          <TestRunPanel
+            phase={testPhase}
+            plan={testPlan}
+            revealedCount={testRevealed}
+            elapsedMs={testElapsed}
+            onRunAgain={startTestRun}
+            onExit={exitTestRun}
+          />
+        ) : configOpen ? (
           <ConfigPanel
             doc={doc}
             selectedId={selectedId}

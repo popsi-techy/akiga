@@ -13,10 +13,22 @@ import FitScreenIcon from '@mui/icons-material/FitScreen';
 import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
 import styles from './flow-canvas.module.css';
-import { buildEdgeModel, type EdgeModel } from './flowEdges';
+import { buildEdgeModel, buildSimTrace, type EdgeModel } from './flowEdges';
 import { FlowStem } from './FlowStem';
 
 export { FlowStem } from './FlowStem';
+export { buildSimTrace } from './flowEdges';
+
+export type SimNodeState = 'pending' | 'active' | 'passed' | 'failed' | 'skipped';
+
+/** Live Test Run visuals — owned by the canvas so zoom/measure stay correct. */
+export interface FlowSimulation {
+  active: boolean;
+  nodeStates: Record<string, SimNodeState>;
+  /** Ordered marker ids (`__start__`, node ids, `__end__`) for the animated trace. */
+  traceNodeIds: string[];
+  traceTone: 'success' | 'danger';
+}
 
 /**
  * FlowCanvas — the Automation builders' derived-layout graph (ADR-0007: custom,
@@ -180,6 +192,8 @@ export interface FlowCanvasProps {
    * the builder, so a preview and its editor are the same picture.
    */
   readOnly?: boolean;
+  /** Dummy / live Test Run visuals (dim edges, node rings, animated trace). */
+  simulation?: FlowSimulation;
 }
 
 interface Ctx {
@@ -195,6 +209,19 @@ interface Ctx {
   readOnly: boolean;
   /** Bump the edge remeasure after DOM that affects anchors mounts. */
   requestMeasure: () => void;
+  simulation?: FlowSimulation;
+}
+
+function simClass(state: SimNodeState | undefined, active: boolean): string {
+  if (!active || !state) return '';
+  const map: Record<SimNodeState, string> = {
+    pending: styles.simPending,
+    active: styles.simActive,
+    passed: styles.simPassed,
+    failed: styles.simFailed,
+    skipped: styles.simSkipped,
+  };
+  return `${styles.simNode} ${map[state]}`;
 }
 const CanvasContext = React.createContext<Ctx | null>(null);
 const useCtx = () => {
@@ -222,9 +249,22 @@ function endsFlow(node: FlowNodeLike, isTerminal?: (n: FlowNodeLike) => boolean)
 }
 
 /** Start / End terminal markers — soft-blue pills with a leading glyph. */
-function Pill({ label, icon }: { label: string; icon: React.ReactNode }) {
+function Pill({
+  label,
+  icon,
+  simId,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  simId?: string;
+}) {
+  const { simulation } = useCtx();
+  const state = simId && simulation?.active ? simulation.nodeStates[simId] : undefined;
   return (
-    <div className="inline-flex items-center gap-2 rounded-pill bg-[#CFE5FC] px-4 py-2 text-body-sm-strong text-text-primary shadow-xs">
+    <div
+      data-flow-sim-node={simId}
+      className={['inline-flex items-center gap-2 rounded-pill bg-[#CFE5FC] px-4 py-2 text-body-sm-strong text-text-primary shadow-xs', simClass(state, !!simulation?.active)].filter(Boolean).join(' ')}
+    >
       <span className="flex text-[var(--ds-color-status-info-solid)]">{icon}</span>
       {label}
     </div>
@@ -479,13 +519,16 @@ function BranchTier({
 }
 
 function NodeBlock({ node, path }: { node: FlowNodeLike; path: FlowPathStep[] }) {
-  const { renderCard, dense, isTerminal, renderBetweenTiers } = useCtx();
+  const { renderCard, dense, isTerminal, renderBetweenTiers, simulation } = useCtx();
   const branches = node.branches ?? [];
   const outcomes = node.outcomeBranches ?? [];
   const between = outcomes.length > 0 ? renderBetweenTiers?.(node) : null;
+  const state = simulation?.active ? simulation.nodeStates[node.id] : undefined;
   return (
     <div className="flex flex-col items-center">
-      {renderCard(node, { dense })}
+      <div data-flow-sim-node={node.id} className={simClass(state, !!simulation?.active)}>
+        {renderCard(node, { dense })}
+      </div>
       {branches.length > 0 && (
         <>
           <FlowStem height={20} />
@@ -529,30 +572,38 @@ export function FlowCanvas({
   draggingKind,
   isTerminal,
   readOnly = false,
+  simulation,
 }: FlowCanvasProps) {
   const [zoom, setZoom] = React.useState(1);
   const [edges, setEdges] = React.useState<EdgeModel>({ width: 0, height: 0, paths: [] });
+  const [traceD, setTraceD] = React.useState('');
   const viewportRef = React.useRef<HTMLDivElement>(null);
   const stageRef = React.useRef<HTMLDivElement>(null);
   const rafRef = React.useRef(0);
   const dense = view === 'outline';
+  const simActive = !!simulation?.active;
+  const traceKey = simulation?.traceNodeIds?.join('|') ?? '';
 
   const measure = React.useCallback(() => {
     cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(() => {
       setEdges(buildEdgeModel(stageRef.current, zoom));
+      if (simulation?.active && simulation.traceNodeIds.length >= 2) {
+        setTraceD(buildSimTrace(stageRef.current, zoom, simulation.traceNodeIds));
+      } else {
+        setTraceD('');
+      }
     });
-  }, [zoom]);
+  }, [zoom, simulation?.active, traceKey]);
 
   const requestMeasure = React.useCallback(() => {
     measure();
   }, [measure]);
 
-  // Remeasure whenever the tree, density, or zoom changes, and whenever the
-  // stage's box size changes (lane width, sealed bodies, font load).
+  // Remeasure whenever the tree, density, zoom, or simulation trace changes.
   React.useLayoutEffect(() => {
     measure();
-  }, [measure, root, dense, headerCard, renderSealedBody, renderBetweenTiers, renderBranchLabel, draggingKind]);
+  }, [measure, root, dense, headerCard, renderSealedBody, renderBetweenTiers, renderBranchLabel, draggingKind, simulation?.nodeStates]);
 
   React.useEffect(() => {
     const st = stageRef.current;
@@ -601,6 +652,7 @@ export function FlowCanvas({
     isTerminal,
     readOnly,
     requestMeasure,
+    simulation,
   };
   // The flow ends (no End pill) only when the last root node is an Exit or every lane
   // of its branch tier exits — otherwise the branches merge and continue into End.
@@ -633,12 +685,25 @@ export function FlowCanvas({
               aria-hidden
             >
               {edges.paths.map((d, i) => (
-                <path key={i} d={d} className={styles.edge} />
+                <path
+                  key={i}
+                  d={d}
+                  className={[styles.edge, simActive ? styles.edgeDimmed : ''].filter(Boolean).join(' ')}
+                />
               ))}
+              {traceD ? (
+                <path
+                  d={traceD}
+                  className={[
+                    styles.edgeTrace,
+                    simulation?.traceTone === 'danger' ? styles.edgeTraceDanger : styles.edgeTraceSuccess,
+                  ].join(' ')}
+                />
+              ) : null}
             </svg>
             <div className={styles.stack}>
               <CanvasContext.Provider value={ctx}>
-                <Pill label="Start" icon={<RadioButtonUnchecked sx={{ fontSize: 15 }} />} />
+                <Pill label="Start" icon={<RadioButtonUnchecked sx={{ fontSize: 15 }} />} simId="__start__" />
                 {headerCard && (
                   <>
                     <FlowStem height={28} />
@@ -647,7 +712,7 @@ export function FlowCanvas({
                 )}
                 <SequenceView seq={root} path={[]} ghost={emptyHint} />
                 {/* When the flow ends in an Exit, don't render the End terminal. */}
-                {!rootExits && <Pill label="End" icon={<Segment sx={{ fontSize: 15 }} />} />}
+                {!rootExits && <Pill label="End" icon={<Segment sx={{ fontSize: 15 }} />} simId="__end__" />}
               </CanvasContext.Provider>
             </div>
           </div>
