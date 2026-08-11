@@ -1824,18 +1824,21 @@ function MainReviewerCard({
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-2 py-6 text-center">
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-subtle text-icon">
+          <div className="flex flex-col items-center py-6 text-center">
+            {/* Explicit steps rather than one `gap`: the heading and its sub-line are
+                a pair (§6.3 — 2–4px, anything more breaks the pair), while the icon
+                above and the action below are separate and want more air. */}
+            <span className="mb-2 grid h-10 w-10 place-items-center rounded-full bg-subtle text-icon">
               <PersonAddAltOutlined sx={{ fontSize: 20 }} />
             </span>
             <p className="text-body-sm-strong text-text-primary">No reviewer assigned</p>
-            <p className="text-caption leading-5 text-text-secondary">
+            <p className="mt-1 text-caption leading-5 text-text-secondary">
               {readOnly
                 ? 'This review was completed without a named reviewer.'
-                : 'Assign someone to put this violation in their SoD queue.'}
+                : 'Assign a user to review this SoD Violation.'}
             </p>
             {!readOnly && (
-              <div className="mt-1">
+              <div className="mt-3">
                 <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>
                   Assign reviewer
                 </Button>
