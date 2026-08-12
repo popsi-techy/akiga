@@ -33,6 +33,27 @@ const CARD_ICON = /<Card\b[^>]*?\bicon=\{\s*<\s*([A-Za-z0-9_]+)/gs;
 /** MUI's outlined variants. `Outline` (no d) covers the legacy names. */
 const isOutlined = (name: string) => /Outlined$|Outline$/.test(name);
 
+/**
+ * The suffix test is necessary but not sufficient: a handful of MUI icons carry no
+ * `Outlined` suffix and are still drawn as a stroke. `Schedule` is the one that got
+ * through — its glyph is a ring (an outer circle with an inner circle subtracted)
+ * plus two hands, i.e. visually identical to `ScheduleOutlined`, so it fails the
+ * 15px legibility test the suffix rule exists to enforce.
+ *
+ * These cannot be detected from the identifier, so they are named. Each maps to the
+ * genuinely-filled icon to use instead. Add to this list whenever a Card icon turns
+ * out to be a stroke on screen despite an unsuffixed name.
+ */
+const OUTLINE_SHAPED: Record<string, string> = {
+  Schedule: 'WatchLater',
+  AccessTime: 'WatchLater',
+  QueryBuilder: 'WatchLater',
+  AccessTimeFilled: 'WatchLater', // identical paths to AccessTimeOutlined
+  RadioButtonUnchecked: 'Circle',
+  PanoramaFishEye: 'Circle',
+  Timer: 'AvTimer',
+};
+
 type Hit = { file: string; line: number; icon: string };
 const errors: Hit[] = [];
 let checked = 0;
@@ -53,7 +74,7 @@ function walk(dir: string) {
     while ((match = CARD_ICON.exec(source))) {
       checked += 1;
       const icon = match[1];
-      if (!isOutlined(icon)) continue;
+      if (!isOutlined(icon) && !(icon in OUTLINE_SHAPED)) continue;
       errors.push({ file: rel, line: source.slice(0, match.index).split('\n').length, icon });
     }
   }
@@ -66,8 +87,9 @@ console.log('\n  Icon check — a Card header icon is filled, never outlined\n')
 if (errors.length > 0) {
   console.error(`  ✗ ${errors.length} outlined icon(s) passed to a Card. At 15px an outlined glyph reads as a smudge.\n`);
   for (const e of errors) {
-    const filled = e.icon.replace(/Outlined$|Outline$/, '');
-    console.error(`      ${e.file}:${e.line}  <Card icon={<${e.icon} />}  →  use <${filled} />`);
+    const filled = OUTLINE_SHAPED[e.icon] ?? e.icon.replace(/Outlined$|Outline$/, '');
+    const why = OUTLINE_SHAPED[e.icon] ? ' (drawn as a stroke despite the unsuffixed name)' : '';
+    console.error(`      ${e.file}:${e.line}  <Card icon={<${e.icon} />}${why}  →  use <${filled} />`);
   }
   console.error('');
   process.exit(1);

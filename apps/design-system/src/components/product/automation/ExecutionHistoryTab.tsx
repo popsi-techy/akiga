@@ -344,7 +344,10 @@ export function ExecutionHistoryTab({ policyId }: { policyId: string }) {
             )}
           </div>
         </div>
-        <div className="ds-scroll min-h-0 flex-1 space-y-2 overflow-y-auto py-3">
+        {/* `space-y-1` (4px), matching the owner-type selector's NavList rather than
+            RadioCardGroup's 8px grid: both are outlined single-choice lists in a rail,
+            and two rails in the same product should stack at the same rhythm. */}
+        <div className="ds-scroll min-h-0 flex-1 space-y-1 overflow-y-auto py-3">
           {runs.map((run) => (
             <RunRow key={run.id} run={run} active={run.id === selectedId} onSelect={() => setSelectedId(run.id)} />
           ))}

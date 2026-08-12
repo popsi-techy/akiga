@@ -8,7 +8,7 @@ import BlockOutlined from '@mui/icons-material/BlockOutlined';
 import Person from '@mui/icons-material/Person';
 import PersonOutline from '@mui/icons-material/PersonOutline';
 import Info from '@mui/icons-material/Info';
-import Schedule from '@mui/icons-material/Schedule';
+import WatchLater from '@mui/icons-material/WatchLater';
 import HourglassEmptyOutlined from '@mui/icons-material/HourglassEmptyOutlined';
 import GroupsOutlined from '@mui/icons-material/GroupsOutlined';
 import RepeatOutlined from '@mui/icons-material/RepeatOutlined';
@@ -108,7 +108,7 @@ function OverviewTab({ ea }: { ea: EADetail }) {
             </InfoRowGroup>
           </Card>
 
-          <Card title="Timeline" icon={<Schedule />} padding="none">
+          <Card title="Timeline" icon={<WatchLater />} padding="none">
             <InfoRowGroup>
               <InfoRow icon={<HistoryOutlined sx={{ fontSize: 18 }} />} label="Last Updated On" value={ea.timeline.updatedOn} />
               <InfoRow icon={<CalendarTodayOutlined sx={{ fontSize: 18 }} />} label="Created On" value={ea.timeline.createdOn} />

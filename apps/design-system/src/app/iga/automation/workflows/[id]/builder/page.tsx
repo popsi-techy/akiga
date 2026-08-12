@@ -6,6 +6,8 @@ import ArrowBackOutlined from '@mui/icons-material/ArrowBackOutlined';
 import SaveOutlined from '@mui/icons-material/SaveOutlined';
 import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
 import HistoryOutlined from '@mui/icons-material/HistoryOutlined';
+import PlayArrowOutlined from '@mui/icons-material/PlayArrowOutlined';
+import StopOutlined from '@mui/icons-material/StopOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import KeyboardDoubleArrowLeft from '@mui/icons-material/KeyboardDoubleArrowLeft';
 import KeyboardDoubleArrowRight from '@mui/icons-material/KeyboardDoubleArrowRight';
@@ -26,7 +28,21 @@ import AddIcon from '@mui/icons-material/Add';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import TuneOutlined from '@mui/icons-material/TuneOutlined';
-import { Avatar, Button, StatusChip, Input, Drawer, Dialog, Menu, FlowCanvas, SegmentedControl, useToast, type FlowNodeLike, type FlowInsertLoc } from '@ds/components';
+import {
+  Avatar,
+  Button,
+  StatusChip,
+  Input,
+  Dialog,
+  Menu,
+  FlowCanvas,
+  SegmentedControl,
+  useToast,
+  type FlowNodeLike,
+  type FlowInsertLoc,
+  type FlowSimulation,
+  type SimNodeState,
+} from '@ds/components';
 import { getWorkflow, updateWorkflow, WORKFLOW_EVENT_META, eventFromType } from '@/data/workflows';
 import type { AutomationWorkflow, WorkflowNode, WorkflowBlockType, WorkflowBranch, WorkflowEvent, WorkflowEventType, AssignEntitiesConfig as AEConfig, UserFilterConfig as UFConfig, MultisplitConfig as MSConfig, NotificationConfig as NConfig, DelayConfig as DlyConfig, WaitForUserConfig as WFUConfig } from '@/data/automation-types';
 import { BLOCK_META, BLOCK_PALETTE, paletteBlocksForEvent, createBlock, insertBlock, deleteBlock, updateBlock, findBlock, allBlocks, isBlockComplete, defaultConfigFor } from '@/lib/workflow-tree';
@@ -41,9 +57,12 @@ import { WaitForUserConfig } from '@/components/product/automation/WaitForUserCo
 import { EmptyState } from '@/components/product/automation/config-kit';
 import { LaneLabel, ConditionLaneLabel, SplitLaneLabel } from '@/components/product/automation/LaneLabel';
 import { SingleSelectDrawer } from '@/components/product/automation/SingleSelectDrawer';
+import { TestRunBanner, TestRunPanel, type TestRunPhase } from '@/components/product/automation/TestRunPanel';
+import { VersionsPanel } from '@/components/product/automation/VersionsPanel';
 import { ConditionPreviewChip, ConditionPreviewLabel } from '@/components/product/ConditionPreviewChip';
 import { flattenRules, ruleParts } from '@/components/product/automation/condition-format';
 import { listApprovalPolicies } from '@/data/approval-policies';
+import { buildWorkflowTestRunPlan, type TestRunPlan } from '@/lib/workflow-test-run';
 import TaskAltOutlined from '@mui/icons-material/TaskAltOutlined';
 
 const EVENT_SEL = '__event__';
@@ -147,6 +166,131 @@ export default function WorkflowBuilderPage() {
   const [policyNodeId, setPolicyNodeId] = React.useState<string | null>(null); // Assign Entities → attach policy from canvas
 
   const doc = hist?.doc ?? null;
+
+  // ---- Test run (dummy simulation) ------------------------------------
+  const [testPhase, setTestPhase] = React.useState<TestRunPhase>('idle');
+  const [testPlan, setTestPlan] = React.useState<TestRunPlan | null>(null);
+  const [testRevealed, setTestRevealed] = React.useState(0);
+  const [testElapsed, setTestElapsed] = React.useState(0);
+  const [testTraceIds, setTestTraceIds] = React.useState<string[]>([]);
+  const [testNodeStates, setTestNodeStates] = React.useState<Record<string, SimNodeState>>({});
+  const [testTone, setTestTone] = React.useState<'success' | 'danger'>('success');
+  const runNonceRef = React.useRef(0);
+  const timersRef = React.useRef<number[]>([]);
+
+  const clearTestTimers = React.useCallback(() => {
+    timersRef.current.forEach((t) => window.clearTimeout(t));
+    timersRef.current = [];
+  }, []);
+
+  const exitTestRun = React.useCallback(() => {
+    clearTestTimers();
+    setTestPhase('idle');
+    setTestPlan(null);
+    setTestRevealed(0);
+    setTestElapsed(0);
+    setTestTraceIds([]);
+    setTestNodeStates({});
+    setTestTone('success');
+  }, [clearTestTimers]);
+
+  const startTestRun = React.useCallback(() => {
+    if (!doc) return;
+    clearTestTimers();
+    setVersionsOpen(false);
+    const want = runNonceRef.current % 2 === 0 ? 'passed' : 'failed';
+    runNonceRef.current += 1;
+    const plan = buildWorkflowTestRunPlan(doc.root, want);
+    setTestPlan(plan);
+    setTestPhase('running');
+    setTestRevealed(0);
+    setTestElapsed(0);
+    setTestTone('success');
+    setConfigOpen(true);
+
+    const all = allBlocks(doc.root);
+    const states: Record<string, SimNodeState> = { __start__: 'active' };
+    for (const n of all) states[n.id] = 'pending';
+    states.__end__ = 'pending';
+    setTestNodeStates(states);
+    setTestTraceIds(['__start__']);
+
+    let elapsed = 0;
+    let revealed = 0;
+    let visitIdx = 1;
+
+    const tickStep = () => {
+      if (revealed >= plan.steps.length) {
+        setTestNodeStates((prev) => {
+          const next = { ...prev };
+          for (const id of Object.keys(next)) {
+            if (id === plan.failedNodeId) next[id] = 'failed';
+            else if (next[id] === 'pending' || next[id] === 'active') {
+              next[id] = plan.visitOrder.includes(id) || id === '__start__' ? 'passed' : 'skipped';
+            }
+          }
+          if (plan.result === 'passed') next.__end__ = 'passed';
+          next.__start__ = 'passed';
+          return next;
+        });
+        setTestTraceIds(plan.visitOrder);
+        setTestTone(plan.result === 'failed' ? 'danger' : 'success');
+        setTestPhase('done');
+        return;
+      }
+
+      const step = plan.steps[revealed];
+      setTestNodeStates((prev) => {
+        const next = { ...prev };
+        for (const [id, st] of Object.entries(next)) {
+          if (st === 'active' && id !== step.nodeId) next[id] = 'passed';
+        }
+        next.__start__ = 'passed';
+        next[step.nodeId] = 'active';
+        return next;
+      });
+
+      const at = plan.visitOrder.indexOf(step.nodeId);
+      if (at >= 0) {
+        visitIdx = Math.max(visitIdx, at + 1);
+        setTestTraceIds(plan.visitOrder.slice(0, visitIdx));
+      }
+
+      const t = window.setTimeout(() => {
+        elapsed += step.durationMs;
+        setTestElapsed(elapsed);
+        revealed += 1;
+        setTestRevealed(revealed);
+        setTestNodeStates((prev) => ({
+          ...prev,
+          [step.nodeId]: step.status === 'failed' ? 'failed' : 'passed',
+        }));
+        if (step.status === 'failed') {
+          setTestTone('danger');
+          setTestTraceIds(plan.visitOrder.slice(0, plan.visitOrder.indexOf(step.nodeId) + 1));
+          setTestPhase('done');
+          return;
+        }
+        tickStep();
+      }, step.durationMs);
+      timersRef.current.push(t);
+    };
+
+    const startBeat = window.setTimeout(tickStep, 320);
+    timersRef.current.push(startBeat);
+  }, [doc, clearTestTimers]);
+
+  React.useEffect(() => () => clearTestTimers(), [clearTestTimers]);
+
+  const simulation: FlowSimulation | undefined =
+    testPhase === 'idle'
+      ? undefined
+      : {
+          active: true,
+          nodeStates: testNodeStates,
+          traceNodeIds: testTraceIds,
+          traceTone: testTone,
+        };
 
   React.useEffect(() => {
     const wf = getWorkflow(params.id);
@@ -614,12 +758,53 @@ export default function WorkflowBuilderPage() {
           {dirty && <span className="text-caption text-text-tertiary">Unsaved changes</span>}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" startIcon={<HistoryOutlined />} onClick={() => setVersionsOpen(true)}>Versions</Button>
+          <Button
+            variant="secondary"
+            startIcon={testPhase === 'running' ? <StopOutlined /> : <PlayArrowOutlined />}
+            onClick={() => {
+              if (testPhase === 'running') exitTestRun();
+              else startTestRun();
+            }}
+            disabled={!doc || !doc.event || (doc.root?.length ?? 0) === 0}
+            title={
+              !doc?.event
+                ? 'Add a lifecycle event before running a test'
+                : !doc?.root?.length
+                  ? 'Add steps before running a test'
+                  : undefined
+            }
+          >
+            {testPhase === 'running' ? 'Stop' : testPhase === 'done' ? 'Run again' : 'Test run'}
+          </Button>
+          <Button
+            variant="secondary"
+            startIcon={<HistoryOutlined />}
+            onClick={() => {
+              if (versionsOpen) {
+                setVersionsOpen(false);
+                return;
+              }
+              if (testPhase !== 'idle') exitTestRun();
+              setVersionsOpen(true);
+              setConfigOpen(true);
+            }}
+          >
+            Versions
+          </Button>
           <Button variant="secondary" startIcon={<SaveOutlined />} onClick={save} disabled={!dirty}>Save</Button>
           <Button startIcon={<CheckCircleOutlined />} onClick={saveAndActivate} disabled={!canActivate} title={!doc?.event ? 'Event required' : incomplete.length ? `${incomplete.length} blocks incomplete` : undefined}>Save &amp; Activate</Button>
           <Menu items={[{ label: 'Duplicate (soon)', onClick: () => toast.info('Coming soon') }, { label: 'Export JSON (soon)', onClick: () => toast.info('Coming soon') }]} />
         </div>
       </div>
+
+      {testPhase !== 'idle' && (
+        <TestRunBanner
+          phase={testPhase}
+          result={testPlan?.result}
+          onExit={exitTestRun}
+          onStop={exitTestRun}
+        />
+      )}
 
       <div className="flex min-h-0 flex-1">
         {/* palette */}
@@ -789,14 +974,27 @@ export default function WorkflowBuilderPage() {
               canUndo={(hist?.past.length ?? 0) > 0}
               canRedo={(hist?.future.length ?? 0) > 0}
               emptyHint={doc.event ? 'Add component' : 'Drop lifecycle event'}
-              draggingKind={draggingKind}
+              draggingKind={testPhase === 'idle' ? draggingKind : null}
               isTerminal={(n) => (n as WorkflowNode).type === 'exit'}
+              readOnly={testPhase !== 'idle'}
+              simulation={simulation}
             />
           )}
         </div>
 
-        {/* config */}
-        {configOpen ? (
+        {/* right rail — Test Run, Versions, or Configuration (one at a time) */}
+        {testPhase !== 'idle' ? (
+          <TestRunPanel
+            phase={testPhase}
+            plan={testPlan}
+            revealedCount={testRevealed}
+            elapsedMs={testElapsed}
+            onRunAgain={startTestRun}
+            onExit={exitTestRun}
+          />
+        ) : versionsOpen ? (
+          <VersionsPanel doc={doc} onClose={() => setVersionsOpen(false)} />
+        ) : configOpen ? (
           <WfConfigPanel
             doc={doc}
             selectedId={selectedId}
@@ -848,14 +1046,6 @@ export default function WorkflowBuilderPage() {
           />
         );
       })()}
-      <Drawer open={versionsOpen} onClose={() => setVersionsOpen(false)} title="Version history" subtitle="Published revisions of this workflow." icon={<HistoryOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}>
-        <div className="grid h-full place-items-center">
-          <div className="text-center">
-            <div className="text-body-strong text-text-primary">No versions yet</div>
-            <p className="mx-auto mt-1 max-w-[240px] text-caption text-text-secondary">Durable version history is planned.</p>
-          </div>
-        </div>
-      </Drawer>
     </div>
   );
 }

@@ -4,98 +4,59 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import EditOutlined from '@mui/icons-material/EditOutlined';
-import RuleOutlined from '@mui/icons-material/RuleOutlined';
 import ContentCopyOutlined from '@mui/icons-material/ContentCopyOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
-import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined';
-import PersonOutline from '@mui/icons-material/PersonOutline';
-import TimerOutlined from '@mui/icons-material/TimerOutlined';
-import AccountTreeOutlined from '@mui/icons-material/AccountTreeOutlined';
-import { Avatar, Button, Dialog, Menu, StatusChip, Tabs, useToast } from '@ds/components';
+import WatchLater from '@mui/icons-material/WatchLater';
+import { Avatar, Button, Card, Dialog, InfoRow, InfoRowGroup, Menu, StatusChip, Tabs, useToast } from '@ds/components';
+import { infoIcon } from '@/components/product/directory';
 import { getApprovalPolicy, deleteApprovalPolicy, updateApprovalPolicy } from '@/data/approval-policies';
 import { allNodes, isNodeComplete } from '@/lib/policy-tree';
-import type { ApprovalPolicy, ApprovalLevelConfig, ParallelConfig, PolicyNode } from '@/data/automation-types';
-import { PolicyFlowPreview } from '@/components/product/automation/PolicyFlowPreview';
+import type { ApprovalPolicy } from '@/data/automation-types';
+import { PolicyStagesPreview } from '@/components/product/automation/PolicyStagesPreview';
 import { ExecutionHistoryTab } from '@/components/product/automation/ExecutionHistoryTab';
 import { runStats } from '@/data/approval-runs';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 
 const LIST_HREF = '/iga/automation/approval-policies';
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** Deterministic UTC date format — same as the list, so a row and its detail agree
+    (and no SSR/client hydration drift from the viewer's timezone). */
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+}
+
 const TABS = [
   { value: 'workflow', label: 'Workflow' },
   { value: 'history', label: 'Execution History' },
 ];
 
-/** Longest SLA anywhere in the flow, humanised — "how long can this take?". */
-function longestSla(root: PolicyNode[]): string {
-  let best = 0;
-  let label = '—';
-  for (const n of allNodes(root)) {
-    const sla =
-      n.type === 'approvalLevel'
-        ? (n.config as ApprovalLevelConfig | undefined)?.sla
-        : n.type === 'parallelBranch'
-          ? (n.config as ParallelConfig | undefined)?.sla
-          : undefined;
-    if (!sla) continue;
-    const mins = (sla.days ?? 0) * 1440 + (sla.hours ?? 0) * 60 + (sla.minutes ?? 0);
-    if (mins <= best) continue;
-    best = mins;
-    const parts: string[] = [];
-    if (sla.days) parts.push(`${sla.days}d`);
-    if (sla.hours) parts.push(`${sla.hours}h`);
-    if (sla.minutes) parts.push(`${sla.minutes}m`);
-    label = parts.join(' ');
-  }
-  return label;
-}
-
-/** A compact fact about the flow — the answers you want before opening the canvas. */
-function SummaryCell({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: string; tone?: 'warning' }) {
-  return (
-    <div className="flex min-w-0 items-center gap-2.5 border-r border-border px-4 py-2.5 last:border-r-0">
-      <span className="shrink-0 text-icon">{icon}</span>
-      <span className="min-w-0">
-        <span className="block truncate text-caption text-text-secondary">{label}</span>
-        <span
-          className="block truncate text-body-sm-strong tabular-nums"
-          style={{ color: tone === 'warning' ? 'var(--ds-color-status-warning-fg)' : 'var(--ds-color-text-primary)' }}
-        >
-          {value}
-        </span>
-      </span>
-    </div>
-  );
-}
-
+/**
+ * The stage list is the whole tab. The summary strip that used to sit above it
+ * (steps · branches · longest SLA · configuration) is gone: every one of those
+ * facts is now legible in the stages themselves — count them, read the SLA chip,
+ * see the Incomplete badge — so the strip was restating the list above the list.
+ * The Edit action stays in the page header, where it holds across both tabs.
+ */
 function WorkflowTab({ policy }: { policy: ApprovalPolicy }) {
-  const nodes = allNodes(policy.root);
-  const incomplete = nodes.filter((n) => !isNodeComplete(n));
-  const levels = nodes.filter((n) => n.type === 'approvalLevel' || n.type === 'parallelBranch').length;
-  const branches = nodes.filter((n) => n.type === 'conditionalBranch').length;
-
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      {/* What the flow amounts to, before you read it step by step. */}
-      <div className="mb-4 flex shrink-0 flex-wrap items-stretch overflow-hidden rounded-lg border border-border bg-surface">
-        <SummaryCell icon={<PersonOutline sx={{ fontSize: 18 }} />} label="Approval steps" value={String(levels)} />
-        <SummaryCell icon={<AccountTreeOutlined sx={{ fontSize: 18 }} />} label="Condition branches" value={String(branches)} />
-        <SummaryCell icon={<TimerOutlined sx={{ fontSize: 18 }} />} label="Longest SLA" value={longestSla(policy.root)} />
-        <SummaryCell
-          icon={incomplete.length > 0 ? <WarningAmberOutlined sx={{ fontSize: 18 }} /> : <CheckCircleOutlined sx={{ fontSize: 18 }} />}
-          label="Configuration"
-          value={incomplete.length > 0 ? `${incomplete.length} step${incomplete.length === 1 ? '' : 's'} incomplete` : 'Complete'}
-          tone={incomplete.length > 0 ? 'warning' : undefined}
-        />
-        {/* No Edit button here: the header already carries it as the page's one
-            primary action, and it stays put across both tabs. */}
-      </div>
-
-      {/* The flow itself — the protagonist of this tab. */}
-      <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-border">
-        <PolicyFlowPreview policy={policy} />
+    <div className="ds-scroll h-full min-h-0 overflow-y-auto pb-6">
+      {/* Route left, record facts right — the padded-detail rail from SoD V3.
+          The rail is context you consult; it never out-weighs the route. */}
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0">
+          <PolicyStagesPreview policy={policy} />
+        </div>
+        <aside className="lg:sticky lg:top-0 lg:self-start">
+          <Card title="Timeline" icon={<WatchLater />} padding="none">
+            <InfoRowGroup>
+              <InfoRow icon={infoIcon.updated} label="Last Updated On" value={formatDate(policy.updatedAt)} />
+              <InfoRow icon={infoIcon.created} label="Created On" value={formatDate(policy.createdAt)} />
+            </InfoRowGroup>
+          </Card>
+        </aside>
       </div>
     </div>
   );

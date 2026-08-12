@@ -26,7 +26,6 @@ import {
   Button,
   StatusChip,
   Input,
-  Drawer,
   Dialog,
   Menu,
   FlowCanvas,
@@ -71,6 +70,7 @@ import { ParallelBranchConfig } from '@/components/product/automation/ParallelBr
 import { EmptyState } from '@/components/product/automation/config-kit';
 import { LaneLabel, ConditionLaneLabel, ParallelLaneLabel, AutoResolveBody, OUTCOME_TONE } from '@/components/product/automation/LaneLabel';
 import { TestRunBanner, TestRunPanel, type TestRunPhase } from '@/components/product/automation/TestRunPanel';
+import { VersionsPanel } from '@/components/product/automation/VersionsPanel';
 import { buildTestRunPlan, type TestRunPlan } from '@/lib/policy-test-run';
 
 /** One-line summary shown on a node card. */
@@ -180,6 +180,7 @@ export default function ApprovalPolicyBuilderPage() {
   const startTestRun = React.useCallback(() => {
     if (!doc) return;
     clearTestTimers();
+    setVersionsOpen(false);
     const want = runNonceRef.current % 2 === 0 ? 'passed' : 'failed';
     runNonceRef.current += 1;
     const plan = buildTestRunPlan(doc.root, want);
@@ -704,7 +705,19 @@ export default function ApprovalPolicyBuilderPage() {
           >
             {testPhase === 'running' ? 'Stop' : testPhase === 'done' ? 'Run again' : 'Test run'}
           </Button>
-          <Button variant="secondary" startIcon={<HistoryOutlined />} onClick={() => setVersionsOpen(true)}>
+          <Button
+            variant="secondary"
+            startIcon={<HistoryOutlined />}
+            onClick={() => {
+              if (versionsOpen) {
+                setVersionsOpen(false);
+                return;
+              }
+              if (testPhase !== 'idle') exitTestRun();
+              setVersionsOpen(true);
+              setConfigOpen(true);
+            }}
+          >
             Versions
           </Button>
           <Button variant="secondary" startIcon={<SaveOutlined />} onClick={save} disabled={!dirty}>
@@ -871,7 +884,7 @@ export default function ApprovalPolicyBuilderPage() {
           )}
         </div>
 
-        {/* config — swapped for Test Run results while simulating */}
+        {/* right rail — Test Run, Versions, or Configuration (one at a time) */}
         {testPhase !== 'idle' ? (
           <TestRunPanel
             phase={testPhase}
@@ -881,6 +894,8 @@ export default function ApprovalPolicyBuilderPage() {
             onRunAgain={startTestRun}
             onExit={exitTestRun}
           />
+        ) : versionsOpen ? (
+          <VersionsPanel doc={doc} onClose={() => setVersionsOpen(false)} />
         ) : configOpen ? (
           <ConfigPanel
             doc={doc}
@@ -913,27 +928,6 @@ export default function ApprovalPolicyBuilderPage() {
       >
         You have unsaved changes to this policy. Leaving now will discard them.
       </Dialog>
-
-      {/* versions (stub) */}
-      <Drawer
-        open={versionsOpen}
-        onClose={() => setVersionsOpen(false)}
-        title="Version history"
-        subtitle="Published revisions of this policy."
-        icon={<HistoryOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
-      >
-        <div className="grid h-full place-items-center">
-          <div className="text-center">
-            <span className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-subtle text-icon">
-              <HistoryOutlined sx={{ fontSize: 24 }} />
-            </span>
-            <div className="text-body-strong text-text-primary">No versions yet</div>
-            <p className="mx-auto mt-1 max-w-[240px] text-caption text-text-secondary">
-              Durable version history is planned. For now, activating a policy publishes the current draft.
-            </p>
-          </div>
-        </div>
-      </Drawer>
     </div>
   );
 }

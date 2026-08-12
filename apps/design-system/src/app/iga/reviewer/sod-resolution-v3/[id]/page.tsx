@@ -12,13 +12,14 @@ import Person from '@mui/icons-material/Person';
 import WatchLater from '@mui/icons-material/WatchLater';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
+import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined';
 import AssignmentInd from '@mui/icons-material/AssignmentInd';
 import PersonAddAltOutlined from '@mui/icons-material/PersonAddAltOutlined';
 import ManageAccountsOutlined from '@mui/icons-material/ManageAccountsOutlined';
 import PersonRemoveOutlined from '@mui/icons-material/PersonRemoveOutlined';
 import IconButton from '@mui/material/IconButton';
 import CircularProgress from '@mui/material/CircularProgress';
-import { Avatar, Button, Card, Checkbox, DatePicker, InfoRow, InfoRowGroup, Input, Menu, QuickFilter, SelectableList, StatusChip, Stepper, Tabs, TimePicker, Tooltip, useToast } from '@ds/components';
+import { Avatar, Button, Card, Checkbox, DatePicker, Dialog, InfoRow, InfoRowGroup, Input, Menu, QuickFilter, SelectableList, StatusChip, Stepper, Tabs, TimePicker, Tooltip, useToast } from '@ds/components';
 import {
   getReview,
   getAccess,
@@ -351,6 +352,7 @@ function SodResolutionV3WorkspacePageInner() {
   const [review, setReview] = React.useState<SodReview | null>(null);
   const [loaded, setLoaded] = React.useState(false);
   const [detailsOpen, setDetailsOpen] = React.useState(false);
+  const [cancelOpen, setCancelOpen] = React.useState(false);
   const [actions, setActions] = React.useState<V3Action[]>([]);
   const isSubmitted = Boolean(review?.submission);
   /**
@@ -695,6 +697,33 @@ function SodResolutionV3WorkspacePageInner() {
     router.replace(pathname, { scroll: false });
     toast.success('Draft saved');
   };
+  /** Discard staged work and return to the violation detail (main) page. */
+  /**
+   * True when the workspace holds anything the reviewer would lose: saved draft
+   * actions, a staged removal, a drafted acceptance, or simply having advanced
+   * past step 1. Drives whether Cancel needs confirming.
+   */
+  const hasStagedWork =
+    actions.length > 0 ||
+    removalSelection.size > 0 ||
+    Object.keys(acceptPerRule).length > 0 ||
+    step > 1;
+
+  const cancelDraft = () => {
+    persistActions(review.id, []);
+    persistDraftStep(review.id, null);
+    setActions([]);
+    setRemovalSelection(new Set());
+    setRemoveJustification(defaultRemoveJustification(review));
+    setAcceptPerRule({});
+    setAcceptFieldEdited({});
+    setApplyTemplateRuleId(null);
+    setRuleFilter(null);
+    setStep(1);
+    setCancelOpen(false);
+    router.replace(pathname, { scroll: false });
+    toast.success('Draft discarded');
+  };
   const openWorkspace = () => {
     if ((isSubmitted && !canEdit) || workspaceLoading || workspaceOpen) return;
     setWorkspaceLoading(true);
@@ -1004,6 +1033,15 @@ function SodResolutionV3WorkspacePageInner() {
             {/* Edit lives on the Preview section's own heading, not here: it acts on
                 what that section shows, and this bar is for advancing or leaving the
                 flow. See PreviewSubmitColumns. */}
+            {/* Confirm only when there is something to lose. Cancelling an
+                untouched workspace destroys nothing, and a dialog there is pure
+                friction — the guard is for work, not for the click. */}
+            <Button
+              variant="tertiary"
+              onClick={() => (hasStagedWork ? setCancelOpen(true) : cancelDraft())}
+            >
+              Cancel
+            </Button>
             <Button variant="secondary" onClick={saveAsDraft}>
               Save as draft
             </Button>
@@ -1105,6 +1143,29 @@ function SodResolutionV3WorkspacePageInner() {
       )}
 
       <UserDetailsDrawer open={detailsOpen} onClose={() => setDetailsOpen(false)} review={review} />
+
+      {/* Cancel is destructive here: it does not just close the workspace, it clears
+          the saved draft from the store. The dialog names what is lost and what it
+          costs to recover, so "Cancel" cannot be read as "go back". */}
+      <Dialog
+        open={cancelOpen}
+        onClose={() => setCancelOpen(false)}
+        title="Discard this resolution?"
+        tone="danger"
+        icon={<WarningAmberOutlined sx={{ fontSize: 22 }} />}
+        confirmLabel="Discard and restart"
+        cancelLabel="Keep working"
+        onConfirm={cancelDraft}
+      >
+        Every decision you have staged — access marked for removal, risk acceptances and
+        their justifications — will be <strong className="text-text-primary">permanently deleted</strong>,
+        including anything already saved as a draft. The review returns to step 1 and you
+        will have to start again from the beginning.
+        <span className="mt-3 block">
+          To come back to this later instead, choose{' '}
+          <strong className="text-text-primary">Save as draft</strong>.
+        </span>
+      </Dialog>
     </div>
   );
 }

@@ -1,9 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
-import CancelOutlined from '@mui/icons-material/CancelOutlined';
-import HourglassEmptyOutlined from '@mui/icons-material/HourglassEmptyOutlined';
+import CheckCircle from '@mui/icons-material/CheckCircle';
+import Cancel from '@mui/icons-material/Cancel';
+import HourglassFull from '@mui/icons-material/HourglassFull';
 import PlayArrowOutlined from '@mui/icons-material/PlayArrowOutlined';
 import CloseOutlined from '@mui/icons-material/CloseOutlined';
 import { Button } from '@ds/components';
@@ -36,11 +36,8 @@ export function TestRunPanel({
 
   return (
     <aside className="flex w-[320px] shrink-0 flex-col border-l border-border bg-surface">
-      <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-3">
-        <div className="min-w-0">
-          <div className="text-overline uppercase tracking-[0.06em] text-text-tertiary">Test run</div>
-          <div className="mt-1 text-body-strong text-text-primary">Simulated request</div>
-        </div>
+      <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
+        <div className="min-w-0 text-body-strong text-text-primary">Test run</div>
         <button
           type="button"
           onClick={onExit}
@@ -89,7 +86,7 @@ function OutcomeHeader({ result, elapsedMs }: { result: TestRunResult | 'running
     return (
       <div className="flex items-center gap-3">
         <span className="grid h-10 w-10 place-items-center rounded-full bg-brand-subtle text-brand">
-          <HourglassEmptyOutlined sx={{ fontSize: 22 }} />
+          <HourglassFull sx={{ fontSize: 22 }} />
         </span>
         <div>
           <div className="text-body-strong text-text-primary">Running…</div>
@@ -109,7 +106,7 @@ function OutcomeHeader({ result, elapsedMs }: { result: TestRunResult | 'running
             : 'bg-[var(--ds-color-status-danger-subtle)] text-[var(--ds-color-status-danger-fg)]',
         ].join(' ')}
       >
-        {ok ? <CheckCircleOutlined sx={{ fontSize: 22 }} /> : <CancelOutlined sx={{ fontSize: 22 }} />}
+        {ok ? <CheckCircle sx={{ fontSize: 22 }} /> : <Cancel sx={{ fontSize: 22 }} />}
       </span>
       <div>
         <div className="text-body-strong text-text-primary">{ok ? 'Passed' : 'Failed'}</div>
@@ -124,11 +121,11 @@ function OutcomeHeader({ result, elapsedMs }: { result: TestRunResult | 'running
 function StepRow({ step, index }: { step: TestRunStep; index: number }) {
   const icon =
     step.status === 'failed' ? (
-      <CancelOutlined sx={{ fontSize: 16, color: 'var(--ds-color-status-danger-fg)' }} />
+      <Cancel sx={{ fontSize: 16, color: 'var(--ds-color-status-danger-fg)' }} />
     ) : step.status === 'passed' ? (
-      <CheckCircleOutlined sx={{ fontSize: 16, color: 'var(--ds-color-status-success-fg)' }} />
+      <CheckCircle sx={{ fontSize: 16, color: 'var(--ds-color-status-success-fg)' }} />
     ) : (
-      <HourglassEmptyOutlined sx={{ fontSize: 16, color: 'var(--ds-color-text-tertiary)' }} />
+      <HourglassFull sx={{ fontSize: 16, color: 'var(--ds-color-text-tertiary)' }} />
     );
 
   return (

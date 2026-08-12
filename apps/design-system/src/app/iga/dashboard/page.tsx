@@ -13,7 +13,7 @@ import ArrowForwardOutlined from '@mui/icons-material/ArrowForwardOutlined';
 import ChevronRightOutlined from '@mui/icons-material/ChevronRightOutlined';
 import Campaign from '@mui/icons-material/Campaign';
 import CampaignOutlined from '@mui/icons-material/CampaignOutlined';
-import Schedule from '@mui/icons-material/Schedule';
+import WatchLater from '@mui/icons-material/WatchLater';
 import Bolt from '@mui/icons-material/Bolt';
 import GppGood from '@mui/icons-material/GppGood';
 import GppMaybe from '@mui/icons-material/GppMaybe';
@@ -137,7 +137,7 @@ export default function DashboardPage() {
         <Card
           hoverElevate
           title="Certifications Approaching Deadline"
-          icon={<Schedule />}
+          icon={<WatchLater />}
           action={<CardActions />}
           padding="none"
         >

@@ -20,6 +20,7 @@ import TaskAltOutlined from '@mui/icons-material/TaskAltOutlined';
 import ScheduleOutlined from '@mui/icons-material/ScheduleOutlined';
 import HistoryOutlined from '@mui/icons-material/HistoryOutlined';
 import EventOutlined from '@mui/icons-material/EventOutlined';
+import CalendarTodayOutlined from '@mui/icons-material/CalendarTodayOutlined';
 import TimerOutlined from '@mui/icons-material/TimerOutlined';
 import BoltOutlined from '@mui/icons-material/BoltOutlined';
 import FormatListNumberedOutlined from '@mui/icons-material/FormatListNumberedOutlined';
@@ -80,6 +81,9 @@ export const infoIcon = {
   started: <ScheduleOutlined sx={px} />,
   completed: <EventOutlined sx={px} />,
   submitted: <HistoryOutlined sx={px} />,
+  /** Record lifecycle — when a thing came into being, and when it last changed. */
+  created: <CalendarTodayOutlined sx={px} />,
+  updated: <HistoryOutlined sx={px} />,
 } satisfies Record<string, React.ReactNode>;
 
 export type InfoIconName = keyof typeof infoIcon;
