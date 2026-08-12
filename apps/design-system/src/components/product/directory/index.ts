@@ -1,5 +1,6 @@
 export { RiskScoreChip, RiskDot } from './RiskScoreChip';
 export { EntityAvatar, type EntityKind } from './EntityAvatar';
+export { AccountDetailsDrawer } from './AccountDetailsDrawer';
 export { EntityOwnersTab } from './EntityOwnersTab';
 export { ApplicationApprovalPolicyTab } from './ApplicationApprovalPolicyTab';
 export { DetailShell, DetailNotFound, InfoRow, InfoRowGroup, RelationTable } from './DetailShell';

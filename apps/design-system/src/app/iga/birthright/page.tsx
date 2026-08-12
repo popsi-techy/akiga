@@ -4,8 +4,7 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import AddIcon from '@mui/icons-material/Add';
-import AccountTreeOutlined from '@mui/icons-material/AccountTreeOutlined';
-import EditOutlined from '@mui/icons-material/EditOutlined';
+import VerifiedOutlined from '@mui/icons-material/VerifiedOutlined';
 import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import {
@@ -20,90 +19,101 @@ import {
   useToast,
   type Column,
 } from '@ds/components';
-import { listWorkflows, createWorkflow, deleteWorkflow, WORKFLOW_EVENT_META } from '@/data/workflows';
-import type { WorkflowRow, WorkflowStatus, WorkflowEventType } from '@/data/automation-types';
+import {
+  listBirthrightPolicies,
+  createBirthrightPolicy,
+  deleteBirthrightPolicy,
+  type BirthrightPolicyRow,
+  type BirthrightStatus,
+} from '@/data/birthright';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** Deterministic UTC format — a row and the detail it opens must agree. */
 function formatDate(iso: string): string {
   const d = new Date(iso);
   return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 }
-const STATUS_META: Record<WorkflowStatus, { intent: 'success' | 'neutral'; label: string }> = {
+
+const STATUS_META: Record<BirthrightStatus, { intent: 'success' | 'neutral'; label: string }> = {
   active: { intent: 'success', label: 'Active' },
   draft: { intent: 'neutral', label: 'Draft' },
 };
-const EVENT_LABEL: Record<WorkflowEventType, string> = {
-  joiner: WORKFLOW_EVENT_META.joiner.label,
-  mover: WORKFLOW_EVENT_META.mover.label,
-  leaver: WORKFLOW_EVENT_META.leaver.label,
-};
 
-export default function WorkflowsListPage() {
+export default function BirthrightPoliciesPage() {
   const router = useRouter();
   const toast = useToast();
-  const [rows, setRows] = React.useState<WorkflowRow[] | null>(null);
+  const [rows, setRows] = React.useState<BirthrightPolicyRow[] | null>(null);
   const [search, setSearch] = React.useState('');
-  const [status, setStatus] = React.useState<'all' | WorkflowStatus>('all');
+  const [status, setStatus] = React.useState<'all' | BirthrightStatus>('all');
   const [createOpen, setCreateOpen] = React.useState(false);
   const [name, setName] = React.useState('');
   const [description, setDescription] = React.useState('');
-  const [deleteTarget, setDeleteTarget] = React.useState<WorkflowRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<BirthrightPolicyRow | null>(null);
 
-  const refresh = React.useCallback(() => setRows(listWorkflows()), []);
+  const refresh = React.useCallback(() => setRows(listBirthrightPolicies()), []);
   React.useEffect(() => {
     refresh();
   }, [refresh]);
 
   const filtered = (rows ?? []).filter(
-    (r) => r.name.toLowerCase().includes(search.trim().toLowerCase()) && (status === 'all' || r.status === status),
+    (r) =>
+      r.name.toLowerCase().includes(search.trim().toLowerCase()) &&
+      (status === 'all' || r.status === status),
   );
 
-  const openBuilder = (id: string) => router.push(`/iga/automation/workflows/${id}/builder`);
-  /** A row opens the read-only detail, not the editor — the same as Approval
-      Policies. Creating a workflow still goes straight to the builder, since a
-      brand-new one has nothing to read. */
-  const openDetail = (id: string) => router.push(`/iga/automation/workflows/${id}`);
+  const openDetail = (id: string) => router.push(`/iga/birthright/${id}`);
 
   const resetCreate = () => {
     setName('');
     setDescription('');
   };
-
   const handleCreate = () => {
-    const wf = createWorkflow({ name, description });
+    const p = createBirthrightPolicy({ name, description });
     setCreateOpen(false);
     resetCreate();
-    openBuilder(wf.id);
+    // Straight to the detail: a policy that grants nothing is not finished, and
+    // the assignment sections are the next thing to do.
+    openDetail(p.id);
   };
   const confirmDelete = () => {
     if (!deleteTarget) return;
-    deleteWorkflow(deleteTarget.id);
+    deleteBirthrightPolicy(deleteTarget.id);
     toast.success(`“${deleteTarget.name}” deleted`);
     setDeleteTarget(null);
     refresh();
   };
 
-  const columns: Column<WorkflowRow>[] = [
+  const columns: Column<BirthrightPolicyRow>[] = [
     {
       id: 'name',
-      header: 'Workflow Name',
+      header: 'Policy Name',
       sortable: true,
       value: (r) => r.name,
       render: (r) => (
         <div className="flex items-center gap-3">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-subtle text-icon-brand">
-            <AccountTreeOutlined sx={{ fontSize: 18 }} />
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand-subtle text-icon-brand">
+            <VerifiedOutlined sx={{ fontSize: 18 }} />
           </span>
-          <span className="text-body-sm-strong text-text-primary">{r.name}</span>
+          <div className="min-w-0">
+            <div className="truncate text-body-sm-strong text-text-primary">{r.name}</div>
+            <div className="truncate text-caption text-text-secondary">{r.description || 'No description'}</div>
+          </div>
         </div>
       ),
     },
     {
-      id: 'eventType',
-      header: 'Event Type',
+      id: 'grants',
+      header: 'Grants',
       sortable: true,
-      value: (r) => r.eventType ?? '',
-      render: (r) => (r.eventType ? EVENT_LABEL[r.eventType] : <span className="text-text-disabled">—</span>),
+      align: 'right',
+      width: 110,
+      value: (r) => r.grants,
+      render: (r) =>
+        r.grants === 0 ? (
+          <span className="text-text-disabled">—</span>
+        ) : (
+          <span className="text-body-sm tabular-nums text-text-primary">{r.grants}</span>
+        ),
     },
     {
       id: 'status',
@@ -123,7 +133,6 @@ export default function WorkflowsListPage() {
         <Menu
           items={[
             { label: 'View details', icon: <VisibilityOutlined sx={{ fontSize: 18 }} />, onClick: () => openDetail(r.id) },
-            { label: 'Edit workflow', icon: <EditOutlined sx={{ fontSize: 18 }} />, onClick: () => openBuilder(r.id) },
             { label: 'Delete', icon: <DeleteOutline sx={{ fontSize: 18 }} />, danger: true, divider: true, onClick: () => setDeleteTarget(r) },
           ]}
         />
@@ -134,16 +143,21 @@ export default function WorkflowsListPage() {
   return (
     <div className="flex h-full flex-col">
       <div className="mb-5 shrink-0">
-        <h1 className="text-h2 text-text-primary">Workflows</h1>
+        <h1 className="text-h2 text-text-primary">Birthright Policies</h1>
         <p className="mt-1 text-body text-text-secondary">
-          Event-driven lifecycle automation — compose filters, entity assignment, notifications, and
-          branching to automate identity onboarding.
+          Access granted automatically by virtue of who someone is — no request, no approval. Each
+          policy is a named bundle of entitlements and roles.
         </p>
       </div>
 
       <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
         <div className="w-full max-w-sm">
-          <Input placeholder="Search by name" value={search} onChange={(e) => setSearch(e.target.value)} startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />} />
+          <Input
+            placeholder="Search by name"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+          />
         </div>
         <div className="w-[160px]">
           <Select
@@ -153,18 +167,18 @@ export default function WorkflowsListPage() {
               { value: 'draft', label: 'Draft' },
             ]}
             value={status}
-            onChange={(v) => setStatus(v as 'all' | WorkflowStatus)}
+            onChange={(v) => setStatus(v as 'all' | BirthrightStatus)}
           />
         </div>
         <div className="ml-auto">
           <Button startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
-            Create Workflow
+            Create Policy
           </Button>
         </div>
       </div>
 
       <div className="min-h-0 flex-1">
-        <DataTable<WorkflowRow>
+        <DataTable<BirthrightPolicyRow>
           columns={columns}
           rows={filtered}
           loading={rows === null}
@@ -172,8 +186,8 @@ export default function WorkflowsListPage() {
           fillHeight
           defaultRowsPerPage={8}
           rowsPerPageOptions={[8, 16, 24]}
-          emptyTitle="No workflows yet"
-          emptyMessage="Create a workflow to automate onboarding from a lifecycle event like Joiner."
+          emptyTitle="No birthright policies yet"
+          emptyMessage="Create one to grant a baseline set of access to every identity that matches it."
         />
       </div>
 
@@ -183,9 +197,9 @@ export default function WorkflowsListPage() {
           setCreateOpen(false);
           resetCreate();
         }}
-        title="Create Workflow"
-        subtitle="Name the workflow, then place a lifecycle event from the Events palette in the builder."
-        icon={<AccountTreeOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
+        title="Create Birthright Policy"
+        subtitle="Name it now; choose what it grants on the next screen."
+        icon={<VerifiedOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
         footer={
           <>
             <Button
@@ -197,22 +211,24 @@ export default function WorkflowsListPage() {
             >
               Cancel
             </Button>
-            <Button onClick={handleCreate}>Create &amp; Open Builder</Button>
+            <Button disabled={!name.trim()} onClick={handleCreate}>
+              Create &amp; Assign Access
+            </Button>
           </>
         }
       >
         <div className="space-y-5">
           <Input
-            label="Workflow name"
-            placeholder="e.g. Engineering Onboarding"
-            size="sm"
+            label="Policy name"
+            placeholder="e.g. All Employees"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
           />
+          {/* Multiline Input, matching the Workflows create drawer — a description
+              here is one or two plain sentences, not formatted copy. */}
           <Input
             label="Description"
-            placeholder="What this workflow automates (optional)"
+            placeholder="What this policy grants, and who it is for (optional)"
             size="sm"
             multiline
             minRows={3}
@@ -225,12 +241,14 @@ export default function WorkflowsListPage() {
       <Dialog
         open={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
-        title="Delete this workflow?"
+        title="Delete this birthright policy?"
         tone="danger"
         confirmLabel="Delete"
         onConfirm={confirmDelete}
       >
-        <strong className="text-text-primary">{deleteTarget?.name}</strong> will be permanently removed. This cannot be undone.
+        <strong className="text-text-primary">{deleteTarget?.name}</strong> will be permanently
+        removed. Identities keep access it already granted — this stops future grants only. This
+        cannot be undone.
       </Dialog>
     </div>
   );

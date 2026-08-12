@@ -32,6 +32,7 @@ export function TableSelectDrawer({
   nameHeader,
   descriptionHeader = 'Description',
   entity,
+  entityPlural,
   rows,
   selectedIds,
   onApply,
@@ -48,6 +49,8 @@ export function TableSelectDrawer({
   /** Header for the second column — it is not always a description (e.g. "Email"). @default 'Description' */
   descriptionHeader?: string;
   entity: string; // singular, e.g. "technical role"
+  /** Plural, when appending "s" is wrong ("policies", not "policys"). @default ${entity}s */
+  entityPlural?: string;
   rows: TableSelectRow[];
   selectedIds: string[];
   onApply: (ids: string[]) => void;
@@ -92,7 +95,9 @@ export function TableSelectDrawer({
   const selectedItems = rows
     .filter((r) => sel.includes(r.id))
     .map((r) => ({ id: r.id, label: r.name, sublabel: single ? r.description : undefined }));
-  const plural = (n: number) => `${n} ${entity}${n === 1 ? '' : 's'} selected`;
+  // Naive "+s" produces "policys". Callers whose plural is irregular pass it.
+  const plurals = entityPlural ?? `${entity}s`;
+  const plural = (n: number) => `${n} ${n === 1 ? entity : plurals} selected`;
   const verb = confirmLabel ?? (single ? 'Select' : 'Add');
 
   return (
@@ -116,7 +121,7 @@ export function TableSelectDrawer({
       <div className="flex h-full">
         <div className="flex min-w-0 flex-1 flex-col px-6 py-5">
           <div className="mb-4 w-full max-w-sm shrink-0">
-            <Input placeholder={`Search ${entity}s`} value={query} onChange={(e) => setQuery(e.target.value)} startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />} />
+            <Input placeholder={`Search ${plurals}`} value={query} onChange={(e) => setQuery(e.target.value)} startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />} />
           </div>
           <div className="min-h-0 flex-1">
             <DataTable<TableSelectRow>

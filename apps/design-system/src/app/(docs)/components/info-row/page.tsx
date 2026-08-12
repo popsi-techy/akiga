@@ -62,14 +62,37 @@ export default function InfoRowDocs() {
         </Example>
       </Section>
 
+      <Section
+        title="Emphasis"
+        description="Which half of the pair carries the weight. Set it on the group — a group with two emphases has no hierarchy left to read."
+      >
+        <Example label="value (default) — the label names the field, the value answers">
+          <Card padding="none" className="w-full max-w-md">
+            <InfoRowGroup>
+              <InfoRow icon={infoIcon.person} label="Owner" value="Marcus Lee" />
+              <InfoRow icon={infoIcon.department} label="Department" value="IT" />
+            </InfoRowGroup>
+          </Card>
+        </Example>
+        <Example label='emphasis="label" — for a summary read cold, e.g. a peek drawer'>
+          <Card padding="none" className="w-full max-w-md">
+            <InfoRowGroup emphasis="label">
+              <InfoRow icon={infoIcon.person} label="Owner" value="Marcus Lee" />
+              <InfoRow icon={infoIcon.department} label="Department" value="IT" />
+            </InfoRowGroup>
+          </Card>
+        </Example>
+      </Section>
+
       <Section title="Props">
         <PropsTable
           rows={[
-            { name: 'label', type: 'string', description: 'Label cell (secondary). Column width follows the widest label in the group.' },
+            { name: 'label', type: 'string', description: 'Label cell. Column width follows the widest label in the group.' },
             { name: 'value', type: 'ReactNode', description: 'Value cell — left-aligned; all values share the same start edge.' },
-            { name: 'icon', type: 'ReactNode', default: 'required', description: 'Leading icon in the label cell, outlined at 18px. Required — one row without an icon breaks the scan column for every row around it. Product code takes these from the shared infoIcon vocabulary so a concept looks the same on every page.' },
-            { name: 'className', type: 'string', description: 'Applied to both cells (e.g. px-4 outside a DS Card gutter).' },
-            { name: 'InfoRowGroup', type: 'wrapper', description: 'table w-full — required so rows share one column layout.' },
+            { name: 'icon', type: 'ReactNode', default: 'required', description: 'Leading icon in the label cell, outlined at 18px. Required — one row without an icon breaks the scan column for every row around it. Product code takes these from the shared infoIcon vocabulary so a concept looks the same on every page. Colour follows the group emphasis: icon.subtle by default, icon.default when the label leads.' },
+            { name: 'className', type: 'string', description: 'Applied to the row (e.g. px-4 outside a DS Card gutter).' },
+            { name: 'InfoRowGroup', type: 'wrapper', description: 'table w-full — required so rows share one column layout and one emphasis.' },
+            { name: 'InfoRowGroup emphasis', type: "'value' | 'label'", default: "'value'", description: 'value: the label is quiet and the value is emphasised — right on a detail rail, where you know the fields and are scanning for what they say. label: the label is emphasised, the value recedes and the icon darkens to icon.default — for a summary read cold, where the reader is learning which fields exist.' },
           ]}
         />
       </Section>

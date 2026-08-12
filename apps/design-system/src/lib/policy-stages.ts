@@ -1,7 +1,6 @@
 import type {
   ApprovalLevelConfig,
   ApprovalPolicy,
-  NotificationConfig,
   ParallelConfig,
   PolicyNode,
 } from '@/data/automation-types';
@@ -22,8 +21,9 @@ import { isNodeComplete } from '@/lib/policy-tree';
  *
  * Only decision points become stages (approval levels and parallel approvals) —
  * an "approval policy" with four stages should mean four approvals, not four
- * boxes. Everything else that still has an effect (notifications, early exits)
- * is kept as a note between stages so the preview does not quietly omit it.
+ * boxes. Non-deciding steps (notifications, early exits) are dropped entirely:
+ * this view answers "who approves, in what order", and a mail step listed
+ * alongside the approvals competes with that without changing the answer.
  */
 
 /** How a stage was reached: one entry per branch it sits inside, outermost first. */
@@ -55,17 +55,8 @@ export interface PolicyStage {
   complete: boolean;
 }
 
-/** A non-deciding step that still does something, anchored after a stage. */
-export interface PolicyStageNote {
-  /** Stage number this follows; 0 when it runs before the first stage. */
-  after: number;
-  label: string;
-  detail: string;
-}
-
 export interface PolicyStageModel {
   stages: PolicyStage[];
-  notes: PolicyStageNote[];
 }
 
 function slaLabel(sla?: { days?: number; hours?: number; minutes?: number }): string {
@@ -150,7 +141,6 @@ function conditionSummary(group?: ConditionGroup): { text: string; extra: number
 
 export function toStages(root: PolicyNode[]): PolicyStageModel {
   const stages: PolicyStage[] = [];
-  const notes: PolicyStageNote[] = [];
 
   const walk = (seq: PolicyNode[], conditions: StageCondition[]) => {
     for (const node of seq) {
@@ -204,29 +194,12 @@ export function toStages(root: PolicyNode[]): PolicyStageModel {
         continue;
       }
 
-      if (node.type === 'notification') {
-        const c = node.config as NotificationConfig | undefined;
-        const on = [c?.email.enabled && 'Email', c?.slack.enabled && 'Slack'].filter(Boolean) as string[];
-        notes.push({
-          after: stages.length,
-          label: node.name ?? 'Notification',
-          detail: on.length ? on.join(' + ') : 'No channels enabled',
-        });
-        continue;
-      }
-
-      if (node.type === 'exit' || node.type === 'skip') {
-        notes.push({
-          after: stages.length,
-          label: node.type === 'exit' ? 'Exit' : 'Skip',
-          detail: node.type === 'exit' ? 'The request ends here' : 'This step is skipped',
-        });
-      }
+      // notification / exit / skip: not decisions, so they do not appear here.
     }
   };
 
   walk(root, []);
-  return { stages, notes };
+  return { stages };
 }
 
 /** Longest SLA across every stage — "how long can this take?". */

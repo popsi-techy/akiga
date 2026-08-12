@@ -8,9 +8,11 @@ import ChevronRight from '@mui/icons-material/ChevronRight';
 import RuleOutlined from '@mui/icons-material/RuleOutlined';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import BadgeOutlined from '@mui/icons-material/BadgeOutlined';
+import VerifiedOutlined from '@mui/icons-material/VerifiedOutlined';
 import type { AssignEntitiesConfig as AEConfig, EntitySelection, ConditionGroup } from '@/data/automation-types';
 import { listTechnicalRoles, listBusinessRoles } from '@/data/catalog';
 import { listApprovalPolicies } from '@/data/approval-policies';
+import { listBirthrightPolicies } from '@/data/birthright';
 import { isConditionGroupValid, emptyConditionGroup } from '@/lib/policy-tree';
 import { ConditionPreviewChip } from '@/components/product/ConditionPreviewChip';
 import { flattenRules, ruleParts } from './condition-format';
@@ -19,7 +21,7 @@ import { TableSelectDrawer } from './TableSelectDrawer';
 import { SingleSelectDrawer } from './SingleSelectDrawer';
 import { ConditionBuilderDrawer } from './ConditionBuilderDrawer';
 
-type DrawerKind = 'entities' | 'tRoles' | 'bRoles' | 'policy' | 'criteria' | null;
+type DrawerKind = 'entities' | 'tRoles' | 'bRoles' | 'birthright' | 'policy' | 'criteria' | null;
 
 /** Quiet uppercase section label (the one heading style across the builders). */
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -89,6 +91,14 @@ export function AssignEntitiesConfig({ config, onChange }: { config: AEConfig; o
   const entSummary = config.entitlements.length ? `${appCount ? `${plural(appCount, 'app')} · ` : ''}${plural(config.entitlements.length, 'entitlement')}` : undefined;
   const tRoleSummary = config.technicalRoles.length ? plural(config.technicalRoles.length, 'technical role') : undefined;
   const bRoleSummary = config.businessRoles.length ? plural(config.businessRoles.length, 'business role') : undefined;
+  // Optional on the type — workflows saved before birthright policies existed
+  // have no key at all, so normalise once here rather than at every use.
+  const birthrights = config.birthrightPolicies ?? [];
+  /** Only active policies can be applied — a draft grants nothing yet. */
+  const birthrightRows = listBirthrightPolicies()
+    .filter((p) => p.status === 'active')
+    .map((p) => ({ id: p.id, name: p.name, description: p.description || 'No description' }));
+  const brSummary = birthrights.length ? plural(birthrights.length, 'birthright policy').replace('policys', 'policies') : undefined;
 
   return (
     <div>
@@ -99,6 +109,11 @@ export function AssignEntitiesConfig({ config, onChange }: { config: AEConfig; o
           <AddRow title="Add apps and entitlements" summary={entSummary} items={config.entitlements} onClick={() => setDrawer('entities')} />
           <AddRow title="Add Technical Roles" summary={tRoleSummary} items={config.technicalRoles} onClick={() => setDrawer('tRoles')} />
           <AddRow title="Add Business Roles" summary={bRoleSummary} items={config.businessRoles} onClick={() => setDrawer('bRoles')} />
+          {/* Last in the list: a birthright policy grants a whole named bundle, so
+              it is a coarser instrument than the three above it. Picking one is
+              also the shortcut — "give them what every employee gets" — which
+              reads better as the alternative to the specific picks, not before them. */}
+          <AddRow title="Add Birthright Policy" summary={brSummary} items={birthrights} onClick={() => setDrawer('birthright')} />
         </div>
       </div>
 
@@ -174,6 +189,29 @@ export function AssignEntitiesConfig({ config, onChange }: { config: AEConfig; o
         rows={listBusinessRoles()}
         selectedIds={config.businessRoles.map((r) => r.id)}
         onApply={(ids) => onChange({ ...config, businessRoles: listBusinessRoles().filter((r) => ids.includes(r.id)).map((r) => ({ id: r.id, name: r.name })) })}
+      />
+      {/* Checkbox · name · description — no risk column, since a birthright policy
+          has no score of its own; its risk is whatever it grants. */}
+      <TableSelectDrawer
+        open={drawer === 'birthright'}
+        onClose={() => setDrawer(null)}
+        title="Add Birthright Policies"
+        subtitle="Grant a whole policy — everything it assigns, applied together."
+        icon={<VerifiedOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
+        nameHeader="Birthright policy"
+        entity="birthright policy"
+        entityPlural="birthright policies"
+        showRisk={false}
+        rows={birthrightRows}
+        selectedIds={birthrights.map((p) => p.id)}
+        onApply={(ids) =>
+          onChange({
+            ...config,
+            birthrightPolicies: birthrightRows
+              .filter((p) => ids.includes(p.id))
+              .map((p) => ({ id: p.id, name: p.name })),
+          })
+        }
       />
       <SingleSelectDrawer
         open={drawer === 'policy'}

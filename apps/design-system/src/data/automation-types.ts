@@ -281,6 +281,12 @@ export interface AssignEntitiesConfig {
   entitlements: EntitySelection[];
   technicalRoles: EntitySelection[];
   businessRoles: EntitySelection[];
+  /**
+   * Birthright policies to apply wholesale — granting the bundle rather than
+   * re-listing its contents here. Optional so workflows saved before this
+   * existed still load.
+   */
+  birthrightPolicies?: EntitySelection[];
   approvalPolicyId?: string;
   approvalPolicyName?: string;
   criteria?: ConditionGroup;

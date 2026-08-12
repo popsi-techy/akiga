@@ -14,7 +14,12 @@ import { userIdentities } from './seed';
 /** The model's "now". Relative labels ("2 days ago") are computed against this. */
 export const RUNS_AS_OF = '2026-08-09T09:00:00.000Z';
 
-export type RunOutcome = 'approved' | 'rejected' | 'expired' | 'running' | 'failed';
+/**
+ * `completed` is the workflow outcome: a lifecycle workflow finishes, it is not
+ * "approved". The rest are shared with approval runs — the two modules record
+ * runs in the same shape so one history surface can render both.
+ */
+export type RunOutcome = 'approved' | 'rejected' | 'expired' | 'running' | 'failed' | 'completed';
 
 export type StepDecision =
   | 'approved'
@@ -24,7 +29,11 @@ export type StepDecision =
   | 'notified'
   | 'skipped'
   | 'pending'
-  | 'escalated';
+  | 'escalated'
+  /** Workflow steps: a filter matched (or did not), and entities were assigned. */
+  | 'matched'
+  | 'no-match'
+  | 'assigned';
 
 export interface RunStep {
   /** Matches a node id in the policy flow, so a step can be traced to the canvas. */
@@ -70,7 +79,7 @@ export interface ApprovalRun {
   targetUserId: string;
   /** One line naming what was asked for. */
   request: string;
-  trigger: 'Access request' | 'Birthright policy' | 'Role assignment' | 'Emergency access';
+  trigger: 'Access request' | 'Birthright policy' | 'Role assignment' | 'Emergency access' | 'Lifecycle event';
   /** True when a level ran past its SLA — surfaced even on approved runs. */
   slaBreached: boolean;
   steps: RunStep[];

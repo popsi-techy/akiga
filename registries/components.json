@@ -239,7 +239,8 @@
       "source": "apps/design-system/src/design-system/components/InfoRow/InfoRow.tsx",
       "extends": null,
       "variants": [
-        "default"
+        "emphasis:value",
+        "emphasis:label"
       ],
       "states": [
         "default"

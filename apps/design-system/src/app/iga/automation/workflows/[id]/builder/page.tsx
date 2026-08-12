@@ -47,6 +47,7 @@ import { getWorkflow, updateWorkflow, WORKFLOW_EVENT_META, eventFromType } from 
 import type { AutomationWorkflow, WorkflowNode, WorkflowBlockType, WorkflowBranch, WorkflowEvent, WorkflowEventType, AssignEntitiesConfig as AEConfig, UserFilterConfig as UFConfig, MultisplitConfig as MSConfig, NotificationConfig as NConfig, DelayConfig as DlyConfig, WaitForUserConfig as WFUConfig } from '@/data/automation-types';
 import { BLOCK_META, BLOCK_PALETTE, paletteBlocksForEvent, createBlock, insertBlock, deleteBlock, updateBlock, findBlock, allBlocks, isBlockComplete, defaultConfigFor } from '@/lib/workflow-tree';
 import { countConditionRules, isConditionGroupValid } from '@/lib/policy-tree';
+import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import { UserFilterConfig } from '@/components/product/automation/UserFilterConfig';
 import { AssignEntitiesConfig } from '@/components/product/automation/AssignEntitiesConfig';
 import { MultisplitConfig } from '@/components/product/automation/MultisplitConfig';
@@ -66,83 +67,22 @@ import { buildWorkflowTestRunPlan, type TestRunPlan } from '@/lib/workflow-test-
 import TaskAltOutlined from '@mui/icons-material/TaskAltOutlined';
 
 const EVENT_SEL = '__event__';
-const EVENT_ICONS: Record<WorkflowEventType, React.ComponentType<{ sx?: object }>> = {
-  joiner: PersonAddAlt,
-  mover: SwapHorizOutlined,
-  leaver: Logout,
-};
-const ICONS: Record<string, React.ComponentType<{ sx?: object }>> = {
-  filter: FilterAltOutlined,
-  assignment: AssignmentIndOutlined,
-  mail: MailOutline,
-  call_split: CallSplit,
-  account_tree: AccountTreeOutlined,
-  skip_next: SkipNext,
-  logout: Logout,
-  schedule: ScheduleOutlined,
-  person_search: PersonSearchOutlined,
-};
 
-const EVENT_TYPES: WorkflowEventType[] = ['joiner', 'mover', 'leaver'];
+// Block visuals live in one module shared with the read-only preview. They used
+// to be duplicated here, and duplicated they drifted: a change to how an Assign
+// Entities block summarises itself reached the preview and not the canvas.
+import {
+  EVENT_ICONS,
+  EVENT_TYPES,
+  ICONS,
+  PALETTE_SECTIONS,
+  blockSummary,
+  tileFor,
+} from '@/components/product/automation/workflow-visuals';
+
+/** Builder-only: the palette drags a block *kind*, which may be an event. */
 const isEventKind = (kind: string): kind is WorkflowEventType =>
   kind === 'joiner' || kind === 'mover' || kind === 'leaver';
-
-/** Icon-tile colors grouped by palette section (decorative — categorical, not text). */
-const SECTION_TILE: Record<string, { bg: string; fg: string }> = {
-  Events: { bg: 'var(--ds-color-brand-subtle)', fg: 'var(--ds-color-brand-primary)' },
-  Filters: { bg: '#EFEAFE', fg: '#7C4DFF' }, //       violet
-  Tasks: { bg: '#E8F1FE', fg: '#2E7CF6' }, //         blue
-  Branching: { bg: '#FFF1E3', fg: '#F59E0B' }, //     amber
-  'Flow Control': { bg: '#E4F6EF', fg: '#0EA47A' }, // teal
-};
-const tileFor = (section: string) => SECTION_TILE[section] ?? { bg: 'var(--ds-color-surface-hover)', fg: 'var(--ds-color-icon-default)' };
-/** Section order — shared by the sidebar palette and the canvas quick-insert menu. */
-const PALETTE_SECTIONS = ['Filters', 'Tasks', 'Branching', 'Flow Control'] as const;
-
-function blockSummary(node: WorkflowNode): string {
-  const c = node.config as Record<string, unknown> | undefined;
-  switch (node.type) {
-    case 'userFilter': {
-      const cond = (c as UFConfig | undefined)?.condition;
-      const n = cond ? countConditionRules(cond) : 0;
-      return n ? `${n} condition${n > 1 ? 's' : ''}` : 'No conditions';
-    }
-    case 'assignEntities': {
-      const a = c as AEConfig | undefined;
-      const n = (a?.entitlements.length ?? 0) + (a?.technicalRoles.length ?? 0) + (a?.businessRoles.length ?? 0);
-      return n ? `${n} entit${n > 1 ? 'ies' : 'y'}${a?.approvalPolicyId ? ' · policy attached' : ''}` : 'Nothing selected yet';
-    }
-    case 'notification': {
-      const nc = c as NConfig | undefined;
-      const on = [nc?.email.enabled && 'Email', nc?.slack.enabled && 'Slack'].filter(Boolean);
-      return on.length ? on.join(' + ') : 'No channels enabled';
-    }
-    case 'multisplitBranch': {
-      const lanes = (node.branches ?? []).filter((b) => b.kind === 'split').length;
-      const attrs = (c as MSConfig | undefined)?.splitAttributes.length ?? 0;
-      return `${lanes} branches · ${attrs} attribute${attrs === 1 ? '' : 's'}`;
-    }
-    case 'wfConditionalBranch': {
-      const paths = (node.branches ?? []).filter((b) => b.kind === 'if' || b.kind === 'elseif').length;
-      return `${paths} condition path${paths === 1 ? '' : 's'} + fallback`;
-    }
-    case 'delay': {
-      const d = c as DlyConfig | undefined;
-      const parts = [d?.days && `${d.days}d`, d?.hours && `${d.hours}h`, d?.minutes && `${d.minutes}m`].filter(Boolean);
-      return parts.length ? `Wait ${parts.join(' ')}` : 'No delay set';
-    }
-    case 'waitForUser': {
-      const w = c as WFUConfig | undefined;
-      const parts = [w?.days && `${w.days}d`, w?.hours && `${w.hours}h`, w?.minutes && `${w.minutes}m`].filter(Boolean);
-      if (!w || !parts.length || w.connectionIds.length < 1) return 'Not configured';
-      const tries = w.unlimitedRetries ? '∞' : `${w.maxRetries} tries`;
-      const apps = `${w.connectionIds.length} app${w.connectionIds.length === 1 ? '' : 's'}`;
-      return `Every ${parts.join(' ')} · ${tries} · ${apps}`;
-    }
-    default:
-      return BLOCK_META[node.type].title;
-  }
-}
 
 type Hist = { doc: AutomationWorkflow; past: AutomationWorkflow[]; future: AutomationWorkflow[] };
 
@@ -387,7 +327,21 @@ export default function WorkflowBuilderPage() {
     setSavedSnapshot(JSON.stringify(saved));
     toast.success('Workflow activated');
   };
-  const goBack = () => (dirty ? setBackConfirm(true) : router.push('/iga/automation/workflows'));
+  /** Back goes to this workflow's detail page, not the list — the builder is
+      opened from the detail, so returning to the list would skip a level. */
+  const goBack = () => (dirty ? setBackConfirm(true) : router.push(`/iga/automation/workflows/${params.id}`));
+
+  // Without this the frame falls back to a generic "Automation Details" crumb.
+  // Same trail as the approval-policy builder: list → this record → the editor.
+  useSetBreadcrumbs(
+    doc
+      ? [
+          { label: 'Workflows', href: '/iga/automation/workflows' },
+          { label: doc.name, href: `/iga/automation/workflows/${params.id}` },
+          { label: 'Workflow builder' },
+        ]
+      : null,
+  );
 
   const allowedBlocks = paletteBlocksForEvent(doc?.event?.type);
   // Grouped by section so the quick-insert menu reads like the sidebar palette.
@@ -453,7 +407,16 @@ export default function WorkflowBuilderPage() {
       const entCount = (c.entitlements?.length ?? 0) + (c.technicalRoles?.length ?? 0) + (c.businessRoles?.length ?? 0);
       const critRules = c.criteria ? flattenRules(c.criteria) : [];
       const critValid = c.criteria ? isConditionGroupValid(c.criteria) : false;
-      const entSummary = entCount ? `${entCount} entit${entCount > 1 ? 'ies' : 'y'}${c.approvalPolicyName ? ` · ${c.approvalPolicyName}` : ''}` : 'Nothing selected yet';
+      // Birthright policies count separately: "3 entities" would misdescribe a
+      // bundle that stands in for a dozen grants.
+      const brCount = c.birthrightPolicies?.length ?? 0;
+      const entParts = [
+        entCount ? `${entCount} entit${entCount > 1 ? 'ies' : 'y'}` : null,
+        brCount ? `${brCount} birthright polic${brCount > 1 ? 'ies' : 'y'}` : null,
+      ].filter(Boolean);
+      const entSummary = entParts.length
+        ? `${entParts.join(' · ')}${c.approvalPolicyName ? ` · ${c.approvalPolicyName}` : ''}`
+        : 'Nothing selected yet';
       return (
         <div className="ds-node-in group relative flex flex-col items-center">
           {/* outer container with a legend pill */}
@@ -751,9 +714,22 @@ export default function WorkflowBuilderPage() {
       {/* header */}
       <div className="flex shrink-0 items-center justify-between border-b border-border bg-canvas px-5 py-2.5">
         <div className="flex items-center gap-3">
-          <button type="button" onClick={goBack} aria-label="Back to Workflows" className="grid h-8 w-8 place-items-center rounded-md text-icon hover:bg-surface-hover"><ArrowBackOutlined sx={{ fontSize: 20 }} /></button>
+          <button type="button" onClick={goBack} aria-label="Back to workflow details" className="grid h-8 w-8 place-items-center rounded-md text-icon hover:bg-surface-hover"><ArrowBackOutlined sx={{ fontSize: 20 }} /></button>
           <Avatar name={doc?.name ?? 'Workflow'} initials={(doc?.name ?? 'W').charAt(0).toUpperCase()} size="sm" />
-          <span className="text-h5 text-text-primary">{doc?.name ?? '…'}</span>
+          {/* Name owns the title weight; version is a qualifier — same baseline, quieter
+              type and colour — so “Version 1” never competes with the workflow name.
+              Matches the approval-policy builder exactly. */}
+          <span className="flex min-w-0 items-baseline">
+            <span className="truncate text-h5 text-text-primary">{doc?.name ?? '…'}</span>
+            {doc && (
+              <>
+                <span className="mx-1.5 shrink-0 text-body text-text-disabled" aria-hidden>
+                  –
+                </span>
+                <span className="shrink-0 text-body text-text-tertiary">Version 1</span>
+              </>
+            )}
+          </span>
           {doc && <StatusChip intent={doc.status === 'active' ? 'success' : 'neutral'} label={doc.status === 'active' ? 'Active' : 'Draft'} />}
           {dirty && <span className="text-caption text-text-tertiary">Unsaved changes</span>}
         </div>
@@ -830,7 +806,7 @@ export default function WorkflowBuilderPage() {
                   <p className="mb-2 px-1 text-caption leading-4 text-text-secondary">
                     {doc?.event
                       ? 'Remove the event from the canvas to choose a different lifecycle trigger.'
-                      : 'Drop one lifecycle event onto the canvas first.'}
+                      : 'Drop an event first to start adding components.'}
                   </p>
                   <div className="space-y-2">
                     {EVENT_TYPES.map((type) => {
@@ -1012,7 +988,7 @@ export default function WorkflowBuilderPage() {
         )}
       </div>
 
-      <Dialog open={backConfirm} onClose={() => setBackConfirm(false)} title="Discard unsaved changes?" tone="danger" confirmLabel="Discard" cancelLabel="Keep editing" onConfirm={() => router.push('/iga/automation/workflows')}>
+      <Dialog open={backConfirm} onClose={() => setBackConfirm(false)} title="Discard unsaved changes?" tone="danger" confirmLabel="Discard" cancelLabel="Keep editing" onConfirm={() => router.push(`/iga/automation/workflows/${params.id}`)}>
         You have unsaved changes to this workflow. Leaving now will discard them.
       </Dialog>
       <Dialog

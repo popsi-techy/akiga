@@ -119,8 +119,8 @@ for (const [k, s] of Object.entries(color.status)) {
 
 // --- Graphical / UI contrast (1.4.11, >= 3:1) ---
 checks.push({ label: 'icon.default on surface', fg: color.icon.default, bg: color.surface.default, min: AA_UI });
-// icon.subtle is not decorative: it is the InfoRow leading-icon column, the scan
-// target that lets the eye find a row without reading its label. It sits on cards
+// icon.subtle is not decorative: it carries de-emphasised but meaningful glyphs —
+// stage-card markers, hint affordances, stepper connectors. It sits on cards
 // (surface) and on bare rows (canvas), so both must clear 3:1.
 checks.push({ label: 'icon.subtle on surface', fg: color.icon.subtle, bg: color.surface.default, min: AA_UI });
 checks.push({ label: 'icon.subtle on canvas', fg: color.icon.subtle, bg: color.background.canvas, min: AA_UI });

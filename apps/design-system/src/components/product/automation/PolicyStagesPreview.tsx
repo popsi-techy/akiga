@@ -5,12 +5,10 @@ import PersonOutline from '@mui/icons-material/PersonOutline';
 import GroupsOutlined from '@mui/icons-material/GroupsOutlined';
 import TimerOutlined from '@mui/icons-material/TimerOutlined';
 import AltRouteOutlined from '@mui/icons-material/AltRouteOutlined';
-import MailOutline from '@mui/icons-material/MailOutline';
-import LogoutOutlined from '@mui/icons-material/LogoutOutlined';
 import UndoOutlined from '@mui/icons-material/UndoOutlined';
 import { StatusChip } from '@ds/components';
 import type { ApprovalPolicy } from '@/data/automation-types';
-import { toStages, type PolicyStage, type PolicyStageNote, type StageCondition } from '@/lib/policy-stages';
+import { toStages, type PolicyStage, type StageCondition } from '@/lib/policy-stages';
 
 /**
  * The Workflow tab's read-only view of an approval policy, as a **sequence of
@@ -156,32 +154,8 @@ function StageBlock({ stage, last }: { stage: PolicyStage; last: boolean }) {
   );
 }
 
-/**
- * A step that is not a decision but still happens. Deliberately un-numbered and
- * un-carded: it should be legible without ever being mistaken for a stage.
- */
-function NoteRow({ note }: { note: PolicyStageNote }) {
-  const exit = note.label === 'Exit';
-  return (
-    <li className="flex gap-4">
-      <div className="flex w-8 shrink-0 flex-col items-center">
-        <span aria-hidden className="w-px flex-1 bg-border" />
-      </div>
-      <div className="min-w-0 flex-1 pb-5">
-        <div className="flex items-center gap-2 rounded-md bg-subtle px-3 py-2">
-          <span className="shrink-0 text-icon-subtle">
-            {exit ? <LogoutOutlined sx={{ fontSize: 15 }} /> : <MailOutline sx={{ fontSize: 15 }} />}
-          </span>
-          <span className="shrink-0 text-caption-strong text-text-primary">{note.label}</span>
-          <span className="min-w-0 truncate text-caption text-text-secondary">{note.detail}</span>
-        </div>
-      </div>
-    </li>
-  );
-}
-
 export function PolicyStagesPreview({ policy }: { policy: ApprovalPolicy }) {
-  const { stages, notes } = React.useMemo(() => toStages(policy.root), [policy.root]);
+  const { stages } = React.useMemo(() => toStages(policy.root), [policy.root]);
 
   if (stages.length === 0) {
     return (
@@ -200,9 +174,6 @@ export function PolicyStagesPreview({ policy }: { policy: ApprovalPolicy }) {
     );
   }
 
-  // Notes are anchored to the stage they follow, so a notification before the
-  // first approval still renders above stage 1.
-  const notesAfter = (n: number) => notes.filter((x) => x.after === n);
   const incomplete = stages.filter((s) => !s.complete).length;
 
   return (
@@ -223,16 +194,8 @@ export function PolicyStagesPreview({ policy }: { policy: ApprovalPolicy }) {
       </div>
 
       <ol className="max-w-3xl">
-        {notesAfter(0).map((n, i) => (
-          <NoteRow key={`n0-${i}`} note={n} />
-        ))}
         {stages.map((s, i) => (
-          <React.Fragment key={s.nodeId}>
-            <StageBlock stage={s} last={i === stages.length - 1 && notesAfter(s.number).length === 0} />
-            {notesAfter(s.number).map((n, j) => (
-              <NoteRow key={`n-${s.number}-${j}`} note={n} />
-            ))}
-          </React.Fragment>
+          <StageBlock key={s.nodeId} stage={s} last={i === stages.length - 1} />
         ))}
       </ol>
     </div>

@@ -12,7 +12,7 @@ export type { CardProps } from './Card/Card';
 
 
 export { InfoRow, InfoRowGroup } from './InfoRow/InfoRow';
-export type { InfoRowProps } from './InfoRow/InfoRow';
+export type { InfoRowProps, InfoRowEmphasis } from './InfoRow/InfoRow';
 
 export { Avatar, AvatarGroup, initialsOf } from './Avatar/Avatar';
 export type { AvatarProps, AvatarGroupProps, AvatarSize, AvatarShape } from './Avatar/Avatar';

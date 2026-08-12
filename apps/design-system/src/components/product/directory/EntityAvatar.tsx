@@ -1,11 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import AccountBoxOutlined from '@mui/icons-material/AccountBoxOutlined';
-import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
-import EngineeringOutlined from '@mui/icons-material/EngineeringOutlined';
-import BadgeOutlined from '@mui/icons-material/BadgeOutlined';
-import GroupsOutlined from '@mui/icons-material/GroupsOutlined';
 import { Avatar } from '@ds/components';
 import { AppBadge } from '@/components/product/sod/labels';
 
@@ -18,33 +13,24 @@ export type EntityKind =
   | 'business-role'
   | 'governance-group';
 
-const ICON: Partial<Record<EntityKind, React.ComponentType<{ sx?: object }>>> = {
-  account: AccountBoxOutlined,
-  entitlement: VpnKeyOutlined,
-  'technical-role': EngineeringOutlined,
-  'business-role': BadgeOutlined,
-  'governance-group': GroupsOutlined,
-};
-
-function IconTile({ Icon, size }: { Icon: React.ComponentType<{ sx?: object }>; size: number }) {
-  return (
-    <span
-      className="inline-flex shrink-0 items-center justify-center rounded-md bg-brand-subtle text-brand"
-      style={{ width: size, height: size }}
-    >
-      <Icon sx={{ fontSize: Math.round(size * 0.55) }} />
-    </span>
-  );
-}
-
-/** One consistent visual per Directory entity: Avatar for people, AppBadge for
-    applications, a brand icon tile for accounts/entitlements/roles/groups. */
+/**
+ * One consistent visual per Directory entity.
+ *
+ * Everything gets a **letter avatar** — the entity's initial, brand on brand-tint
+ * — with one exception: an application shows its real logo (falling back to the
+ * same letter treatment when there isn't one), because a recognisable product
+ * mark identifies an app faster than any letter can.
+ *
+ * Entitlements, accounts, roles and groups used to get a per-kind icon tile: a
+ * key, a badge, a hard hat. That looked considered and wasn't — the kind is
+ * already stated by the page you are on and the label beside the mark, so the
+ * icon repeated it, while the *name* — the one thing that distinguishes two
+ * entitlements from each other — went unrepresented. A letter carries the name.
+ */
 export function EntityAvatar({ kind, name, size = 'sm' }: { kind: EntityKind; name: string; size?: 'sm' | 'md' }) {
   const px = size === 'md' ? 40 : 28;
-  if (kind === 'user') return <Avatar name={name} size={size} />;
   if (kind === 'application') return <AppBadge app={name} size={px} />;
-  const Icon = ICON[kind];
-  return Icon ? <IconTile Icon={Icon} size={px} /> : <Avatar name={name} size={size} />;
+  return <Avatar name={name} size={size} />;
 }
 
 export default EntityAvatar;

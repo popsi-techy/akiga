@@ -119,7 +119,15 @@ export function isBlockComplete(node: WorkflowNode): boolean {
     case 'assignEntities': {
       const c = node.config as AssignEntitiesConfig | undefined;
       if (!c) return false;
-      return c.entitlements.length + c.technicalRoles.length + c.businessRoles.length > 0;
+      // A birthright policy on its own is a complete assignment — the block
+      // grants whatever that policy grants.
+      return (
+        c.entitlements.length +
+          c.technicalRoles.length +
+          c.businessRoles.length +
+          (c.birthrightPolicies?.length ?? 0) >
+        0
+      );
     }
     case 'notification': {
       const c = node.config as NotificationConfig | undefined;

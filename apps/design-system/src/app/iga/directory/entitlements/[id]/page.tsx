@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, type TabItem } from '@ds/components';
-import { getEntitlementDetail } from '@/data/directory';
+import { getEntitlementDetail, type AppAccountRow } from '@/data/directory';
 import {
   DetailShell,
   DetailNotFound,
@@ -16,6 +16,7 @@ import {
   accountColumns,
   roleColumns,
   infoIcon,
+  AccountDetailsDrawer,
 } from '@/components/product/directory';
 
 const TABS: TabItem[] = [
@@ -30,6 +31,8 @@ export default function EntitlementDetailPage() {
   const id = String(useParams().id);
   const router = useRouter();
   const [tab, setTab] = React.useState('overview');
+  // Peek at a related account in place; the drawer offers its page as a second step.
+  const [peekAccount, setPeekAccount] = React.useState<AppAccountRow | null>(null);
   const detail = getEntitlementDetail(id);
 
   if (!detail) return <DetailNotFound title="Entitlement not found" backHref="/iga/directory/entitlements" backLabel="Back to Entitlements" />;
@@ -64,7 +67,7 @@ export default function EntitlementDetailPage() {
         <RelationTable
           columns={accountColumns}
           rows={accounts}
-          onRowClick={(r) => router.push(`/iga/directory/app-accounts/${r.id}`)}
+          onRowClick={(r) => setPeekAccount(r)}
           emptyTitle="No app accounts"
           emptyMessage="No accounts currently hold this entitlement."
         />
@@ -87,6 +90,12 @@ export default function EntitlementDetailPage() {
           emptyMessage="No business roles include this entitlement directly."
         />
       )}
+
+      <AccountDetailsDrawer
+        account={peekAccount}
+        open={peekAccount !== null}
+        onClose={() => setPeekAccount(null)}
+      />
     </DetailShell>
   );
 }

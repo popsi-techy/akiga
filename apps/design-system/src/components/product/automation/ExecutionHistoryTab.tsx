@@ -9,6 +9,7 @@ import ErrorOutlineOutlined from '@mui/icons-material/ErrorOutlineOutlined';
 import TrendingUpOutlined from '@mui/icons-material/TrendingUpOutlined';
 import MailOutline from '@mui/icons-material/MailOutline';
 import SkipNextOutlined from '@mui/icons-material/SkipNextOutlined';
+import TaskAltOutlined from '@mui/icons-material/TaskAltOutlined';
 import Person from '@mui/icons-material/Person';
 import CheckCircle from '@mui/icons-material/CheckCircle';
 import History from '@mui/icons-material/History';
@@ -26,6 +27,10 @@ import {
   type RunStep,
   type StepDecision,
 } from '@/data/approval-runs';
+import { listWorkflowRuns, workflowRunStats } from '@/data/workflow-runs';
+
+/** Neither id supplied — render the empty state rather than throwing. */
+const EMPTY_STATS = { total: 0, approved: 0, rejected: 0, running: 0, breached: 0, approvalRate: 0 };
 
 /* ------------------------------------------------------------------ *
  * Formatting — all relative to RUNS_AS_OF, never to the wall clock, so
@@ -76,6 +81,7 @@ const OUTCOME: Record<RunOutcome, { label: string; intent: 'success' | 'danger' 
   expired: { label: 'Expired', intent: 'caution', Icon: TimerOutlined },
   running: { label: 'Running', intent: 'info', Icon: HourglassEmptyOutlined },
   failed: { label: 'Failed', intent: 'danger', Icon: ErrorOutlineOutlined },
+  completed: { label: 'Completed', intent: 'success', Icon: CheckCircleOutlined },
 };
 
 const DECISION: Record<StepDecision, { label: string; tone: 'success' | 'danger' | 'neutral' | 'warning' | 'info'; Icon: React.ComponentType<{ sx?: object }> }> = {
@@ -87,6 +93,10 @@ const DECISION: Record<StepDecision, { label: string; tone: 'success' | 'danger'
   skipped: { label: 'Skipped', tone: 'warning', Icon: SkipNextOutlined },
   pending: { label: 'Waiting', tone: 'info', Icon: HourglassEmptyOutlined },
   escalated: { label: 'Escalated', tone: 'warning', Icon: TrendingUpOutlined },
+  // Workflow steps
+  matched: { label: 'Matched', tone: 'success', Icon: CheckCircleOutlined },
+  'no-match': { label: 'No match', tone: 'neutral', Icon: SkipNextOutlined },
+  assigned: { label: 'Assigned', tone: 'success', Icon: TaskAltOutlined },
 };
 
 const GRANT_INTENT: Record<RunGrant['result'], { label: string; intent: 'success' | 'danger' | 'neutral' | 'info' }> = {
@@ -237,7 +247,7 @@ function GrantsList({ grants }: { grants: RunGrant[] }) {
   );
 }
 
-function RunDetail({ run }: { run: ApprovalRun }) {
+function RunDetail({ run, isWorkflow }: { run: ApprovalRun; isWorkflow: boolean }) {
   const o = OUTCOME[run.outcome];
   return (
     <div className="ds-scroll h-full overflow-y-auto pr-0.5">
@@ -261,7 +271,7 @@ function RunDetail({ run }: { run: ApprovalRun }) {
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-5">
-          <Card title="Approval path" icon={<Person />} padding="none">
+          <Card title={isWorkflow ? 'Execution path' : 'Approval path'} icon={<Person />} padding="none">
             <StepTimeline steps={run.steps} />
           </Card>
 
@@ -297,9 +307,30 @@ function RunDetail({ run }: { run: ApprovalRun }) {
  * split is right because the question is always two-part — "which run?", then
  * "what happened in it?" — and a single table answers only the first.
  */
-export function ExecutionHistoryTab({ policyId }: { policyId: string }) {
-  const runs = React.useMemo(() => listRuns(policyId), [policyId]);
-  const stats = React.useMemo(() => runStats(policyId), [policyId]);
+/**
+ * Approval policies and workflows record runs in the same shape, so one history
+ * surface renders both — pass whichever id you have. The vocabulary differs only
+ * in the outcome and step labels, which the shared enums already carry.
+ */
+export function ExecutionHistoryTab({
+  policyId,
+  workflowId,
+}: {
+  policyId?: string;
+  workflowId?: string;
+}) {
+  // Approval and workflow runs share a record shape but not a vocabulary: a
+  // workflow completes rather than being approved, and its steps are an
+  // execution path, not an approval path.
+  const isWorkflow = Boolean(workflowId);
+  const runs = React.useMemo(
+    () => (workflowId ? listWorkflowRuns(workflowId) : policyId ? listRuns(policyId) : []),
+    [policyId, workflowId],
+  );
+  const stats = React.useMemo(
+    () => (workflowId ? workflowRunStats(workflowId) : policyId ? runStats(policyId) : EMPTY_STATS),
+    [policyId, workflowId],
+  );
   const [selectedId, setSelectedId] = React.useState<string | null>(runs[0]?.id ?? null);
   React.useEffect(() => setSelectedId(runs[0]?.id ?? null), [runs]);
 
@@ -335,7 +366,7 @@ export function ExecutionHistoryTab({ policyId }: { policyId: string }) {
             <span className="text-caption tabular-nums text-text-tertiary">{stats.total} total</span>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-caption text-text-secondary">
-            <span className="tabular-nums">{stats.approvalRate}% approved</span>
+            <span className="tabular-nums">{stats.approvalRate}% {isWorkflow ? 'completed' : 'approved'}</span>
             {stats.running > 0 && <span className="tabular-nums">{stats.running} running</span>}
             {stats.breached > 0 && (
               <span className="tabular-nums" style={{ color: 'var(--ds-color-status-warning-fg)' }}>
@@ -355,7 +386,7 @@ export function ExecutionHistoryTab({ policyId }: { policyId: string }) {
       </Card>
 
       {/* Right: the selected run */}
-      <div className="min-h-0 min-w-0">{selected && <RunDetail run={selected} />}</div>
+      <div className="min-h-0 min-w-0">{selected && <RunDetail run={selected} isWorkflow={isWorkflow} />}</div>
     </div>
   );
 }

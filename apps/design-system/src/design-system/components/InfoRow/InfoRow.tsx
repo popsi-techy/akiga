@@ -1,22 +1,44 @@
+'use client';
+
 import * as React from 'react';
 
 /**
  * InfoRow — label/value row for framed Card flush lists (padding="none").
  *
+ * Client component: the group shares its emphasis with its rows through context,
+ * and `createContext` is client-only.
+ *
  * Laid out like a two-column table via CSS subgrid: the label column shares one
  * width across the group so every value starts on the same left edge. The bottom
  * border is on the row (full width); the last row has no border.
  */
+
+/**
+ * Which half of the pair carries the weight.
+ *
+ * - `value` (default) — the label names the field quietly and the **value** is
+ *   emphasised. Right almost everywhere: on a detail rail you already know the
+ *   fields, and you are scanning for what they say.
+ * - `label` — the **label** is emphasised and the value recedes. For a summary
+ *   read cold, where the reader is learning *which* fields exist as much as what
+ *   is in them (e.g. a peek drawer opened from a table). Also darkens the icon
+ *   to `icon.default`, since the icon belongs to the label.
+ *
+ * Set it on `InfoRowGroup` — the whole group shares one emphasis, because a
+ * group with two of them has no hierarchy left to read.
+ */
+export type InfoRowEmphasis = 'value' | 'label';
+
+const EmphasisContext = React.createContext<InfoRowEmphasis>('value');
+
 export interface InfoRowProps {
   label: string;
   value: React.ReactNode;
   /**
    * Leading icon — **required**, and outlined at 18px (`sx={{ fontSize: 18 }}`).
-   * It inherits `icon.subtle` (#808B9E), so pass an uncoloured icon. Subtle, not
-   * `icon.default`: the icon column is a scan aid, and at 18px beside a
-   * `body-sm` label it should locate the row without competing with the value
-   * that the row exists to show. 3.44:1 on both surface and canvas — above the
-   * 3:1 WCAG 1.4.11 floor for non-text content.
+   * It inherits its colour from the group's emphasis, so pass an uncoloured icon:
+   * `icon.subtle` (#808B9E) by default, `icon.default` (#44546F) when the label
+   * leads. Both clear the 3:1 WCAG 1.4.11 floor on surface and canvas.
    *
    * Required rather than optional because a group of these is a scan target: the
    * icon column is what lets the eye find "Owners" without reading four labels,
@@ -30,6 +52,9 @@ export interface InfoRowProps {
 }
 
 export function InfoRow({ label, value, icon, className = '' }: InfoRowProps) {
+  const emphasis = React.useContext(EmphasisContext);
+  const labelLeads = emphasis === 'label';
+
   return (
     <div
       role="row"
@@ -40,13 +65,24 @@ export function InfoRow({ label, value, icon, className = '' }: InfoRowProps) {
         .filter(Boolean)
         .join(' ')}
     >
-      <div role="cell" className="flex min-w-0 items-center gap-2.5 py-3 text-body-sm text-text-secondary">
-        {icon != null && <span className="shrink-0 text-icon-subtle">{icon}</span>}
+      <div
+        role="cell"
+        className={[
+          'flex min-w-0 items-center gap-2.5 py-3',
+          labelLeads ? 'text-body-sm-strong text-text-primary' : 'text-body-sm text-text-secondary',
+        ].join(' ')}
+      >
+        {icon != null && (
+          <span className={['shrink-0', labelLeads ? 'text-icon' : 'text-icon-subtle'].join(' ')}>{icon}</span>
+        )}
         <span className="whitespace-nowrap">{label}</span>
       </div>
       <div
         role="cell"
-        className="min-w-0 truncate py-3 text-left text-body-sm-strong text-text-primary"
+        className={[
+          'min-w-0 truncate py-3 text-left',
+          labelLeads ? 'text-body-sm text-text-secondary' : 'text-body-sm-strong text-text-primary',
+        ].join(' ')}
       >
         {value}
       </div>
@@ -55,28 +91,30 @@ export function InfoRow({ label, value, icon, className = '' }: InfoRowProps) {
 }
 
 /**
- * Wraps InfoRows so they share one column layout (values line up) and full-width
- * row dividers.
+ * Wraps InfoRows so they share one column layout (values line up), full-width
+ * row dividers, and one emphasis.
  */
 export function InfoRowGroup({
   children,
+  emphasis = 'value',
   className = '',
 }: {
   children: React.ReactNode;
+  /** Which half carries the weight — see {@link InfoRowEmphasis}. @default 'value' */
+  emphasis?: InfoRowEmphasis;
   className?: string;
 }) {
   return (
-    <div
-      role="table"
-      className={[
-        'grid w-full grid-cols-[auto_minmax(0,1fr)] gap-x-4',
-        className,
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      {children}
-    </div>
+    <EmphasisContext.Provider value={emphasis}>
+      <div
+        role="table"
+        className={['grid w-full grid-cols-[auto_minmax(0,1fr)] gap-x-4', className]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {children}
+      </div>
+    </EmphasisContext.Provider>
   );
 }
 
