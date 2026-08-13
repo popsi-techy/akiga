@@ -26,6 +26,10 @@ import BoltOutlined from '@mui/icons-material/BoltOutlined';
 import FormatListNumberedOutlined from '@mui/icons-material/FormatListNumberedOutlined';
 import CategoryOutlined from '@mui/icons-material/CategoryOutlined';
 import InventoryOutlined from '@mui/icons-material/InventoryOutlined';
+import SyncOutlined from '@mui/icons-material/SyncOutlined';
+import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
+import TravelExploreOutlined from '@mui/icons-material/TravelExploreOutlined';
+import RuleOutlined from '@mui/icons-material/RuleOutlined';
 
 /**
  * The icon vocabulary for `InfoRow` label columns.
@@ -75,6 +79,14 @@ export const infoIcon = {
   duration: <TimerOutlined sx={px} />,
   steps: <FormatListNumberedOutlined sx={px} />,
   type: <CategoryOutlined sx={px} />,
+  /** A connector run — reconciliation, and anything else that pulls from a system. */
+  sync: <SyncOutlined sx={px} />,
+  /** Credentials IGA holds for a system. */
+  authorization: <VpnKeyOutlined sx={px} />,
+  /** How an application came to be known — an IAM found it, or it was added directly. */
+  discovery: <TravelExploreOutlined sx={px} />,
+  /** The access an application is expected to grant. */
+  baseline: <RuleOutlined sx={px} />,
   item: <InventoryOutlined sx={px} />,
 
   // Time.

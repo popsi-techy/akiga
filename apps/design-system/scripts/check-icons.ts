@@ -20,7 +20,7 @@
  *
  * Run: `npm run check:icons`
  */
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
@@ -54,7 +54,41 @@ const OUTLINE_SHAPED: Record<string, string> = {
   Timer: 'AvTimer',
 };
 
-type Hit = { file: string; line: number; icon: string };
+/**
+ * The same failure, caught mechanically instead of by name.
+ *
+ * For a genuinely filled icon MUI ships two different glyphs — `Person` has mass,
+ * `PersonOutlined` is a stroke. For a stroke-shaped one it ships the *same* path
+ * under both names, because there was never a filled drawing to begin with:
+ * `Sync` and `SyncOutlined` are byte-identical, as are `Schedule` and
+ * `ScheduleOutlined`. So comparing the two path sets answers "is this actually
+ * filled?" without anyone having to notice the smudge on screen first.
+ *
+ * This is what `OUTLINE_SHAPED` above was doing by hand. That list stays for the
+ * cases this cannot see — an icon whose sibling is named differently, or one
+ * with no Outlined sibling at all.
+ */
+const ICONS_DIR = join(__dirname, '..', 'node_modules', '@mui', 'icons-material');
+
+function glyph(name: string): string | null {
+  const file = join(ICONS_DIR, `${name}.js`);
+  if (!existsSync(file)) return null;
+  const paths = readFileSync(file, 'utf8').match(/d:\s*"[^"]*"/g);
+  return paths ? paths.join('|') : null;
+}
+
+const strokeShapedCache = new Map<string, boolean>();
+function isStrokeShaped(name: string): boolean {
+  const cached = strokeShapedCache.get(name);
+  if (cached !== undefined) return cached;
+  const filled = glyph(name);
+  const outlined = glyph(`${name}Outlined`);
+  const same = filled !== null && outlined !== null && filled === outlined;
+  strokeShapedCache.set(name, same);
+  return same;
+}
+
+type Hit = { file: string; line: number; icon: string; reason: 'suffix' | 'named' | 'identical' };
 const errors: Hit[] = [];
 let checked = 0;
 
@@ -74,8 +108,15 @@ function walk(dir: string) {
     while ((match = CARD_ICON.exec(source))) {
       checked += 1;
       const icon = match[1];
-      if (!isOutlined(icon) && !(icon in OUTLINE_SHAPED)) continue;
-      errors.push({ file: rel, line: source.slice(0, match.index).split('\n').length, icon });
+      const reason: Hit['reason'] | null = isOutlined(icon)
+        ? 'suffix'
+        : icon in OUTLINE_SHAPED
+          ? 'named'
+          : isStrokeShaped(icon)
+            ? 'identical'
+            : null;
+      if (!reason) continue;
+      errors.push({ file: rel, line: source.slice(0, match.index).split('\n').length, icon, reason });
     }
   }
 }
@@ -88,8 +129,14 @@ if (errors.length > 0) {
   console.error(`  ✗ ${errors.length} outlined icon(s) passed to a Card. At 15px an outlined glyph reads as a smudge.\n`);
   for (const e of errors) {
     const filled = OUTLINE_SHAPED[e.icon] ?? e.icon.replace(/Outlined$|Outline$/, '');
-    const why = OUTLINE_SHAPED[e.icon] ? ' (drawn as a stroke despite the unsuffixed name)' : '';
-    console.error(`      ${e.file}:${e.line}  <Card icon={<${e.icon} />}${why}  →  use <${filled} />`);
+    const why =
+      e.reason === 'named'
+        ? ' (drawn as a stroke despite the unsuffixed name)'
+        : e.reason === 'identical'
+          ? ` (identical path to ${e.icon}Outlined — MUI has no filled drawing for it)`
+          : '';
+    const fix = e.reason === 'identical' ? 'pick a genuinely filled icon' : `use <${filled} />`;
+    console.error(`      ${e.file}:${e.line}  <Card icon={<${e.icon} />}${why}  →  ${fix}`);
   }
   console.error('');
   process.exit(1);
