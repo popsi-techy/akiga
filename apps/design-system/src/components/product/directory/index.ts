@@ -17,3 +17,5 @@ export { AttributeMappingDrawer } from './AttributeMappingDrawer';
 export { BaselineDrawer } from './BaselineDrawer';
 export { BaselineGovernanceTab } from './BaselineGovernanceTab';
 export { ApplicationOverviewTab } from './ApplicationOverviewTab';
+export { AccountAccessVariants } from './AccountAccessVariants';
+export { ACCOUNT_PEEK_VARIANTS, type AccountPeekVariant } from './AccountAccessVariants';

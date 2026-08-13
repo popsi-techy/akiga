@@ -17,6 +17,83 @@ import { infoIcon } from './infoIcons';
  * the row answers it in place, and offers the full page as a deliberate second
  * step rather than an accident.
  */
+/**
+ * The account summary itself, independent of what contains it.
+ *
+ * Extracted so the overlay drawer and the inline panel show the same thing:
+ * two copies of these rows would drift the moment one gained a field.
+ */
+export function AccountDetailsBody({
+  account,
+  surface = 'card',
+}: {
+  account: AppAccountRow;
+  /** `bare` drops the bordered card — for containers that already have a border. */
+  surface?: 'card' | 'bare';
+}) {
+  const detail = React.useMemo(() => getAppAccountDetail(account.id), [account.id]);
+  const identity = React.useMemo(
+    () => (account.identityId ? getUserIdentityDetail(account.identityId)?.identity ?? null : null),
+    [account.identityId],
+  );
+
+  const entitlements = detail?.entitlements ?? [];
+  // Two names, then a count — the full list belongs on the account's own page.
+  const entitlementSummary =
+    entitlements.length === 0
+      ? 'None'
+      : entitlements
+          .slice(0, 2)
+          .map((e) => e.name)
+          .join(', ') + (entitlements.length > 2 ? ` +${entitlements.length - 2}` : '');
+
+  // `emphasis="label"`: read cold, opened from a table row, so the reader is
+  // learning which fields exist as much as what is in them. Detail rails keep
+  // the default, where the value leads.
+  // `bare` drops the row gutter too — its container supplies the inset, so the
+  // dividers stop at the gutter instead of running to the panel edge.
+  const pad = surface === 'card' ? 'px-5' : '';
+  const rows = (
+    <InfoRowGroup
+      emphasis="label"
+      className={surface === 'card' ? '-mx-5 w-[calc(100%+2.5rem)]' : undefined}
+    >
+      <InfoRow className={pad} icon={infoIcon.account} label="Account" value={account.accountName} />
+        <InfoRow className={pad} icon={infoIcon.email} label="Email" value={account.email || '—'} />
+        <InfoRow className={pad} icon={infoIcon.application} label="Application" value={account.applicationName} />
+        <InfoRow
+          className={pad}
+          icon={infoIcon.person}
+          label="Linked identity"
+          value={
+            account.orphan || !account.identityName ? (
+              <span className="flex items-center gap-2">
+                <span className="text-text-tertiary">Not linked</span>
+                <StatusChip intent="warning" label="Orphan" />
+              </span>
+            ) : (
+              account.identityName
+            )
+          }
+        />
+        {identity && (
+          <>
+            <InfoRow className={pad} icon={infoIcon.jobTitle} label="Job title" value={identity.jobTitle} />
+            <InfoRow className={pad} icon={infoIcon.department} label="Department" value={identity.department} />
+          </>
+        )}
+        <InfoRow
+          className={pad}
+          icon={infoIcon.entitlement}
+          label={`Entitlements (${entitlements.length})`}
+          value={entitlementSummary}
+        />
+    </InfoRowGroup>
+  );
+
+  return surface === 'card' ? <Card padding="none">{rows}</Card> : rows;
+}
+
 export function AccountDetailsDrawer({
   account,
   open,
@@ -28,26 +105,7 @@ export function AccountDetailsDrawer({
 }) {
   const router = useRouter();
 
-  const detail = React.useMemo(
-    () => (account ? getAppAccountDetail(account.id) : null),
-    [account],
-  );
-  const identity = React.useMemo(
-    () => (account?.identityId ? getUserIdentityDetail(account.identityId)?.identity ?? null : null),
-    [account],
-  );
-
   if (!account) return null;
-
-  const entitlements = detail?.entitlements ?? [];
-  // Two names, then a count — the full list belongs on the account's own page.
-  const entitlementSummary =
-    entitlements.length === 0
-      ? 'None'
-      : entitlements
-          .slice(0, 2)
-          .map((e) => e.name)
-          .join(', ') + (entitlements.length > 2 ? ` +${entitlements.length - 2}` : '');
 
   return (
     <Drawer
@@ -74,47 +132,7 @@ export function AccountDetailsDrawer({
         </>
       }
     >
-      {/* Cancels Card's `padding="none"` gutter so the dividers reach the card's
-          edges; each row then carries its own `px-5`. The explicit width is
-          required: `InfoRowGroup` is `w-full`, so a bare `-mx-5` would shift the
-          group left without widening it and leave the rules 40px short on the
-          right. Same inset as before — the rules just read as one continuous
-          list instead of a stack of short lines. */}
-      <Card padding="none">
-        {/* `emphasis="label"`: this drawer is read cold, opened from a table row,
-            so the reader is learning which fields exist as much as what is in
-            them. Detail rails keep the default, where the value leads. */}
-        <InfoRowGroup emphasis="label" className="-mx-5 w-[calc(100%+2.5rem)]">
-          <InfoRow className="px-5" icon={infoIcon.account} label="Account" value={account.accountName} />
-          <InfoRow className="px-5" icon={infoIcon.email} label="Email" value={account.email || '—'} />
-          <InfoRow className="px-5" icon={infoIcon.application} label="Application" value={account.applicationName} />
-          <InfoRow className="px-5"
-            icon={infoIcon.person}
-            label="Linked identity"
-            value={
-              account.orphan || !account.identityName ? (
-                <span className="flex items-center gap-2">
-                  <span className="text-text-tertiary">Not linked</span>
-                  <StatusChip intent="warning" label="Orphan" />
-                </span>
-              ) : (
-                account.identityName
-              )
-            }
-          />
-          {identity && (
-            <>
-              <InfoRow className="px-5" icon={infoIcon.jobTitle} label="Job title" value={identity.jobTitle} />
-              <InfoRow className="px-5" icon={infoIcon.department} label="Department" value={identity.department} />
-            </>
-          )}
-          <InfoRow className="px-5"
-            icon={infoIcon.entitlement}
-            label={`Entitlements (${entitlements.length})`}
-            value={entitlementSummary}
-          />
-        </InfoRowGroup>
-      </Card>
+      <AccountDetailsBody account={account} />
     </Drawer>
   );
 }

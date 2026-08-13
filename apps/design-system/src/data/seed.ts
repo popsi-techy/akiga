@@ -237,6 +237,11 @@ export const catalogApps: { id: string; name: string; description: string; owner
     { id: 'ent-okta-admin', name: 'Super Admin', description: 'Full tenant administration and user management.', risk: 88, ownerIds: ['o-marcus'] },
     { id: 'ent-okta-ro', name: 'Read-only Admin', description: 'View-only access to admin console.', risk: 32, ownerIds: ['o-henry'] },
     { id: 'ent-okta-user', name: 'Standard User', description: 'Standard sign-in access for end users.', risk: 8, ownerIds: ['o-henry'] },
+    // Demo fixture: the entitlement whose App Accounts tab compares three ways
+    // of revealing an account's details. Held by a deliberate spread — orphan,
+    // no email, long name — so each variation is judged against awkward rows
+    // rather than tidy ones.
+    { id: 'ent-testent', name: 'testent', description: 'Test entitlement used to compare account-detail interactions.', risk: 45, ownerIds: ['o-henry'] },
   ] },
   { id: 'app-salesforce', name: 'Salesforce', description: 'CRM for sales, service, and marketing teams.', ownerIds: ['o-bob', 'o-henry'], entitlements: [
     { id: 'ent-sf-admin', name: 'System Administrator', description: 'Manage org configuration, users, and data.', risk: 84, ownerIds: ['o-bob'] },
@@ -342,10 +347,12 @@ export const appAccounts: SeedAppAccount[] = [
   { id: 'aa-bob-aws', accountName: 'bsmith', email: 'bob.smith@acme.com', applicationId: 'app-aws', identityId: 'o-bob', entitlementIds: ['ent-aws-ro'] },
   { id: 'aa-daniel-sf', accountName: 'daniel.white@acme.com', email: 'daniel.white@acme.com', applicationId: 'app-salesforce', identityId: 'o-daniel', entitlementIds: ['ent-sf-sales'] },
   { id: 'aa-grace-sf', accountName: 'grace.lee@acme.com', email: 'grace.lee@acme.com', applicationId: 'app-salesforce', identityId: 'o-grace', entitlementIds: ['ent-sf-service'] },
-  { id: 'aa-emily-okta', accountName: 'emily.davis', email: 'emily.davis@acme.com', applicationId: 'app-okta', identityId: 'o-emily', entitlementIds: ['ent-okta-user'] },
-  { id: 'aa-catherine-okta', accountName: 'catherine.brown', email: 'catherine.brown@acme.com', applicationId: 'app-okta', identityId: 'o-catherine', entitlementIds: ['ent-okta-ro'] },
+  { id: 'aa-emily-okta', accountName: 'emily.davis', email: 'emily.davis@acme.com', applicationId: 'app-okta', identityId: 'o-emily', entitlementIds: ['ent-okta-user', 'ent-testent'] },
+  { id: 'aa-catherine-okta', accountName: 'catherine.brown', email: 'catherine.brown@acme.com', applicationId: 'app-okta', identityId: 'o-catherine', entitlementIds: ['ent-okta-ro', 'ent-testent'] },
   { id: 'aa-catherine-aws', accountName: 'cbrown', email: 'catherine.brown@acme.com', applicationId: 'app-aws', identityId: 'o-catherine', entitlementIds: ['ent-aws-ro'] },
-  { id: 'aa-henry-okta', accountName: 'henry.taylor', email: 'henry.taylor@acme.com', applicationId: 'app-okta', identityId: 'o-henry', entitlementIds: ['ent-okta-ro'] },
+  { id: 'aa-henry-okta', accountName: 'henry.taylor', email: 'henry.taylor@acme.com', applicationId: 'app-okta', identityId: 'o-henry', entitlementIds: ['ent-okta-ro', 'ent-testent'] },
+  // Awkward rows for the demo: no owning identity, and no email.
+  { id: 'aa-orphan-okta', accountName: 'svc-okta-provisioning', email: '', applicationId: 'app-okta', identityId: null, entitlementIds: ['ent-testent'] },
   { id: 'aa-sofia-github', accountName: 'sofia-r', email: 'sofia.rossi@acme.com', applicationId: 'app-github', identityId: 'o-sofia', entitlementIds: ['ent-gh-write'] },
   { id: 'aa-hana-sf', accountName: 'hana.kim@acme.com', email: 'hana.kim@acme.com', applicationId: 'app-salesforce', identityId: 'o-hana', entitlementIds: ['ent-sf-sales'] },
   { id: 'aa-orphan-sf', accountName: 'svc-integration', email: 'integration@acme.com', applicationId: 'app-salesforce', identityId: null, entitlementIds: ['ent-sf-service'] },
