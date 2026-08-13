@@ -10,6 +10,11 @@ import {
   userIdentities,
   appAccounts,
   catalogApps,
+  appProfileFor,
+  type AppDiscoverySource,
+  type AppAuthorizationStatus,
+  type AppExternalProvisioning,
+  type AppProvisioningType,
   technicalRoles,
   businessRoles,
   governanceGroups,
@@ -19,6 +24,11 @@ import {
   type RiskLevel,
   type IdentityStatus,
 } from './seed';
+import {
+  listOnboardedApplications,
+  getOnboardedApplication,
+  type OnboardedApplication,
+} from './applications-store';
 
 // ---- back-compat (consumed by automation approver pickers) ------------
 export interface DirUser {
@@ -96,6 +106,12 @@ export interface ApplicationRow {
   ownerCount: number;
   accountCount: number;
   entitlementCount: number;
+  /** Integration facts — see `appProfiles` in the seed. */
+  appType: string;
+  discoverySource: AppDiscoverySource;
+  authorizationStatus: AppAuthorizationStatus;
+  externalProvisioning: AppExternalProvisioning;
+  provisioningType: AppProvisioningType;
 }
 export interface EntitlementRow {
   id: string;
@@ -202,7 +218,47 @@ export function getAppAccountDetail(id: string) {
 }
 
 // ---- Application -----------------------------------------------------
-export function listApplications(): ApplicationRow[] {
+type CatalogApp = (typeof catalogApps)[number];
+
+/**
+ * A just-onboarded application, in the same shape as a catalogued one.
+ *
+ * It has no accounts, entitlements or owners yet — that is the honest state of
+ * an application whose connector has not run a sync, and the detail page's
+ * empty states already say so. The integration facts come from the form rather
+ * than the seed: an IAM-sourced type means the app was discovered through an
+ * IAM, and provisioning follows the toggle the admin just set.
+ */
+const onboardedApp = (a: OnboardedApplication): CatalogApp => ({
+  id: a.id,
+  name: a.name,
+  description: `Onboarded from ${a.appType}.`,
+  ownerIds: [],
+  entitlements: [],
+});
+
+const onboardedRow = (a: OnboardedApplication): ApplicationRow => ({
+  id: a.id,
+  name: a.name,
+  description: `Onboarded from ${a.appType}.`,
+  ownerCount: 0,
+  accountCount: 0,
+  entitlementCount: 0,
+  appType: a.appType,
+  discoverySource: a.appTypeCategory === 'iam' ? 'IAM' : 'Direct',
+  authorizationStatus: 'authorized',
+  externalProvisioning: a.enableProvisioning ? 'enabled' : 'disabled',
+  provisioningType: a.enableProvisioning ? 'auto' : 'manual',
+});
+
+/**
+ * The seeded catalog only — identical on the server and the client.
+ *
+ * Split out from `listApplications` so a page can paint these immediately and
+ * merge the localStorage-backed half after mount, instead of rendering an empty
+ * table (and its "no applications" message) for one frame.
+ */
+export function listCataloguedApplications(): ApplicationRow[] {
   return catalogApps.map((app) => ({
     id: app.id,
     name: app.name,
@@ -210,9 +266,26 @@ export function listApplications(): ApplicationRow[] {
     ownerCount: app.ownerIds.length,
     accountCount: appAccounts.filter((a) => a.applicationId === app.id).length,
     entitlementCount: app.entitlements.length,
+    ...appProfileFor(app.id),
   }));
 }
+
+/** Browser-only: empty during server render. */
+export function listOnboardedApplicationRows(): ApplicationRow[] {
+  return listOnboardedApplications().map(onboardedRow);
+}
+
+export function listApplications(): ApplicationRow[] {
+  // Onboarded first: the one you just added is the one you came back to see.
+  return [...listOnboardedApplicationRows(), ...listCataloguedApplications()];
+}
 export function getApplicationDetail(id: string) {
+  const onboarded = getOnboardedApplication(id);
+  if (onboarded) {
+    // Typed empties, so the two branches produce one return type rather than a
+    // union that callers have to narrow before they can sort or filter.
+    return { app: onboardedApp(onboarded), accounts: [] as AppAccountRow[], entitlements: [] as EntitlementRow[] };
+  }
   const app = appById.get(id);
   if (!app) return null;
   return {

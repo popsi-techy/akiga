@@ -1,7 +1,19 @@
 'use client';
 
 import * as React from 'react';
-import { siAmazonwebservices, siGoogle, siSap, siSalesforce, type SimpleIcon } from 'simple-icons/icons';
+import {
+  siAmazonwebservices,
+  siGithub,
+  siGoogle,
+  siHashicorp,
+  siJira,
+  siOkta,
+  siSalesforce,
+  siSap,
+  siSlack,
+  siSnowflake,
+  type SimpleIcon,
+} from 'simple-icons/icons';
 
 /**
  * AppIcon — compact application mark. Renders a real brand logo when the app
@@ -18,11 +30,18 @@ export interface AppIconProps {
   variant?: 'subtle' | 'surface';
 }
 
+/** Matched in order, so a longer product name wins over a looser pattern. */
 const CATALOG: { match: RegExp; icon: SimpleIcon }[] = [
   { match: /sap/i, icon: siSap },
   { match: /salesforce/i, icon: siSalesforce },
   { match: /\baws\b|amazon\s*web\s*services/i, icon: siAmazonwebservices },
   { match: /google/i, icon: siGoogle },
+  { match: /github/i, icon: siGithub },
+  { match: /slack/i, icon: siSlack },
+  { match: /okta/i, icon: siOkta },
+  { match: /jira/i, icon: siJira },
+  { match: /snowflake/i, icon: siSnowflake },
+  { match: /hashicorp/i, icon: siHashicorp },
 ];
 
 export function resolveAppIcon(app: string): SimpleIcon | null {

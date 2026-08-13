@@ -78,6 +78,7 @@ const groups: { title: string; description: string; items: [string, string, stri
     description: 'Four surfaces, four jobs. Picking the wrong one is the most common overlay mistake.',
     items: [
       ['Drawer', '/components/drawer', 'Right-side panel for long forms and browsing.'],
+      ['Filter Drawer', '/components/filter-drawer', 'Two-pane filtering — categories left, options right, staged until Apply.'],
       ['Modal', '/components/modal', 'Centered panel for a short form or a rich decision.'],
       ['Dialog', '/components/dialog', 'Focused prompt for confirmations and consequences.'],
       ['Toast', '/components/toast', 'Transient feedback with a depleting progress bar.'],

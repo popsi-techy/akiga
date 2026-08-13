@@ -4,6 +4,8 @@ import * as React from 'react';
 import { typography } from '../../tokens/tokens';
 import TextField, { type TextFieldProps } from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
+import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 /**
  * Input — text field extended from MUI, themed by tokens.
@@ -14,6 +16,13 @@ import InputAdornment from '@mui/material/InputAdornment';
 export interface InputProps
   extends Omit<TextFieldProps, 'variant' | 'size' | 'error' | 'color' | 'label'> {
   label?: string;
+  /**
+   * Explanation shown in a tooltip on an info icon beside the label. For the
+   * sentence a user only needs once — `helperText` is for what they need every
+   * time, and putting it there would leave a permanent paragraph under a field
+   * whose meaning is obvious after the first read.
+   */
+  hint?: React.ReactNode;
   helperText?: React.ReactNode;
   /** Error message; presence sets the error state. */
   error?: string;
@@ -24,6 +33,7 @@ export interface InputProps
 
 export function Input({
   label,
+  hint,
   helperText,
   error,
   required,
@@ -43,14 +53,28 @@ export function Input({
       {label && (
         <label
           htmlFor={fieldId}
-          className="mb-1.5 block text-body-sm-strong text-text-primary"
+          className="mb-1.5 flex items-center gap-1.5 text-body-sm-strong text-text-primary"
         >
-          {label}
-          {required && (
-            <span aria-hidden className="text-danger">
-              {' '}
-              *
-            </span>
+          <span>
+            {label}
+            {required && (
+              <span aria-hidden className="text-danger">
+                {' '}
+                *
+              </span>
+            )}
+          </span>
+          {hint && (
+            <Tooltip title={hint}>
+              {/* Focusable so the explanation is reachable without a pointer. */}
+              <span
+                tabIndex={0}
+                aria-label={typeof hint === 'string' ? hint : undefined}
+                className="inline-flex shrink-0 text-icon-subtle"
+              >
+                <InfoOutlined sx={{ fontSize: 15 }} />
+              </span>
+            </Tooltip>
           )}
         </label>
       )}

@@ -208,11 +208,6 @@ export default function ApplicationDetailPage() {
           <Button variant="secondary" startIcon={<EditOutlined />} onClick={() => toast.info('Edit basic details')}>
             Basic Details
           </Button>
-          <Link href="/iga/governance-explorer">
-            <Button variant="secondary" startIcon={<SchemaOutlined />}>
-              Governance Model
-            </Button>
-          </Link>
           {/* No Duplicate: an application is a connector to a real external system,
               not a document. Copying the record would claim a second Okta exists. */}
           <Menu

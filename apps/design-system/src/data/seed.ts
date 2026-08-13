@@ -184,6 +184,54 @@ export const approvalPolicySeed: import('./automation-types').ApprovalPolicy[] =
 
 /** Application + entitlement catalog — selectable in Assign Entities and the Directory.
     `ownerIds` reference User Identities (see `userIdentities`). */
+/**
+ * How each application is *connected*, as opposed to what it contains.
+ *
+ * Kept beside `catalogApps` rather than inside it: the catalog entry is about
+ * access (entitlements, owners) and these are integration facts — how we found
+ * the app, whether we are cleared to manage it, and whether we push changes back.
+ * They also change on a different cadence, from the connector rather than from
+ * governance.
+ */
+export type AppDiscoverySource = 'IAM' | 'Direct';
+export type AppAuthorizationStatus = 'authorized' | 'pending';
+export type AppExternalProvisioning = 'enabled' | 'disabled';
+export type AppProvisioningType = 'manual' | 'auto';
+
+export interface AppProfile {
+  /**
+   * The connector the instance was created from — Salesforce, Okta, AWS.
+   *
+   * Not a category (CRM, ERP): when the add-application flow lands, the user
+   * picks a type from the application-type catalog and then types the *name* this
+   * instance carries through IGA. Two Salesforce tenants therefore share one
+   * type and differ by name. Every seeded app is currently named after its own
+   * connector, so today the two columns read alike.
+   */
+  appType: string;
+  discoverySource: AppDiscoverySource;
+  authorizationStatus: AppAuthorizationStatus;
+  externalProvisioning: AppExternalProvisioning;
+  provisioningType: AppProvisioningType;
+}
+
+export const appProfiles: Record<string, AppProfile> = {
+  'app-okta': { appType: 'Okta', discoverySource: 'Direct', authorizationStatus: 'authorized', externalProvisioning: 'enabled', provisioningType: 'auto' },
+  'app-salesforce': { appType: 'Salesforce', discoverySource: 'IAM', authorizationStatus: 'authorized', externalProvisioning: 'enabled', provisioningType: 'auto' },
+  'app-github': { appType: 'GitHub', discoverySource: 'IAM', authorizationStatus: 'authorized', externalProvisioning: 'enabled', provisioningType: 'manual' },
+  'app-aws': { appType: 'AWS', discoverySource: 'Direct', authorizationStatus: 'authorized', externalProvisioning: 'enabled', provisioningType: 'auto' },
+  'app-sap': { appType: 'SAP', discoverySource: 'Direct', authorizationStatus: 'pending', externalProvisioning: 'disabled', provisioningType: 'manual' },
+  'app-workday': { appType: 'Workday', discoverySource: 'IAM', authorizationStatus: 'authorized', externalProvisioning: 'enabled', provisioningType: 'auto' },
+  'app-servicenow': { appType: 'ServiceNow', discoverySource: 'IAM', authorizationStatus: 'authorized', externalProvisioning: 'disabled', provisioningType: 'manual' },
+  'app-snowflake': { appType: 'Snowflake', discoverySource: 'Direct', authorizationStatus: 'pending', externalProvisioning: 'disabled', provisioningType: 'manual' },
+  'app-netsuite': { appType: 'NetSuite', discoverySource: 'IAM', authorizationStatus: 'authorized', externalProvisioning: 'enabled', provisioningType: 'auto' },
+  'app-jira': { appType: 'Jira', discoverySource: 'IAM', authorizationStatus: 'authorized', externalProvisioning: 'enabled', provisioningType: 'manual' },
+};
+
+/** Falls back rather than throwing, so a newly-seeded app still lists. */
+export const appProfileFor = (id: string): AppProfile =>
+  appProfiles[id] ?? { appType: 'Unknown', discoverySource: 'Direct', authorizationStatus: 'pending', externalProvisioning: 'disabled', provisioningType: 'manual' };
+
 export const catalogApps: { id: string; name: string; description: string; ownerIds: string[]; entitlements: { id: string; name: string; description: string; risk: number; ownerIds: string[] }[] }[] = [
   { id: 'app-okta', name: 'Okta', description: 'Workforce identity & single sign-on.', ownerIds: ['o-marcus', 'o-henry'], entitlements: [
     { id: 'ent-okta-admin', name: 'Super Admin', description: 'Full tenant administration and user management.', risk: 88, ownerIds: ['o-marcus'] },

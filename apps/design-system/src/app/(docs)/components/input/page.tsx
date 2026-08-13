@@ -39,6 +39,21 @@ export default function InputDocs() {
         </Example>
       </Section>
 
+      <Section
+        title="Hint vs helper text"
+        description="helperText is always on screen, so it is for what the user needs every time they fill the field. hint hides the sentence behind an info icon on the label — use it for the explanation that is only needed on first acquaintance, and keep the form scannable afterwards."
+      >
+        <Example label="hint on the label">
+          <div className="w-72">
+            <Input
+              label="Application Prefix"
+              hint="Prepended to account names imported from this application, so their origin is readable at a glance."
+              placeholder="Enter Application Prefix"
+            />
+          </div>
+        </Example>
+      </Section>
+
       <Section title="Sizes">
         <Example label="sm · md">
           <div className="w-56"><Input label="Small" size="sm" /></div>
@@ -52,6 +67,7 @@ export default function InputDocs() {
             { name: 'label', type: 'string', description: 'Always-visible field label.' },
             { name: 'error', type: 'string', description: 'Error message; presence sets the error state.' },
             { name: 'helperText', type: 'ReactNode', description: 'Guidance shown under the field.' },
+            { name: 'hint', type: 'ReactNode', description: 'Explanation on an info icon beside the label — for what a user needs once, not every time.' },
             { name: 'startAdornment / endAdornment', type: 'ReactNode', description: 'Leading/trailing content (icon, unit).' },
             { name: 'size', type: "'sm' | 'md'", default: "'md'", description: 'Control height.' },
             { name: '…TextFieldProps', type: 'MUI props', description: 'value, onChange, placeholder, type, etc. pass through.' },

@@ -97,6 +97,7 @@ export const navigation: NavSection[] = [
     title: 'Overlays',
     items: [
       { label: 'Drawer', href: '/components/drawer', status: 'ready' },
+      { label: 'Filter Drawer', href: '/components/filter-drawer', status: 'ready' },
       { label: 'Modal', href: '/components/modal', status: 'ready' },
       { label: 'Dialog', href: '/components/dialog', status: 'ready' },
       { label: 'Toast', href: '/components/toast', status: 'ready' },

@@ -16,7 +16,7 @@
         "letter-fallback"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/app-icon/page.tsx",
-      "notes": "Brand logos via Simple Icons (CC0) when the app name matches the catalog (SAP, Salesforce, AWS, Google); otherwise first-letter tile. Product AppBadge appearance=\"logo\" consumes this. Used first on SoD Resolution V3."
+      "notes": "Brand logos via Simple Icons (CC0) when the app name matches the catalog (SAP, Salesforce, AWS, Google, GitHub, Slack, Okta, Jira, Snowflake, HashiCorp); otherwise first-letter tile. Product AppBadge appearance=\"logo\" consumes this. Used on SoD Resolution V3 and the application-type catalog."
     },
     {
       "name": "Avatar",
@@ -268,7 +268,7 @@
         "read-only"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/input/page.tsx",
-      "notes": "Shares the control-height scale with Select, DatePicker, TimePicker and Button. Error is driven by the presence of the `error` message, not a separate boolean."
+      "notes": "Shares the control-height scale with Select, DatePicker, TimePicker and Button. Error is driven by the presence of the `error` message, not a separate boolean. `hint` puts an explanation on an info icon beside the label, for what a user needs once; `helperText` stays on screen, for what they need every time."
     },
     {
       "name": "Menu",
@@ -308,6 +308,22 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/components/meter/page.tsx",
       "notes": "Tones resolve to the status *fill* roles, not the text roles: a bar is a graphical object under WCAG 1.4.11, and the text roles read heavy as a solid block. Always show the number in text as well — the bar is the shape, not the value."
+    },
+    {
+      "name": "FilterDrawer",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/FilterDrawer/FilterDrawer.tsx",
+      "extends": null,
+      "variants": [
+        "checkbox-group"
+      ],
+      "states": [
+        "empty",
+        "staged",
+        "applied"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/filter-drawer/page.tsx",
+      "notes": "The product's one filtering surface: categories in a left rail, the selected category's options as a searchable, paginated checkbox table on the right. A drawer, matching every other pick-from-a-catalog surface (Add Owners, Add Technical Roles, Assign Reviewer). Staged — nothing changes until Apply, so Cancel has something to discard and the list never reorders under the cursor mid-decision. One option kind today (checkbox list); FilterGroup is shaped to take ranges and dates as further kinds without disturbing it."
     },
     {
       "name": "Modal",

@@ -4,8 +4,8 @@ import * as React from 'react';
 import { PageHeader, Section, Example, PropsTable, DoDont, Code } from '@/components/docs/primitives';
 import { AppIcon, resolveAppIcon } from '@ds/components';
 
-const KNOWN = ['SAP S/4HANA Finance', 'Salesforce', 'AWS', 'Google Workspace'];
-const UNKNOWN = ['Workday', 'ServiceNow', 'Snowflake', 'NetSuite', 'Jira'];
+const KNOWN = ['SAP S/4HANA Finance', 'Salesforce', 'AWS', 'Google Workspace', 'GitHub Enterprise', 'Slack', 'Okta', 'Jira', 'Snowflake', 'HashiCorp Vault'];
+const UNKNOWN = ['Workday', 'ServiceNow', 'NetSuite', 'Active Directory', 'CyberArk'];
 
 export default function AppIconDocs() {
   return (
@@ -70,7 +70,7 @@ export default function AppIconDocs() {
           ]}
         />
         <p className="mt-3 text-body-sm text-text-secondary">
-          Currently catalogued: {KNOWN.filter((a) => resolveAppIcon(a)).length} patterns — SAP, Salesforce, AWS, Google.
+          Currently catalogued: {KNOWN.filter((a) => resolveAppIcon(a)).length} patterns — SAP, Salesforce, AWS, Google, GitHub, Slack, Okta, Jira, Snowflake, HashiCorp.
           Everything else is letter-only until a mark is added.
         </p>
       </Section>
