@@ -348,9 +348,10 @@ export const appAccounts: SeedAppAccount[] = [
   { id: 'aa-daniel-sf', accountName: 'daniel.white@acme.com', email: 'daniel.white@acme.com', applicationId: 'app-salesforce', identityId: 'o-daniel', entitlementIds: ['ent-sf-sales'] },
   { id: 'aa-grace-sf', accountName: 'grace.lee@acme.com', email: 'grace.lee@acme.com', applicationId: 'app-salesforce', identityId: 'o-grace', entitlementIds: ['ent-sf-service'] },
   { id: 'aa-emily-okta', accountName: 'emily.davis', email: 'emily.davis@acme.com', applicationId: 'app-okta', identityId: 'o-emily', entitlementIds: ['ent-okta-user', 'ent-testent'] },
-  { id: 'aa-catherine-okta', accountName: 'catherine.brown', email: 'catherine.brown@acme.com', applicationId: 'app-okta', identityId: 'o-catherine', entitlementIds: ['ent-okta-ro', 'ent-testent'] },
+  // Three and four entitlements, so the chip row's `+n` overflow is reachable.
+  { id: 'aa-catherine-okta', accountName: 'catherine.brown', email: 'catherine.brown@acme.com', applicationId: 'app-okta', identityId: 'o-catherine', entitlementIds: ['ent-okta-ro', 'ent-okta-user', 'ent-testent'] },
   { id: 'aa-catherine-aws', accountName: 'cbrown', email: 'catherine.brown@acme.com', applicationId: 'app-aws', identityId: 'o-catherine', entitlementIds: ['ent-aws-ro'] },
-  { id: 'aa-henry-okta', accountName: 'henry.taylor', email: 'henry.taylor@acme.com', applicationId: 'app-okta', identityId: 'o-henry', entitlementIds: ['ent-okta-ro', 'ent-testent'] },
+  { id: 'aa-henry-okta', accountName: 'henry.taylor', email: 'henry.taylor@acme.com', applicationId: 'app-okta', identityId: 'o-henry', entitlementIds: ['ent-okta-ro', 'ent-okta-user', 'ent-okta-admin', 'ent-testent'] },
   // Awkward rows for the demo: no owning identity, and no email.
   { id: 'aa-orphan-okta', accountName: 'svc-okta-provisioning', email: '', applicationId: 'app-okta', identityId: null, entitlementIds: ['ent-testent'] },
   { id: 'aa-sofia-github', accountName: 'sofia-r', email: 'sofia.rossi@acme.com', applicationId: 'app-github', identityId: 'o-sofia', entitlementIds: ['ent-gh-write'] },

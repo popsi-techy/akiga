@@ -170,6 +170,9 @@ function InlineAccountPanel({ account, onClose }: { account: AppAccountRow; onCl
   return (
     <div className="flex h-full flex-col rounded-xl border border-border bg-surface">
       <header className="flex items-start gap-3 border-b border-border px-5 py-4">
+        {/* Same mark as the table row it opened from, so the panel is visibly
+            about that row rather than about "an account". */}
+        <EntityAvatar kind="account" name={account.accountName} size="md" />
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-h5 text-text-primary">{account.accountName}</h3>
           <p className="mt-0.5 text-caption text-text-secondary">This account’s identity and access</p>

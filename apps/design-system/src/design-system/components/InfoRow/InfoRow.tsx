@@ -49,9 +49,17 @@ export interface InfoRowProps {
   icon: React.ReactNode;
   /** Applied to the row (e.g. `px-4` when not inside a DS Card gutter). */
   className?: string;
+  /**
+   * Let the value wrap onto more than one line instead of truncating.
+   *
+   * The default is right for text — a clipped sentence still reads, and every row
+   * keeps the same height. It is wrong for a value made of chips: clipping cuts a
+   * chip in half, which looks like a rendering fault rather than an ellipsis.
+   */
+  valueWrap?: boolean;
 }
 
-export function InfoRow({ label, value, icon, className = '' }: InfoRowProps) {
+export function InfoRow({ label, value, icon, className = '', valueWrap = false }: InfoRowProps) {
   const emphasis = React.useContext(EmphasisContext);
   const labelLeads = emphasis === 'label';
 
@@ -80,9 +88,12 @@ export function InfoRow({ label, value, icon, className = '' }: InfoRowProps) {
       <div
         role="cell"
         className={[
-          'min-w-0 truncate py-3 text-left',
+          'min-w-0 py-3 text-left',
+          valueWrap ? '' : 'truncate',
           labelLeads ? 'text-body-sm text-text-secondary' : 'text-body-sm-strong text-text-primary',
-        ].join(' ')}
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
         {value}
       </div>

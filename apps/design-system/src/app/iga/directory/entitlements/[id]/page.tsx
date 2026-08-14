@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Card, SegmentedControl, type TabItem } from '@ds/components';
 import { getEntitlementDetail, type AppAccountRow } from '@/data/directory';
 import {
@@ -14,7 +14,6 @@ import {
   EntityOwnersTab,
   RiskScoreChip,
   accountColumns,
-  roleColumns,
   infoIcon,
   AccountDetailsDrawer,
   AccountAccessVariants,
@@ -29,13 +28,10 @@ const TABS: TabItem[] = [
   { value: 'overview', label: 'Overview' },
   { value: 'owners', label: 'Assigned Owners' },
   { value: 'accounts', label: 'App Accounts' },
-  { value: 'technical-roles', label: 'Technical Roles' },
-  { value: 'business-roles', label: 'Business Roles' },
 ];
 
 export default function EntitlementDetailPage() {
   const id = String(useParams().id);
-  const router = useRouter();
   const [tab, setTab] = React.useState('overview');
   // Peek at a related account in place; the drawer offers its page as a second step.
   const [peekAccount, setPeekAccount] = React.useState<AppAccountRow | null>(null);
@@ -98,24 +94,6 @@ export default function EntitlementDetailPage() {
             emptyMessage="No accounts currently hold this entitlement."
           />
         ))}
-      {tab === 'technical-roles' && (
-        <RelationTable
-          columns={roleColumns('technical-role', 'Technical Role')}
-          rows={technicalRoles}
-          onRowClick={(r) => router.push(`/iga/directory/technical-roles/${r.id}`)}
-          emptyTitle="No technical roles"
-          emptyMessage="No technical roles bundle this entitlement."
-        />
-      )}
-      {tab === 'business-roles' && (
-        <RelationTable
-          columns={roleColumns('business-role', 'Business Role')}
-          rows={businessRoles}
-          onRowClick={(r) => router.push(`/iga/directory/business-roles/${r.id}`)}
-          emptyTitle="No business roles"
-          emptyMessage="No business roles include this entitlement directly."
-        />
-      )}
 
       <AccountDetailsDrawer
         account={peekAccount}
