@@ -1,6 +1,6 @@
 export { RiskScoreChip, RiskDot } from './RiskScoreChip';
 export { EntityAvatar, type EntityKind } from './EntityAvatar';
-export { AccountDetailsDrawer } from './AccountDetailsDrawer';
+export { AccountDetailsBody } from './AccountDetailsBody';
 export { AddApplicationDrawer } from './AddApplicationDrawer';
 export { EntityOwnersTab } from './EntityOwnersTab';
 export { ApplicationApprovalPolicyTab } from './ApplicationApprovalPolicyTab';
@@ -17,5 +17,4 @@ export { AttributeMappingDrawer } from './AttributeMappingDrawer';
 export { BaselineDrawer } from './BaselineDrawer';
 export { BaselineGovernanceTab } from './BaselineGovernanceTab';
 export { ApplicationOverviewTab } from './ApplicationOverviewTab';
-export { AccountAccessVariants } from './AccountAccessVariants';
-export { ACCOUNT_PEEK_VARIANTS, type AccountPeekVariant } from './AccountAccessVariants';
+export { AppAccountsPeek } from './AppAccountsPeek';
