@@ -56,6 +56,10 @@ export function AccountDetailsBody({
           className={pad}
           icon={infoIcon.account}
           label="Account"
+          // The circle avatar's ring paints 3px outside its box, and the cell's
+          // default `truncate` clips it. Lifting the clip lets the ring show; the
+          // name span below still truncates, so nothing wraps.
+          valueWrap
           value={
             <span className="flex min-w-0 items-center gap-2">
               <Avatar name={account.accountName} size="xs" shape="circle" />
@@ -79,6 +83,7 @@ export function AccountDetailsBody({
           className={pad}
           icon={infoIcon.person}
           label="Linked identity"
+          valueWrap
           value={
             account.orphan || !account.identityName ? (
               <span className="flex items-center gap-2">

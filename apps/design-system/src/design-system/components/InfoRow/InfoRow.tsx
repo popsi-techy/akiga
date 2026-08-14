@@ -50,11 +50,13 @@ export interface InfoRowProps {
   /** Applied to the row (e.g. `px-4` when not inside a DS Card gutter). */
   className?: string;
   /**
-   * Let the value wrap onto more than one line instead of truncating.
+   * Drop the value cell's `truncate`, so it neither ellipsizes nor clips.
    *
    * The default is right for text — a clipped sentence still reads, and every row
-   * keeps the same height. It is wrong for a value made of chips: clipping cuts a
-   * chip in half, which looks like a rendering fault rather than an ellipsis.
+   * keeps the same height. It is wrong twice over for richer values: clipping cuts
+   * a chip in half, and `overflow: hidden` also shaves anything that paints
+   * outside its own box, such as a circle avatar's ring. A value that still needs
+   * to ellipsize can truncate its own text span inside.
    */
   valueWrap?: boolean;
 }
