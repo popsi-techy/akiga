@@ -18,29 +18,53 @@ export interface NavCardProps {
   /** Optional leading icon rendered in a brand-tint tile. */
   icon?: React.ReactNode;
   onClick?: () => void;
+  /**
+   * Present but not yet available. The card keeps its place in the grid — the set
+   * of views is itself information — but drops the arrow and recedes, so nothing
+   * invites a click that would do nothing.
+   */
+  disabled?: boolean;
 }
 
 /** Fixed locale so the server and client render the same string (no hydration mismatch). */
 const formatCount = (n: number) => n.toLocaleString('en-US');
 
-export function NavCard({ title, description, count, tags, icon, onClick }: NavCardProps) {
+export function NavCard({ title, description, count, tags, icon, onClick, disabled = false }: NavCardProps) {
   return (
     <button
       type="button"
-      onClick={onClick}
-      className="group flex w-full flex-col rounded-xl border border-border bg-surface p-5 text-left transition-all hover:border-border-strong hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      className={[
+        'group flex w-full flex-col rounded-xl border border-border p-5 text-left transition-all',
+        disabled
+          ? 'cursor-default bg-subtle'
+          : 'bg-surface hover:border-border-strong hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle',
+      ].join(' ')}
     >
       <div className="flex items-start gap-3">
         {icon && (
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-subtle text-icon-brand">{icon}</span>
+          <span
+            className={[
+              'grid h-9 w-9 shrink-0 place-items-center rounded-lg',
+              disabled ? 'bg-surface text-icon-subtle' : 'bg-brand-subtle text-icon-brand',
+            ].join(' ')}
+          >
+            {icon}
+          </span>
         )}
-        <h3 className="min-w-0 flex-1 text-h5 text-text-primary">{title}</h3>
-        <ArrowForwardOutlined
-          sx={{ fontSize: 18 }}
-          className="mt-0.5 shrink-0 text-icon transition-transform group-hover:translate-x-0.5 group-hover:text-text-primary"
-        />
+        <h3 className={`min-w-0 flex-1 text-h5 ${disabled ? 'text-text-tertiary' : 'text-text-primary'}`}>{title}</h3>
+        {/* No arrow when there is nowhere to go. */}
+        {!disabled && (
+          <ArrowForwardOutlined
+            sx={{ fontSize: 18 }}
+            className="mt-0.5 shrink-0 text-icon transition-transform group-hover:translate-x-0.5 group-hover:text-text-primary"
+          />
+        )}
       </div>
-      {description && <p className="mt-2 text-body-sm text-text-secondary">{description}</p>}
+      {description && (
+        <p className={`mt-2 text-body-sm ${disabled ? 'text-text-tertiary' : 'text-text-secondary'}`}>{description}</p>
+      )}
       {(count != null || (tags && tags.length > 0)) && (
         <div className="mt-4 flex flex-wrap items-center gap-1.5">
           {count != null && (

@@ -30,7 +30,7 @@ export default function NavListDocs() {
               onChange={setValue}
               items={[
                 { id: 'owners', label: 'Owners', icon: <PersonOutline sx={{ fontSize: 18 }} />, count: 4 },
-                { id: 'groups', label: 'Governance groups', icon: <GroupsOutlined sx={{ fontSize: 18 }} />, count: 2 },
+                { id: 'groups', label: 'Governance teams', icon: <GroupsOutlined sx={{ fontSize: 18 }} />, count: 2 },
                 { id: 'reviewers', label: 'Reviewers', icon: <ShieldOutlined sx={{ fontSize: 18 }} />, count: 0 },
                 { id: 'audit', label: 'Audit trail' },
               ]}

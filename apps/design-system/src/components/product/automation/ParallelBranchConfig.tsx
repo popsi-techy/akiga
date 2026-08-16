@@ -19,7 +19,7 @@ import {
   type FallbackApproverResolution,
 } from '@/data/automation-types';
 import { nid } from '@/lib/policy-tree';
-import { listUsers, listGovernanceGroups, getUser, getGovernanceGroup } from '@/data/directory';
+import { listUsers, listGovernanceTeams, getUser, getGovernanceTeam } from '@/data/directory';
 import { SingleSelectDrawer } from './SingleSelectDrawer';
 
 const APPROVER_OPTS = (Object.entries(APPROVER_TYPE_LABEL) as [ApproverType, string][]).map(([value, label]) => ({ value, label }));
@@ -44,7 +44,7 @@ function FieldLabelSm({ children }: { children: React.ReactNode }) {
 }
 
 export function ParallelBranchConfig({ config, onChange }: { config: ParallelConfig; onChange: (next: ParallelConfig) => void }) {
-  const [picker, setPicker] = React.useState<{ laneId: string; kind: 'governanceGroup' | 'user' } | null>(null);
+  const [picker, setPicker] = React.useState<{ laneId: string; kind: 'governanceTeam' | 'user' } | null>(null);
   const fallback = config.fallback ?? { enabled: false };
 
   const setLane = (id: string, patch: Partial<ParallelLane>) =>
@@ -74,8 +74,8 @@ export function ParallelBranchConfig({ config, onChange }: { config: ParallelCon
             const a = lane.approver;
             const showCompletion = !!a.approverType && MULTI_APPROVER_TYPES.includes(a.approverType);
             const selName =
-              a.approverType === 'governanceGroup'
-                ? getGovernanceGroup(a.governanceGroupId ?? '')?.name
+              a.approverType === 'governanceTeam'
+                ? getGovernanceTeam(a.governanceTeamId ?? '')?.name
                 : a.approverType === 'user'
                   ? getUser(a.userId ?? '')?.name
                   : undefined;
@@ -102,20 +102,20 @@ export function ParallelBranchConfig({ config, onChange }: { config: ParallelCon
                     const t = v as ApproverType;
                     setApprover(lane.id, {
                       approverType: t,
-                      governanceGroupId: undefined,
+                      governanceTeamId: undefined,
                       userId: undefined,
                       ...(MULTI_APPROVER_TYPES.includes(t) ? {} : { completionRule: undefined }),
                     });
                   }}
                 />
-                {(a.approverType === 'governanceGroup' || a.approverType === 'user') && (
+                {(a.approverType === 'governanceTeam' || a.approverType === 'user') && (
                   <Button
                     variant="secondary"
                     size="sm"
-                    startIcon={a.approverType === 'governanceGroup' ? <GroupsOutlined /> : <PersonOutline />}
-                    onClick={() => setPicker({ laneId: lane.id, kind: a.approverType as 'governanceGroup' | 'user' })}
+                    startIcon={a.approverType === 'governanceTeam' ? <GroupsOutlined /> : <PersonOutline />}
+                    onClick={() => setPicker({ laneId: lane.id, kind: a.approverType as 'governanceTeam' | 'user' })}
                   >
-                    {selName ?? (a.approverType === 'governanceGroup' ? 'Select group' : 'Select user')}
+                    {selName ?? (a.approverType === 'governanceTeam' ? 'Select team' : 'Select user')}
                   </Button>
                 )}
                 {showCompletion && (
@@ -300,14 +300,14 @@ export function ParallelBranchConfig({ config, onChange }: { config: ParallelCon
         <SingleSelectDrawer
           open
           onClose={() => setPicker(null)}
-          title={picker.kind === 'governanceGroup' ? 'Select Governance Group' : 'Select User'}
+          title={picker.kind === 'governanceTeam' ? 'Select Governance Team' : 'Select User'}
           items={
-            picker.kind === 'governanceGroup'
-              ? listGovernanceGroups().map((g) => ({ id: g.id, primary: g.name, secondary: `${g.members} members` }))
+            picker.kind === 'governanceTeam'
+              ? listGovernanceTeams().map((g) => ({ id: g.id, primary: g.name, secondary: `${g.members} members` }))
               : listUsers().map((u) => ({ id: u.id, primary: u.name, secondary: u.email }))
           }
-          selectedId={picker.kind === 'governanceGroup' ? pickerLane.approver.governanceGroupId : pickerLane.approver.userId}
-          onSelect={(id) => setApprover(picker.laneId, picker.kind === 'governanceGroup' ? { governanceGroupId: id } : { userId: id })}
+          selectedId={picker.kind === 'governanceTeam' ? pickerLane.approver.governanceTeamId : pickerLane.approver.userId}
+          onSelect={(id) => setApprover(picker.laneId, picker.kind === 'governanceTeam' ? { governanceTeamId: id } : { userId: id })}
         />
       )}
     </div>

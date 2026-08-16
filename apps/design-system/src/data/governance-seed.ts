@@ -2,7 +2,7 @@
  * Governance Model seed — the governance-only facts that do not live anywhere else.
  *
  * Everything the Directory already owns (applications, entitlements, roles,
- * governance groups, people) is read from `seed.ts` and is NOT restated here.
+ * governance teams, people) is read from `seed.ts` and is NOT restated here.
  * This file adds the layer above it: organizational structure, the policies and
  * workflows that govern access, and the responsibility chain — ownership, approval
  * hierarchies, delegations, escalations.
@@ -266,20 +266,20 @@ export interface SeedGovernanceRole {
   id: string;
   name: string;
   description: string;
-  /** The Governance Group that staffs this role (see `governanceGroups` in seed.ts). */
-  governanceGroupId: string;
+  /** The Governance Team that staffs this role (see `governanceTeams` in seed.ts). */
+  governanceTeamId: string;
   /** What holders of the role are accountable for. */
   responsibilities: string[];
   risk: number;
 }
 
 export const govGovernanceRoles: SeedGovernanceRole[] = [
-  { id: 'gr-app-owner', name: 'Application Owner', description: 'Accountable for an application: its configuration, its access model, and its risk.', governanceGroupId: 'gg-app-owners', responsibilities: ['Approve access requests', 'Maintain the entitlement catalog', 'Attest to application risk'], risk: 42 },
-  { id: 'gr-review-owner', name: 'Access Review Owner', description: 'Accountable for certifying who should keep access at each review cycle.', governanceGroupId: 'gg-compliance', responsibilities: ['Run access certifications', 'Decide revocations', 'Sign off review evidence'], risk: 38 },
-  { id: 'gr-policy-owner', name: 'Policy Owner', description: 'Accountable for a governance policy staying correct and in force.', governanceGroupId: 'gg-compliance', responsibilities: ['Maintain policy rules', 'Approve exceptions', 'Review policy effectiveness'], risk: 34 },
-  { id: 'gr-approval-owner', name: 'Approval Owner', description: 'Accountable for the approval route a request travels and the people on it.', governanceGroupId: 'gg-finance', responsibilities: ['Maintain approval hierarchies', 'Keep approvers current', 'Resolve stalled approvals'], risk: 46 },
-  { id: 'gr-security-governance', name: 'Security Governance', description: 'Final authority on privileged access and separation-of-duties enforcement.', governanceGroupId: 'gg-secops', responsibilities: ['Approve privileged access', 'Enforce SoD policy', 'Own break-glass procedure'], risk: 71 },
-  { id: 'gr-compliance-auditor', name: 'Compliance Auditor', description: 'Independent assurance that governance controls operate as documented.', governanceGroupId: 'gg-compliance', responsibilities: ['Test control operation', 'Evidence regulatory audits', 'Report control failures'], risk: 28 },
+  { id: 'gr-app-owner', name: 'Application Owner', description: 'Accountable for an application: its configuration, its access model, and its risk.', governanceTeamId: 'gt-app-owners', responsibilities: ['Approve access requests', 'Maintain the entitlement catalog', 'Attest to application risk'], risk: 42 },
+  { id: 'gr-review-owner', name: 'Access Review Owner', description: 'Accountable for certifying who should keep access at each review cycle.', governanceTeamId: 'gt-compliance', responsibilities: ['Run access certifications', 'Decide revocations', 'Sign off review evidence'], risk: 38 },
+  { id: 'gr-policy-owner', name: 'Policy Owner', description: 'Accountable for a governance policy staying correct and in force.', governanceTeamId: 'gt-compliance', responsibilities: ['Maintain policy rules', 'Approve exceptions', 'Review policy effectiveness'], risk: 34 },
+  { id: 'gr-approval-owner', name: 'Approval Owner', description: 'Accountable for the approval route a request travels and the people on it.', governanceTeamId: 'gt-finance', responsibilities: ['Maintain approval hierarchies', 'Keep approvers current', 'Resolve stalled approvals'], risk: 46 },
+  { id: 'gr-security-governance', name: 'Security Governance', description: 'Final authority on privileged access and separation-of-duties enforcement.', governanceTeamId: 'gt-secops', responsibilities: ['Approve privileged access', 'Enforce SoD policy', 'Own break-glass procedure'], risk: 71 },
+  { id: 'gr-compliance-auditor', name: 'Compliance Auditor', description: 'Independent assurance that governance controls operate as documented.', governanceTeamId: 'gt-compliance', responsibilities: ['Test control operation', 'Evidence regulatory audits', 'Report control failures'], risk: 28 },
 ];
 
 /**

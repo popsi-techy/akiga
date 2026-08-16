@@ -137,9 +137,9 @@
       ]
     },
     {
-      "id": "governance-group",
-      "name": "Governance Group",
-      "definition": "A group of reviewers/owners responsible for governing access. Contains one or more User Identities and can own applications, entitlements, technical roles, and business roles.",
+      "id": "governance-team",
+      "name": "Governance Team",
+      "definition": "A team of reviewers/owners responsible for governing access. Contains one or more User Identities and can own applications, entitlements, technical roles, and business roles.",
       "owner": "administrator",
       "stateful": false,
       "attributes": [
@@ -442,7 +442,7 @@
     {
       "id": "governance-role",
       "name": "Governance Role",
-      "definition": "A named accountability in the governance model: Application Owner, Access Review Owner, Policy Owner, Approval Owner, Security Governance, Compliance Auditor. A Governance Role is staffed by a Governance Group and states what its holders answer for.",
+      "definition": "A named accountability in the governance model: Application Owner, Access Review Owner, Policy Owner, Approval Owner, Security Governance, Compliance Auditor. A Governance Role is staffed by a Governance Team and states what its holders answer for.",
       "owner": "administrator",
       "stateful": true,
       "states": ["active", "inactive"],
@@ -450,7 +450,7 @@
         { "name": "id", "type": "id", "required": true },
         { "name": "name", "type": "string", "required": true },
         { "name": "description", "type": "string", "required": false },
-        { "name": "governanceGroupId", "type": "ref:governance-group", "required": true },
+        { "name": "governanceTeamId", "type": "ref:governance-team", "required": true },
         { "name": "responsibilities", "type": "string[]", "required": false },
         { "name": "riskScore", "type": "number", "required": false }
       ]

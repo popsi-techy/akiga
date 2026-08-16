@@ -1,12 +1,15 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import PersonOutline from '@mui/icons-material/PersonOutline';
 import GroupsOutlined from '@mui/icons-material/GroupsOutlined';
 import FilterListOutlined from '@mui/icons-material/FilterListOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import PersonAddAltOutlined from '@mui/icons-material/PersonAddAltOutlined';
+import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
 import {
   DataTable,
   Avatar,
@@ -17,17 +20,21 @@ import {
   NavList,
   SelectionPanel,
   Menu,
+  Tooltip,
   useToast,
   type Column,
 } from '@ds/components';
 import {
-  listGoverningGroups,
+  listGoverningTeams,
+  canGovernanceTeamsOwn,
   listUserIdentities,
   resolvePeople,
-  type GovernanceGroupRow,
+  type GovernanceTeamRow,
   type UserIdentityRow,
 } from '@/data/directory';
 import { getOwners, setOwners, type OwnedEntityType } from '@/data/entity-owners';
+import { PeekPanel, PeekSlot } from './PeekPanel';
+import { IdentityDetailsBody } from './IdentityDetailsBody';
 
 /**
  * The "Assigned Owners" / "Reviewers" tab, shared by every governable Directory
@@ -48,16 +55,25 @@ export function EntityOwnersTab({
   label?: string;
   emptyHint?: string;
 }) {
+  const router = useRouter();
   const toast = useToast();
   const lower = label.toLowerCase();
+  // Peek at an owner in place — the table stays visible and the panel swaps.
+  const [peek, setPeek] = React.useState<UserIdentityRow | null>(null);
   /**
    * Ownership has two shapes, and the rail is how you switch between them: named
-   * individuals, and the Governance Groups whose charter covers this entity. One
+   * individuals, and the Governance Teams whose charter covers this entity. One
    * merged table would hide the distinction that matters at audit — who personally
    * answers for this, versus which body does.
    */
-  const [view, setView] = React.useState<'individual' | 'groups'>('individual');
-  const groups = listGoverningGroups(entityType, entityId);
+  const [view, setView] = React.useState<'individual' | 'teams'>('individual');
+  /**
+   * Some entities have no team half of ownership at all — a governance team
+   * cannot be owned by one, and an SoD policy answers to named people. Those
+   * drop the rail rather than offer a view that is empty by definition.
+   */
+  const canHaveTeams = canGovernanceTeamsOwn(entityType);
+  const teams = listGoverningTeams(entityType, entityId);
   // Render seed defaults on the server; sync from the store after mount (no hydration mismatch).
   const [ownerIds, setOwnerIds] = React.useState<string[]>(seedOwnerIds);
   React.useEffect(() => {
@@ -114,21 +130,39 @@ export function EntityOwnersTab({
       id: 'actions',
       header: 'Actions',
       align: 'right',
-      width: 80,
+      width: 104,
       render: (o) => (
-        <Menu
-          items={[
-            { label: 'Message', onClick: () => toast.info(`Message ${o.name}`) },
-            {
-              label: `Remove ${lower}`,
-              danger: true,
-              onClick: () => {
-                persist(ownerIds.filter((x) => x !== o.id));
-                toast.success(`${o.name} removed`);
+        // Two actions, in the order you reach for them: read who this is, then
+        // act on them. The peek is its own button rather than a menu item so it
+        // costs one click, which is the point of a peek.
+        <div className="flex items-center justify-end gap-1">
+          <Tooltip title="View details">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPeek(o);
+              }}
+              aria-label={`View details for ${o.name}`}
+              className="rounded-md p-1 text-icon-subtle transition-colors hover:bg-surface-hover hover:text-text-brand"
+            >
+              <InfoOutlined sx={{ fontSize: 18 }} />
+            </button>
+          </Tooltip>
+          <Menu
+            items={[
+              { label: 'Message', onClick: () => toast.info(`Message ${o.name}`) },
+              {
+                label: `Remove ${lower}`,
+                danger: true,
+                onClick: () => {
+                  persist(ownerIds.filter((x) => x !== o.id));
+                  toast.success(`${o.name} removed`);
+                },
               },
-            },
-          ]}
-        />
+            ]}
+          />
+        </div>
       ),
     },
   ];
@@ -148,45 +182,51 @@ export function EntityOwnersTab({
     { id: 'email', header: 'Email', sortable: true, value: (o) => o.email, render: (o) => <span className="text-text-secondary">{o.email}</span> },
   ];
 
-  const groupColumns: Column<GovernanceGroupRow>[] = [
+  const teamColumns: Column<GovernanceTeamRow>[] = [
     {
       id: 'name',
-      header: 'Governance Group',
+      header: 'Governance Team',
       sortable: true,
-      value: (g) => g.name,
-      render: (g) => (
+      value: (t) => t.name,
+      render: (t) => (
         <div className="flex items-center gap-3">
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-subtle text-icon">
             <GroupsOutlined sx={{ fontSize: 18 }} />
           </span>
           <div className="min-w-0">
-            <div className="truncate text-body-sm-strong text-text-primary">{g.name}</div>
-            <div className="truncate text-caption text-text-secondary">{g.description}</div>
+            <div className="truncate text-body-sm-strong text-text-primary">{t.name}</div>
+            <div className="truncate text-caption text-text-secondary">{t.description}</div>
           </div>
         </div>
       ),
     },
-    { id: 'members', header: 'Members', align: 'right', width: 120, sortable: true, value: (g) => g.reviewerCount, render: (g) => <span className="text-body-sm tabular-nums text-text-primary">{g.reviewerCount}</span> },
+    { id: 'members', header: 'Members', align: 'right', width: 120, sortable: true, value: (t) => t.reviewerCount, render: (t) => <span className="text-body-sm tabular-nums text-text-primary">{t.reviewerCount}</span> },
   ];
 
   return (
-    <div className="grid h-full gap-5 lg:grid-cols-[264px_minmax(0,1fr)]">
+    <div className={`grid h-full gap-5 ${canHaveTeams ? 'lg:grid-cols-[264px_minmax(0,1fr)]' : ''}`}>
       {/* padding="sm" (16px), not "none": `none` keeps a 20px gutter meant for flush
           rows with dividers, and stacking it with a wrapper and the item's own px-3
           pushed the label 42px off the card edge. NavList items are self-padded, so
           the container just needs to clear them — the app sidebar uses the same
-          12–16px rhythm. */}
-      <Card padding="sm" className="h-full">
-        <NavList
-          ariaLabel="Owner type"
-          value={view}
-          onChange={(id) => setView(id as 'individual' | 'groups')}
-          items={[
-            { id: 'individual', icon: <PersonOutline sx={{ fontSize: 18 }} />, label: `Individual ${label}s`, count: ownerIds.length },
-            { id: 'groups', icon: <GroupsOutlined sx={{ fontSize: 18 }} />, label: 'Governance Groups', count: groups.length },
-          ]}
-        />
-      </Card>
+          12–16px rhythm.
+
+          Dropped entirely when there is only one kind to show: a rail with a
+          single item that is always selected is a control that does nothing, and
+          it costs the table 264px to say so. */}
+      {canHaveTeams && (
+        <Card padding="sm" className="h-full">
+          <NavList
+            ariaLabel="Owner type"
+            value={view}
+            onChange={(id) => setView(id as 'individual' | 'teams')}
+            items={[
+              { id: 'individual', icon: <PersonOutline sx={{ fontSize: 18 }} />, label: `Individual ${label}s`, count: ownerIds.length },
+              { id: 'teams', icon: <GroupsOutlined sx={{ fontSize: 18 }} />, label: 'Governance Teams', count: teams.length },
+            ]}
+          />
+        </Card>
+      )}
 
       <div className="flex h-full min-h-0 flex-col">
       <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
@@ -205,22 +245,49 @@ export function EntityOwnersTab({
         )}
       </div>
 
-      <div className="min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1">
         {view === 'individual' ? (
-          <DataTable<UserIdentityRow>
-            columns={columns}
-            rows={owners}
-            fillHeight
-            emptyTitle={`No ${lower}s`}
-            emptyMessage={emptyHint ?? `Add ${lower}s to govern this entity.`}
-          />
+          <>
+            <div className="min-w-0 flex-1">
+              <DataTable<UserIdentityRow>
+                columns={columns}
+                rows={owners}
+                fillHeight
+                onRowClick={(o) => setPeek(o)}
+                emptyTitle={`No ${lower}s`}
+                emptyMessage={emptyHint ?? `Add ${lower}s to govern this entity.`}
+              />
+            </div>
+            <PeekSlot open={peek !== null}>
+              {peek && (
+                <PeekPanel
+                  avatar={<Avatar name={peek.name} size="md" shape="circle" />}
+                  title={peek.name}
+                  subtitle={`This ${lower}’s identity and access`}
+                  onClose={() => setPeek(null)}
+                  footer={
+                    <Button
+                      variant="secondary"
+                      fullWidth
+                      startIcon={<OpenInNewOutlined sx={{ fontSize: 18 }} />}
+                      onClick={() => router.push(`/iga/directory/user-identities/${peek.id}`)}
+                    >
+                      Open identity page
+                    </Button>
+                  }
+                >
+                  <IdentityDetailsBody identity={peek} surface="bare" />
+                </PeekPanel>
+              )}
+            </PeekSlot>
+          </>
         ) : (
-          <DataTable<GovernanceGroupRow>
-            columns={groupColumns}
-            rows={groups.filter((g) => g.name.toLowerCase().includes(search.toLowerCase()))}
+          <DataTable<GovernanceTeamRow>
+            columns={teamColumns}
+            rows={teams.filter((t) => t.name.toLowerCase().includes(search.toLowerCase()))}
             fillHeight
-            emptyTitle="No governance groups"
-            emptyMessage="No Governance Group lists this entity in its charter. Group ownership is assigned on the group."
+            emptyTitle="No governance teams"
+            emptyMessage="No Governance Team lists this entity in its charter. Team ownership is assigned on the team."
           />
         )}
       </div>

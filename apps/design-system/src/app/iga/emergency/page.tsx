@@ -20,13 +20,34 @@ import {
   useToast,
   type Column,
 } from '@ds/components';
-import { getEmergencyAccessList, type EARow } from '@/data/emergency-access';
+import { createEmergencyAccess, getEmergencyAccessList, type EARow } from '@/data/emergency-access';
 
 export default function EmergencyAccessListPage() {
   const router = useRouter();
   const toast = useToast();
   const [search, setSearch] = React.useState('');
   const [createOpen, setCreateOpen] = React.useState(false);
+  const [name, setName] = React.useState('');
+  const [description, setDescription] = React.useState('');
+
+  const openCreate = () => {
+    setName('');
+    setDescription('');
+    setCreateOpen(true);
+  };
+
+  /**
+   * Straight to the draft, not back to the list. Name and description are the
+   * two things a profile cannot be created without — everything that makes it
+   * *work* is on the detail page, and its checklist is the next instruction.
+   */
+  const create = () => {
+    if (name.trim() === '') return;
+    const id = createEmergencyAccess({ name, description });
+    setCreateOpen(false);
+    toast.success(`“${name.trim()}” created as a draft.`);
+    router.push(`/iga/emergency/${id}`);
+  };
 
   const all = getEmergencyAccessList();
   const rows = all.filter((r) => r.name.toLowerCase().includes(search.trim().toLowerCase()));
@@ -118,7 +139,7 @@ export default function EmergencyAccessListPage() {
           Filter
         </Button>
         <div className="ml-auto">
-          <Button startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
+          <Button startIcon={<AddIcon />} onClick={openCreate}>
             Create Emergency Access
           </Button>
         </div>
@@ -146,20 +167,31 @@ export default function EmergencyAccessListPage() {
             <Button variant="secondary" onClick={() => setCreateOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={() => {
-                setCreateOpen(false);
-                toast.success('Emergency access created');
-              }}
-            >
+            <Button onClick={create} disabled={name.trim() === ''}>
               Continue
             </Button>
           </>
         }
       >
         <div className="space-y-4">
-          <Input label="Name" required placeholder="role_name" size="sm" />
-          <Input label="Description" required placeholder="description" size="sm" multiline minRows={3} />
+          <Input
+            label="Name"
+            required
+            hint="Shown wherever this access is requested or reviewed. Name it after the system it unlocks."
+            placeholder="e.g. Bitbucket production"
+            size="sm"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <Input
+            label="Description"
+            placeholder="What this access is for, and when it should be used"
+            size="sm"
+            multiline
+            minRows={3}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
         </div>
       </Drawer>
     </div>

@@ -21,6 +21,7 @@ export function DirectoryListPage<Row extends { id: string }>({
   emptyMessage,
   downloadable = false,
   actions,
+  summary,
   filterGroups,
   filterMatches,
 }: {
@@ -37,6 +38,8 @@ export function DirectoryListPage<Row extends { id: string }>({
   downloadable?: boolean;
   /** Primary action for the module, right-aligned in the toolbar beside Download. */
   actions?: React.ReactNode;
+  /** Optional strip under the title — stat tiles, a callout. Rendered above the toolbar. */
+  summary?: React.ReactNode;
   /** Filter categories. Omit and the Filter button stays a no-op toast. */
   filterGroups?: FilterGroup[];
   /** True when a row survives the applied selection. Required with `filterGroups`. */
@@ -73,6 +76,9 @@ export function DirectoryListPage<Row extends { id: string }>({
         <h1 className="text-h2 text-text-primary">{title}</h1>
         <p className="mt-1 text-body text-text-secondary">{description}</p>
       </div>
+      {/* Between the title and the toolbar: a summary belongs to the page, not
+          above its name, and not between the reader's filters and their results. */}
+      {summary && <div className="mb-5 shrink-0">{summary}</div>}
       <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
         <div className="w-full max-w-sm">
           <Input placeholder={searchPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)} startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />} />

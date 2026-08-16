@@ -1,7 +1,7 @@
 /**
  * Directory service — the canonical read model for the seven core IGA entities
  * (User Identity, App Account, Application, Entitlement, Technical Role, Business
- * Role, Governance Group). Reads the seed (source of truth for prototype data);
+ * Role, Governance Team). Reads the seed (source of truth for prototype data);
  * screens depend on these functions, resolving relationships by id with
  * denormalized display fields. One module (not one per entity) so the many
  * cross-references between entities never form an import cycle.
@@ -17,7 +17,7 @@ import {
   type AppProvisioningType,
   technicalRoles,
   businessRoles,
-  governanceGroups,
+  governanceTeams,
   ownerDirectory,
   type SeedUserIdentity,
   type SeedAppAccount,
@@ -29,6 +29,7 @@ import {
   getOnboardedApplication,
   type OnboardedApplication,
 } from './applications-store';
+import type { OwnedEntityType } from './entity-owners';
 
 // ---- back-compat (consumed by automation approver pickers) ------------
 export interface DirUser {
@@ -36,7 +37,7 @@ export interface DirUser {
   name: string;
   email: string;
 }
-export interface GovGroup {
+export interface GovTeam {
   id: string;
   name: string;
   members: number;
@@ -47,11 +48,11 @@ export function listUsers(): DirUser[] {
 export function getUser(id: string): DirUser | undefined {
   return ownerDirectory.find((u) => u.id === id);
 }
-export function listGovernanceGroups(): GovGroup[] {
-  return governanceGroups.map((g) => ({ id: g.id, name: g.name, members: g.members }));
+export function listGovernanceTeams(): GovTeam[] {
+  return governanceTeams.map((g) => ({ id: g.id, name: g.name, members: g.members }));
 }
-export function getGovernanceGroup(id: string): GovGroup | undefined {
-  const g = governanceGroups.find((x) => x.id === id);
+export function getGovernanceTeam(id: string): GovTeam | undefined {
+  const g = governanceTeams.find((x) => x.id === id);
   return g ? { id: g.id, name: g.name, members: g.members } : undefined;
 }
 
@@ -61,7 +62,7 @@ const accountById = new Map(appAccounts.map((a) => [a.id, a]));
 const appById = new Map(catalogApps.map((a) => [a.id, a]));
 const techRoleById = new Map(technicalRoles.map((r) => [r.id, r]));
 const bizRoleById = new Map(businessRoles.map((r) => [r.id, r]));
-const govGroupById = new Map(governanceGroups.map((g) => [g.id, g]));
+const govTeamById = new Map(governanceTeams.map((g) => [g.id, g]));
 
 /** Flattened entitlement catalog with its owning application denormalized. */
 interface FlatEntitlement {
@@ -127,7 +128,7 @@ export interface RoleRow {
   description: string;
   risk: number;
 }
-export interface GovernanceGroupRow {
+export interface GovernanceTeamRow {
   id: string;
   name: string;
   description: string;
@@ -161,27 +162,52 @@ export function resolvePeople(ids: string[]): UserIdentityRow[] {
 }
 
 /**
- * The Governance Groups that own a given entity — the group side of ownership,
+ * The Governance Teams that own a given entity — the team side of ownership,
  * alongside the individual owners in the entity-owners store.
  *
- * Group ownership is authored on the group (`ownedApplicationIds` and friends)
- * rather than on the entity, so this reads the relationship from the group end.
- * That is deliberate: a group's charter lists what it governs, and inverting it
+ * Team ownership is authored on the team (`ownedApplicationIds` and friends)
+ * rather than on the entity, so this reads the relationship from the team end.
+ * That is deliberate: a team's charter lists what it governs, and inverting it
  * per entity here keeps the seed with one owner of the fact.
  */
-export function listGoverningGroups(
-  entityType: 'application' | 'entitlement' | 'technical-role' | 'business-role' | 'governance-group',
+type TeamOwnedField =
+  | 'ownedApplicationIds'
+  | 'ownedEntitlementIds'
+  | 'ownedTechnicalRoleIds'
+  | 'ownedBusinessRoleIds';
+
+/**
+ * Which charter field, if any, records a team owning this kind of entity.
+ *
+ * `null` means teams do not own it at all — a team cannot own a team (it *is*
+ * the team half of ownership), and an SoD policy is owned by named people who
+ * answer for the rule, not by a body.
+ */
+const TEAM_OWNED_FIELD: Record<OwnedEntityType, TeamOwnedField | null> = {
+  application: 'ownedApplicationIds',
+  entitlement: 'ownedEntitlementIds',
+  'technical-role': 'ownedTechnicalRoleIds',
+  'business-role': 'ownedBusinessRoleIds',
+  'governance-team': null,
+  'sod-policy': null,
+};
+
+/**
+ * Whether the team half of ownership exists for this entity type — so a surface
+ * can drop the rail rather than offer a switch to a view that is empty by
+ * definition. Derived from the same map the lookup uses, so the two cannot drift.
+ */
+export function canGovernanceTeamsOwn(entityType: OwnedEntityType): boolean {
+  return TEAM_OWNED_FIELD[entityType] !== null;
+}
+
+export function listGoverningTeams(
+  entityType: OwnedEntityType,
   entityId: string,
-): GovernanceGroupRow[] {
-  const field = {
-    application: 'ownedApplicationIds',
-    entitlement: 'ownedEntitlementIds',
-    'technical-role': 'ownedTechnicalRoleIds',
-    'business-role': 'ownedBusinessRoleIds',
-    'governance-group': null,
-  }[entityType] as 'ownedApplicationIds' | 'ownedEntitlementIds' | 'ownedTechnicalRoleIds' | 'ownedBusinessRoleIds' | null;
+): GovernanceTeamRow[] {
+  const field = TEAM_OWNED_FIELD[entityType];
   if (!field) return [];
-  return governanceGroups
+  return governanceTeams
     .filter((g) => g[field].includes(entityId))
     .map((g) => ({ id: g.id, name: g.name, description: g.description, reviewerCount: g.reviewerIds.length }));
 }
@@ -345,27 +371,27 @@ export function getBusinessRoleDetail(id: string) {
   };
 }
 
-// ---- Governance Group ------------------------------------------------
-export function listGovernanceGroupRows(): GovernanceGroupRow[] {
-  return governanceGroups.map((g) => ({
+// ---- Governance Team -------------------------------------------------
+export function listGovernanceTeamRows(): GovernanceTeamRow[] {
+  return governanceTeams.map((g) => ({
     id: g.id,
     name: g.name,
     description: g.description,
     reviewerCount: g.reviewerIds.length,
   }));
 }
-export function getGovernanceGroupDetail(id: string) {
-  const group = govGroupById.get(id);
-  if (!group) return null;
+export function getGovernanceTeamDetail(id: string) {
+  const team = govTeamById.get(id);
+  if (!team) return null;
   return {
-    group,
-    reviewers: resolvePeople(group.reviewerIds),
-    ownedApplications: group.ownedApplicationIds.map((aid) => appById.get(aid)).filter(Boolean).map((a) => ({
+    team,
+    reviewers: resolvePeople(team.reviewerIds),
+    ownedApplications: team.ownedApplicationIds.map((aid) => appById.get(aid)).filter(Boolean).map((a) => ({
       id: a!.id, name: a!.name, description: a!.description, ownerCount: a!.ownerIds.length,
       accountCount: appAccounts.filter((x) => x.applicationId === a!.id).length, entitlementCount: a!.entitlements.length,
     })) as ApplicationRow[],
-    ownedEntitlements: resolveEntitlements(group.ownedEntitlementIds),
-    ownedTechnicalRoles: group.ownedTechnicalRoleIds.map((tid) => techRoleById.get(tid)).filter(Boolean).map((r) => toRoleRow(r!)),
-    ownedBusinessRoles: group.ownedBusinessRoleIds.map((bid) => bizRoleById.get(bid)).filter(Boolean).map((r) => toRoleRow(r!)),
+    ownedEntitlements: resolveEntitlements(team.ownedEntitlementIds),
+    ownedTechnicalRoles: team.ownedTechnicalRoleIds.map((tid) => techRoleById.get(tid)).filter(Boolean).map((r) => toRoleRow(r!)),
+    ownedBusinessRoles: team.ownedBusinessRoleIds.map((bid) => bizRoleById.get(bid)).filter(Boolean).map((r) => toRoleRow(r!)),
   };
 }

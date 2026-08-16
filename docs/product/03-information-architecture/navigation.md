@@ -13,7 +13,7 @@ sidebar scales better than a top nav, and matches user expectations from tools i
 ## Navigation groups (in order)
 1. **Overview** — Dashboard
 2. **My Work** — My Approvals, My Reviews, My Requests *(the "needs my action" hub)*
-3. **Directory** — User Identities, App Accounts, Applications, Entitlements, Technical Roles, Business Roles, Governance Groups
+3. **Directory** — User Identities, App Accounts, Applications, Entitlements, Technical Roles, Business Roles, Governance Teams
 4. **Access** — Access Catalog, Roles
 5. **Governance** — Certifications, Policies, Risk, Emergency Access, Workflows
 6. **Evidence** — Reports, Audit

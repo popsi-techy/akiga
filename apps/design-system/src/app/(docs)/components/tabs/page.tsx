@@ -40,7 +40,7 @@ export default function TabsDocs() {
             <Tabs
               items={[
                 { value: 'ind', label: 'Individual Owners', count: 4 },
-                { value: 'grp', label: 'Governance Groups', count: 4 },
+                { value: 'grp', label: 'Governance Teams', count: 4 },
               ]}
               value="ind"
               onChange={() => {}}

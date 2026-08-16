@@ -19,11 +19,11 @@ erDiagram
     BUSINESS_ROLE ||--o{ ENTITLEMENT : "adds directly"
     GROUP ||--o{ ENTITLEMENT : grants
     ENTITLEMENT }o--|| APPLICATION : within
-    GOVERNANCE_GROUP ||--o{ IDENTITY : reviewers
-    GOVERNANCE_GROUP ||--o{ APPLICATION : owns
-    GOVERNANCE_GROUP ||--o{ ENTITLEMENT : owns
-    GOVERNANCE_GROUP ||--o{ TECHNICAL_ROLE : owns
-    GOVERNANCE_GROUP ||--o{ BUSINESS_ROLE : owns
+    GOVERNANCE_TEAM ||--o{ IDENTITY : reviewers
+    GOVERNANCE_TEAM ||--o{ APPLICATION : owns
+    GOVERNANCE_TEAM ||--o{ ENTITLEMENT : owns
+    GOVERNANCE_TEAM ||--o{ TECHNICAL_ROLE : owns
+    GOVERNANCE_TEAM ||--o{ BUSINESS_ROLE : owns
     ACCESS_REQUEST ||--o{ APPROVAL_TASK : generates
     ACCESS_REQUEST }o--o{ ENTITLEMENT : requests
     APPROVAL_POLICY ||--o| WORKFLOW : "realized by"
@@ -47,7 +47,7 @@ erDiagram
    "effective access" view is what most screens display.
 2. **Request spine** — `Access Request → Approval Task(s)` via a `Workflow` shaped by an
    `Approval Policy`. This is the core loop's data path.
-3. **Governance spine** — `Governance Group` **owns** applications/entitlements/roles and holds
+3. **Governance spine** — `Governance Team` **owns** applications/entitlements/roles and holds
    the reviewers; `Certification Campaign → Certification Items` reviews the access spine; and
    `SoD Policy → SoD Violations` constrains it. Every governable entity also has **Assigned
    Owners** (User Identities).

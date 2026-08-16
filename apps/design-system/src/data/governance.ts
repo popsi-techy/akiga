@@ -19,7 +19,7 @@ import {
   catalogApps,
   technicalRoles,
   businessRoles,
-  governanceGroups,
+  governanceTeams,
   userIdentities,
   appAccounts,
   approvalPolicySeed,
@@ -376,7 +376,7 @@ for (const r of govEscalationRules) {
 
 // ---- responsibility --------------------------------------------------
 for (const r of govGovernanceRoles) {
-  const group = governanceGroups.find((g) => g.id === r.governanceGroupId);
+  const team = governanceTeams.find((g) => g.id === r.governanceTeamId);
   push(
     base({
       id: r.id,
@@ -385,8 +385,8 @@ for (const r of govGovernanceRoles) {
       description: r.description,
       risk: r.risk,
       metrics: [
-        { label: 'Holders', value: group?.reviewerIds.length ?? 0 },
-        { label: 'Governance group', value: group?.name ?? '—' },
+        { label: 'Holders', value: team?.reviewerIds.length ?? 0 },
+        { label: 'Governance team', value: team?.name ?? '—' },
       ],
     }),
   );
@@ -567,8 +567,8 @@ for (const r of govEscalationRules) {
 
 // responsibility
 for (const r of govGovernanceRoles) {
-  const group = governanceGroups.find((g) => g.id === r.governanceGroupId);
-  linkAll(r.id, group?.reviewerIds ?? [], 'held-by', { scope: group?.name ?? 'Governance group' });
+  const team = governanceTeams.find((g) => g.id === r.governanceTeamId);
+  linkAll(r.id, team?.reviewerIds ?? [], 'held-by', { scope: team?.name ?? 'Governance team' });
 }
 
 /* ------------------------------------------------------------------ *

@@ -222,16 +222,34 @@ export function setBranchCondition(branches: PolicyBranch[], id: string, conditi
 // ---- approver validity ------------------------------------------------
 export function laneApproverValid(a: LaneApprover | undefined): boolean {
   if (!a?.approverType) return false;
-  if (a.approverType === 'governanceGroup' && !a.governanceGroupId) return false;
+  if (a.approverType === 'governanceTeam' && !a.governanceTeamId) return false;
   if (a.approverType === 'user' && !a.userId) return false;
   return true;
 }
 
 // ---- migration (idempotent on load) ----------------------------------
+/**
+ * Governance Group → Governance Team. Policies live in localStorage, so a store
+ * written before the rename still holds the old approver type, config key and
+ * `gg-` ids; without this the approver reads as blank on the canvas and the node
+ * silently fails its completeness check. Renaming in place keeps the user's work.
+ */
+function migrateApprover<T extends { approverType?: string; governanceTeamId?: string }>(a: T): T {
+  const legacy = a as T & { governanceGroupId?: string };
+  const teamId = legacy.governanceTeamId ?? legacy.governanceGroupId;
+  if (a.approverType !== 'governanceGroup' && legacy.governanceGroupId === undefined) return a;
+  const next = { ...a } as T & { governanceGroupId?: string };
+  if (next.approverType === 'governanceGroup') next.approverType = 'governanceTeam';
+  if (teamId) next.governanceTeamId = teamId.replace(/^gg-/, 'gt-');
+  delete next.governanceGroupId;
+  return next;
+}
+
 export function migratePolicyNode(node: PolicyNode): PolicyNode {
   const n: PolicyNode = { ...node };
   if (n.type === 'approvalLevel') {
     if (!n.config) n.config = defaultApprovalLevelConfig() as unknown as Record<string, unknown>;
+    else n.config = migrateApprover(n.config as unknown as ApprovalLevelConfig) as unknown as Record<string, unknown>;
     if (!n.branches?.length) n.branches = [outcomeBranch('Approved'), outcomeBranch('Rejected')];
     n.branches = reconcileOutcomes(n, n.branches);
   }
@@ -239,7 +257,12 @@ export function migratePolicyNode(node: PolicyNode): PolicyNode {
     if (!n.config) n.config = defaultParallelConfig() as unknown as Record<string, unknown>;
     else {
       const cfg = n.config as unknown as ParallelConfig;
-      if (!cfg.fallback) n.config = { ...cfg, fallback: { enabled: false } } as unknown as Record<string, unknown>;
+      const migrated: ParallelConfig = {
+        ...cfg,
+        fallback: cfg.fallback ?? { enabled: false },
+        lanes: (cfg.lanes ?? []).map((l) => ({ ...l, approver: migrateApprover(l.approver ?? {}) })),
+      };
+      n.config = migrated as unknown as Record<string, unknown>;
     }
     // Legacy nodes stored outcome lanes in `branches`; move them to the second tier.
     const legacyOutcomes = (n.branches ?? []).filter((b) => b.kind === 'outcome');
@@ -270,7 +293,7 @@ export function isNodeComplete(node: PolicyNode): boolean {
     case 'approvalLevel': {
       const c = node.config as ApprovalLevelConfig | undefined;
       if (!c?.approverType) return false;
-      if (c.approverType === 'governanceGroup' && !c.governanceGroupId) return false;
+      if (c.approverType === 'governanceTeam' && !c.governanceTeamId) return false;
       if (c.approverType === 'user' && !c.userId) return false;
       const { days, hours, minutes } = c.sla ?? { days: 0, hours: 0, minutes: 0 };
       if (days === 0 && hours === 0 && minutes === 0) return false; // SLA required

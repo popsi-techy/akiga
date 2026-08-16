@@ -36,10 +36,10 @@ export const sodApps: { id: string; name: string; description: string }[] = [
 export const sodAppById: Record<string, { id: string; name: string; description: string }> = Object.fromEntries(sodApps.map((a) => [a.id, a]));
 
 export const sodPolicies: SodPolicy[] = [
-  { id: 'pol-fin', name: 'Finance SoD Policy', severity: 'critical', description: 'Prevents one person from both initiating and approving financial transactions.' },
-  { id: 'pol-acc', name: 'Access Governance Policy', severity: 'high', description: 'Restricts conflicting read/write/delete on the same directory.' },
-  { id: 'pol-priv', name: 'Privileged Access Policy', severity: 'high', description: 'Limits combinations that grant unchecked administrative power.' },
-  { id: 'pol-data', name: 'Data Handling Policy', severity: 'medium', description: 'Separates data read from bulk export and deletion.' },
+  { id: 'pol-fin', name: 'Finance SoD Policy', severity: 'critical', description: 'Prevents one person from both initiating and approving financial transactions.', status: 'active', createdOn: '2026-01-14T09:20:00.000Z', updatedOn: '2026-07-02T11:05:00.000Z' },
+  { id: 'pol-acc', name: 'Access Governance Policy', severity: 'high', description: 'Restricts conflicting read/write/delete on the same directory.', status: 'active', createdOn: '2026-02-03T14:45:00.000Z', updatedOn: '2026-06-18T08:30:00.000Z' },
+  { id: 'pol-priv', name: 'Privileged Access Policy', severity: 'high', description: 'Limits combinations that grant unchecked administrative power.', status: 'inactive', createdOn: '2026-03-11T10:10:00.000Z', updatedOn: '2026-08-04T16:40:00.000Z' },
+  { id: 'pol-data', name: 'Data Handling Policy', severity: 'medium', description: 'Separates data read from bulk export and deletion.', status: 'draft', createdOn: '2026-08-09T13:15:00.000Z', updatedOn: '2026-08-09T13:15:00.000Z' },
 ];
 export const policyById: Record<string, SodPolicy> = Object.fromEntries(sodPolicies.map((p) => [p.id, p]));
 

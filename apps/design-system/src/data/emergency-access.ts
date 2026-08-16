@@ -8,13 +8,17 @@ import {
   emergencySessions,
   emergencySessionsTotal,
   emergencyOwners,
-  emergencyGovernanceGroupsCount,
+  emergencyGovernanceTeamsCount,
   ownerDirectory,
   identities,
+  catalogApps,
   type RiskLevel,
   type Tone,
   type SeedEAOwner,
+  type EAStatus,
+  type SeedEmergencyAccess,
 } from './seed';
+import type { EntitySelection } from './automation-types';
 import {
   getEligibilityGroups,
   setEligibilityGroups,
@@ -48,15 +52,56 @@ export interface EARow {
   activeUsers: number | null;
 }
 
+/**
+ * Profiles created during this session, newest first.
+ *
+ * Session memory like the rest of this module. They join the seeded list rather
+ * than replacing it, so a demo can create one and still see the others.
+ */
+const createdProfiles: SeedEmergencyAccess[] = [];
+
+const allProfiles = (): SeedEmergencyAccess[] => [...createdProfiles, ...emergencyAccessList];
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+/**
+ * Creates a draft and returns its id.
+ *
+ * Deliberately empty: no eligibility, no assignments, no owners. A new profile
+ * that arrived pre-filled would hide the one thing the draft state exists to
+ * show — what is still missing before it can be switched on.
+ */
+export function createEmergencyAccess(input: { name: string; description: string }): string {
+  const id = `ea-new-${Math.random().toString(36).slice(2, 8)}`;
+  const now = new Date();
+  const today = `${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+  createdProfiles.unshift({
+    id,
+    name: input.name.trim(),
+    initial: (input.name.trim().charAt(0) || 'E').toUpperCase(),
+    description: input.description.trim(),
+    status: 'draft',
+    maxDurationHrs: 24,
+    maxConcurrent: 10,
+    maxRequestsPerDay: 5,
+    cooldownHrs: 2,
+    createdOn: today,
+    updatedOn: today,
+  });
+  // Claim the assignments slot so the seeding fallback does not hand a brand-new
+  // draft somebody else's entitlements.
+  assignmentsById.set(id, { entitlements: [], technicalRoles: [] });
+  return id;
+}
+
 export function getEmergencyAccessList(): EARow[] {
-  return emergencyAccessList.map((ea) => ({
+  return allProfiles().map((ea) => ({
     id: ea.id,
     name: ea.name,
     initial: ea.initial,
-    status:
-      ea.status === 'active'
-        ? { intent: 'success', label: 'Active' }
-        : { intent: 'warning', label: 'Draft' },
+    status: isActive(ea.id, ea.status)
+      ? { intent: 'success', label: 'Active' }
+      : { intent: 'warning', label: 'Draft' },
     risk:
       ea.riskLevel && ea.riskScore != null
         ? { intent: RISK_INTENT[ea.riskLevel], label: `${cap(ea.riskLevel)} (${ea.riskScore})` }
@@ -79,6 +124,8 @@ export interface EADetail {
   initial: string;
   description: string;
   status: { intent: 'warning' | 'success'; label: string };
+  /** A draft has never been activated, so it has no sessions and cannot be requested. */
+  isDraft: boolean;
   risk: { intent: 'success' | 'warning' | 'info' | 'danger'; label: string } | null;
   config: { maxDurationHrs: number; maxConcurrent: number; maxRequestsPerDay: number; cooldownHrs: number };
   timeline: { createdOn: string; updatedOn: string };
@@ -86,12 +133,12 @@ export interface EADetail {
   sessionsTotal: number;
   owners: SeedEAOwner[];
   ownersCount: number;
-  governanceGroupsCount: number;
+  governanceTeamsCount: number;
   eligibilityGroups: EligibilityGroup[];
 }
 
 export function getEmergencyAccess(id: string): EADetail | null {
-  const ea = emergencyAccessList.find((e) => e.id === id);
+  const ea = allProfiles().find((e) => e.id === id);
   if (!ea) return null;
 
   const sessions: EASessionView[] = emergencySessions.map((s, i) => {
@@ -110,10 +157,9 @@ export function getEmergencyAccess(id: string): EADetail | null {
     name: ea.name,
     initial: ea.initial,
     description: ea.description,
-    status:
-      ea.status === 'active'
-        ? { intent: 'success', label: 'Active' }
-        : { intent: 'warning', label: 'Draft' },
+    status: isActive(ea.id, ea.status)
+      ? { intent: 'success', label: 'Active' }
+      : { intent: 'warning', label: 'Draft' },
     risk:
       ea.riskLevel && ea.riskScore != null
         ? { intent: RISK_INTENT[ea.riskLevel], label: `${cap(ea.riskLevel)} (${ea.riskScore})` }
@@ -124,12 +170,13 @@ export function getEmergencyAccess(id: string): EADetail | null {
       maxRequestsPerDay: ea.maxRequestsPerDay,
       cooldownHrs: ea.cooldownHrs,
     },
+    isDraft: !isActive(ea.id, ea.status),
     timeline: { createdOn: ea.createdOn, updatedOn: ea.updatedOn },
     sessions,
     sessionsTotal: emergencySessionsTotal,
     owners: emergencyOwners,
     ownersCount: emergencyOwners.length,
-    governanceGroupsCount: emergencyGovernanceGroupsCount,
+    governanceTeamsCount: emergencyGovernanceTeamsCount,
     eligibilityGroups: getEligibilityGroups(id),
   };
 }
@@ -139,10 +186,117 @@ export function setEmergencyAccessEligibility(id: string, groups: EligibilityGro
   return setEligibilityGroups(id, groups);
 }
 
+/**
+ * Governance teams that own a break-glass profile.
+ *
+ * The other half of ownership: a named person answers for it day to day, a team
+ * answers for it at review. Session memory, seeded empty — group ownership is
+ * something the user assigns, not something the seed asserts.
+ */
+const groupOwnersById = new Map<string, string[]>();
+
+export function getEAGovernanceTeams(id: string): string[] {
+  return groupOwnersById.get(id) ?? [];
+}
+
+export function setEAGovernanceTeams(id: string, ids: string[]): string[] {
+  groupOwnersById.set(id, ids);
+  return ids;
+}
+
 /** People who can be added as owners (directory minus current owners). */
 export function getAvailableOwners(id: string): SeedEAOwner[] {
   const assigned = new Set(emergencyOwners.map((o) => o.id));
   return ownerDirectory.filter((o) => !assigned.has(o.id));
+}
+
+/**
+ * Profiles activated during this session.
+ *
+ * The seed says what a profile started as; activation is something the user did
+ * to it. Session memory, like eligibility and assignments — a draft that
+ * survives a reload as "active" would be lying about the seed.
+ */
+const activatedIds = new Set<string>();
+
+const isActive = (id: string, seeded: EAStatus) =>
+  activatedIds.has(id) || (seeded === 'active' && !deactivatedIds.has(id));
+
+/** Turns a draft on. Idempotent — activating an active profile is not an error. */
+export function activateEmergencyAccess(id: string): void {
+  activatedIds.add(id);
+}
+
+/** Puts an active profile back into draft. Sessions already granted are unaffected. */
+export function deactivateEmergencyAccess(id: string): void {
+  activatedIds.delete(id);
+  deactivatedIds.add(id);
+}
+
+const deactivatedIds = new Set<string>();
+
+/**
+ * What still stands between a draft and being switched on, named in the reader's
+ * words.
+ *
+ * One definition, used by both the header's Activate button and the Overview
+ * checklist — two copies of this rule would eventually disagree, and a disabled
+ * button whose checklist says everything is done is a bug nobody can diagnose.
+ *
+ * Owners and advanced limits are deliberately absent: they make a profile better
+ * governed, not functional, and blocking activation on a missing owner would
+ * stop someone turning on break-glass access during an incident.
+ */
+export function eaBlockingSteps(ea: EADetail): string[] {
+  const assignments = getEAAssignments(ea.id);
+  const blocking: string[] = [];
+  if (ea.name.trim() === '' || ea.description.trim() === '') blocking.push('basic details');
+  if (ea.eligibilityGroups.length === 0) blocking.push('eligibility criteria');
+  if (assignments.entitlements.length + assignments.technicalRoles.length === 0) {
+    blocking.push('assignments');
+  }
+  return blocking;
+}
+
+/**
+ * What a break-glass profile actually hands over.
+ *
+ * Entitlements and technical roles only — no business roles. A business role is
+ * a job description, and nobody is temporarily given a job; break-glass grants
+ * the narrowest thing that unblocks the incident, then takes it back.
+ *
+ * Session memory, like eligibility and advanced config above: these edits belong
+ * to the prototype's lifetime, not to a store.
+ */
+export interface EAAssignments {
+  entitlements: EntitySelection[];
+  technicalRoles: EntitySelection[];
+}
+
+const assignmentsById = new Map<string, EAAssignments>();
+
+/** Seeded from the profile's own name so each one reads plausibly, not identically. */
+function seedAssignments(id: string): EAAssignments {
+  const app = catalogApps.find((a) => id.includes(a.id.replace('app-', ''))) ?? catalogApps[3];
+  return {
+    entitlements: app.entitlements
+      .slice(0, 2)
+      .map((e) => ({ id: e.id, name: e.name, appName: app.name })),
+    technicalRoles: [],
+  };
+}
+
+export function getEAAssignments(id: string): EAAssignments {
+  const existing = assignmentsById.get(id);
+  if (existing) return existing;
+  const seeded = seedAssignments(id);
+  assignmentsById.set(id, seeded);
+  return seeded;
+}
+
+export function setEAAssignments(id: string, next: EAAssignments): EAAssignments {
+  assignmentsById.set(id, next);
+  return next;
 }
 
 /** Advanced configuration — editable limits, risk, and time-window settings. */
@@ -190,7 +344,7 @@ export function riskChipFromScore(score: number): {
 }
 
 function defaultAdvancedConfig(id: string): EAAdvancedConfig {
-  const ea = emergencyAccessList.find((e) => e.id === id);
+  const ea = allProfiles().find((e) => e.id === id);
   return {
     riskScore: ea?.riskScore ?? 84,
     maxConcurrent: ea?.maxConcurrent ?? 2,

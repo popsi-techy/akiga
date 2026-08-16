@@ -11,7 +11,7 @@ export type EntityKind =
   | 'entitlement'
   | 'technical-role'
   | 'business-role'
-  | 'governance-group';
+  | 'governance-team';
 
 /**
  * One consistent visual per Directory entity.

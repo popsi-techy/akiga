@@ -152,7 +152,7 @@ export const approvalPolicyFlows: Record<string, PolicyNode[]> = {
       [
         parallel('pv-par', 'Security + owner', {
           lanes: [
-            { id: 'pv-par-l1', name: 'Security Governance', approver: { approverType: 'governanceGroup', governanceGroupId: 'gg-secops' } },
+            { id: 'pv-par-l1', name: 'Security Governance', approver: { approverType: 'governanceTeam', governanceTeamId: 'gt-secops' } },
             { id: 'pv-par-l2', name: 'Application Owner', approver: { approverType: 'applicationOwner', completionRule: 'anyOne' } },
           ],
           overallRule: 'all',
@@ -182,8 +182,8 @@ export const approvalPolicyFlows: Record<string, PolicyNode[]> = {
       fallback: { enabled: false },
     }),
     level('fa-l2', 'Finance approvers', {
-      approverType: 'governanceGroup',
-      governanceGroupId: 'gg-finance',
+      approverType: 'governanceTeam',
+      governanceTeamId: 'gt-finance',
       completionRule: 'anyOne',
       sla: sla(1),
       fallback: { enabled: true, action: 'fallbackApprover', approverEmail: 'finance-controls@acme.com' },
@@ -192,8 +192,8 @@ export const approvalPolicyFlows: Record<string, PolicyNode[]> = {
       'fa-l3',
       'Compliance sign-off',
       {
-        approverType: 'governanceGroup',
-        governanceGroupId: 'gg-compliance',
+        approverType: 'governanceTeam',
+        governanceTeamId: 'gt-compliance',
         completionRule: 'all',
         sla: sla(3),
         fallback: { enabled: false },
@@ -233,8 +233,8 @@ export const approvalPolicyFlows: Record<string, PolicyNode[]> = {
       'em-l1',
       'Security Governance',
       {
-        approverType: 'governanceGroup',
-        governanceGroupId: 'gg-secops',
+        approverType: 'governanceTeam',
+        governanceTeamId: 'gt-secops',
         completionRule: 'anyOne',
         sla: sla(0, 4),
         fallback: { enabled: true, action: 'notify' },

@@ -50,7 +50,7 @@ canonical; relationship tabs list related entities and each row cross-navigates 
 | Business Role | Overview · Assigned Owners · User Identities · Technical Roles · Entitlements |
 | App Account | Overview · Entitlements |
 | User Identity | Overview · App Accounts · Technical Roles · Business Roles |
-| Governance Group | Overview · Reviewers · Owned Applications · Owned Entitlements · Owned Technical Roles · Owned Business Roles |
+| Governance Team | Overview · Reviewers · Owned Applications · Owned Entitlements · Owned Technical Roles · Owned Business Roles |
 
 ## High-frequency columns (design tables around these)
 | Entity | Typical table columns |
@@ -61,7 +61,7 @@ canonical; relationship tabs list related entities and each row cross-navigates 
 | Entitlement | Entitlement Name · Description · Application · Risk Score |
 | Technical Role | Name · Description · Risk Score |
 | Business Role | Name · Description · Risk Score |
-| Governance Group | Name · Description |
+| Governance Team | Name · Description |
 | Access Request | Beneficiary · Items · Requested · Status · Risk · SoD? |
 | Approval Task | Request · Requester · Risk · Due · (actions) |
 | Certification Item | Identity · Access · Risk · Last reviewed · (decision) |

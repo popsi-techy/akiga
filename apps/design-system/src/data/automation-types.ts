@@ -23,7 +23,7 @@ export type ApproverType =
   | 'roleOwner'
   | 'resourceOwner'
   | 'user'
-  | 'governanceGroup'
+  | 'governanceTeam'
   | 'approverOwner';
 
 /** Display label for every approver type — the single source of truth for the
@@ -37,7 +37,7 @@ export const APPROVER_TYPE_LABEL: Record<ApproverType, string> = {
   roleOwner: 'Role Owner',
   resourceOwner: 'Resource Owner',
   user: 'Predefined User',
-  governanceGroup: 'Governance Group',
+  governanceTeam: 'Governance Team',
   approverOwner: "Last Approver's Manager",
 };
 
@@ -49,7 +49,7 @@ export const MULTI_APPROVER_TYPES: ApproverType[] = [
   'entitlementOwner',
   'roleOwner',
   'resourceOwner',
-  'governanceGroup',
+  'governanceTeam',
 ];
 
 export type CompletionRule = 'all' | 'anyOne' | 'majority';
@@ -84,9 +84,9 @@ export interface FallbackConfig {
 
 export interface ApprovalLevelConfig {
   approverType?: ApproverType;
-  governanceGroupId?: string;
+  governanceTeamId?: string;
   userId?: string;
-  /** Only meaningful for owner / governanceGroup. */
+  /** Only meaningful for owner / governanceTeam. */
   completionRule?: CompletionRule;
   sla: SlaConfig;
   fallback: FallbackConfig;
@@ -140,7 +140,7 @@ export type ConditionNode = ConditionRule | ConditionGroup;
 // ---- parallel lane approver + config ---------------------------------
 export interface LaneApprover {
   approverType?: ApproverType;
-  governanceGroupId?: string;
+  governanceTeamId?: string;
   userId?: string;
   completionRule?: CompletionRule;
 }

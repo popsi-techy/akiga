@@ -54,6 +54,7 @@ const groups: { title: string; description: string; items: [string, string, stri
       ['Nav Card', '/components/nav-card', 'Launcher card for landing pages that route into a section.'],
       ['Menu', '/components/menu', 'Dropdown action menu — the ⋮ row actions.'],
       ['Stepper', '/components/stepper', 'Numbered progress for short linear flows.'],
+      ['Step Tracker', '/components/step-tracker', 'Vertical progress rail beside a multi-step form.'],
     ],
   },
   {

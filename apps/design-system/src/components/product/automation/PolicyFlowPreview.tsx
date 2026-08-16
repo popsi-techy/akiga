@@ -19,7 +19,7 @@ import {
   type NotificationConfig,
 } from '@/data/automation-types';
 import { NODE_META } from '@/lib/policy-tree';
-import { getUser, getGovernanceGroup } from '@/data/directory';
+import { getUser, getGovernanceTeam } from '@/data/directory';
 import { LaneLabel, ConditionLaneLabel, ParallelLaneLabel, AutoResolveBody, OUTCOME_TONE } from './LaneLabel';
 
 /**
@@ -72,7 +72,7 @@ export function nodeSummary(node: PolicyNode): string {
     const c = node.config as ApprovalLevelConfig | undefined;
     if (!c?.approverType) return 'No approver selected';
     let who = APPROVER_TYPE_LABEL[c.approverType];
-    if (c.approverType === 'governanceGroup') who = getGovernanceGroup(c.governanceGroupId ?? '')?.name ?? who;
+    if (c.approverType === 'governanceTeam') who = getGovernanceTeam(c.governanceTeamId ?? '')?.name ?? who;
     else if (c.approverType === 'user') who = getUser(c.userId ?? '')?.name ?? who;
     const sla = slaLabel(c.sla);
     return sla ? `${who} · SLA ${sla}` : who;
@@ -95,8 +95,8 @@ export function PolicyFlowPreview({ policy }: { policy: ApprovalPolicy }) {
             const a = l.approver;
             map[l.id] = !a.approverType
               ? 'Not configured'
-              : a.approverType === 'governanceGroup'
-                ? getGovernanceGroup(a.governanceGroupId ?? '')?.name ?? APPROVER_TYPE_LABEL[a.approverType]
+              : a.approverType === 'governanceTeam'
+                ? getGovernanceTeam(a.governanceTeamId ?? '')?.name ?? APPROVER_TYPE_LABEL[a.approverType]
                 : a.approverType === 'user'
                   ? getUser(a.userId ?? '')?.name ?? APPROVER_TYPE_LABEL[a.approverType]
                   : APPROVER_TYPE_LABEL[a.approverType];

@@ -18,3 +18,5 @@ export { BaselineDrawer } from './BaselineDrawer';
 export { BaselineGovernanceTab } from './BaselineGovernanceTab';
 export { ApplicationOverviewTab } from './ApplicationOverviewTab';
 export { AppAccountsPeek } from './AppAccountsPeek';
+export { PeekPanel, PeekSlot } from './PeekPanel';
+export { IdentityDetailsBody } from './IdentityDetailsBody';

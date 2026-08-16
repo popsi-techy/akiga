@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, type TabItem } from '@ds/components';
-import { getGovernanceGroupDetail } from '@/data/directory';
+import { getGovernanceTeamDetail } from '@/data/directory';
 import {
   DetailShell,
   DetailNotFound,
@@ -27,20 +27,20 @@ const TABS: TabItem[] = [
   { value: 'business-roles', label: 'Owned Business Roles' },
 ];
 
-export default function GovernanceGroupDetailPage() {
+export default function GovernanceTeamDetailPage() {
   const id = String(useParams().id);
   const router = useRouter();
   const [tab, setTab] = React.useState('overview');
-  const detail = getGovernanceGroupDetail(id);
+  const detail = getGovernanceTeamDetail(id);
 
-  if (!detail) return <DetailNotFound title="Governance group not found" backHref="/iga/directory/governance-groups" backLabel="Back to Governance Groups" />;
-  const { group, reviewers, ownedApplications, ownedEntitlements, ownedTechnicalRoles, ownedBusinessRoles } = detail;
+  if (!detail) return <DetailNotFound title="Governance team not found" backHref="/iga/directory/governance-teams" backLabel="Back to Governance Teams" />;
+  const { team, reviewers, ownedApplications, ownedEntitlements, ownedTechnicalRoles, ownedBusinessRoles } = detail;
 
   return (
     <DetailShell
-      avatar={<EntityAvatar kind="governance-group" name={group.name} size="md" />}
-      title={group.name}
-      description={group.description}
+      avatar={<EntityAvatar kind="governance-team" name={team.name} size="md" />}
+      title={team.name}
+      description={team.description}
       tabs={TABS}
       tab={tab}
       onTab={setTab}
@@ -59,7 +59,7 @@ export default function GovernanceGroupDetailPage() {
         </div>
       )}
       {tab === 'reviewers' && (
-        <EntityOwnersTab entityType="governance-group" entityId={group.id} seedOwnerIds={group.reviewerIds} label="Reviewer" emptyHint="Add User Identities as reviewers for this governance group." />
+        <EntityOwnersTab entityType="governance-team" entityId={team.id} seedOwnerIds={team.reviewerIds} label="Reviewer" emptyHint="Add User Identities as reviewers for this governance team." />
       )}
       {tab === 'applications' && (
         <RelationTable
@@ -67,7 +67,7 @@ export default function GovernanceGroupDetailPage() {
           rows={ownedApplications}
           onRowClick={(r) => router.push(`/iga/directory/applications/${r.id}`)}
           emptyTitle="No owned applications"
-          emptyMessage="This group owns no applications yet."
+          emptyMessage="This team owns no applications yet."
         />
       )}
       {tab === 'entitlements' && (
@@ -76,7 +76,7 @@ export default function GovernanceGroupDetailPage() {
           rows={ownedEntitlements}
           onRowClick={(r) => router.push(`/iga/directory/entitlements/${r.id}`)}
           emptyTitle="No owned entitlements"
-          emptyMessage="This group owns no entitlements yet."
+          emptyMessage="This team owns no entitlements yet."
         />
       )}
       {tab === 'technical-roles' && (
@@ -85,7 +85,7 @@ export default function GovernanceGroupDetailPage() {
           rows={ownedTechnicalRoles}
           onRowClick={(r) => router.push(`/iga/directory/technical-roles/${r.id}`)}
           emptyTitle="No owned technical roles"
-          emptyMessage="This group owns no technical roles yet."
+          emptyMessage="This team owns no technical roles yet."
         />
       )}
       {tab === 'business-roles' && (
@@ -94,7 +94,7 @@ export default function GovernanceGroupDetailPage() {
           rows={ownedBusinessRoles}
           onRowClick={(r) => router.push(`/iga/directory/business-roles/${r.id}`)}
           emptyTitle="No owned business roles"
-          emptyMessage="This group owns no business roles yet."
+          emptyMessage="This team owns no business roles yet."
         />
       )}
     </DetailShell>

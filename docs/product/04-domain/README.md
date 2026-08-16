@@ -19,7 +19,7 @@ how they change over time. An AI cannot correctly design a form, table, or workf
 
 **Directory backbone (first-class, with list + detail screens under `/iga/directory/*`):**
 `identity` (User Identity) · `account` (App Account) · `application` · `entitlement` ·
-`technical-role` · `business-role` · `governance-group`
+`technical-role` · `business-role` · `governance-team`
 
 **Process & governance:** `group` · `access-request` · `approval-policy` · `workflow` ·
 `certification` · `sod-policy` · `risk` · `emergency-access` ·

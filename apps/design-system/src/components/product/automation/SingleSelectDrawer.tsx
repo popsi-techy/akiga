@@ -6,7 +6,7 @@ import { Drawer, Input, Button, RadioCardGroup } from '@ds/components';
 
 /**
  * SingleSelectDrawer — a searchable radio-list drawer for choosing exactly one
- * entity (approver User or Governance Group). Multi-select entity catalogs use a
+ * entity (approver User or Governance Team). Multi-select entity catalogs use a
  * different (table) drawer; single approver selection is deliberately simple.
  */
 export interface SingleSelectItem {

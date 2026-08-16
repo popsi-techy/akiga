@@ -23,7 +23,7 @@ module builds on. They each have a list + detail screen under `/iga/directory/*`
 | Entitlement | `entitlement` | ✓ | A grantable unit of access within an application. |
 | Technical Role | `technical-role` | ✓ | A collection of entitlements bundled to simplify provisioning. |
 | Business Role | `business-role` | ✓ | A business function bundling one or more Technical Roles. |
-| Governance Group | `governance-group` | ✓ | A group of reviewers/owners that governs (owns) access. |
+| Governance Team | `governance-team` | ✓ | A team of reviewers/owners that governs (owns) access. |
 | Group | `group` | | A directory collection used to grant access collectively. |
 | Access Request | `access-request` | | A request to grant/revoke access. |
 | Approval Policy | `approval-policy` | | Rules for who must approve what. |

@@ -21,6 +21,7 @@ import AddIcon from '@mui/icons-material/Add';
 import PersonAddAltOutlined from '@mui/icons-material/PersonAddAltOutlined';
 import HistoryOutlined from '@mui/icons-material/HistoryOutlined';
 import CalendarTodayOutlined from '@mui/icons-material/CalendarTodayOutlined';
+import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
 import {
   Tabs,
   Card,
@@ -36,13 +37,27 @@ import {
   Input,
   SelectionPanel,
   NavList,
+  Tooltip,
   useToast,
   type Column,
 } from '@ds/components';
-import { getEmergencyAccess, getAvailableOwners, type EADetail } from '@/data/emergency-access';
+import {
+  getEmergencyAccess,
+  getAvailableOwners,
+  activateEmergencyAccess,
+  deactivateEmergencyAccess,
+  eaBlockingSteps,
+  getEAGovernanceTeams,
+  setEAGovernanceTeams,
+  type EADetail,
+} from '@/data/emergency-access';
 import type { SeedEAOwner } from '@/data/seed';
+import { listGovernanceTeamRows, type GovernanceTeamRow } from '@/data/directory';
+import { TableSelectDrawer } from '@/components/product/automation/TableSelectDrawer';
 import { EligibilityCriteriaTab } from '@/components/product/emergency/EligibilityCriteriaTab';
 import { AdvancedConfigurationTab } from '@/components/product/emergency/AdvancedConfigurationTab';
+import { EmergencyAssignmentsTab } from '@/components/product/emergency/EmergencyAssignmentsTab';
+import { EmergencySetupCard } from '@/components/product/emergency/EmergencySetupCard';
 
 const TABS = [
   { value: 'overview', label: 'Overview' },
@@ -71,32 +86,34 @@ function TabPlaceholder({ label }: { label: string }) {
   );
 }
 
-function OverviewTab({ ea }: { ea: EADetail }) {
+function OverviewTab({ ea, onGoToTab }: { ea: EADetail; onGoToTab: (tab: string) => void }) {
   return (
     <div className="ds-scroll h-full overflow-y-auto pr-0.5">
       <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
-        <Card
-          title={`Recent Sessions (${ea.sessionsTotal})`}
-          icon={<Person />}
-          padding="none"
-        >
-          <div>
-            {ea.sessions.map((s) => (
-              <ListRow key={s.id}>
-                <Avatar name={s.name} size="sm" shape="circle" />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-body-strong text-text-primary">{s.name}</div>
-                  <div className="truncate text-caption text-text-secondary">{s.subtitle}</div>
-                </div>
-                {s.ongoing ? (
-                  <StatusChip intent="success" label={s.when} />
-                ) : (
-                  <span className="text-body-sm text-text-secondary">{s.when}</span>
-                )}
-              </ListRow>
-            ))}
-          </div>
-        </Card>
+        {/* A draft has no sessions and cannot get any until it is switched on, so
+            the slot carries what to do about that instead. */}
+        {ea.isDraft ? (
+          <EmergencySetupCard ea={ea} onGoToTab={onGoToTab} />
+        ) : (
+          <Card title={`Recent Sessions (${ea.sessionsTotal})`} icon={<Person />} padding="none">
+            <div>
+              {ea.sessions.map((s) => (
+                <ListRow key={s.id}>
+                  <Avatar name={s.name} size="sm" shape="circle" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-body-strong text-text-primary">{s.name}</div>
+                    <div className="truncate text-caption text-text-secondary">{s.subtitle}</div>
+                  </div>
+                  {s.ongoing ? (
+                    <StatusChip intent="success" label={s.when} />
+                  ) : (
+                    <span className="text-body-sm text-text-secondary">{s.when}</span>
+                  )}
+                </ListRow>
+              ))}
+            </div>
+          </Card>
+        )}
 
         <div className="space-y-5">
           <Card title="Information" icon={<Info />} padding="none">
@@ -122,7 +139,7 @@ function OverviewTab({ ea }: { ea: EADetail }) {
 
 function OwnersTab({ ea }: { ea: EADetail }) {
   const toast = useToast();
-  const [view, setView] = React.useState<'individual' | 'groups'>('individual');
+  const [view, setView] = React.useState<'individual' | 'teams'>('individual');
   const [search, setSearch] = React.useState('');
   const rows = ea.owners.filter(
     (o) => o.name.toLowerCase().includes(search.toLowerCase()) || o.email.toLowerCase().includes(search.toLowerCase()),
@@ -148,6 +165,65 @@ function OwnersTab({ ea }: { ea: EADetail }) {
     setAddSearch('');
     setAddOpen(true);
   };
+
+  // Governance-team ownership: session memory, read after mount like the rest.
+  const [teamDrawerOpen, setTeamDrawerOpen] = React.useState(false);
+  const [teamIds, setTeamIds] = React.useState<string[]>([]);
+  React.useEffect(() => setTeamIds(getEAGovernanceTeams(ea.id)), [ea.id]);
+  const allTeams = listGovernanceTeamRows();
+  const teamRows = allTeams.filter(
+    (t) => teamIds.includes(t.id) && t.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const teamColumns: Column<GovernanceTeamRow>[] = [
+    {
+      id: 'name',
+      header: 'Governance Team',
+      sortable: true,
+      value: (t) => t.name,
+      render: (t) => (
+        <div className="flex items-center gap-3">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-subtle text-icon">
+            <GroupsOutlined sx={{ fontSize: 18 }} />
+          </span>
+          <div className="min-w-0">
+            <div className="truncate text-body-sm-strong text-text-primary">{t.name}</div>
+            <div className="truncate text-caption text-text-secondary">{t.description}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'members',
+      header: 'Reviewers',
+      align: 'right',
+      width: 120,
+      sortable: true,
+      value: (t) => t.reviewerCount,
+      render: (t) => <span className="text-body-sm tabular-nums text-text-primary">{t.reviewerCount}</span>,
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      align: 'right',
+      width: 80,
+      render: (t) => (
+        <Menu
+          items={[
+            {
+              label: 'Remove team',
+              icon: <DeleteOutline sx={{ fontSize: 18 }} />,
+              danger: true,
+              onClick: () => {
+                setTeamIds(setEAGovernanceTeams(ea.id, teamIds.filter((x) => x !== t.id)));
+                toast.success(`${t.name} removed`);
+              },
+            },
+          ]}
+        />
+      ),
+    },
+  ];
 
   const addColumns: Column<SeedEAOwner>[] = [
     {
@@ -202,10 +278,10 @@ function OwnersTab({ ea }: { ea: EADetail }) {
         <NavList
           ariaLabel="Owner type"
           value={view}
-          onChange={(id) => setView(id as 'individual' | 'groups')}
+          onChange={(id) => setView(id as 'individual' | 'teams')}
           items={[
             { id: 'individual', icon: <PersonOutline sx={{ fontSize: 18 }} />, label: 'Individual Owners', count: ea.ownersCount },
-            { id: 'groups', icon: <GroupsOutlined sx={{ fontSize: 18 }} />, label: 'Governance Groups', count: ea.governanceGroupsCount },
+            { id: 'teams', icon: <GroupsOutlined sx={{ fontSize: 18 }} />, label: 'Governance Teams', count: teamIds.length },
           ]}
         />
       </Card>
@@ -220,8 +296,13 @@ function OwnersTab({ ea }: { ea: EADetail }) {
             Filter
           </Button>
           <div className="ml-auto">
-            <Button startIcon={<AddIcon />} onClick={openAdd}>
-              Add Owners
+            {/* The rail decides what "add" means: the button acts on whichever
+                half of ownership you are looking at. */}
+            <Button
+              startIcon={<AddIcon />}
+              onClick={view === 'individual' ? openAdd : () => setTeamDrawerOpen(true)}
+            >
+              {view === 'individual' ? 'Add Owners' : 'Add Governance Teams'}
             </Button>
           </div>
         </div>
@@ -237,10 +318,29 @@ function OwnersTab({ ea }: { ea: EADetail }) {
               emptyMessage="Add individual owners to govern this emergency access."
             />
           ) : (
-            <TabPlaceholder label="Governance Groups" />
+            <DataTable<GovernanceTeamRow>
+              columns={teamColumns}
+              rows={teamRows}
+              fillHeight
+              emptyTitle="No governance teams"
+              emptyMessage="A team answers for this access at review, where a named owner answers for it day to day."
+            />
           )}
         </div>
       </div>
+
+      <TableSelectDrawer
+        open={teamDrawerOpen}
+        onClose={() => setTeamDrawerOpen(false)}
+        title="Add Governance Teams"
+        subtitle="Teams that answer for this access at review."
+        icon={<GroupsOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
+        nameHeader="Governance Team"
+        entity="governance team"
+        rows={allTeams}
+        selectedIds={teamIds}
+        onApply={(ids) => setTeamIds(setEAGovernanceTeams(ea.id, ids))}
+      />
 
       {/* Add Owners drawer — searchable, multi-select table of available people */}
       <Drawer
@@ -324,8 +424,19 @@ export default function EmergencyAccessDetailPage() {
   const toast = useToast();
   const [tab, setTab] = React.useState('overview');
   const [deactivateOpen, setDeactivateOpen] = React.useState(false);
+  // Bumped after activation so the page re-reads the session-memory status.
+  const [, bump] = React.useReducer((n: number) => n + 1, 0);
 
   const ea = getEmergencyAccess(id);
+  const blocking = ea ? eaBlockingSteps(ea) : [];
+
+  const activate = () => {
+    if (!ea || blocking.length > 0) return;
+    activateEmergencyAccess(ea.id);
+    toast.success(`“${ea.name}” is active. It can now be requested.`);
+    bump();
+    setTab('sessions');
+  };
 
   if (!ea) {
     return (
@@ -361,9 +472,32 @@ export default function EmergencyAccessDetailPage() {
             <Button variant="secondary" startIcon={<EditOutlined />} onClick={() => toast.info('Edit basic details')}>
               Basic Details
             </Button>
-            <Button variant="secondary" startIcon={<BlockOutlined />} onClick={() => setDeactivateOpen(true)}>
-              Deactivate
-            </Button>
+            {/* A draft has never been on, so the only thing to offer is turning
+                it on — and only once it would actually work. Same rule as the
+                Overview checklist, from one definition. */}
+            {ea.isDraft ? (
+              <Tooltip
+                title={
+                  blocking.length > 0
+                    ? `Add ${blocking.join(' and ')} before this can be activated.`
+                    : 'Let eligible people request this access'
+                }
+              >
+                <span>
+                  <Button
+                    startIcon={<CheckCircleOutlined />}
+                    disabled={blocking.length > 0}
+                    onClick={activate}
+                  >
+                    Activate
+                  </Button>
+                </span>
+              </Tooltip>
+            ) : (
+              <Button variant="secondary" startIcon={<BlockOutlined />} onClick={() => setDeactivateOpen(true)}>
+                Deactivate
+              </Button>
+            )}
             <Menu
               items={[
                 { label: 'Duplicate', icon: <ContentCopyOutlined sx={{ fontSize: 18 }} />, onClick: () => toast.info('Duplicated'), divider: true },
@@ -377,11 +511,11 @@ export default function EmergencyAccessDetailPage() {
 
       {/* Tab content — fills the remaining height */}
       <div className="min-h-0 flex-1 pt-5">
-        {tab === 'overview' && <OverviewTab ea={ea} />}
+        {tab === 'overview' && <OverviewTab ea={ea} onGoToTab={setTab} />}
         {tab === 'owners' && <OwnersTab ea={ea} />}
         {tab === 'eligibility' && <EligibilityCriteriaTab eaId={ea.id} />}
         {tab === 'sessions' && <TabPlaceholder label="Sessions" />}
-        {tab === 'assignments' && <TabPlaceholder label="Assignments" />}
+        {tab === 'assignments' && <EmergencyAssignmentsTab eaId={id} />}
         {tab === 'advanced' && <AdvancedConfigurationTab eaId={ea.id} />}
       </div>
 
@@ -393,7 +527,10 @@ export default function EmergencyAccessDetailPage() {
         confirmLabel="Deactivate"
         onConfirm={() => {
           setDeactivateOpen(false);
-          toast.success(`${ea.name} deactivated`);
+          deactivateEmergencyAccess(ea.id);
+          toast.success(`“${ea.name}” deactivated. It is a draft again.`);
+          bump();
+          setTab('overview');
         }}
       >
         Active users will lose emergency access immediately. This action is logged and the access can

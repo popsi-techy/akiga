@@ -88,6 +88,9 @@ export type { NavCardProps } from './NavCard/NavCard';
 export { Stepper } from './Stepper/Stepper';
 export type { StepperProps, StepperStep } from './Stepper/Stepper';
 
+export { StepTracker } from './StepTracker/StepTracker';
+export type { StepTrackerProps, StepTrackerStep } from './StepTracker/StepTracker';
+
 export { Meter } from './Meter/Meter';
 export type { MeterProps, MeterTone } from './Meter/Meter';
 

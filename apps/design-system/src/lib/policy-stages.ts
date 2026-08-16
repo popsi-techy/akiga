@@ -5,7 +5,7 @@ import type {
   PolicyNode,
 } from '@/data/automation-types';
 import { APPROVER_TYPE_LABEL, type ConditionGroup } from '@/data/automation-types';
-import { getGovernanceGroup, getUser } from '@/data/directory';
+import { getGovernanceTeam, getUser } from '@/data/directory';
 import { flattenRules, ruleText } from '@/components/product/automation/condition-format';
 import { isPolicyOperand, policyRuleText } from '@/data/policy-conditions';
 import { isNodeComplete } from '@/lib/policy-tree';
@@ -71,13 +71,13 @@ function slaLabel(sla?: { days?: number; hours?: number; minutes?: number }): st
 /** Resolves an approver reference to the name a reader would recognise. */
 function approverName(a: {
   approverType?: string;
-  governanceGroupId?: string;
+  governanceTeamId?: string;
   userId?: string;
 }): string {
   if (!a.approverType) return 'No approver selected';
   const type = a.approverType as keyof typeof APPROVER_TYPE_LABEL;
-  if (a.approverType === 'governanceGroup') {
-    return getGovernanceGroup(a.governanceGroupId ?? '')?.name ?? APPROVER_TYPE_LABEL[type];
+  if (a.approverType === 'governanceTeam') {
+    return getGovernanceTeam(a.governanceTeamId ?? '')?.name ?? APPROVER_TYPE_LABEL[type];
   }
   if (a.approverType === 'user') {
     return getUser(a.userId ?? '')?.name ?? APPROVER_TYPE_LABEL[type];

@@ -27,7 +27,7 @@ export default function RadioCardGroupDocs() {
               onChange={setValue}
               options={[
                 { value: 'manager', label: 'Manager', description: "The requester's direct manager", icon: <SupervisorAccountOutlined sx={{ fontSize: 20 }} /> },
-                { value: 'governanceGroup', label: 'Governance Group', description: 'A named group of approvers', icon: <GroupsOutlined sx={{ fontSize: 20 }} /> },
+                { value: 'governanceTeam', label: 'Governance Team', description: 'A named team of approvers', icon: <GroupsOutlined sx={{ fontSize: 20 }} /> },
                 { value: 'user', label: 'Specific User', description: 'A named individual approver', icon: <PersonOutline sx={{ fontSize: 20 }} /> },
               ]}
             />

@@ -591,6 +591,26 @@
       "notes": "Steps keep their number throughout, so \"step 2\" means the same thing on every screen. showBack=false on a step that owns its own way back (a final review with an explicit Edit). Cap at four steps."
     },
     {
+      "name": "StepTracker",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/StepTracker/StepTracker.tsx",
+      "extends": null,
+      "variants": [
+        "done",
+        "current",
+        "upcoming",
+        "fill"
+      ],
+      "states": [
+        "default",
+        "clickable",
+        "current",
+        "done"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/step-tracker/page.tsx",
+      "notes": "Vertical numbered progress rail for a multi-step form, with a sentence per step. Sibling of Stepper, not a replacement: Stepper is a strip above a canvas that reports position, this is a column beside a form that also explains the steps. Only completed steps are clickable — going forward belongs to the form action that validates the current step. Completed and current markers keep their NUMBER (never a tick, so \"step 3 of 5\" stays checkable) and wear a 4px halo; markers use the status *solid* role via tokens because a filled marker is a graphic, not text. Connectors are a repeating-linear-gradient (6px dash, 2px gap) — border-style: dashed sizes dashes from the border width and reads as dots at 1px. `fill` spreads the steps down a constrained container."
+    },
+    {
       "name": "Switch",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/Switch/Switch.tsx",

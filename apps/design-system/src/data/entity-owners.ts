@@ -8,7 +8,8 @@ export type OwnedEntityType =
   | 'entitlement'
   | 'technical-role'
   | 'business-role'
-  | 'governance-group';
+  | 'governance-team'
+  | 'sod-policy';
 
 const STORE_KEY = 'iga.entityOwners.v1';
 const SEED_VERSION = 1;
@@ -39,11 +40,31 @@ function readStore(): Store {
       window.localStorage.setItem(STORE_KEY, JSON.stringify(s));
       return s;
     }
+    if (migrateGovernanceTeamKeys(parsed)) window.localStorage.setItem(STORE_KEY, JSON.stringify(parsed));
     return parsed;
   } catch {
     return seedStore();
   }
 }
+/**
+ * Governance Group → Governance Team. The key encodes both the entity type and
+ * its id, so a store written before the rename hides its reviewer lists behind
+ * `governance-group:gg-*` keys nothing reads any more — the team would silently
+ * fall back to seed reviewers. Rewrites the keys instead of dropping the store.
+ * Returns whether anything moved. Idempotent.
+ */
+function migrateGovernanceTeamKeys(s: Store): boolean {
+  let moved = false;
+  for (const key of Object.keys(s.owners)) {
+    if (!key.startsWith('governance-group:')) continue;
+    const next = key.replace('governance-group:', 'governance-team:').replace(':gg-', ':gt-');
+    s.owners[next] = s.owners[key];
+    delete s.owners[key];
+    moved = true;
+  }
+  return moved;
+}
+
 function writeStore(s: Store) {
   if (hasWindow()) window.localStorage.setItem(STORE_KEY, JSON.stringify(s));
 }

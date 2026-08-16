@@ -166,7 +166,7 @@ export interface SeedEAOwner {
 }
 const toOwner = (u: SeedUserIdentity): SeedEAOwner => ({ id: u.id, name: u.name, email: u.email });
 export const emergencyOwners: SeedEAOwner[] = userIdentities.slice(0, 8).map(toOwner);
-export const emergencyGovernanceGroupsCount = 4;
+export const emergencyGovernanceTeamsCount = 4;
 
 /**
  * Approval Policy seed — used only to prime an empty localStorage store on first
@@ -315,13 +315,13 @@ export const businessRoles: { id: string; name: string; description: string; ris
   { id: 'br-service-desk', name: 'IT Service Desk', description: 'First-line support and request fulfilment', risk: 30, technicalRoleIds: ['tr-itsm'], entitlementIds: ['ent-snow-fulfiller'], memberIds: ['o-grace'], ownerIds: ['o-henry'] },
 ];
 
-/** Governance groups — reviewers/owners that govern access. `members` = reviewer count. */
-export const governanceGroups: { id: string; name: string; description: string; members: number; reviewerIds: string[]; ownedApplicationIds: string[]; ownedEntitlementIds: string[]; ownedTechnicalRoleIds: string[]; ownedBusinessRoleIds: string[] }[] = [
-  { id: 'gg-secops', name: 'Security Operations', description: 'Owns privileged access and reviews security-sensitive entitlements.', members: 2, reviewerIds: ['o-catherine', 'o-marcus'], ownedApplicationIds: ['app-okta'], ownedEntitlementIds: ['ent-okta-admin', 'ent-aws-admin', 'ent-flake-acct'], ownedTechnicalRoleIds: ['tr-devops'], ownedBusinessRoleIds: ['br-security-analyst'] },
-  { id: 'gg-it-admins', name: 'IT Administrators', description: 'Owns infrastructure applications and administrator access.', members: 2, reviewerIds: ['o-marcus', 'o-henry'], ownedApplicationIds: ['app-aws', 'app-servicenow'], ownedEntitlementIds: ['ent-aws-power', 'ent-snow-admin'], ownedTechnicalRoleIds: ['tr-devops', 'tr-itsm'], ownedBusinessRoleIds: ['br-service-desk'] },
-  { id: 'gg-compliance', name: 'Compliance Team', description: 'Reviews access for regulatory compliance.', members: 2, reviewerIds: ['o-olivia', 'o-catherine'], ownedApplicationIds: [], ownedEntitlementIds: ['ent-sf-admin'], ownedTechnicalRoleIds: [], ownedBusinessRoleIds: ['br-finance', 'br-controller'] },
-  { id: 'gg-app-owners', name: 'Application Owners', description: 'Owns business applications and their role bundles.', members: 3, reviewerIds: ['o-henry', 'o-priya', 'o-bob'], ownedApplicationIds: ['app-salesforce', 'app-github', 'app-jira'], ownedEntitlementIds: [], ownedTechnicalRoleIds: ['tr-eng-baseline', 'tr-sf-admin'], ownedBusinessRoleIds: ['br-sales-rep', 'br-support'] },
-  { id: 'gg-finance', name: 'Finance Approvers', description: 'Approves and owns finance-system access.', members: 2, reviewerIds: ['o-bob', 'o-hana'], ownedApplicationIds: ['app-netsuite'], ownedEntitlementIds: ['ent-sf-sales', 'ent-sap-pay'], ownedTechnicalRoleIds: ['tr-sap-fin'], ownedBusinessRoleIds: ['br-finance'] },
+/** Governance teams — reviewers/owners that govern access. `members` = reviewer count. */
+export const governanceTeams: { id: string; name: string; description: string; members: number; reviewerIds: string[]; ownedApplicationIds: string[]; ownedEntitlementIds: string[]; ownedTechnicalRoleIds: string[]; ownedBusinessRoleIds: string[] }[] = [
+  { id: 'gt-secops', name: 'Security Operations', description: 'Owns privileged access and reviews security-sensitive entitlements.', members: 2, reviewerIds: ['o-catherine', 'o-marcus'], ownedApplicationIds: ['app-okta'], ownedEntitlementIds: ['ent-okta-admin', 'ent-aws-admin', 'ent-flake-acct'], ownedTechnicalRoleIds: ['tr-devops'], ownedBusinessRoleIds: ['br-security-analyst'] },
+  { id: 'gt-it-admins', name: 'IT Administrators', description: 'Owns infrastructure applications and administrator access.', members: 2, reviewerIds: ['o-marcus', 'o-henry'], ownedApplicationIds: ['app-aws', 'app-servicenow'], ownedEntitlementIds: ['ent-aws-power', 'ent-snow-admin'], ownedTechnicalRoleIds: ['tr-devops', 'tr-itsm'], ownedBusinessRoleIds: ['br-service-desk'] },
+  { id: 'gt-compliance', name: 'Compliance Team', description: 'Reviews access for regulatory compliance.', members: 2, reviewerIds: ['o-olivia', 'o-catherine'], ownedApplicationIds: [], ownedEntitlementIds: ['ent-sf-admin'], ownedTechnicalRoleIds: [], ownedBusinessRoleIds: ['br-finance', 'br-controller'] },
+  { id: 'gt-app-owners', name: 'Application Owners', description: 'Owns business applications and their role bundles.', members: 3, reviewerIds: ['o-henry', 'o-priya', 'o-bob'], ownedApplicationIds: ['app-salesforce', 'app-github', 'app-jira'], ownedEntitlementIds: [], ownedTechnicalRoleIds: ['tr-eng-baseline', 'tr-sf-admin'], ownedBusinessRoleIds: ['br-sales-rep', 'br-support'] },
+  { id: 'gt-finance', name: 'Finance Approvers', description: 'Approves and owns finance-system access.', members: 2, reviewerIds: ['o-bob', 'o-hana'], ownedApplicationIds: ['app-netsuite'], ownedEntitlementIds: ['ent-sf-sales', 'ent-sap-pay'], ownedTechnicalRoleIds: ['tr-sap-fin'], ownedBusinessRoleIds: ['br-finance'] },
 ];
 
 /** App Accounts — a User Identity's login within an application (identityId null = orphan). */

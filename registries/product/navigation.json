@@ -28,7 +28,7 @@
         { "id": "approval-policies", "label": "Approval Policies", "route": "/iga/automation/approval-policies", "icon": "rule" },
         { "id": "birthright-policies", "label": "Birthright Policies", "route": "/iga/birthright", "icon": "verified" }
       ]},
-      { "id": "governance-teams", "label": "Governance Teams", "route": "/iga/directory/governance-groups", "icon": "groups", "personas": ["auditor", "administrator"] },
+      { "id": "governance-teams", "label": "Governance Teams", "route": "/iga/directory/governance-teams", "icon": "groups", "personas": ["auditor", "administrator"] },
       { "id": "certifications", "label": "Access Certification", "route": "/iga/certifications", "icon": "campaign", "personas": ["administrator", "auditor"] }
     ]},
     { "group": "administration", "label": "Administration", "items": [

@@ -22,11 +22,11 @@
     { "from": "business-role", "to": "entitlement", "type": "has-many", "label": "adds directly" },
     { "from": "business-role", "to": "identity", "type": "has-many", "label": "assigned to" },
     { "from": "business-role", "to": "identity", "type": "has-one", "label": "owned by (role-owner)" },
-    { "from": "governance-group", "to": "identity", "type": "has-many", "label": "contains (reviewers)" },
-    { "from": "governance-group", "to": "application", "type": "has-many", "label": "owns" },
-    { "from": "governance-group", "to": "entitlement", "type": "has-many", "label": "owns" },
-    { "from": "governance-group", "to": "technical-role", "type": "has-many", "label": "owns" },
-    { "from": "governance-group", "to": "business-role", "type": "has-many", "label": "owns" },
+    { "from": "governance-team", "to": "identity", "type": "has-many", "label": "contains (reviewers)" },
+    { "from": "governance-team", "to": "application", "type": "has-many", "label": "owns" },
+    { "from": "governance-team", "to": "entitlement", "type": "has-many", "label": "owns" },
+    { "from": "governance-team", "to": "technical-role", "type": "has-many", "label": "owns" },
+    { "from": "governance-team", "to": "business-role", "type": "has-many", "label": "owns" },
     { "from": "group", "to": "entitlement", "type": "has-many", "label": "grants" },
     { "from": "entitlement", "to": "application", "type": "belongs-to", "label": "within" },
     { "from": "entitlement", "to": "identity", "type": "has-one", "label": "owned by (entitlement-owner)" },
@@ -70,7 +70,7 @@
     { "from": "sod-policy", "to": "department", "type": "has-many", "label": "applies to" },
     { "from": "delegation", "to": "identity", "type": "has-one", "label": "delegated to" },
     { "from": "escalation-rule", "to": "identity", "type": "has-many", "label": "escalates to" },
-    { "from": "governance-role", "to": "governance-group", "type": "has-one", "label": "held by" },
+    { "from": "governance-role", "to": "governance-team", "type": "has-one", "label": "held by" },
     { "from": "governance-finding", "to": "application", "type": "belongs-to", "label": "found on" }
   ]
 }

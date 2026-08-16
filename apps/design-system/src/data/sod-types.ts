@@ -18,11 +18,82 @@ export interface SodAccess {
   risk?: number; // canonical 0–100 Risk Score
 }
 
+/**
+ * Draft → Active → Inactive.
+ *
+ * `draft` has never been enforced; `inactive` was and no longer is. Keeping them
+ * apart matters at audit: "never switched on" and "deliberately switched off"
+ * are different answers to the same question, and collapsing them into one
+ * "not active" state loses the one an auditor actually asks about.
+ */
+export type SodPolicyStatus = 'draft' | 'active' | 'inactive';
+
 export interface SodPolicy {
   id: string;
   name: string; // "Finance SoD Policy"
   severity: Severity;
   description: string;
+  status: SodPolicyStatus;
+  /** ISO instants. Formatted for display at the call site, always in UTC. */
+  createdOn: string;
+  updatedOn: string;
+}
+
+// ---- Ruleset -----------------------------------------------------------
+
+export type SodCombinator = 'AND' | 'OR';
+
+/**
+ * One piece of access in a rule — an entitlement or a technical role.
+ *
+ * No business roles: a business role is a job description, and an SoD rule that
+ * names one is really a statement about the entitlements inside it. Writing the
+ * rule against the job title hides which permissions actually conflict, which is
+ * the one thing the reviewer needs when the conflict fires.
+ */
+export interface SodAccessRef {
+  kind: 'access';
+  /** Node id, unique within the ruleset — not the access id (the same access may appear twice). */
+  id: string;
+  accessId: string;
+  accessType: 'entitlement' | 'technicalRole';
+  name: string;
+  /** Empty for technical roles, which are not scoped to one application. */
+  appName?: string;
+}
+
+/**
+ * A boolean group. `AND` means every child must be held, `OR` means any one.
+ *
+ * Nesting is what lets one expression carry a two-sided conflict — the classic
+ * "(raise a payment OR create a vendor) AND (approve a payment)" — without the
+ * model needing a special notion of sides.
+ */
+export interface SodRuleGroup {
+  kind: 'group';
+  id: string;
+  combinator: SodCombinator;
+  children: SodRuleNode[];
+}
+
+export type SodRuleNode = SodRuleGroup | SodAccessRef;
+
+/**
+ * A saved ruleset.
+ *
+ * Versioned rather than edited in place once the policy is live: an SoD policy
+ * is a control, and "what was this checking on the day that violation fired?"
+ * is unanswerable if the rule was overwritten. A draft policy has no such
+ * history to protect, so its single version is edited in place.
+ */
+export interface SodRulesetVersion {
+  version: number;
+  state: 'active' | 'superseded';
+  root: SodRuleGroup;
+  savedOn: string;
+  savedBy: string;
+  /** Why this version exists — captured when superseding a live ruleset. */
+  note?: string;
 }
 
 /** A conflicting access combination (per-user rule instance). */

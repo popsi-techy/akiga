@@ -13,7 +13,7 @@ import {
   type FallbackAction,
   type FallbackApproverResolution,
 } from '@/data/automation-types';
-import { listUsers, listGovernanceGroups, getUser, getGovernanceGroup } from '@/data/directory';
+import { listUsers, listGovernanceTeams, getUser, getGovernanceTeam } from '@/data/directory';
 import { SingleSelectDrawer } from './SingleSelectDrawer';
 import { ConfigSection, FieldLabel } from './config-kit';
 
@@ -32,7 +32,7 @@ const FALLBACK_APPROVER_RESOLUTION_OPTIONS: { value: FallbackApproverResolution;
 ];
 
 export function ApprovalLevelConfig({ config, onChange }: { config: ALConfig; onChange: (next: ALConfig) => void }) {
-  const [groupDrawer, setGroupDrawer] = React.useState(false);
+  const [teamDrawer, setTeamDrawer] = React.useState(false);
   const [userDrawer, setUserDrawer] = React.useState(false);
 
   const set = (patch: Partial<ALConfig>) => onChange({ ...config, ...patch });
@@ -41,13 +41,13 @@ export function ApprovalLevelConfig({ config, onChange }: { config: ALConfig; on
     onChange({
       ...config,
       approverType: t,
-      governanceGroupId: undefined,
+      governanceTeamId: undefined,
       userId: undefined,
       ...(MULTI_APPROVER_TYPES.includes(t) ? {} : { completionRule: undefined }),
     });
 
   const showCompletion = !!config.approverType && MULTI_APPROVER_TYPES.includes(config.approverType);
-  const group = config.governanceGroupId ? getGovernanceGroup(config.governanceGroupId) : undefined;
+  const team = config.governanceTeamId ? getGovernanceTeam(config.governanceTeamId) : undefined;
   const user = config.userId ? getUser(config.userId) : undefined;
 
   return (
@@ -61,10 +61,10 @@ export function ApprovalLevelConfig({ config, onChange }: { config: ALConfig; on
         />
 
         {/* Dependent controls live inside the Approver group — no divider. */}
-        {config.approverType === 'governanceGroup' && (
+        {config.approverType === 'governanceTeam' && (
           <div className="mt-4">
-            <FieldLabel>Governance group</FieldLabel>
-            <PickerRow value={group?.name} selectLabel="Select Governance Group" icon={<GroupsOutlined sx={{ fontSize: 16 }} />} onOpen={() => setGroupDrawer(true)} />
+            <FieldLabel>Governance team</FieldLabel>
+            <PickerRow value={team?.name} selectLabel="Select Governance Team" icon={<GroupsOutlined sx={{ fontSize: 16 }} />} onOpen={() => setTeamDrawer(true)} />
           </div>
         )}
         {config.approverType === 'user' && (
@@ -211,15 +211,15 @@ export function ApprovalLevelConfig({ config, onChange }: { config: ALConfig; on
       </ConfigSection>
 
       <SingleSelectDrawer
-        open={groupDrawer}
-        onClose={() => setGroupDrawer(false)}
-        title="Select Governance Group"
-        subtitle="Choose the group that will approve at this level."
+        open={teamDrawer}
+        onClose={() => setTeamDrawer(false)}
+        title="Select Governance Team"
+        subtitle="Choose the team that will approve at this level."
         icon={<GroupsOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
-        items={listGovernanceGroups().map((g) => ({ id: g.id, primary: g.name, secondary: `${g.members} members` }))}
-        selectedId={config.governanceGroupId}
-        onSelect={(id) => set({ governanceGroupId: id })}
-        searchPlaceholder="Search groups"
+        items={listGovernanceTeams().map((g) => ({ id: g.id, primary: g.name, secondary: `${g.members} members` }))}
+        selectedId={config.governanceTeamId}
+        onSelect={(id) => set({ governanceTeamId: id })}
+        searchPlaceholder="Search teams"
       />
       <SingleSelectDrawer
         open={userDrawer}

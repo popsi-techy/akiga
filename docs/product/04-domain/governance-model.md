@@ -68,7 +68,7 @@ findings engine cover fourteen kinds without fourteen special cases.
 | **SoD Policy** | Constrains what may be held together | `sod-seed.ts` + governance scope |
 | **Delegation** | Temporary transfer of approval authority | `governance-seed.ts` |
 | **Escalation Rule** | What happens when nobody acts in time | `governance-seed.ts` |
-| **Governance Role** | A named accountability, staffed by a Governance Group | `governance-seed.ts` |
+| **Governance Role** | A named accountability, staffed by a Governance Team | `governance-seed.ts` |
 | **Person** | A User Identity acting in a governance capacity | `seed.ts` (Directory) |
 
 ### Ownership is three things, not one
