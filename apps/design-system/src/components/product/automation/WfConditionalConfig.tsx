@@ -63,7 +63,7 @@ export function WfConditionalConfig({ node, onPatchNode }: { node: WorkflowNode;
               return (
                 <div key={b.id} className="rounded-lg border border-border bg-surface px-3 py-2.5">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2.5 py-0.5 text-caption-strong tracking-wide text-[var(--ds-color-status-info-fg)]">{b.label}</span>
+                    <span className="rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2.5 py-0.5 text-caption-medium tracking-wide text-[var(--ds-color-status-info-fg)]">{b.label}</span>
                     <div className="flex items-center gap-0.5">
                       {!valid && <StatusChip intent="warning" label="Not set" />}
                       <button
@@ -115,7 +115,7 @@ export function WfConditionalConfig({ node, onPatchNode }: { node: WorkflowNode;
       <div>
         <SectionLabel>Fallback Branch</SectionLabel>
         <div className="flex items-center gap-2.5 rounded-lg border border-border bg-surface px-3 py-2.5">
-          <span className="rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2.5 py-0.5 text-caption-strong tracking-wide text-[var(--ds-color-status-info-fg)]">{elseBranch?.label ?? 'ELSE'}</span>
+          <span className="rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2.5 py-0.5 text-caption-medium tracking-wide text-[var(--ds-color-status-info-fg)]">{elseBranch?.label ?? 'ELSE'}</span>
           <span className="text-body-sm text-text-secondary">All other identities</span>
         </div>
       </div>

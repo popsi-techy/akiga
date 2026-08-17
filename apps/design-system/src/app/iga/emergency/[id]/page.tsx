@@ -58,6 +58,7 @@ import { EligibilityCriteriaTab } from '@/components/product/emergency/Eligibili
 import { AdvancedConfigurationTab } from '@/components/product/emergency/AdvancedConfigurationTab';
 import { EmergencyAssignmentsTab } from '@/components/product/emergency/EmergencyAssignmentsTab';
 import { EmergencySetupCard } from '@/components/product/emergency/EmergencySetupCard';
+import { formatDateTime } from '@/lib/datetime';
 
 const TABS = [
   { value: 'overview', label: 'Overview' },
@@ -116,19 +117,26 @@ function OverviewTab({ ea, onGoToTab }: { ea: EADetail; onGoToTab: (tab: string)
         )}
 
         <div className="space-y-5">
-          <Card title="Information" icon={<Info />} padding="none">
-            <InfoRowGroup>
-              <InfoRow icon={<HourglassEmptyOutlined sx={{ fontSize: 18 }} />} label="Max. Duration" value={`${ea.config.maxDurationHrs} Hrs`} />
-              <InfoRow icon={<GroupsOutlined sx={{ fontSize: 18 }} />} label="Max. Concurrent Users" value={String(ea.config.maxConcurrent)} />
-              <InfoRow icon={<RepeatOutlined sx={{ fontSize: 18 }} />} label="Max. Requests Per Day" value={String(ea.config.maxRequestsPerDay)} />
-              <InfoRow icon={<PauseCircleOutline sx={{ fontSize: 18 }} />} label="Cooldown Period" value={`${ea.config.cooldownHrs} Hrs`} />
-            </InfoRowGroup>
-          </Card>
+          {/* Draft has nothing to report here: these are the module's defaults,
+              not limits anyone chose, and stating them as facts about the profile
+              invites a reader to trust numbers no one has looked at. They appear
+              once the profile is live — and until then, Advanced Configuration is
+              where they are actually set. */}
+          {!ea.isDraft && (
+            <Card title="Information" icon={<Info />} padding="none">
+              <InfoRowGroup>
+                <InfoRow icon={<HourglassEmptyOutlined sx={{ fontSize: 18 }} />} label="Max. Duration" value={`${ea.config.maxDurationHrs} Hrs`} />
+                <InfoRow icon={<GroupsOutlined sx={{ fontSize: 18 }} />} label="Max. Concurrent Users" value={String(ea.config.maxConcurrent)} />
+                <InfoRow icon={<RepeatOutlined sx={{ fontSize: 18 }} />} label="Max. Requests Per Day" value={String(ea.config.maxRequestsPerDay)} />
+                <InfoRow icon={<PauseCircleOutline sx={{ fontSize: 18 }} />} label="Cooldown Period" value={`${ea.config.cooldownHrs} Hrs`} />
+              </InfoRowGroup>
+            </Card>
+          )}
 
           <Card title="Timeline" icon={<WatchLater />} padding="none">
             <InfoRowGroup>
-              <InfoRow icon={<HistoryOutlined sx={{ fontSize: 18 }} />} label="Last Updated On" value={ea.timeline.updatedOn} />
-              <InfoRow icon={<CalendarTodayOutlined sx={{ fontSize: 18 }} />} label="Created On" value={ea.timeline.createdOn} />
+              <InfoRow icon={<HistoryOutlined sx={{ fontSize: 18 }} />} label="Last Updated On" value={formatDateTime(ea.timeline.updatedOn)} />
+              <InfoRow icon={<CalendarTodayOutlined sx={{ fontSize: 18 }} />} label="Created On" value={formatDateTime(ea.timeline.createdOn)} />
             </InfoRowGroup>
           </Card>
         </div>

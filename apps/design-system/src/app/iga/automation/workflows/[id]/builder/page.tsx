@@ -432,7 +432,7 @@ export default function WorkflowBuilderPage() {
                   <TuneOutlined sx={{ fontSize: 13 }} className="shrink-0" />
                   {critValid ? <ConditionPreviewLabel {...ruleParts(critRules[0])} /> : <span className="truncate">No additional criteria</span>}
                 </span>
-                {critValid && critRules.length > 1 && <span className="shrink-0 rounded-pill bg-subtle px-1.5 py-0.5 text-caption-strong text-text-secondary">+{critRules.length - 1}</span>}
+                {critValid && critRules.length > 1 && <span className="shrink-0 rounded-pill bg-subtle px-1.5 py-0.5 text-caption-medium text-text-secondary">+{critRules.length - 1}</span>}
               </div>
               <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedId(node.id); setConfigOpen(true); }} className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-surface-hover">
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 18 }} /></span>

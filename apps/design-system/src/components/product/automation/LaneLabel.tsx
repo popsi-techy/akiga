@@ -94,7 +94,7 @@ export function SplitLaneLabel({ label, matchValues, onOpen }: { label: string; 
   const ip = laneOpenProps(onOpen);
   return (
     <div {...ip.attrs} className={[PILL, ip.className].join(' ')}>
-      <span className="max-w-[96px] shrink-0 truncate rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2 py-0.5 text-caption-strong text-[var(--ds-color-status-info-fg)]">{label}</span>
+      <span className="max-w-[96px] shrink-0 truncate rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2 py-0.5 text-caption-medium text-[var(--ds-color-status-info-fg)]">{label}</span>
       {matches.length ? (
         <>
           <span className="min-w-0 truncate text-text-primary">{matches[0]}</span>
@@ -115,7 +115,7 @@ export function ParallelLaneLabel({ label, approver, onOpen }: { label: string; 
   const ip = laneOpenProps(onOpen);
   return (
     <div {...ip.attrs} className={[PILL, ip.className].join(' ')}>
-      <span className="max-w-[110px] shrink-0 truncate rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2 py-0.5 text-caption-strong text-[var(--ds-color-status-info-fg)]">{label}</span>
+      <span className="max-w-[110px] shrink-0 truncate rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2 py-0.5 text-caption-medium text-[var(--ds-color-status-info-fg)]">{label}</span>
       {approver ? (
         <span className="min-w-0 truncate text-text-primary">{approver}</span>
       ) : (
@@ -165,7 +165,7 @@ export function AutoResolveBody({
           <div
             {...ip.attrs}
             className={[
-              'inline-flex w-max max-w-[280px] items-center rounded-pill border border-dashed border-border bg-surface px-3 py-1.5 text-caption-strong text-text-secondary',
+              'inline-flex w-max max-w-[280px] items-center rounded-pill border border-dashed border-border bg-surface px-3 py-1.5 text-caption-medium text-text-secondary',
               ip.className,
             ].join(' ')}
           >
@@ -177,7 +177,7 @@ export function AutoResolveBody({
       <div
         {...(detail ? {} : ip.attrs)}
         className={[
-          'inline-flex w-max max-w-[280px] items-center gap-1.5 rounded-pill border px-3 py-1.5 text-caption-strong',
+          'inline-flex w-max max-w-[280px] items-center gap-1.5 rounded-pill border px-3 py-1.5 text-caption-medium',
           BODY_TONE_CLASS[tone],
           detail ? '' : ip.className,
           detail && onOpen ? 'cursor-pointer' : '',

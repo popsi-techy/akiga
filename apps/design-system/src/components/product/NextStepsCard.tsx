@@ -65,8 +65,18 @@ export function NextStepsCard({
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2">
                   <span className="truncate text-body-sm-strong text-text-primary">{step.label}</span>
+                  {/* The same marker a required field carries — a danger-tinted
+                      asterisk — so "required" means one thing across forms and
+                      checklists. Unlike a field, nothing here carries a
+                      `required` attribute for assistive tech, so the word is
+                      kept for screen readers rather than dropped with the text. */}
                   {step.required && (
-                    <span className="shrink-0 text-caption text-text-tertiary">Required</span>
+                    <>
+                      <span aria-hidden className="shrink-0 text-body-sm-strong text-danger">
+                        *
+                      </span>
+                      <span className="sr-only">Required</span>
+                    </>
                   )}
                 </span>
                 <span className="mt-0.5 block truncate text-caption text-text-secondary">{step.hint}</span>

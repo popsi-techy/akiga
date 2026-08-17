@@ -68,12 +68,12 @@ export function NavCard({ title, description, count, tags, icon, onClick, disabl
       {(count != null || (tags && tags.length > 0)) && (
         <div className="mt-4 flex flex-wrap items-center gap-1.5">
           {count != null && (
-            <span className="rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2.5 py-1 text-caption-strong tabular-nums text-[var(--ds-color-status-info-fg)]">
+            <span className="rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2.5 py-1 text-caption-medium tabular-nums text-[var(--ds-color-status-info-fg)]">
               {formatCount(count)}
             </span>
           )}
           {tags?.map((t) => (
-            <span key={t} className="rounded-pill bg-subtle px-2.5 py-1 text-caption-strong text-text-secondary">
+            <span key={t} className="rounded-pill bg-subtle px-2.5 py-1 text-caption-medium text-text-secondary">
               {t}
             </span>
           ))}

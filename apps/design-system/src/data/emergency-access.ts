@@ -62,7 +62,6 @@ const createdProfiles: SeedEmergencyAccess[] = [];
 
 const allProfiles = (): SeedEmergencyAccess[] => [...createdProfiles, ...emergencyAccessList];
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 /**
  * Creates a draft and returns its id.
@@ -73,8 +72,9 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
  */
 export function createEmergencyAccess(input: { name: string; description: string }): string {
   const id = `ea-new-${Math.random().toString(36).slice(2, 8)}`;
-  const now = new Date();
-  const today = `${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+  // An instant, not a formatted string: the display format belongs to the screen
+  // showing it, and a stored "April 20, 2026" can never grow a time later.
+  const today = new Date().toISOString();
   createdProfiles.unshift({
     id,
     name: input.name.trim(),

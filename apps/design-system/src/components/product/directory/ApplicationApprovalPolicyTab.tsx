@@ -57,7 +57,7 @@ function ApprovalChain({ hierarchy }: { hierarchy: GovApprovalHierarchy }) {
           <li key={level.level}>
             <div className="ml-3 h-3 w-px bg-border-strong" aria-hidden />
             <div className="flex items-start gap-2.5 rounded-md border border-border bg-canvas px-3 py-2">
-              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-pill bg-subtle text-caption-strong tabular-nums text-text-secondary">
+              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-pill bg-subtle text-caption-medium tabular-nums text-text-secondary">
                 {level.level}
               </span>
               <div className="min-w-0 flex-1">

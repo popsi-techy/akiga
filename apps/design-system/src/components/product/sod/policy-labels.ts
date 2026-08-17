@@ -23,10 +23,6 @@ export const STATUS_META: Record<SodPolicyStatus, { label: string; intent: Statu
   inactive: { label: 'Inactive', intent: 'neutral' },
 };
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-/** Deterministic UTC formatting — a local-time format drifts between server and client. */
-export function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
-}
+// Re-exported so SoD policy screens have one import for their labels and dates;
+// the formatting itself lives in `lib/datetime` and is shared.
+export { formatDate } from '@/lib/datetime';

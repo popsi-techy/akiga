@@ -33,7 +33,7 @@ function GroupView({ group, isRoot = false }: { group: SodRuleGroup; isRoot?: bo
         {/* The joining word, stated once for the whole group. */}
         {group.children.length > 1 && (
           <div className="flex shrink-0 flex-col items-center">
-            <span className="rounded-pill bg-subtle px-2 py-0.5 text-caption-strong text-text-secondary">
+            <span className="rounded-pill bg-subtle px-2 py-0.5 text-caption-medium text-text-secondary">
               {group.combinator}
             </span>
             <span className="mt-1 w-px flex-1 bg-border" aria-hidden />

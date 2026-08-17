@@ -44,7 +44,7 @@ export function NavList({ items, value, onChange, ariaLabel }: NavListProps) {
             {item.count != null && (
               <span
                 className={[
-                  'shrink-0 rounded-pill px-2 py-0.5 text-caption-strong',
+                  'shrink-0 rounded-pill px-2 py-0.5 text-caption-medium',
                   active ? 'bg-brand text-brand-on' : 'bg-subtle text-text-secondary',
                 ].join(' ')}
               >

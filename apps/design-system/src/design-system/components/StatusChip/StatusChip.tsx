@@ -42,8 +42,14 @@ export function StatusChip({
          override, so the chip stays 22px and tracks the scale if it changes.
          `whitespace-nowrap` because a chip is a single mark: as a flex item in a
          tight cell it would otherwise shrink and wrap its label onto a second
-         line, silently making one table row taller than its neighbours. */
-      className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill px-2 py-0.5 text-caption-strong"
+         line, silently making one table row taller than its neighbours.
+
+         `-medium` (500), not `-strong` (600): a chip is already marked out by a
+         tint, a border and a dot, so 600 was a fourth signal saying the same
+         thing — and in a table it made every status read louder than the row it
+         describes. Done by switching the type token, which is the only way the
+         scale permits a weight change (see `check:type`). */
+      className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill px-2 py-0.5 text-caption-medium"
       style={style}
     >
       {dot && (

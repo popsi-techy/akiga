@@ -495,7 +495,7 @@ function BranchTier({
                 {renderBranchLabel ? (
                   renderBranchLabel(br, node)
                 ) : (
-                  <div className="rounded-pill bg-subtle px-3 py-1 text-caption-strong text-text-secondary">{br.label}</div>
+                  <div className="rounded-pill bg-subtle px-3 py-1 text-caption-medium text-text-secondary">{br.label}</div>
                 )}
               </div>
               <SequenceView seq={br.seq} path={[...path, { nodeId: node.id, branchId: br.id }]} sealed={br.sealed} branch={br} node={node} />

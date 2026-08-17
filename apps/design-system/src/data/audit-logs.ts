@@ -84,6 +84,15 @@ export type AuditDecision = 'APPROVED' | 'REJECTED' | 'PENDING' | 'NOT_APPLICABL
  * A snapshot, not a lookup: an audit trail has to say what was true at the time,
  * because the entitlement may have been re-scored or retired since.
  */
+/** The capacity an action was taken in, as recorded on the event. */
+export type ActorType = 'ADMIN' | 'END_USER' | 'SYSTEM';
+
+export const ACTOR_TYPE_LABEL: Record<ActorType, string> = {
+  ADMIN: 'Administrator',
+  END_USER: 'End user',
+  SYSTEM: 'System',
+};
+
 export interface AuditSnapshot {
   requestable: boolean;
   riskScore: number;
@@ -102,6 +111,15 @@ export interface AuditEntry {
   /** An email for a person, or `system` when the platform acted on its own. */
   actor: string;
   actorId: string;
+  /**
+   * What the actor was acting as, not who they are.
+   *
+   * The same person can appear as an ADMIN on one entry and an END USER on the
+   * next — asking for their own access rather than administering someone else's.
+   * An auditor reading a row needs the capacity it was done in, which is why this
+   * is recorded with the event rather than looked up from the identity.
+   */
+  actorType: ActorType;
   outcome: AuditOutcome;
   /** A request is a bundle; an item is one entitlement inside it. */
   targetKind: 'request' | 'item';
@@ -193,6 +211,13 @@ const entries: AuditEntry[] = (() => {
     const systemDriven = task === 'Complete Access Request' || task === 'Reject Access Item';
 
     const actor = systemDriven ? 'system' : pick(ACTORS);
+    // Submitting is the one task a person does for themselves; everything else
+    // in this log is somebody administering another person's access.
+    const actorType: ActorType = systemDriven
+      ? 'SYSTEM'
+      : task.startsWith('Submit') || task.startsWith('Cancel')
+        ? 'END_USER'
+        : 'ADMIN';
     const target = isRequestLevel ? requestId : item.name;
     const itemCount = between(1, 5);
     const decision: AuditDecision = task.startsWith('Approve')
@@ -212,6 +237,7 @@ const entries: AuditEntry[] = (() => {
       description: `${task} ‘${target}’${isRequestLevel ? '' : ` of request ‘${requestId}’`} by ${actor === 'system' ? 'system' : actor}`,
       actor,
       actorId: uuid(),
+      actorType,
       outcome: next() < 0.06 ? 'failed' : 'success',
       targetKind: isRequestLevel ? 'request' : 'item',
       target,

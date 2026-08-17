@@ -70,7 +70,7 @@ export default function ColorsPage() {
                 </div>
                 <div className="p-3">
                   <span
-                    className="inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-caption-strong"
+                    className="inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-caption-medium"
                     style={{ background: s.subtle, color: s.fg, border: `1px solid ${s.border}` }}
                   >
                     <span className="h-1.5 w-1.5 rounded-pill" style={{ background: s.solid }} />

@@ -6,8 +6,11 @@ import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
 import { Avatar, Drawer, InfoRow, InfoRowGroup, StatusChip, Tabs, type TabItem } from '@ds/components';
 import { AppBadge } from '../sod/labels';
 import { RiskScoreChip, infoIcon } from '../directory';
+import { IdentityTip } from '../directory/IdentityTip';
+import { EntitlementTip } from '../directory/EntitlementTip';
 import { formatDateTime } from '../sod/labels';
-import type { AuditEntry } from '@/data/audit-logs';
+import { ACTOR_TYPE_LABEL, type AuditEntry } from '@/data/audit-logs';
+import { listEntitlementRows, listUserIdentities } from '@/data/directory';
 
 const TABS: TabItem[] = [
   { value: 'event', label: 'Event' },
@@ -49,6 +52,36 @@ export function AuditEntryDrawer({
       setTargetOpen(false);
     }
   }, [open, entry?.id]);
+
+  // Above the `!entry` guard: hooks must run in the same order on every render,
+  // and the drawer renders once with no entry before one is chosen.
+  //
+  // The log records an address, not an identity id, because an actor may not be
+  // a governed identity at all (a service account, someone since deleted). So
+  // this is a lookup that is allowed to fail, and the UI degrades when it does.
+  const actorEmail = entry?.actor;
+  const identity = React.useMemo(
+    () =>
+      !actorEmail || actorEmail === 'system'
+        ? undefined
+        : listUserIdentities().find((u) => u.email === actorEmail),
+    [actorEmail],
+  );
+
+  // Matched on name and application, not id: the log stores its own uuid for the
+  // target, and an audit trail outlives the catalog — an entitlement named here
+  // may since have been renamed or retired. Unresolved is a normal outcome.
+  const targetName = entry?.targetKind === 'item' ? entry.target : undefined;
+  const targetApp = entry?.application;
+  const targetEntitlement = React.useMemo(
+    () =>
+      !targetName
+        ? undefined
+        : listEntitlementRows().find(
+            (e) => e.name === targetName && e.applicationName === targetApp,
+          ),
+    [targetName, targetApp],
+  );
 
   if (!entry) return null;
 
@@ -95,7 +128,7 @@ export function AuditEntryDrawer({
             <InfoRow
               className={ROW}
               icon={infoIcon.person}
-              label="Actor"
+              label="Actor (initiated by)"
               valueWrap
               value={
                 system ? (
@@ -104,6 +137,14 @@ export function AuditEntryDrawer({
                   <span className="flex min-w-0 items-center gap-2">
                     <Avatar name={entry.actor} size="xs" shape="circle" />
                     <span className="min-w-0 truncate">{entry.actor}</span>
+                    {/* The row names an address; the icon answers the follow-up —
+                        *which* person is that, and should their access worry me —
+                        without leaving the event. Same affordance the account
+                        panels use, and it carries its own way out to the identity
+                        page, so reading and navigating stay separate decisions.
+                        Absent when the address is not a governed identity: an
+                        icon that opens nothing is worse than none. */}
+                    {identity && <IdentityTip identity={identity} />}
                   </span>
                 )
               }
@@ -111,10 +152,10 @@ export function AuditEntryDrawer({
             <InfoRow
               className={ROW}
               icon={infoIcon.trigger}
-              label="Acted as"
-              value={system ? 'The platform, once approvals landed' : 'A signed-in user'}
+              label="Actor type"
+              value={ACTOR_TYPE_LABEL[entry.actorType]}
             />
-            <InfoRow className={ROW} icon={infoIcon.discovery} label="Source IP" value={entry.source} />
+            <InfoRow className={ROW} icon={infoIcon.discovery} label="IP address" value={entry.source} />
             <InfoRow className={ROW} icon={infoIcon.status} label="Actor ID" valueWrap value={<Mono>{entry.actorId}</Mono>} />
           </Fields>
         )}
@@ -129,19 +170,29 @@ export function AuditEntryDrawer({
               className={ROW}
               icon={entry.targetKind === 'request' ? infoIcon.item : infoIcon.entitlement}
               label="Performed on"
+              valueWrap
               value={
-                <button
-                  type="button"
-                  onClick={() => setTargetOpen((v) => !v)}
-                  aria-expanded={targetOpen}
-                  className="inline-flex items-center gap-1 text-body-sm-strong text-text-brand hover:underline"
-                >
-                  {entry.target}
-                  <KeyboardArrowDown
-                    sx={{ fontSize: 16 }}
-                    className={`transition-transform ${targetOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
+                <span className="flex min-w-0 items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTargetOpen((v) => !v)}
+                    aria-expanded={targetOpen}
+                    className="inline-flex min-w-0 items-center gap-1 text-body-sm-strong text-text-brand hover:underline"
+                  >
+                    <span className="min-w-0 truncate">{entry.target}</span>
+                    <KeyboardArrowDown
+                      sx={{ fontSize: 16 }}
+                      className={`shrink-0 transition-transform ${targetOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {/* Two different questions, two different controls: the chevron
+                      opens what was recorded at the time, this opens what the
+                      entitlement is in the catalog now. The card says which it is
+                      showing, so the two risk scores can never be confused.
+                      Absent when the item is not in the catalog — an audit log
+                      outlives the things it describes. */}
+                  {targetEntitlement && <EntitlementTip entitlement={targetEntitlement} />}
+                </span>
               }
             />
             {targetOpen && (
@@ -151,7 +202,10 @@ export function AuditEntryDrawer({
                 <p className="text-caption text-text-tertiary">
                   As recorded on {formatDateTime(entry.at)}
                 </p>
-                <p className="mt-1.5 text-body-sm leading-5 text-text-primary">{entry.targetDescription}</p>
+                {/* No description here: the panel's job is the state that can
+                    have changed since — risk, type, status. What the entitlement
+                    *is* comes from the catalog card on the info icon beside the
+                    row, where it is current. */}
                 <dl className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2">
                   <dt className="text-caption text-text-tertiary">Risk score</dt>
                   <dd>

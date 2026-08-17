@@ -193,13 +193,13 @@ export function ReconciliationTab({ applicationId }: { applicationId: string }) 
  * so they carry the colour; the total stays neutral. A run that changed nothing
  * says so, instead of showing two zeroes that compete with the number.
  *
- * Geometry matches `StatusChip` (rounded-pill, px-2 py-0.5, caption-strong), so
+ * Geometry matches `StatusChip` (rounded-pill, px-2 py-0.5, caption-medium), so
  * a row of chips sits on one baseline whichever column it is in.
  */
 export function Delta({ total, added, removed }: { total?: number; added: number; removed: number }) {
   const still = added === 0 && removed === 0;
   return (
-    <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border border-border bg-subtle px-2 py-0.5 text-caption-strong">
+    <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border border-border bg-subtle px-2 py-0.5 text-caption-medium">
       {total !== undefined && <span className="text-text-primary">{total}</span>}
       {still ? (
         <span className="text-text-tertiary">No change</span>

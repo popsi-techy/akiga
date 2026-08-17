@@ -110,7 +110,7 @@ export function MultisplitConfig({ node, onPatchNode }: { node: WorkflowNode; on
       <div>
         <div className="mb-1.5 text-caption-strong uppercase tracking-[0.07em] text-text-tertiary">Fallback Branch</div>
         <div className="flex items-center gap-2.5 rounded-lg border border-border bg-surface px-3 py-2.5">
-          <span className="rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2.5 py-0.5 text-caption-strong tracking-wide text-[var(--ds-color-status-info-fg)]">ELSE</span>
+          <span className="rounded-pill bg-[var(--ds-color-status-info-subtle)] px-2.5 py-0.5 text-caption-medium tracking-wide text-[var(--ds-color-status-info-fg)]">ELSE</span>
           <span className="text-body-sm text-text-secondary">All identities that match no branch</span>
         </div>
       </div>

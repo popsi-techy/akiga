@@ -8,7 +8,7 @@ function StatusDot({ status }: { status?: string }) {
   if (status === 'planned')
     return <span className="ml-auto text-caption text-text-disabled">soon</span>;
   if (status === 'wip')
-    return <span className="ml-auto rounded-pill bg-brand-subtle px-2 py-0.5 text-caption-strong text-brand-active">WIP</span>;
+    return <span className="ml-auto rounded-pill bg-brand-subtle px-2 py-0.5 text-caption-medium text-brand-active">WIP</span>;
   return null;
 }
 
