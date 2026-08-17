@@ -37,7 +37,7 @@ export function EmergencySetupCard({ ea, onGoToTab }: { ea: EADetail; onGoToTab:
   const toast = useToast();
   // Read during render, not in an effect: the store is a module-level Map seeded
   // deterministically, so the server and client agree — and an effect would show
-  // every step as "To do" for one frame before correcting itself.
+  // every step as "Pending" for one frame before correcting itself.
   const assignments = React.useMemo(() => getEAAssignments(ea.id), [ea.id]);
 
   const steps: Step[] = [
@@ -83,7 +83,11 @@ export function EmergencySetupCard({ ea, onGoToTab }: { ea: EADetail; onGoToTab:
       hint: 'Duration, concurrency and cooldown limits',
       icon: <SettingsOutlined sx={{ fontSize: 18 }} />,
       required: false,
+      // Satisfied from the moment the profile exists: it is created with working
+      // limits. So it reports the defaults rather than claiming a decision — the
+      // reader still needs to know these are worth a look.
       done: true,
+      doneLabel: 'Default applied',
       tab: 'advanced',
     },
   ];

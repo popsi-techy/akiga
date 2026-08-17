@@ -104,7 +104,7 @@ export default function ReviewRequestsPage() {
             e.stopPropagation();
             router.push(`/iga/reviewer/review-requests/${r.id}`);
           }}
-          className="text-body-sm-strong text-brand hover:underline"
+          className="text-body-sm-strong text-text-link hover:underline"
         >
           {r.accessDurationLabel}
         </button>

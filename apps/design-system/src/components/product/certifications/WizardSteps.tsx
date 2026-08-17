@@ -11,6 +11,7 @@ import Groups from '@mui/icons-material/Groups';
 import Person from '@mui/icons-material/Person';
 import WatchLater from '@mui/icons-material/WatchLater';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
+import EditOutlined from '@mui/icons-material/EditOutlined';
 import GroupsOutlined from '@mui/icons-material/GroupsOutlined';
 import PersonOutline from '@mui/icons-material/PersonOutline';
 import {
@@ -20,6 +21,7 @@ import {
   Checkbox,
   DatePicker,
   Input,
+  OverflowChips,
   Select,
   Switch,
   Tooltip,
@@ -61,11 +63,14 @@ function PickerSlot({
   title,
   hint,
   action,
+  summary,
 }: {
   icon: React.ReactNode;
   title: string;
   hint: string;
   action: React.ReactNode;
+  /** What has been chosen, named beside the action. Absent while empty. */
+  summary?: React.ReactNode;
 }) {
   return (
     <div className="flex items-center gap-4 rounded-xl border border-border bg-surface px-5 py-4">
@@ -76,6 +81,10 @@ function PickerSlot({
         <div className="text-body-strong text-text-primary">{title}</div>
         <p className="mt-0.5 text-body-sm text-text-secondary">{hint}</p>
       </div>
+      {/* One row in both states, filled or empty. The count and the chips replace
+          the "nothing chosen" copy in place, so the step does not change shape
+          under the reader the moment they pick something. */}
+      {summary && <div className="hidden shrink-0 sm:block">{summary}</div>}
       <div className="shrink-0">{action}</div>
     </div>
   );
@@ -152,39 +161,43 @@ export function DetailsStep({ draft, patch }: { draft: Certification; patch: Pat
           <div className="mb-2 text-body-sm-strong text-text-secondary">
             Applications <span className="text-danger">*</span>
           </div>
-          {chosen.length === 0 ? (
-            <PickerSlot
-              icon={<AppsOutlined sx={{ fontSize: 22 }} />}
-              title="No applications chosen"
-              hint="The review covers the access people hold in these systems."
-              action={
+          <PickerSlot
+            icon={<AppsOutlined sx={{ fontSize: 22 }} />}
+            title={
+              chosen.length === 0
+                ? 'No applications chosen'
+                : `${chosen.length} application${chosen.length === 1 ? '' : 's'} selected`
+            }
+            hint={
+              chosen.length === 0
+                ? 'The review covers the access people hold in these systems.'
+                : 'Edit which systems this review covers.'
+            }
+            summary={chosen.length > 0 ? <OverflowChips items={chosen} max={1} /> : undefined}
+            action={
+              chosen.length === 0 ? (
                 <Button variant="secondary" startIcon={<AddIcon />} onClick={() => setPickerOpen(true)}>
                   Add applications
                 </Button>
-              }
-            />
-          ) : (
-            <Card padding="none">
-              <div>
-                {chosen.map((a) => (
-                  <PickedRow
-                    key={a.id}
-                    avatar={<Avatar name={a.name} size="sm" />}
-                    primary={a.name}
-                    secondary={a.description}
-                    onRemove={() =>
-                      patch({ applicationIds: draft.applicationIds.filter((id) => id !== a.id) })
-                    }
-                  />
-                ))}
-              </div>
-              <div className="py-3">
-                <Button variant="secondary" size="sm" startIcon={<AddIcon />} onClick={() => setPickerOpen(true)}>
-                  Add applications
-                </Button>
-              </div>
-            </Card>
-          )}
+              ) : (
+                // A pencil, not "Add applications": the drawer opens with the
+                // current picks selected, so it edits the set rather than
+                // appending to it, and the button should say so.
+                //
+                // Bare, not an outlined Button: a 36px box holding one small
+                // glyph reads as an empty frame beside the chips, where the icon
+                // on its own reads as an action attached to them.
+                <button
+                  type="button"
+                  aria-label="Edit applications"
+                  onClick={() => setPickerOpen(true)}
+                  className="grid h-8 w-8 place-items-center rounded-md text-icon transition-colors hover:bg-surface-hover hover:text-text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+                >
+                  <EditOutlined sx={{ fontSize: 18 }} />
+                </button>
+              )
+            }
+          />
         </div>
       </div>
 

@@ -184,6 +184,23 @@ Whichever you want, it is a **type role**, never a weight utility: say `body-med
 
 If a screen shows two orange buttons, one of them is wrong. Demote it to `secondary`.
 
+### 5.1a Text-only controls are blue, never orange
+
+A control with no button chrome — `View details`, `Clear all`, `Make default`, `Map attributes` — is
+read as a link, so it takes `text.link` `#1565C0`. Orange is the colour of the one action the reader
+is meant to take next; spending it on every secondary link is how a screen ends up with four oranges
+and no primary. **Rule: if it looks like a link, it is `text.link`. If it deserves the brand, give it
+a real `Button` and make it the only one.**
+
+Two consequences worth stating:
+
+- **A value is not a control.** Do not colour the thing the reader came to read in order to make it
+  clickable — put the affordance in its own link beside it. An entity name tinted brand and
+  underlined promises navigation, and if it only expands a panel the promise was false.
+- `text.link` is one step darker than the blue used for `info` fills (`#1976D2`), which is 4.40:1 on
+  `subtle` and fails AA. Text-only controls land in tinted panels constantly, so the link colour has
+  to clear AA on all three grounds. `npm run check:contrast` enforces exactly that.
+
 ### 5.2 Status colour only on status objects
 
 Chips, dots, meters, rule outcomes, risk badges. **A container never takes a status colour.** A card

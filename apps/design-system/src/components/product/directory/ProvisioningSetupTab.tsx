@@ -132,7 +132,7 @@ export function ProvisioningSetupTab({
             e.stopPropagation();
             authorize(r);
           }}
-          className="text-body-sm-strong text-text-brand hover:underline"
+          className="text-body-sm-strong text-text-link hover:underline"
         >
           {r.authorized ? 'Reconnect' : 'Connect'}
         </button>

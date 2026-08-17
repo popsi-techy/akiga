@@ -60,7 +60,59 @@ export interface EARow {
  */
 const createdProfiles: SeedEmergencyAccess[] = [];
 
-const allProfiles = (): SeedEmergencyAccess[] => [...createdProfiles, ...emergencyAccessList];
+/**
+ * Profiles deleted during this session.
+ *
+ * A tombstone rather than a splice, because the seeded profiles come from a
+ * frozen module constant that must not be mutated — and because "deleted" is a
+ * fact about this session, exactly like activation, so the two are remembered
+ * the same way.
+ */
+const deletedIds = new Set<string>();
+
+/**
+ * Name and description, edited after creation.
+ *
+ * An overrides map rather than a mutation, because the seeded profiles come from
+ * a frozen module constant — and a seed that quietly changes shape mid-session
+ * is the hardest kind of prototype bug to see.
+ */
+const basicsById = new Map<string, { name: string; description: string }>();
+
+export function updateEmergencyAccessBasics(
+  id: string,
+  input: { name: string; description: string },
+): void {
+  basicsById.set(id, { name: input.name.trim(), description: input.description.trim() });
+}
+
+const withBasics = (ea: SeedEmergencyAccess): SeedEmergencyAccess => {
+  const edit = basicsById.get(ea.id);
+  if (!edit) return ea;
+  return {
+    ...ea,
+    name: edit.name,
+    description: edit.description,
+    initial: (edit.name.charAt(0) || ea.initial).toUpperCase(),
+  };
+};
+
+const allProfiles = (): SeedEmergencyAccess[] =>
+  [...createdProfiles, ...emergencyAccessList]
+    .filter((e) => !deletedIds.has(e.id))
+    .map(withBasics);
+
+/**
+ * Removes a profile. Its eligibility, assignments and owners go with it — a
+ * profile that came back after a delete would come back armed.
+ */
+export function deleteEmergencyAccess(id: string): void {
+  deletedIds.add(id);
+  assignmentsById.delete(id);
+  ownersById.delete(id);
+  groupOwnersById.delete(id);
+  advancedConfigById.delete(id);
+}
 
 
 /**
@@ -88,9 +140,10 @@ export function createEmergencyAccess(input: { name: string; description: string
     createdOn: today,
     updatedOn: today,
   });
-  // Claim the assignments slot so the seeding fallback does not hand a brand-new
-  // draft somebody else's entitlements.
+  // Claim both slots so the seeding fallbacks do not hand a brand-new draft
+  // somebody else's entitlements or somebody else's owners.
   assignmentsById.set(id, { entitlements: [], technicalRoles: [] });
+  ownersById.set(id, []);
   return id;
 }
 
@@ -174,8 +227,8 @@ export function getEmergencyAccess(id: string): EADetail | null {
     timeline: { createdOn: ea.createdOn, updatedOn: ea.updatedOn },
     sessions,
     sessionsTotal: emergencySessionsTotal,
-    owners: emergencyOwners,
-    ownersCount: emergencyOwners.length,
+    owners: getEAOwners(id),
+    ownersCount: getEAOwners(id).length,
     governanceTeamsCount: emergencyGovernanceTeamsCount,
     eligibilityGroups: getEligibilityGroups(id),
   };
@@ -204,9 +257,38 @@ export function setEAGovernanceTeams(id: string, ids: string[]): string[] {
   return ids;
 }
 
-/** People who can be added as owners (directory minus current owners). */
+/**
+ * Owners of one profile.
+ *
+ * Per profile, not per module. A profile the seed says has been running carries
+ * the sample owners, because that is what the seed asserts about it; a draft
+ * starts with nobody, because nobody has been named yet.
+ *
+ * The module-wide list this replaced made every profile claim the same eight
+ * owners — so a draft nobody had touched reported "Owners: done" on its own
+ * checklist, which is the one thing a checklist cannot afford to get wrong.
+ *
+ * Keyed off the *seeded* status, not the live one: activating a draft is not a
+ * way to acquire owners.
+ */
+const ownersById = new Map<string, SeedEAOwner[]>();
+
+export function getEAOwners(id: string): SeedEAOwner[] {
+  const existing = ownersById.get(id);
+  if (existing) return existing;
+  const seeded = allProfiles().find((e) => e.id === id)?.status === 'active' ? emergencyOwners : [];
+  ownersById.set(id, seeded);
+  return seeded;
+}
+
+export function setEAOwners(id: string, owners: SeedEAOwner[]): SeedEAOwner[] {
+  ownersById.set(id, owners);
+  return owners;
+}
+
+/** People who can be added as owners (directory minus this profile's owners). */
 export function getAvailableOwners(id: string): SeedEAOwner[] {
-  const assigned = new Set(emergencyOwners.map((o) => o.id));
+  const assigned = new Set(getEAOwners(id).map((o) => o.id));
   return ownerDirectory.filter((o) => !assigned.has(o.id));
 }
 
@@ -236,26 +318,48 @@ export function deactivateEmergencyAccess(id: string): void {
 const deactivatedIds = new Set<string>();
 
 /**
- * What still stands between a draft and being switched on, named in the reader's
- * words.
+ * The checks that gate activation, as data rather than a chain of `if`s.
  *
- * One definition, used by both the header's Activate button and the Overview
- * checklist — two copies of this rule would eventually disagree, and a disabled
- * button whose checklist says everything is done is a bug nobody can diagnose.
+ * A list so the *count* is derivable: the header shows "2 / 3 required" beside
+ * the Activate button, and a hardcoded 3 would keep saying 3 the day a fourth
+ * check is added here. One definition, one denominator.
  *
  * Owners and advanced limits are deliberately absent: they make a profile better
  * governed, not functional, and blocking activation on a missing owner would
  * stop someone turning on break-glass access during an incident.
  */
+const EA_REQUIRED_CHECKS: { label: string; satisfied: (ea: EADetail) => boolean }[] = [
+  {
+    label: 'basic details',
+    satisfied: (ea) => ea.name.trim() !== '' && ea.description.trim() !== '',
+  },
+  {
+    label: 'eligibility criteria',
+    satisfied: (ea) => ea.eligibilityGroups.length > 0,
+  },
+  {
+    label: 'assignments',
+    satisfied: (ea) => {
+      const a = getEAAssignments(ea.id);
+      return a.entitlements.length + a.technicalRoles.length > 0;
+    },
+  },
+];
+
+/** How many things must be configured before a draft can be switched on. */
+export const EA_REQUIRED_STEPS = EA_REQUIRED_CHECKS.length;
+
+/**
+ * What still stands between a draft and being switched on, named in the reader's
+ * words.
+ *
+ * Used by the header's Activate button, the Overview checklist and the V2
+ * stepper's preview — two copies of this rule would eventually disagree, and a
+ * disabled button whose checklist says everything is done is a bug nobody can
+ * diagnose.
+ */
 export function eaBlockingSteps(ea: EADetail): string[] {
-  const assignments = getEAAssignments(ea.id);
-  const blocking: string[] = [];
-  if (ea.name.trim() === '' || ea.description.trim() === '') blocking.push('basic details');
-  if (ea.eligibilityGroups.length === 0) blocking.push('eligibility criteria');
-  if (assignments.entitlements.length + assignments.technicalRoles.length === 0) {
-    blocking.push('assignments');
-  }
-  return blocking;
+  return EA_REQUIRED_CHECKS.filter((c) => !c.satisfied(ea)).map((c) => c.label);
 }
 
 /**

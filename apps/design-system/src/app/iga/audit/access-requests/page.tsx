@@ -6,7 +6,6 @@ import FilterListOutlined from '@mui/icons-material/FilterListOutlined';
 import FileDownloadOutlined from '@mui/icons-material/FileDownloadOutlined';
 import RefreshOutlined from '@mui/icons-material/Refresh';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
-import TaskAltOutlined from '@mui/icons-material/TaskAltOutlined';
 import DescriptionOutlined from '@mui/icons-material/DescriptionOutlined';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import PersonOutline from '@mui/icons-material/PersonOutline';
@@ -65,11 +64,13 @@ export default function AccessRequestAuditPage() {
       sortable: true,
       width: 230,
       value: (r) => r.task,
+      // A letter, not an icon: the same glyph on all 121 rows carried no
+      // information and only paid for itself as decoration, where the event's
+      // initial at least differs between Submit, Cancel and Complete. Uses the
+      // product's one-letter avatar so this column matches every other table.
       render: (r) => (
         <span className="flex items-center gap-2.5">
-          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-brand-subtle text-icon-brand">
-            <TaskAltOutlined sx={{ fontSize: 16 }} />
-          </span>
+          <Avatar name={r.task} size="xs" />
           <span className="truncate text-body-sm-strong text-text-primary">{r.task}</span>
         </span>
       ),

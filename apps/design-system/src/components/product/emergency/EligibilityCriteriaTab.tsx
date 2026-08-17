@@ -17,7 +17,14 @@ import { eligibilityGroupDisplayName, touchEligibilityGroup } from '@/data/eligi
 import { EligibilityAddCard, EligibilityGroupCard } from './EligibilityGroupCard';
 import { EligibilityCriteriaDrawer } from './EligibilityCriteriaDrawer';
 
-export function EligibilityCriteriaTab({ eaId }: { eaId: string }) {
+export function EligibilityCriteriaTab({
+  eaId,
+  onChanged,
+}: {
+  eaId: string;
+  /** Rules changed — lets a host surface (the V2 stepper) re-read readiness. */
+  onChanged?: () => void;
+}) {
   const toast = useToast();
   const [groups, setGroups] = React.useState<EligibilityGroup[]>(() => getEligibilityGroups(eaId));
   const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -33,6 +40,7 @@ export function EligibilityCriteriaTab({ eaId }: { eaId: string }) {
 
   const persist = (next: EligibilityGroup[]) => {
     setGroups(setEmergencyAccessEligibility(eaId, next));
+    onChanged?.();
     setSelectedIds((prev) => {
       const ids = new Set(next.map((g) => g.id));
       return new Set([...prev].filter((id) => ids.has(id)));

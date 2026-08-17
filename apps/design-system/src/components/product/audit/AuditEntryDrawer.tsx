@@ -173,32 +173,62 @@ export function AuditEntryDrawer({
               valueWrap
               value={
                 <span className="flex min-w-0 items-center gap-2">
+                  {/* The name is a value, not a control. Making it the toggle put
+                      the brand colour and an underline on the one thing in the row
+                      the reader came to read, and promised navigation it never
+                      delivered — the same name on the Actor tab is plain text, and
+                      these two rows do the same job. The disclosure moved to its
+                      own link on the right, where it reads as an action. */}
+                  <span className="min-w-0 truncate">{entry.target}</span>
+                  {/* Two different questions, two different controls: this opens
+                      what the entitlement is in the catalog *now*, the link opens
+                      what was recorded *then*. Absent when the item is not in the
+                      catalog — an audit log outlives the things it describes. */}
+                  {targetEntitlement && <EntitlementTip entitlement={targetEntitlement} />}
+                  {/* "State at the time", not "View details".
+
+                      Time is the only thing separating this from the ⓘ beside it,
+                      which shows the same four fields as they are now — so a label
+                      reading "details" described both controls and distinguished
+                      neither, leaving the reader to click one and find out. Naming
+                      the time also gives the panel a reason to exist: a risk score
+                      of 53 at approval and 91 today is the finding, and it is
+                      invisible unless the reader knows which one they are looking
+                      at. It rhymes with the panel's own "As recorded on …" header.
+
+                      The label holds still and the chevron carries open/closed —
+                      the accordion convention. A View/Hide swap would have to
+                      become "Hide state at the time", and the row's only fixed
+                      point would change width every time it was clicked.
+
+                      `ml-auto` rather than a justify-between wrapper: the name has
+                      to keep its truncation, so it stays the flexible child and
+                      this gets pushed off its end. */}
                   <button
                     type="button"
                     onClick={() => setTargetOpen((v) => !v)}
                     aria-expanded={targetOpen}
-                    className="inline-flex min-w-0 items-center gap-1 text-body-sm-strong text-text-brand hover:underline"
+                    aria-controls={SNAPSHOT_ID}
+                    className="group ml-auto inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-sm text-body-sm-strong text-text-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
                   >
-                    <span className="min-w-0 truncate">{entry.target}</span>
+                    {/* Underline on the label, not the button: text-decoration on
+                        the button draws a rule under the chevron too. */}
+                    <span className="group-hover:underline">State at the time</span>
                     <KeyboardArrowDown
                       sx={{ fontSize: 16 }}
                       className={`shrink-0 transition-transform ${targetOpen ? 'rotate-180' : ''}`}
                     />
                   </button>
-                  {/* Two different questions, two different controls: the chevron
-                      opens what was recorded at the time, this opens what the
-                      entitlement is in the catalog now. The card says which it is
-                      showing, so the two risk scores can never be confused.
-                      Absent when the item is not in the catalog — an audit log
-                      outlives the things it describes. */}
-                  {targetEntitlement && <EntitlementTip entitlement={targetEntitlement} />}
                 </span>
               }
             />
             {targetOpen && (
               // Spans both grid columns so it reads as a drawer under the row
               // rather than a value in it.
-              <div className="col-span-2 border-b border-border bg-subtle px-4 py-3.5 last:border-b-0">
+              <div
+                id={SNAPSHOT_ID}
+                className="col-span-2 border-b border-border bg-subtle px-4 py-3.5 last:border-b-0"
+              >
                 <p className="text-caption text-text-tertiary">
                   As recorded on {formatDateTime(entry.at)}
                 </p>
@@ -287,6 +317,14 @@ export function AuditEntryDrawer({
 
 /** Row gutter. Named once so all four tabs share it and cannot drift apart. */
 const ROW = 'px-4';
+
+/**
+ * Ties the "State at the time" link to the panel it opens for assistive tech.
+ *
+ * A constant is safe here because only one entry is open at a time — the drawer
+ * renders a single event, so there is never a second panel to collide with.
+ */
+const SNAPSHOT_ID = 'audit-target-snapshot';
 
 /**
  * The bordered box each tab's fields sit in.

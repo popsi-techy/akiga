@@ -188,7 +188,7 @@ function RequestedForSection({ request }: { request: AccessRequest }) {
             <div className="text-body-strong text-text-primary">{request.requestedForName}</div>
             <div className="text-body-sm text-text-secondary">{request.requestedForEmail}</div>
           </div>
-          <button type="button" className="shrink-0 text-body-sm-strong text-brand hover:underline">
+          <button type="button" className="shrink-0 text-body-sm-strong text-text-link hover:underline">
             User Details
           </button>
         </div>
@@ -317,7 +317,7 @@ function JustificationInset({ text }: { text: string }) {
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="mt-1 text-caption-strong text-brand hover:underline"
+          className="mt-1 text-caption-strong text-text-link hover:underline"
         >
           {expanded ? 'Show less' : 'Read more'}
         </button>

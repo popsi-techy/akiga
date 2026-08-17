@@ -121,7 +121,7 @@ export function ReviewRequestQuickDrawer({
 
         <Link
           href={`/iga/reviewer/review-requests/${request.id}`}
-          className="inline-flex items-center gap-1 text-body-sm-strong text-brand hover:underline"
+          className="inline-flex items-center gap-1 text-body-sm-strong text-text-link hover:underline"
         >
           View detailed information
           <ArrowForwardOutlined sx={{ fontSize: 16 }} />

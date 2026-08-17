@@ -41,6 +41,7 @@ export const navigation: NavSection[] = [
       { label: 'Avatar', href: '/components/avatar', status: 'ready' },
       { label: 'App Icon', href: '/components/app-icon', status: 'ready' },
       { label: 'Info Row', href: '/components/info-row', status: 'ready' },
+      { label: 'Overflow Chips', href: '/components/overflow-chips', status: 'ready' },
       { label: 'Status Chip', href: '/components/status-chip', status: 'ready' },
       { label: 'Meter', href: '/components/meter', status: 'ready' },
     ],

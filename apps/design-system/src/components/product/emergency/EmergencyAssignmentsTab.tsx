@@ -42,7 +42,14 @@ const META: Record<Kind, { label: string; entity: string; empty: string; hint: s
  * No business roles here, unlike a birthright policy: a business role is a job
  * description, and nobody is temporarily given a job.
  */
-export function EmergencyAssignmentsTab({ eaId }: { eaId: string }) {
+export function EmergencyAssignmentsTab({
+  eaId,
+  onChanged,
+}: {
+  eaId: string;
+  /** What this grants changed — lets a host surface re-read readiness. */
+  onChanged?: () => void;
+}) {
   const toast = useToast();
   const [kind, setKind] = React.useState<Kind>('entitlements');
   const [search, setSearch] = React.useState('');
@@ -55,8 +62,10 @@ export function EmergencyAssignmentsTab({ eaId }: { eaId: string }) {
   // Session-memory store, so read it after mount like the other EA tabs.
   React.useEffect(() => setAssignments(getEAAssignments(eaId)), [eaId]);
 
-  const patch = (next: Partial<EAAssignments>) =>
+  const patch = (next: Partial<EAAssignments>) => {
     setAssignments(setEAAssignments(eaId, { ...assignments, ...next }));
+    onChanged?.();
+  };
 
   const meta = META[kind];
   const current = assignments[kind];

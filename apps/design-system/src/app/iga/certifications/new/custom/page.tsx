@@ -184,7 +184,7 @@ export default function CustomCertificationWizard() {
             just has to take it. */}
         <aside className="lg:min-h-[520px]">
           <div className="h-full rounded-xl border border-border bg-subtle p-5">
-            <StepTracker title="Your progress" steps={STEPS} current={step} onStepClick={goTo} fill />
+            <StepTracker title="Your progress" steps={STEPS} current={step} onStepClick={goTo} />
           </div>
         </aside>
       </div>

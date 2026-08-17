@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
-import { Avatar, Card, InfoRow, InfoRowGroup, StatusChip, Tooltip } from '@ds/components';
+import { Avatar, Card, InfoRow, InfoRowGroup, OverflowChips, StatusChip, Tooltip } from '@ds/components';
 import { getAppAccountDetail, getUserIdentityDetail, type AppAccountRow } from '@/data/directory';
 import type { SeedUserIdentity } from '@/data/seed';
 import { AppBadge } from '../sod/labels';
@@ -107,64 +107,10 @@ export function AccountDetailsBody({
           icon={infoIcon.entitlement}
           label={`Entitlements (${entitlements.length})`}
           valueWrap
-          value={<EntitlementChips items={entitlements} />}
+          value={<OverflowChips items={entitlements} />}
         />
     </InfoRowGroup>
   );
 
   return surface === 'card' ? <Card padding="none">{rows}</Card> : rows;
-}
-
-/**
- * Entitlements as chips: one named, the rest behind a `+n`.
- *
- * One, because two wrap to a second line in a 400px panel and that row then
- * stands taller than every other — a list of label/value rows reads by its
- * even rhythm. The overflow is a real affordance rather than an ellipsis:
- * hovering or focusing `+n` names the ones that did not fit.
- */
-function EntitlementChips({ items }: { items: { id: string; name: string }[] }) {
-  if (items.length === 0) return <span className="text-text-tertiary">None</span>;
-
-  const shown = items.slice(0, 1);
-  const rest = items.slice(1);
-  const chip =
-    'inline-flex max-w-[140px] items-center rounded-pill border border-border bg-subtle px-2 py-0.5 text-caption-medium text-text-primary';
-
-  // `flex-nowrap`: one chip plus `+n` always fits, so wrapping can only ever be
-  // a mistake here — and a wrap would be the thing that changes the row height.
-  return (
-    <span className="flex flex-nowrap items-center gap-1.5">
-      {shown.map((e) => (
-        <span key={e.id} className={chip} title={e.name}>
-          <span className="truncate">{e.name}</span>
-        </span>
-      ))}
-      {rest.length > 0 && (
-        <Tooltip
-          variant="card"
-          // Chips in the overlay too — the same mark for the same kind of thing,
-          // so the hidden ones read as a continuation of the row rather than a
-          // different list. Free to wrap here: the card sizes to its contents.
-          title={
-            <div className="flex max-w-[260px] flex-wrap items-center gap-1.5 p-3">
-              {rest.map((e) => (
-                <span key={e.id} className={chip} title={e.name}>
-                  <span className="truncate">{e.name}</span>
-                </span>
-              ))}
-            </div>
-          }
-        >
-          <span
-            tabIndex={0}
-            aria-label={`${rest.length} more: ${rest.map((e) => e.name).join(', ')}`}
-            className={`${chip} cursor-help text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle`}
-          >
-            +{rest.length}
-          </span>
-        </Tooltip>
-      )}
-    </span>
-  );
 }

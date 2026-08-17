@@ -22,7 +22,12 @@ export const palette = {
     500: '#90CAF9',
     600: '#64B5F6',
     700: '#42A5F5',
-    800: '#1976D2', // link color
+    800: '#1976D2', // info solid / fill — carries white text, so AA is the chip's job
+    // Link TEXT. One step down from 800 because #1976D2 is 4.60:1 on white but only
+    // 4.40:1 on `subtle`, and a text-only control is the standard secondary action
+    // here — it lands in tinted panels as often as on a card. 900 would pass at
+    // 8.6:1 but is a near-black navy that stops reading as a link at 14px.
+    850: '#1565C0',
     900: '#0D47A1',
   },
 

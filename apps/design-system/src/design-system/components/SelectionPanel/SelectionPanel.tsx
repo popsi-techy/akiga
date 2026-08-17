@@ -60,7 +60,7 @@ export function SelectionPanel({
             <button
               type="button"
               onClick={onClearAll}
-              className="text-body-sm-strong text-text-brand hover:underline"
+              className="text-body-sm-strong text-text-link hover:underline"
             >
               Clear all
             </button>

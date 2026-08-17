@@ -62,8 +62,18 @@ for (const [bn, bg] of Object.entries(backgrounds)) {
   checks.push({ label: `text.primary on ${bn}`, fg: color.text.primary, bg, min: AA_TEXT });
   checks.push({ label: `text.secondary on ${bn}`, fg: color.text.secondary, bg, min: AA_TEXT });
 }
-checks.push({ label: 'text.tertiary on surface', fg: color.text.tertiary, bg: color.surface.default, min: AA_TEXT });
-checks.push({ label: 'text.link on surface', fg: color.text.link, bg: color.surface.default, min: AA_TEXT });
+// Tertiary on all three too, for the same reason as `link` below: muted captions
+// sit inside tinted panels constantly, and checking only white left the tinted case
+// unguarded.
+for (const [bn, bg] of Object.entries(backgrounds)) {
+  checks.push({ label: `text.tertiary on ${bn}`, fg: color.text.tertiary, bg, min: AA_TEXT });
+}
+// Link text on all three grounds, not just white: a text-only control is the
+// standard way to offer a secondary action here, so it lands in tinted panels and
+// on the canvas as often as it does on a card.
+for (const [bn, bg] of Object.entries(backgrounds)) {
+  checks.push({ label: `text.link on ${bn}`, fg: color.text.link, bg, min: AA_TEXT });
+}
 checks.push({ label: 'text.brand on surface', fg: color.text.brand, bg: color.surface.default, min: AA_TEXT });
 // Brand-colored text on the brand tint (active nav, brand labels) uses the darkest orange.
 checks.push({ label: 'brand.primaryActive on brand.subtle', fg: color.brand.primaryActive, bg: color.brand.subtle, min: AA_TEXT });

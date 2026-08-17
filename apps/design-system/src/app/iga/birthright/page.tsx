@@ -8,6 +8,7 @@ import VerifiedOutlined from '@mui/icons-material/VerifiedOutlined';
 import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import {
+  Avatar,
   DataTable,
   StatusChip,
   Button,
@@ -89,11 +90,11 @@ export default function BirthrightPoliciesPage() {
       header: 'Policy Name',
       sortable: true,
       value: (r) => r.name,
+      // The policy's initial, not a fixed icon: one glyph repeated down the
+      // column is decoration, and the letter at least varies by row.
       render: (r) => (
         <div className="flex items-center gap-3">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand-subtle text-icon-brand">
-            <VerifiedOutlined sx={{ fontSize: 18 }} />
-          </span>
+          <Avatar name={r.name} size="sm" />
           <div className="min-w-0">
             <div className="truncate text-body-sm-strong text-text-primary">{r.name}</div>
             <div className="truncate text-caption text-text-secondary">{r.description || 'No description'}</div>

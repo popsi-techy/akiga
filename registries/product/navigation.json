@@ -33,7 +33,8 @@
     ]},
     { "group": "administration", "label": "Administration", "items": [
       { "id": "license-governance", "label": "License Governance", "route": "/iga/license-governance", "icon": "card_membership", "personas": ["administrator", "auditor"] },
-      { "id": "emergency", "label": "Emergency Access", "route": "/iga/emergency", "icon": "key", "personas": ["administrator"] },
+      { "id": "emergency", "label": "Emergency Access V1", "route": "/iga/emergency", "icon": "key", "personas": ["administrator"] },
+      { "id": "emergency-v2", "label": "Emergency Access V2", "route": "/iga/emergency-v2", "icon": "key", "personas": ["administrator"] },
       { "id": "provisioning-tasks", "label": "Provisioning Tasks", "route": "/iga/provisioning-tasks", "icon": "playlist_add_check", "personas": ["administrator"] }
     ]},
     { "group": "analytics", "label": "Analytics", "items": [

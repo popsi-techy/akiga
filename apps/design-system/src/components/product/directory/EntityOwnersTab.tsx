@@ -188,11 +188,11 @@ export function EntityOwnersTab({
       header: 'Governance Team',
       sortable: true,
       value: (t) => t.name,
+      // The team's initial, not a fixed icon: one glyph repeated down the column
+      // is decoration, and the letter at least varies by row.
       render: (t) => (
         <div className="flex items-center gap-3">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-subtle text-icon">
-            <GroupsOutlined sx={{ fontSize: 18 }} />
-          </span>
+          <Avatar name={t.name} size="sm" />
           <div className="min-w-0">
             <div className="truncate text-body-sm-strong text-text-primary">{t.name}</div>
             <div className="truncate text-caption text-text-secondary">{t.description}</div>

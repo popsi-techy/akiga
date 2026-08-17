@@ -172,7 +172,14 @@ function DurationField({
   );
 }
 
-export function AdvancedConfigurationTab({ eaId }: { eaId: string }) {
+export function AdvancedConfigurationTab({
+  eaId,
+  onChanged,
+}: {
+  eaId: string;
+  /** Limits were saved — lets a host surface re-read what it reports. */
+  onChanged?: () => void;
+}) {
   const toast = useToast();
   const [config, setConfig] = React.useState<EAAdvancedConfig>(() => getAdvancedConfig(eaId));
   const [dirty, setDirty] = React.useState(false);
@@ -192,6 +199,7 @@ export function AdvancedConfigurationTab({ eaId }: { eaId: string }) {
   const save = () => {
     setAdvancedConfig(eaId, config);
     setDirty(false);
+    onChanged?.();
     toast.success('Advanced configuration saved');
   };
 

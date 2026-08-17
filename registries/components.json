@@ -551,6 +551,24 @@
       "notes": "KPI tile — label, value, icon in a tinted rounded square. The icon is graphical (WCAG 1.4.11, 3:1) so brand-orange on tint is fine. The only \"resting\" shadow permitted in the system."
     },
     {
+      "name": "OverflowChips",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/OverflowChips/OverflowChips.tsx",
+      "extends": null,
+      "variants": [
+        "grouped",
+        "single",
+        "empty"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus-visible"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/overflow-chips/page.tsx",
+      "notes": "A few named things plus a +n that reveals the rest, for rows whose height must not change with their contents (table cells, label/value rows, a summary beside a button). With an overflow the set sits in ONE tinted pill — the named chip and the +n are halves of a single value, and loose chips read as two values; with nothing to collapse a lone chip is left ungrouped. The +n is plain text, never a second outlined chip: it is a remainder, not an item. Promoted from product code once a second surface needed it."
+    },
+    {
       "name": "StatusChip",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/StatusChip/StatusChip.tsx",
@@ -598,17 +616,19 @@
       "variants": [
         "done",
         "current",
-        "upcoming",
-        "fill"
+        "skipped",
+        "upcoming"
       ],
       "states": [
         "default",
         "clickable",
         "current",
-        "done"
+        "done",
+        "skipped",
+        "required"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/step-tracker/page.tsx",
-      "notes": "Vertical numbered progress rail for a multi-step form, with a sentence per step. Sibling of Stepper, not a replacement: Stepper is a strip above a canvas that reports position, this is a column beside a form that also explains the steps. Only completed steps are clickable — going forward belongs to the form action that validates the current step. Completed and current markers keep their NUMBER (never a tick, so \"step 3 of 5\" stays checkable) and wear a 4px halo; markers use the status *solid* role via tokens because a filled marker is a graphic, not text. Connectors are a repeating-linear-gradient (6px dash, 2px gap) — border-style: dashed sizes dashes from the border width and reads as dots at 1px. `fill` spreads the steps down a constrained container."
+      "notes": "Vertical numbered progress rail for a multi-step form, with a sentence per step. Sibling of Stepper, not a replacement: Stepper is a strip above a canvas that reports position, this is a column beside a form that also explains the steps. Steps behind the reader are clickable; going forward belongs to the form action, which is what decides whether the current step may be left. Completed and current markers keep their NUMBER (never a tick, so \"step 3 of 5\" stays checkable) and wear a 4px halo; markers use the status *solid* role via tokens because a filled marker is a graphic, not text. Connectors are a repeating-linear-gradient (6px dash, 2px gap) — border-style: dashed sizes dashes from the border width and reads as dots at 1px. Steps are top-aligned with one spacing between them; a taller panel leaves space at the bottom rather than stretching the gaps, so the rhythm is a decision and not a function of the viewport. Per-step `status` ('done' | 'skipped') overrides the position-derived state for flows a reader can pass through without finishing — omitted, state comes from `current`, which would mark everything behind the reader done. A skipped marker is the upcoming outline turned DASHED, borrowing the connector's language (dashed = not settled), and its second line replaces the description with the consequence: a skipped required step reads \"Skipped — still required\" in the danger tone. Skipped steps stay clickable, or skipping becomes a one-way door. Per-step `required` renders the same danger asterisk a required field carries, with the word kept for screen readers since nothing here has a `required` attribute; it belongs on the rail rather than only on a final screen so \"can I pass this?\" is answered at the step. Callers should DERIVE status from their data (behind the reader + still empty = skipped) rather than record what was clicked, so filling a step in later clears the mark by itself."
     },
     {
       "name": "Switch",
@@ -645,7 +665,7 @@
         "with-count"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/tabs/page.tsx",
-      "notes": "32px tall — the component owns the height (MUI's block padding is zeroed); never pad the band locally. Selection is marked by colour and a 1px indicator, never by weight, so labels never shift width as the selection moves. Every tab needs its own empty state."
+      "notes": "32px tall — the component owns the height (MUI's block padding is zeroed); never pad the band locally. Selection is marked by colour and a 1px indicator, never by weight, so labels never shift width as the selection moves. Every tab needs its own empty state. Counts go through `TabItem.count`, which renders \"label (n)\" — NEVER write the brackets into `label`, or two tab strips end up disagreeing about the punctuation. `count: 0` renders \"(0)\" and should: a missing count reads as \"not counted yet\" and makes the reader open the tab to learn it was empty; omit `count` only for a tab holding no collection, where a number would have no referent. Count everything BEHIND the tab, not the pane that opens first — an Owners tab holding individual owners and governance teams counts both, or a profile owned solely by a team reads \"Owners (0)\". Derive it from whatever the page already uses to decide that section is empty (e.g. the same sum a setup checklist reads), so the tab and that surface cannot disagree."
     },
     {
       "name": "TimePicker",

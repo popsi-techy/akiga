@@ -10,6 +10,7 @@ import PlayCircleOutlined from '@mui/icons-material/PlayCircleOutlined';
 import RocketLaunchOutlined from '@mui/icons-material/RocketLaunchOutlined';
 import TaskAltOutlined from '@mui/icons-material/TaskAltOutlined';
 import {
+  Avatar,
   Button,
   Dialog,
   Menu,
@@ -68,11 +69,11 @@ export default function CertificationsListPage() {
       header: 'Access Certification',
       sortable: true,
       value: (c) => c.name,
+      // The certification's initial, not a fixed icon: one glyph repeated down
+      // the column is decoration, and the letter at least varies by row.
       render: (c) => (
         <div className="flex items-center gap-3">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand-subtle text-icon-brand">
-            <TaskAltOutlined sx={{ fontSize: 17 }} />
-          </span>
+          <Avatar name={c.name} size="sm" />
           <div className="min-w-0">
             <div className="truncate text-body-sm-strong text-text-primary">{c.name}</div>
             <div className="truncate text-caption text-text-secondary">{TYPE_LABEL[c.type]} review</div>

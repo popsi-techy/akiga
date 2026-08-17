@@ -1,6 +1,9 @@
 export { Button } from './Button/Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './Button/Button';
 
+export { OverflowChips } from './OverflowChips/OverflowChips';
+export type { OverflowChipsProps } from './OverflowChips/OverflowChips';
+
 export { StatusChip } from './StatusChip/StatusChip';
 export type { StatusChipProps, StatusIntent } from './StatusChip/StatusChip';
 
@@ -89,7 +92,7 @@ export { Stepper } from './Stepper/Stepper';
 export type { StepperProps, StepperStep } from './Stepper/Stepper';
 
 export { StepTracker } from './StepTracker/StepTracker';
-export type { StepTrackerProps, StepTrackerStep } from './StepTracker/StepTracker';
+export type { StepTrackerProps, StepTrackerStep, StepTrackerStatus } from './StepTracker/StepTracker';
 
 export { Meter } from './Meter/Meter';
 export type { MeterProps, MeterTone } from './Meter/Meter';

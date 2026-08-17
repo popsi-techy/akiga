@@ -14,6 +14,15 @@ export interface NextStep {
   /** Required steps block the object going live; the rest can be done later. */
   required: boolean;
   done: boolean;
+  /**
+   * What the chip says when this step is done. @default 'Completed'
+   *
+   * For the step that is satisfied without anyone doing anything — limits that
+   * arrived with working defaults, say. "Completed" would take credit for a
+   * decision nobody made, and the reader would stop looking at a value they may
+   * well want to change.
+   */
+  doneLabel?: string;
 }
 
 /**
@@ -54,16 +63,23 @@ export function NextStepsCard({
               // gutter, and adding one here insets the rows twice.
               className="flex w-full items-center gap-3 border-b border-border py-3.5 text-left transition-colors hover:bg-surface-hover"
             >
-              <span
-                className={[
-                  'grid h-9 w-9 shrink-0 place-items-center rounded-lg',
-                  step.done ? 'bg-subtle text-icon-subtle' : 'bg-brand-subtle text-icon-brand',
-                ].join(' ')}
-              >
+              {/* Always the quiet fill. The tile identifies which step this is;
+                  the chip on the right says whether it is done. Tinting the
+                  pending ones brand-orange made the card's accent colour mean
+                  "not finished", and left three oranges competing with the one
+                  that matters — Activate. */}
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-subtle text-icon-subtle">
                 {step.icon}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-2">
+                {/* `gap-1`, roughly the width of a space at this size. `Input`
+                    renders its asterisk inside the label with a literal `{' '}`,
+                    which is the spacing to match — a required marker modifies the
+                    word it follows, so anything wider reads as a separate item.
+                    It cannot go inside the label here because that span
+                    truncates, and a long step name would ellipsize away the one
+                    mark saying the step is required. */}
+                <span className="flex items-center gap-1">
                   <span className="truncate text-body-sm-strong text-text-primary">{step.label}</span>
                   {/* The same marker a required field carries — a danger-tinted
                       asterisk — so "required" means one thing across forms and
@@ -81,10 +97,12 @@ export function NextStepsCard({
                 </span>
                 <span className="mt-0.5 block truncate text-caption text-text-secondary">{step.hint}</span>
               </span>
+              {/* "Pending" over "To do": the row is already an instruction, so the
+                  chip's job is to report state, and a state reads as a noun. */}
               {step.done ? (
-                <StatusChip intent="success" label="Done" />
+                <StatusChip intent="success" label={step.doneLabel ?? 'Completed'} />
               ) : (
-                <StatusChip intent="warning" label="To do" />
+                <StatusChip intent="warning" label="Pending" />
               )}
               <ChevronRightOutlined sx={{ fontSize: 18 }} className="shrink-0 text-icon-subtle" />
             </button>

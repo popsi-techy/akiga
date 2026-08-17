@@ -53,6 +53,13 @@ export default function TabsDocs() {
         <PropsTable
           rows={[
             { name: 'items', type: 'TabItem[]', description: '{ value, label, count?, disabled? }.' },
+            {
+              name: 'items[].count',
+              type: 'number',
+              default: '—',
+              description:
+                'Rendered as “label (n)”. Pass it rather than writing the brackets into the label, so the formatting stays one decision. `0` renders “(0)”; omit it for a tab with nothing to count.',
+            },
             { name: 'value / onChange', type: 'string / (v) => void', description: 'Controlled active tab.' },
             { name: 'aria-label', type: 'string', description: 'Accessible name for the tablist.' },
           ]}
@@ -63,11 +70,15 @@ export default function TabsDocs() {
         <DoDont
           dos={[
             'Use for switching sections within one object/page.',
-            'Show counts where they help (Owners (4)).',
+            'Count everything behind the tab, not the pane that opens first — an Owners tab holding people and teams counts both, or a profile owned only by a team reads “Owners (0)”.',
+            'Show the zero. “Owners (0)” answers the question; a missing count reads as “not counted yet” and makes the reader open the tab to find out it was empty.',
+            'Derive the count from whatever the page already uses to decide the section is empty, so the tab and that other surface cannot disagree.',
             'Keep labels short; order by importance.',
             'Pair with an aria-label.',
           ]}
           donts={[
+            'Don’t write the brackets into the `label` — pass `count` and let the component format it, or two tab strips will disagree about the punctuation.',
+            'Don’t count a tab that holds no collection. A count on “Overview” is a number with no referent.',
             'Don’t use tabs for primary app navigation (that’s the sidebar).',
             'Don’t exceed ~7 tabs — reconsider the IA.',
             'Don’t hide destructive actions behind a tab.',

@@ -43,7 +43,10 @@ export const color = {
     tertiary: p.ink[300], //     #54637B muted
     disabled: p.ink[50], //      #808B9E disabled / placeholder
     inverse: p.white, //         on dark surfaces
-    link: p.blue[800], //        #1976D2 (4.6:1 on white)
+    // Every text-only control: "View details", "Clear all", "Make default". Blue,
+    // not brand orange — a screen gets one orange, and it belongs to the action the
+    // reader is meant to take next, not to every secondary link competing with it.
+    link: p.blue[850], //        #1565C0 (5.7:1 on white, 5.4:1 on subtle)
     // Small brand-colored TEXT uses the darker orange for AA (#EB5424 is only 3.6:1).
     // The vibrant #EB5424 (brand.primary) is reserved for fills, indicators, focus, and large text.
     brand: p.orange[800], //     #C9441E (4.85:1 on white)
