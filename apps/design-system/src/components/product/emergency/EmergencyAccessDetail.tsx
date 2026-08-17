@@ -36,6 +36,8 @@ import {
   Input,
   SelectionPanel,
   NavList,
+  OverflowChips,
+  PickerSlot,
   Tooltip,
   useToast,
   type Column,
@@ -54,6 +56,7 @@ import {
   getEAGovernanceTeams,
   setEAGovernanceTeams,
   getEAAssignments,
+  listOwnerCandidates,
   type EADetail,
 } from '@/data/emergency-access';
 import type { SeedEAOwner } from '@/data/seed';
@@ -178,6 +181,129 @@ function OverviewTab({ ea, onGoToTab }: { ea: EADetail; onGoToTab: (tab: string)
           </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Who answers for this profile, as two picker slots — for the V2 creation stepper.
+ *
+ * Same reasoning as `EmergencyAssignmentsPicker`: the tab below is a 264px rail
+ * beside a table, which needs a page's width and gets a wizard column. The step
+ * asks *who answers for this*, and a count with the first name in it answers that.
+ *
+ * Both halves use `TableSelectDrawer`, which preselects and replaces — so the step
+ * can take an owner back out as well as put one in. The tab's own "Add Owners"
+ * drawer only appends, and relies on its table's row menu for removal; with no
+ * table here, appending alone would let a reader add the wrong person and be stuck
+ * with them until they reached the detail page.
+ */
+export function EmergencyOwnersPicker({ ea, onChanged }: { ea: EADetail; onChanged: () => void }) {
+  const [owners, setOwners] = React.useState<SeedEAOwner[]>([]);
+  const [teamIds, setTeamIds] = React.useState<string[]>([]);
+  const [open, setOpen] = React.useState<'people' | 'teams' | null>(null);
+
+  // Session memory, so read both after mount like every other EA surface.
+  React.useEffect(() => {
+    setOwners(getEAOwners(ea.id));
+    setTeamIds(getEAGovernanceTeams(ea.id));
+  }, [ea.id]);
+
+  const candidates = listOwnerCandidates();
+  const allTeams = listGovernanceTeamRows();
+
+  const commitOwners = (ids: string[]) => {
+    setOwners(setEAOwners(ea.id, candidates.filter((o) => ids.includes(o.id))));
+    onChanged();
+  };
+  const commitTeams = (ids: string[]) => {
+    setTeamIds(setEAGovernanceTeams(ea.id, ids));
+    onChanged();
+  };
+
+  const slots = [
+    {
+      key: 'people' as const,
+      icon: <PersonOutline sx={{ fontSize: 22 }} />,
+      empty: 'No owners named',
+      emptyHint: 'A named owner answers for this access day to day.',
+      editHint: 'Edit who answers for this access day to day.',
+      addLabel: 'Add Owners',
+      items: owners.map((o) => ({ id: o.id, name: o.name })),
+      entity: 'owner',
+    },
+    {
+      key: 'teams' as const,
+      icon: <GroupsOutlined sx={{ fontSize: 22 }} />,
+      empty: 'No governance teams',
+      emptyHint: 'A team answers for this access at review, where an owner answers day to day.',
+      editHint: 'Edit which teams answer for this at review.',
+      addLabel: 'Add Governance Teams',
+      items: allTeams.filter((t) => teamIds.includes(t.id)).map((t) => ({ id: t.id, name: t.name })),
+      entity: 'governance team',
+    },
+  ];
+
+  return (
+    <div className="max-w-3xl space-y-4">
+      {slots.map((s) => (
+        <PickerSlot
+          key={s.key}
+          icon={s.icon}
+          title={
+            s.items.length === 0
+              ? s.empty
+              : `${s.items.length} ${s.entity}${s.items.length === 1 ? '' : 's'} selected`
+          }
+          hint={s.items.length === 0 ? s.emptyHint : s.editHint}
+          summary={s.items.length > 0 ? <OverflowChips items={s.items} /> : undefined}
+          {...(s.items.length === 0
+            ? {
+                action: (
+                  <Button variant="secondary" startIcon={<AddIcon />} onClick={() => setOpen(s.key)}>
+                    {s.addLabel}
+                  </Button>
+                ),
+              }
+            : { onEdit: () => setOpen(s.key), editLabel: `Edit ${s.entity}s` })}
+        />
+      ))}
+
+      {/* Neither is required to switch the access on — `EA_REQUIRED_CHECKS` leaves
+          ownership out on purpose, because blocking break-glass access on a
+          missing owner would stop someone turning it on during an incident. Worth
+          saying so, or the reader assumes the step is another gate. */}
+      <p className="text-caption text-text-tertiary">
+        Optional, and worth doing anyway: ownership is what makes this reviewable later. It can be
+        set after the access is switched on.
+      </p>
+
+      <TableSelectDrawer
+        open={open === 'people'}
+        onClose={() => setOpen(null)}
+        title="Add Owners"
+        subtitle="Select people to add as owners of this emergency access."
+        icon={<PersonAddAltOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
+        nameHeader="Owner"
+        descriptionHeader="Email"
+        entity="owner"
+        showRisk={false}
+        rows={candidates.map((o) => ({ id: o.id, name: o.name, description: o.email }))}
+        selectedIds={owners.map((o) => o.id)}
+        onApply={commitOwners}
+      />
+      <TableSelectDrawer
+        open={open === 'teams'}
+        onClose={() => setOpen(null)}
+        title="Add Governance Teams"
+        subtitle="Teams that answer for this access at review."
+        icon={<GroupsOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
+        nameHeader="Governance Team"
+        entity="governance team"
+        rows={allTeams}
+        selectedIds={teamIds}
+        onApply={commitTeams}
+      />
     </div>
   );
 }

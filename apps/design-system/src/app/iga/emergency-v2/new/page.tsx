@@ -30,7 +30,7 @@ import { SetupProgress } from '@/components/product/SetupProgress';
 import { EligibilityCriteriaTab } from '@/components/product/emergency/EligibilityCriteriaTab';
 import { AdvancedConfigurationTab } from '@/components/product/emergency/AdvancedConfigurationTab';
 import { EmergencyAssignmentsPicker } from '@/components/product/emergency/EmergencyAssignmentsTab';
-import { EmergencyOwnersTab } from '@/components/product/emergency/EmergencyAccessDetail';
+import { EmergencyOwnersPicker } from '@/components/product/emergency/EmergencyAccessDetail';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 
 type StepDef = {
@@ -294,7 +294,7 @@ export default function EmergencyAccessV2Wizard() {
     // access-certification wizard uses. Same store, same drawers.
     if (step === 1) return <EmergencyAssignmentsPicker eaId={ea.id} onChanged={bump} />;
     if (step === 2) return <EligibilityCriteriaTab eaId={ea.id} onChanged={bump} />;
-    if (step === 3) return <EmergencyOwnersTab ea={ea} onChanged={bump} />;
+    if (step === 3) return <EmergencyOwnersPicker ea={ea} onChanged={bump} />;
     if (step === 4) return <AdvancedConfigurationTab eaId={ea.id} onChanged={bump} />;
     return <Preview ea={ea} blocking={blocking} onGoToStep={goTo} />;
   };

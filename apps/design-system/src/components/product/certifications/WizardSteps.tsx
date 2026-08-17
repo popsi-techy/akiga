@@ -8,14 +8,11 @@ import AppsOutlined from '@mui/icons-material/AppsOutlined';
 // them, which is how these two got caught.
 import Assignment from '@mui/icons-material/Assignment';
 import Groups from '@mui/icons-material/Groups';
-import Person from '@mui/icons-material/Person';
 import WatchLater from '@mui/icons-material/WatchLater';
-import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import GroupsOutlined from '@mui/icons-material/GroupsOutlined';
 import PersonOutline from '@mui/icons-material/PersonOutline';
 import {
-  Avatar,
   Button,
   Card,
   Checkbox,
@@ -51,37 +48,6 @@ export function StepHeading({ step, title, description }: { step: number; title:
       <p className="text-body-sm-strong text-brand">Step {step} of 5</p>
       <h2 className="mt-1 text-h4 text-text-primary">{title}</h2>
       <p className="mt-1 text-body-sm text-text-secondary">{description}</p>
-    </div>
-  );
-}
-
-/** A chosen thing, with a way to take it back out. */
-function PickedRow({
-  avatar,
-  primary,
-  secondary,
-  onRemove,
-}: {
-  avatar: React.ReactNode;
-  primary: string;
-  secondary: string;
-  onRemove: () => void;
-}) {
-  return (
-    <div className="flex items-center gap-3 border-b border-border py-3 last:border-0">
-      {avatar}
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-body-sm-strong text-text-primary">{primary}</div>
-        <div className="truncate text-caption text-text-secondary">{secondary}</div>
-      </div>
-      <button
-        type="button"
-        onClick={onRemove}
-        aria-label={`Remove ${primary}`}
-        className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-icon transition-colors hover:bg-surface-hover hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-      >
-        <DeleteOutline sx={{ fontSize: 17 }} />
-      </button>
     </div>
   );
 }
@@ -188,41 +154,42 @@ export function UsersStep({ draft, patch }: { draft: Certification; patch: Patch
         description="Choose the people whose access reviewers will confirm or take away."
       />
 
-      {chosen.length === 0 ? (
-        <div className="max-w-2xl">
-          <PickerSlot
-            icon={<PersonOutline sx={{ fontSize: 22 }} />}
-            title="No users chosen"
-            hint="Nobody's access will be reviewed until you add people here."
-            action={
-              <Button startIcon={<AddIcon />} onClick={() => setPickerOpen(true)}>
-                Add users
-              </Button>
-            }
-          />
-        </div>
-      ) : (
-        <div className="max-w-2xl">
-          <Card title={`${chosen.length} user${chosen.length === 1 ? '' : 's'} to review`} icon={<Person />} padding="none">
-            <div>
-              {chosen.map((u) => (
-                <PickedRow
-                  key={u.id}
-                  avatar={<Avatar name={u.name} size="sm" shape="circle" />}
-                  primary={u.name}
-                  secondary={`${u.jobTitle} · ${u.department}`}
-                  onRemove={() => patch({ userIds: draft.userIds.filter((id) => id !== u.id) })}
-                />
-              ))}
-            </div>
-            <div className="py-3">
-              <Button variant="secondary" size="sm" startIcon={<AddIcon />} onClick={() => setPickerOpen(true)}>
-                Add users
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
+      {/* One row in both states, like the applications slot on step 1. This step
+          used to grow a card listing every chosen person, each with its own remove
+          button — which broke the property the slot exists for: the step changed
+          shape and height the moment anything was picked, and a review of forty
+          people scrolled past its own footer.
+
+          Removal did not have to move with it. The drawer preselects and replaces
+          rather than appending, so taking someone out happens there, in a
+          searchable table beside a running selection panel — which is where you
+          want to be when the set is large, and the only place the inline list was
+          ever better was when it was short. */}
+      <div className="max-w-2xl">
+        <PickerSlot
+          icon={<PersonOutline sx={{ fontSize: 22 }} />}
+          title={
+            chosen.length === 0
+              ? 'No users chosen'
+              : `${chosen.length} user${chosen.length === 1 ? '' : 's'} to review`
+          }
+          hint={
+            chosen.length === 0
+              ? "Nobody's access will be reviewed until you add people here."
+              : 'Edit whose access reviewers will decide on.'
+          }
+          summary={chosen.length > 0 ? <OverflowChips items={chosen} /> : undefined}
+          {...(chosen.length === 0
+            ? {
+                action: (
+                  <Button startIcon={<AddIcon />} onClick={() => setPickerOpen(true)}>
+                    Add users
+                  </Button>
+                ),
+              }
+            : { onEdit: () => setPickerOpen(true), editLabel: 'Edit users' })}
+        />
+      </div>
 
       <TableSelectDrawer
         open={pickerOpen}

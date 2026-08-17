@@ -293,6 +293,17 @@ export function getAvailableOwners(id: string): SeedEAOwner[] {
 }
 
 /**
+ * Everyone who could own a profile, whether they already do or not.
+ *
+ * The partner to `getAvailableOwners`, which subtracts the current owners because
+ * its drawer *appends*. A drawer that *edits* the set has to show the current
+ * owners too — with their boxes ticked — or there is no way to take one back out.
+ */
+export function listOwnerCandidates(): SeedEAOwner[] {
+  return ownerDirectory;
+}
+
+/**
  * Profiles activated during this session.
  *
  * The seed says what a profile started as; activation is something the user did
