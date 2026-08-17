@@ -31,6 +31,11 @@ const STEPS = [
   { label: 'Preview', description: 'Check it, then launch or save for later' },
 ];
 
+/** Before the store has been read, and the Suspense fallback at the bottom. */
+function WizardLoading() {
+  return <div className="py-16 text-center text-body-sm text-text-secondary">Loading…</div>;
+}
+
 /**
  * Create or continue a custom access certification.
  *
@@ -43,7 +48,7 @@ const STEPS = [
  * The draft is written to the store on every step change, so leaving halfway
  * leaves a draft on the list rather than nothing.
  */
-export default function CustomCertificationWizard() {
+function CustomCertificationWizardInner() {
   const router = useRouter();
   const toast = useToast();
   const editingId = useSearchParams().get('id');
@@ -70,9 +75,7 @@ export default function CustomCertificationWizard() {
     );
   }, [editingId]);
 
-  if (!draft) {
-    return <div className="py-16 text-center text-body-sm text-text-secondary">Loading…</div>;
-  }
+  if (!draft) return <WizardLoading />;
 
   const patch = (next: Partial<Certification>) => setDraft({ ...draft, ...next });
   const gaps = certificationGaps(draft);
@@ -189,5 +192,24 @@ export default function CustomCertificationWizard() {
         </aside>
       </div>
     </div>
+  );
+}
+
+/**
+ * `useSearchParams` — read above for the `?id=` that continues an existing draft
+ * — has no value during a static prerender, so Next refuses to prerender the
+ * route unless the component reading it sits under a Suspense boundary. Without
+ * this the production build fails on this page while `next dev` is perfectly
+ * happy, because dev renders every route on demand.
+ *
+ * The fallback is the same "Loading…" the wizard already shows while it reads the
+ * store, so the prerendered HTML matches the first thing the client would paint
+ * anyway — the boundary costs the reader nothing.
+ */
+export default function CustomCertificationWizard() {
+  return (
+    <React.Suspense fallback={<WizardLoading />}>
+      <CustomCertificationWizardInner />
+    </React.Suspense>
   );
 }

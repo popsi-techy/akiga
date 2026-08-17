@@ -53,6 +53,8 @@ export type { DonutChartProps, DonutSegment } from './DonutChart/DonutChart';
 export { Menu } from './Menu/Menu';
 export type { MenuProps, MenuActionItem } from './Menu/Menu';
 
+export { PickerSlot } from './PickerSlot/PickerSlot';
+export type { PickerSlotProps } from './PickerSlot/PickerSlot';
 export { SelectionPanel } from './SelectionPanel/SelectionPanel';
 export type { SelectionPanelProps, SelectionItem } from './SelectionPanel/SelectionPanel';
 

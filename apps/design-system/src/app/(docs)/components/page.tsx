@@ -42,6 +42,7 @@ const groups: { title: string; description: string; items: [string, string, stri
       ['Radio Card Group', '/components/radio-card-group', 'Single-choice selector as icon + label cards.'],
       ['Selectable List', '/components/selectable-list', 'Multi-select rows with descriptions and trailing content.'],
       ['Selection Panel', '/components/selection-panel', 'The “what you selected” side panel for multi-select drawers.'],
+      ['Picker Slot', '/components/picker-slot', 'One row standing in for a collection chosen in a drawer.'],
       ['Segmented Control', '/components/segmented-control', 'Connected toggle where one segment is always on.'],
       ['Quick Filter', '/components/quick-filter', 'Standalone filter chips where cleared is a real state.'],
     ],

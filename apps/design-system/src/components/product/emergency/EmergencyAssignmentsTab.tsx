@@ -7,7 +7,18 @@ import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
 import LaptopOutlined from '@mui/icons-material/LaptopOutlined';
-import { Button, Card, DataTable, Input, Menu, NavList, useToast, type Column } from '@ds/components';
+import {
+  Button,
+  Card,
+  DataTable,
+  Input,
+  Menu,
+  NavList,
+  OverflowChips,
+  PickerSlot,
+  useToast,
+  type Column,
+} from '@ds/components';
 import { AppBadge } from '../sod/labels';
 import { EntityCatalogDrawer } from '../automation/EntityCatalogDrawer';
 import { TableSelectDrawer } from '../automation/TableSelectDrawer';
@@ -17,20 +28,158 @@ import type { EntitySelection } from '@/data/automation-types';
 
 type Kind = keyof EAAssignments;
 
-const META: Record<Kind, { label: string; entity: string; empty: string; hint: string }> = {
+const META: Record<
+  Kind,
+  { label: string; entity: string; empty: string; hint: string; editHint: string; icon: React.ReactNode }
+> = {
   entitlements: {
     label: 'Entitlements',
     entity: 'entitlement',
     empty: 'No entitlements granted',
     hint: 'Individual permissions handed over for the length of a session, then taken back.',
+    editHint: 'Edit which permissions this access hands over.',
+    icon: <VpnKeyOutlined sx={{ fontSize: 22 }} />,
   },
   technicalRoles: {
     label: 'Technical Roles',
     entity: 'technical role',
     empty: 'No technical roles granted',
     hint: 'Bundles of entitlements within one application — quicker to grant, wider to hold.',
+    editHint: 'Edit which bundles this access hands over.',
+    icon: <LaptopOutlined sx={{ fontSize: 22 }} />,
   },
 };
+
+/** `n entitlements` / `1 entitlement`, from the singular in `META`. */
+const countLabel = (n: number, entity: string) => `${n} ${entity}${n === 1 ? '' : 's'} selected`;
+
+/**
+ * Everything both surfaces need from the store, so the tab and the wizard's slots
+ * read and write assignments exactly the same way.
+ */
+function useAssignments(eaId: string, onChanged?: () => void) {
+  const [assignments, setAssignments] = React.useState<EAAssignments>({
+    entitlements: [],
+    technicalRoles: [],
+  });
+  // Session-memory store, so read it after mount like the other EA tabs.
+  React.useEffect(() => setAssignments(getEAAssignments(eaId)), [eaId]);
+  const patch = (next: Partial<EAAssignments>) => {
+    setAssignments((prev) => setEAAssignments(eaId, { ...prev, ...next }));
+    onChanged?.();
+  };
+  return { assignments, patch };
+}
+
+/**
+ * The two catalog pickers, shared by both surfaces below.
+ *
+ * `open` is the kind whose drawer is showing, or null — one piece of state rather
+ * than a boolean per drawer, because only one can be open and two booleans can
+ * disagree about that.
+ */
+function AssignmentDrawers({
+  open,
+  onClose,
+  assignments,
+  patch,
+}: {
+  open: Kind | null;
+  onClose: () => void;
+  assignments: EAAssignments;
+  patch: (next: Partial<EAAssignments>) => void;
+}) {
+  return (
+    <>
+      {/* The same catalog pickers the workflow builder and birthright policies use. */}
+      <EntityCatalogDrawer
+        open={open === 'entitlements'}
+        onClose={onClose}
+        selected={assignments.entitlements}
+        onApply={(entitlements) => patch({ entitlements })}
+      />
+      <TableSelectDrawer
+        open={open === 'technicalRoles'}
+        onClose={onClose}
+        title="Add Technical Roles"
+        subtitle="Select the roles this access hands over."
+        icon={<ShieldOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
+        nameHeader="Technical role"
+        entity="technical role"
+        rows={listTechnicalRoles()}
+        selectedIds={assignments.technicalRoles.map((r) => r.id)}
+        onApply={(ids) =>
+          patch({
+            technicalRoles: listTechnicalRoles()
+              .filter((r) => ids.includes(r.id))
+              .map((r) => ({ id: r.id, name: r.name })),
+          })
+        }
+      />
+    </>
+  );
+}
+
+/**
+ * What this profile grants, as two picker slots — for the V2 creation stepper.
+ *
+ * The tab below is the wrong shape for a wizard column: a 264px rail beside a
+ * three-column table, squeezed into the space left over by the progress rail,
+ * scrolls sideways and clips its own empty-state copy. None of that detail is
+ * what the step is asking, either — the step asks *what does this hand over*, and
+ * a count with the first name in it answers that.
+ *
+ * Same component the access-certification wizard picks applications with, and the
+ * same drawers the tab uses, so what is configured here and what is maintained
+ * later cannot drift apart.
+ */
+export function EmergencyAssignmentsPicker({
+  eaId,
+  onChanged,
+}: {
+  eaId: string;
+  onChanged?: () => void;
+}) {
+  const { assignments, patch } = useAssignments(eaId, onChanged);
+  const [open, setOpen] = React.useState<Kind | null>(null);
+
+  return (
+    <div className="max-w-3xl space-y-4">
+      {(['entitlements', 'technicalRoles'] as Kind[]).map((kind) => {
+        const items = assignments[kind];
+        const meta = META[kind];
+        return (
+          <PickerSlot
+            key={kind}
+            icon={meta.icon}
+            title={items.length === 0 ? meta.empty : countLabel(items.length, meta.entity)}
+            hint={items.length === 0 ? meta.hint : meta.editHint}
+            summary={items.length > 0 ? <OverflowChips items={items} /> : undefined}
+            {...(items.length === 0
+              ? {
+                  action: (
+                    <Button variant="secondary" startIcon={<AddIcon />} onClick={() => setOpen(kind)}>
+                      Add {meta.label}
+                    </Button>
+                  ),
+                }
+              : { onEdit: () => setOpen(kind), editLabel: `Edit ${meta.label.toLowerCase()}` })}
+          />
+        );
+      })}
+
+      {/* Neither slot is required on its own — the gate asks for at least one of
+          the two, which is what `eaBlockingSteps` checks. Saying so here saves the
+          reader filling both to find out. */}
+      <p className="text-caption text-text-tertiary">
+        Either one is enough to switch this access on. Most profiles grant entitlements; reach for a
+        technical role when a whole bundle is needed at once.
+      </p>
+
+      <AssignmentDrawers open={open} onClose={() => setOpen(null)} assignments={assignments} patch={patch} />
+    </div>
+  );
+}
 
 /**
  * What this break-glass profile grants.
@@ -54,18 +203,7 @@ export function EmergencyAssignmentsTab({
   const [kind, setKind] = React.useState<Kind>('entitlements');
   const [search, setSearch] = React.useState('');
   const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [assignments, setAssignments] = React.useState<EAAssignments>({
-    entitlements: [],
-    technicalRoles: [],
-  });
-
-  // Session-memory store, so read it after mount like the other EA tabs.
-  React.useEffect(() => setAssignments(getEAAssignments(eaId)), [eaId]);
-
-  const patch = (next: Partial<EAAssignments>) => {
-    setAssignments(setEAAssignments(eaId, { ...assignments, ...next }));
-    onChanged?.();
-  };
+  const { assignments, patch } = useAssignments(eaId, onChanged);
 
   const meta = META[kind];
   const current = assignments[kind];
@@ -188,30 +326,11 @@ export function EmergencyAssignmentsTab({
         </div>
       </div>
 
-      {/* The same catalog pickers the workflow builder and birthright policies use. */}
-      <EntityCatalogDrawer
-        open={drawerOpen && kind === 'entitlements'}
+      <AssignmentDrawers
+        open={drawerOpen ? kind : null}
         onClose={() => setDrawerOpen(false)}
-        selected={assignments.entitlements}
-        onApply={(entitlements) => patch({ entitlements })}
-      />
-      <TableSelectDrawer
-        open={drawerOpen && kind === 'technicalRoles'}
-        onClose={() => setDrawerOpen(false)}
-        title="Add Technical Roles"
-        subtitle="Select the roles this access hands over."
-        icon={<ShieldOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
-        nameHeader="Technical role"
-        entity="technical role"
-        rows={listTechnicalRoles()}
-        selectedIds={assignments.technicalRoles.map((r) => r.id)}
-        onApply={(ids) =>
-          patch({
-            technicalRoles: listTechnicalRoles()
-              .filter((r) => ids.includes(r.id))
-              .map((r) => ({ id: r.id, name: r.name })),
-          })
-        }
+        assignments={assignments}
+        patch={patch}
       />
     </div>
   );

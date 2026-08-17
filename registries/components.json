@@ -514,6 +514,25 @@
       "notes": "Multi-select rows with leading visual, description and trailing content. variant=\"plain\" exists so the list can sit inside an already-bordered panel without becoming a card inside a card. tone=\"danger\" for access about to be revoked."
     },
     {
+      "name": "PickerSlot",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/PickerSlot/PickerSlot.tsx",
+      "extends": null,
+      "variants": [
+        "empty",
+        "filled"
+      ],
+      "states": [
+        "default",
+        "empty",
+        "filled",
+        "hover",
+        "focus-visible"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/picker-slot/page.tsx",
+      "notes": "One row standing in for a collection chosen elsewhere: the row states what is chosen and offers the single control that changes it, while the choosing happens in a Drawer where there is room for search, paging and a SelectionPanel. THE INVARIANT: one row in both states — the count plus `summary` chips replace the \"nothing chosen\" copy IN PLACE, so the surface does not change shape under the reader the moment they pick something (no card growing into a table, no control moving). Anything that breaks that breaks the component. `action` is the empty-state control (normally a `secondary` Button naming what gets added); `onEdit` is the filled-state control and renders the standard BARE pencil — pass one or the other, never both, since two controls make the reader work out which applies. The pencil is unboxed on purpose: a second outlined control beside the chips reads as a button competing with the step's own primary action. `summary` is normally `OverflowChips` and is hidden below `sm`, where keeping the row to one line beats naming the items. Use this instead of embedding the real table when the surface is narrow — a rail-and-table editor squeezed into a wizard column scrolls sideways and clips its own copy, and that detail is not what the step is asking. Use the table itself on a detail page, where the collection is the subject rather than one answer among six. Promoted out of the access-certification wizard when the emergency-access V2 stepper needed the same row; both read and write the same store as their detail-page tab, so a wizard and its tab cannot drift apart."
+    },
+    {
       "name": "SelectionPanel",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/SelectionPanel/SelectionPanel.tsx",

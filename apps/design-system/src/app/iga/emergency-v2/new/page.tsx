@@ -29,7 +29,7 @@ import {
 import { SetupProgress } from '@/components/product/SetupProgress';
 import { EligibilityCriteriaTab } from '@/components/product/emergency/EligibilityCriteriaTab';
 import { AdvancedConfigurationTab } from '@/components/product/emergency/AdvancedConfigurationTab';
-import { EmergencyAssignmentsTab } from '@/components/product/emergency/EmergencyAssignmentsTab';
+import { EmergencyAssignmentsPicker } from '@/components/product/emergency/EmergencyAssignmentsTab';
 import { EmergencyOwnersTab } from '@/components/product/emergency/EmergencyAccessDetail';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 
@@ -288,7 +288,11 @@ export default function EmergencyAccessV2Wizard() {
     if (!ea) return null;
     // The editors are the same components the tabs use, so what you configure
     // here and what you maintain later can never drift apart.
-    if (step === 1) return <EmergencyAssignmentsTab eaId={ea.id} onChanged={bump} />;
+    //
+    // Assignments is the exception, and only in shape: the tab's rail-and-table
+    // needs a page's width, so the step asks with the picker slots the
+    // access-certification wizard uses. Same store, same drawers.
+    if (step === 1) return <EmergencyAssignmentsPicker eaId={ea.id} onChanged={bump} />;
     if (step === 2) return <EligibilityCriteriaTab eaId={ea.id} onChanged={bump} />;
     if (step === 3) return <EmergencyOwnersTab ea={ea} onChanged={bump} />;
     if (step === 4) return <AdvancedConfigurationTab eaId={ea.id} onChanged={bump} />;

@@ -65,6 +65,7 @@ export const navigation: NavSection[] = [
       { label: 'Radio Card Group', href: '/components/radio-card-group', status: 'ready' },
       { label: 'Selectable List', href: '/components/selectable-list', status: 'ready' },
       { label: 'Selection Panel', href: '/components/selection-panel', status: 'ready' },
+      { label: 'Picker Slot', href: '/components/picker-slot', status: 'ready' },
       { label: 'Segmented Control', href: '/components/segmented-control', status: 'ready' },
       { label: 'Quick Filter', href: '/components/quick-filter', status: 'ready' },
     ],

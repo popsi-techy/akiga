@@ -22,6 +22,7 @@ import {
   DatePicker,
   Input,
   OverflowChips,
+  PickerSlot,
   Select,
   Switch,
   Tooltip,
@@ -50,42 +51,6 @@ export function StepHeading({ step, title, description }: { step: number; title:
       <p className="text-body-sm-strong text-brand">Step {step} of 5</p>
       <h2 className="mt-1 text-h4 text-text-primary">{title}</h2>
       <p className="mt-1 text-body-sm text-text-secondary">{description}</p>
-    </div>
-  );
-}
-
-/**
- * An empty slot that states what is missing and offers the one way to fix it.
- * Used by the two steps whose whole job is choosing things.
- */
-function PickerSlot({
-  icon,
-  title,
-  hint,
-  action,
-  summary,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  hint: string;
-  action: React.ReactNode;
-  /** What has been chosen, named beside the action. Absent while empty. */
-  summary?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center gap-4 rounded-xl border border-border bg-surface px-5 py-4">
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-subtle text-icon-brand">
-        {icon}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="text-body-strong text-text-primary">{title}</div>
-        <p className="mt-0.5 text-body-sm text-text-secondary">{hint}</p>
-      </div>
-      {/* One row in both states, filled or empty. The count and the chips replace
-          the "nothing chosen" copy in place, so the step does not change shape
-          under the reader the moment they pick something. */}
-      {summary && <div className="hidden shrink-0 sm:block">{summary}</div>}
-      <div className="shrink-0">{action}</div>
     </div>
   );
 }
@@ -174,29 +139,19 @@ export function DetailsStep({ draft, patch }: { draft: Certification; patch: Pat
                 : 'Edit which systems this review covers.'
             }
             summary={chosen.length > 0 ? <OverflowChips items={chosen} max={1} /> : undefined}
-            action={
-              chosen.length === 0 ? (
-                <Button variant="secondary" startIcon={<AddIcon />} onClick={() => setPickerOpen(true)}>
-                  Add applications
-                </Button>
-              ) : (
-                // A pencil, not "Add applications": the drawer opens with the
-                // current picks selected, so it edits the set rather than
-                // appending to it, and the button should say so.
-                //
-                // Bare, not an outlined Button: a 36px box holding one small
-                // glyph reads as an empty frame beside the chips, where the icon
-                // on its own reads as an action attached to them.
-                <button
-                  type="button"
-                  aria-label="Edit applications"
-                  onClick={() => setPickerOpen(true)}
-                  className="grid h-8 w-8 place-items-center rounded-md text-icon transition-colors hover:bg-surface-hover hover:text-text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-                >
-                  <EditOutlined sx={{ fontSize: 18 }} />
-                </button>
-              )
-            }
+            // A pencil once something is chosen, not "Add applications": the
+            // drawer opens with the current picks selected, so it edits the set
+            // rather than appending to it. `PickerSlot` owns how that pencil
+            // looks, so every filled slot offers editing the same way.
+            {...(chosen.length === 0
+              ? {
+                  action: (
+                    <Button variant="secondary" startIcon={<AddIcon />} onClick={() => setPickerOpen(true)}>
+                      Add applications
+                    </Button>
+                  ),
+                }
+              : { onEdit: () => setPickerOpen(true), editLabel: 'Edit applications' })}
           />
         </div>
       </div>
