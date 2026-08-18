@@ -34,7 +34,19 @@ import { EmergencyOwnersPicker } from '@/components/product/emergency/EmergencyA
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 
 type StepDef = {
+  /** Short name, for the progress rail. */
   label: string;
+  /**
+   * The step's one heading, in five or six words.
+   *
+   * It replaced a stack of three — "Step 1 of 6", the short label, then a
+   * description — which spent the top of every step restating what the rail beside
+   * it already showed. Written as an instruction rather than a noun so it does the
+   * description's job too: "Assignments" names a section, "Choose what a session
+   * grants" tells the reader what is being asked of them.
+   */
+  heading: string;
+  /** The same line, one rung quieter, under the label in the rail. */
   description: string;
   /**
    * The name `eaBlockingSteps` gives this step's requirement, for the steps that
@@ -61,6 +73,7 @@ type StepDef = {
 const STEPS: StepDef[] = [
   {
     label: 'Basic details',
+    heading: 'Name and describe this access',
     description: 'What this access is called, and what it is for',
     blocker: 'basic details',
     // No skip: every editor after this one writes against a profile id, so there
@@ -68,24 +81,28 @@ const STEPS: StepDef[] = [
   },
   {
     label: 'Assignments',
+    heading: 'Choose what a session grants',
     description: 'What a requester is handed for the length of a session',
     blocker: 'assignments',
     skipLabel: 'Skip step',
   },
   {
     label: 'Eligibility criteria',
+    heading: 'Decide who can request it',
     description: 'Who is allowed to ask for it',
     blocker: 'eligibility criteria',
     skipLabel: 'Skip step',
   },
   {
     label: 'Owners',
+    heading: 'Choose who answers at review',
     description: 'Who answers for it at review',
     filled: (ea) => getEAOwners(ea.id).length + getEAGovernanceTeams(ea.id).length > 0,
     skipLabel: 'Skip step',
   },
   {
     label: 'Limits and timing',
+    heading: 'Set how long and how often',
     description: 'How long a session lasts, how often, and when',
     // Always satisfied: the defaults are real, working values rather than empty
     // fields, so this step can be passed but never left incomplete.
@@ -94,6 +111,7 @@ const STEPS: StepDef[] = [
   },
   {
     label: 'Preview',
+    heading: 'Check it, then switch it on',
     description: 'Check it, then switch it on',
     // No `filled`: the finish line is not a task, so it never marks itself done.
   },
@@ -310,14 +328,14 @@ export default function EmergencyAccessV2Wizard() {
       <div className="grid min-h-0 flex-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex min-h-0 min-w-0 flex-col">
           <div className="shrink-0">
-            <h1 className="mb-5 text-h2 text-text-primary">New emergency access</h1>
-
+            {/* No page title: the breadcrumb already names this screen, and the
+                step heading below is the wizard's real subject — the question being
+                asked right now. Two titles stacked made the constant one loudest. */}
+            {/* One heading. The count went because the rail numbers the steps and
+                marks the current one, and the description went because the heading
+                is now written to say the same thing. */}
             <div className="mb-5">
-              <p className="text-body-sm-strong text-brand">
-                Step {step + 1} of {STEPS.length}
-              </p>
-              <h2 className="mt-1 text-h4 text-text-primary">{STEPS[step].label}</h2>
-              <p className="mt-1 text-body-sm text-text-secondary">{STEPS[step].description}</p>
+              <h2 className="text-h4 text-text-primary">{STEPS[step].heading}</h2>
             </div>
           </div>
 
@@ -326,7 +344,7 @@ export default function EmergencyAccessV2Wizard() {
               than an arbitrary minimum. */}
           <div className="ds-scroll min-h-0 flex-1 overflow-y-auto pr-0.5">{stepBody()}</div>
 
-          <div className="mt-6 flex shrink-0 flex-wrap items-center gap-3 border-t border-border pt-5">
+          <div className="mt-6 flex shrink-0 flex-wrap items-center gap-3 pt-5">
             {/* One leave-without-finishing button, not two. Before step 1 commits
                 there is nothing saved, so leaving is a cancel; after it, the draft
                 exists whatever the button says — and offering both "Cancel" and
@@ -421,23 +439,9 @@ export default function EmergencyAccessV2Wizard() {
           <div className="ds-scroll h-full overflow-y-auto rounded-xl border border-border bg-subtle p-5">
             <StepTracker title="Your progress" steps={railSteps} current={step} onStepClick={goTo} />
 
-            {/* Under the rail, not above it: the asterisks say which steps are
-                required, and this says how many of them are answered. Reading the
-                list first and the tally second is the order the reader needs. */}
-            {id && (
-              <div className="mt-6 border-t border-border pt-4">
-                <SetupProgress
-                  done={EA_REQUIRED_STEPS - blocking.length}
-                  total={EA_REQUIRED_STEPS}
-                  align="start"
-                />
-                <p className="mt-2 text-caption text-text-secondary">
-                  {blocking.length === 0
-                    ? 'Everything required is in place — this can be switched on.'
-                    : 'Skipping is fine. Anything still marked * has to be filled in before this can be switched on.'}
-                </p>
-              </div>
-            )}
+            {/* No tally under the rail. The asterisks in the list already mark
+                which steps are required, and the Preview step names whatever is
+                still missing before it will let this be switched on. */}
           </div>
         </aside>
       </div>

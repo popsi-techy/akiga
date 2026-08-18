@@ -168,14 +168,10 @@ export function EmergencyAssignmentsPicker({
         );
       })}
 
-      {/* Neither slot is required on its own — the gate asks for at least one of
-          the two, which is what `eaBlockingSteps` checks. Saying so here saves the
-          reader filling both to find out. */}
-      <p className="text-caption text-text-tertiary">
-        Either one is enough to switch this access on. Most profiles grant entitlements; reach for a
-        technical role when a whole bundle is needed at once.
-      </p>
-
+      {/* Neither slot is required on its own — `eaBlockingSteps` asks for at least
+          one of the two. That used to be spelled out here in a footnote; the rule
+          still lives in `data/emergency-access`, and the preview step names whatever
+          is actually still missing, so nothing depends on this being restated. */}
       <AssignmentDrawers open={open} onClose={() => setOpen(null)} assignments={assignments} patch={patch} />
     </div>
   );
