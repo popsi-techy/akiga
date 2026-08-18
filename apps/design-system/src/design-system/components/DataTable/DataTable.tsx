@@ -30,7 +30,26 @@ export interface Column<Row> {
   header: string;
   sortable?: boolean;
   align?: 'left' | 'right' | 'center';
+  /**
+   * Column width, applied to the header **and** the body cell.
+   *
+   * The table lays out `fixed`, so this sets a column's share of the row rather
+   * than a minimum it might exceed. Columns without a width split what is left
+   * equally — which is why a table of six columns where one carries a name and
+   * another carries a status chip should say so: equal columns are never broken,
+   * only plain.
+   */
   width?: string | number;
+  /**
+   * Let this cell wrap onto more lines instead of truncating.
+   *
+   * The default is right for a list: every row is one height, and a long value
+   * ellipsizes with the full text on hover. It is wrong twice over for richer
+   * content — `overflow: hidden` also shaves anything that paints outside its own
+   * box, such as a focus ring or an avatar's ring — so a cell holding those opts
+   * out. Same trade, and the same name, as `InfoRow`'s `valueWrap`.
+   */
+  wrap?: boolean;
   /** Custom cell renderer. */
   render?: (row: Row) => React.ReactNode;
   /** Value used for sorting/default display when no render is provided. */
@@ -38,6 +57,27 @@ export interface Column<Row> {
 }
 
 export interface DataTableProps<Row extends { id: string }> {
+  /**
+   * How columns are sized. **Prefer `'fixed'` for any new list.**
+   *
+   * `'auto'` (the default, for compatibility) sizes columns to their content. It
+   * reads well until a value is long, and then it fails two ways at once: a cell's
+   * minimum width is its longest word, so one long string widens the table past its
+   * container and the trailing columns scroll off — and truncation is impossible,
+   * because adding `nowrap` under auto layout makes the minimum the *whole string*
+   * and the overflow larger. Measured on the reports list: 82px of overflow before,
+   * 302px with nowrap alone.
+   *
+   * `'fixed'` ends both. Columns take the `width` they declare and share what is
+   * left equally, cells truncate to one line with the full text on hover, and every
+   * row is the same height (that same list went 75px → 55px rows, 0 overflow).
+   *
+   * The cost is that it stops guessing: a table that does not say which column
+   * carries the name will give it the same share as its status column. That is why
+   * this is not yet the default — twenty-five existing tables would need widths
+   * declared before it could be flipped safely.
+   */
+  layout?: 'auto' | 'fixed';
   columns: Column<Row>[];
   rows: Row[];
   selectable?: boolean;
@@ -71,6 +111,7 @@ export function DataTable<Row extends { id: string }>({
   rows,
   selectable = false,
   selectionMode = 'multiple',
+  layout = 'auto',
   loading = false,
   emptyTitle = 'Nothing here yet',
   emptyMessage = 'When there is data to show, it will appear in this table.',
@@ -170,6 +211,20 @@ export function DataTable<Row extends { id: string }>({
     color: 'var(--ds-color-text-primary)',
     borderBottom: '1px solid var(--ds-color-border-default)',
   };
+  /**
+   * One line, ellipsized — so every row is the same height whatever is in it.
+   *
+   * Headers were already `nowrap` while body cells wrapped freely, which is what
+   * produced 75px rows under a 46px header band. A list is scanned vertically, and
+   * ragged row heights are what make a long one hard to read.
+   *
+   * Only under `layout="fixed"`. Truncating under auto layout makes the overflow
+   * worse rather than better — see the `layout` prop.
+   */
+  const truncateSx =
+    layout === 'fixed'
+      ? { whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' }
+      : {};
 
   const rangeStart = rows.length === 0 ? 0 : page * rowsPerPage + 1;
   const rangeEnd = Math.min((page + 1) * rowsPerPage, rows.length);
@@ -183,7 +238,11 @@ export function DataTable<Row extends { id: string }>({
       }`}
     >
       <TableContainer sx={fillHeight ? { flex: 1, minHeight: 0, overflowY: 'auto' } : undefined}>
-        <Table stickyHeader={fillHeight} size="small" sx={{ '& td, & th': { paddingY: '10px' } }}>
+        <Table
+          stickyHeader={fillHeight}
+          size="small"
+          sx={{ tableLayout: layout, '& td, & th': { paddingY: '10px' } }}
+        >
           <TableHead>
             <TableRow>
               {selectable && (
@@ -243,7 +302,7 @@ export function DataTable<Row extends { id: string }>({
                     </TableCell>
                   )}
                   {columns.map((col) => (
-                    <TableCell key={col.id} sx={bodyCellSx}>
+                    <TableCell key={col.id} sx={{ ...bodyCellSx, width: col.width }}>
                       <Skeleton variant="text" width={col.width ? undefined : '70%'} />
                     </TableCell>
                   ))}
@@ -296,7 +355,15 @@ export function DataTable<Row extends { id: string }>({
                       </TableCell>
                     )}
                     {columns.map((col) => (
-                      <TableCell key={col.id} align={col.align ?? 'left'} sx={bodyCellSx}>
+                      <TableCell
+                        key={col.id}
+                        align={col.align ?? 'left'}
+                        sx={{ ...bodyCellSx, width: col.width, ...(col.wrap ? {} : truncateSx) }}
+                        // The full text on hover, so truncation hides nothing the
+                        // reader cannot get back. Only for plain values — a custom
+                        // render is a tree, and stringifying it would produce noise.
+                        title={!col.render && col.value ? String(col.value(row)) : undefined}
+                      >
                         {col.render ? col.render(row) : getValue(row, col)}
                       </TableCell>
                     ))}

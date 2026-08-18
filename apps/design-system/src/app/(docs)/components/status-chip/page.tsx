@@ -1,6 +1,9 @@
 'use client';
 
 import { PageHeader, Section, Example, PropsTable, DoDont, Code } from '@/components/docs/primitives';
+import PersonOutline from '@mui/icons-material/PersonOutline';
+import BadgeOutlined from '@mui/icons-material/BadgeOutlined';
+import SmartToyOutlined from '@mui/icons-material/SmartToyOutlined';
 import { StatusChip } from '@ds/components';
 
 export default function StatusChipDocs() {
@@ -49,6 +52,25 @@ export default function StatusChipDocs() {
         </p>
       </Section>
 
+      <Section
+        title="An icon instead of the dot"
+        description="Pass `icon` for a chip that labels what a thing IS rather than what state it is in. A dot is a state light — it says “this is currently true” and its colour carries the meaning — so a dot in front of a classification implies a liveness it does not have. The icon says the category outright and, at chip size, is read before the word beside it, which is what matters in a column where every row carries one. It supersedes the dot rather than joining it: two leading marks make the gap before the label stop being predictable down a column."
+      >
+        <Example label="classification, not state">
+          <StatusChip intent="info" label="Workforce" icon={<PersonOutline />} />
+          <StatusChip intent="caution" label="External" icon={<BadgeOutlined />} />
+          <StatusChip intent="info" label="Service account" icon={<SmartToyOutlined />} />
+        </Example>
+        <p className="mt-3 max-w-2xl text-body-sm text-text-secondary">
+          Pass a plain outlined MUI icon with no <code>sx</code> — the chip sizes it to 13px and gives it
+          the intent colour. The icon does the identifying; the tint is for making one value findable
+          without reading, so reserve it for the value that genuinely warrants a second look. Never{' '}
+          <code>danger</code> on a classification — red belongs to a real fault, not to a category. Pick glyphs that
+          are separable at a glance rather than merely different — a reader scanning a column of twenty
+          is matching shapes, not reading them.
+        </p>
+      </Section>
+
       <Section title="Emphasis">
         <Example label="subtle (default) · solid">
           <StatusChip intent="success" label="Active" />
@@ -62,6 +84,7 @@ export default function StatusChipDocs() {
           rows={[
             { name: 'intent', type: "'info' | 'success' | 'warning' | 'caution' | 'danger' | 'neutral'", default: "'neutral'", description: 'Semantic role → color mapping. caution is the orange step between warning and danger.' },
             { name: 'label', type: 'string', description: 'Text shown in the chip.' },
+            { name: 'icon', type: 'ReactNode', default: '—', description: 'A leading icon in place of the dot, for a chip that labels what a thing IS rather than its state. Pass a plain outlined MUI icon; the chip sizes it to 13px and applies the intent colour. Supersedes `dot`.' },
             { name: 'dot', type: 'boolean', default: 'true', description: 'Leading status dot; false for risk/severity.' },
             { name: 'emphasis', type: "'subtle' | 'solid'", default: "'subtle'", description: 'Tinted (default) or solid fill.' },
           ]}
@@ -88,7 +111,10 @@ export default function StatusChipDocs() {
 
       <Section title="Usage">
         <div className="rounded-lg border border-border bg-sunken p-4 font-mono text-caption leading-6 text-text-primary">
-          <div>{`import { StatusChip } from '@ds/components';`}</div>
+          <div>{`import PersonOutline from '@mui/icons-material/PersonOutline';
+import BadgeOutlined from '@mui/icons-material/BadgeOutlined';
+import SmartToyOutlined from '@mui/icons-material/SmartToyOutlined';
+import { StatusChip } from '@ds/components';`}</div>
           <div>{`<StatusChip intent="success" label="Active" />`}</div>
           <div>{`<StatusChip intent="danger" dot={false} label="Critical (94)" />`}</div>
         </div>

@@ -111,7 +111,7 @@ export function UserDetailsDrawer({ open, onClose, review }: { open: boolean; on
                 value={
                   review.managerName ? (
                     <span className="inline-flex items-center gap-2">
-                      <Avatar name={review.managerName} size="sm" />
+                      <Avatar name={review.managerName} size="sm" kind="person" />
                       <span>{review.managerName}</span>
                       <InfoOutlined sx={{ fontSize: 15, color: 'var(--ds-color-status-info-solid)' }} titleAccess="Manager details" />
                     </span>

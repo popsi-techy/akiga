@@ -59,7 +59,7 @@ export function AccountDetailsBody({
           valueWrap
           value={
             <span className="flex min-w-0 items-center gap-2">
-              <Avatar name={account.accountName} size="xs" shape="circle" />
+              <Avatar name={account.accountName} size="xs" kind="person" />
               <span className="min-w-0 truncate">{account.accountName}</span>
             </span>
           }
@@ -89,7 +89,7 @@ export function AccountDetailsBody({
               </span>
             ) : (
               <span className="flex min-w-0 items-center gap-2">
-                <Avatar name={account.identityName} size="xs" shape="circle" />
+                <Avatar name={account.identityName} size="xs" kind="person" />
                 <span className="min-w-0 truncate">{account.identityName}</span>
                 {identity && <IdentityTip identity={identity} />}
               </span>

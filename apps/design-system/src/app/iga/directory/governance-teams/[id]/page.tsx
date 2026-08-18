@@ -59,7 +59,7 @@ export default function GovernanceTeamDetailPage() {
         </div>
       )}
       {tab === 'reviewers' && (
-        <EntityOwnersTab entityType="governance-team" entityId={team.id} seedOwnerIds={team.reviewerIds} label="Reviewer" emptyHint="Add User Identities as reviewers for this governance team." />
+        <EntityOwnersTab entityType="governance-team" entityId={team.id} seedOwnerIds={team.reviewerIds} label="Reviewer" emptyHint="Add people from the workforce as reviewers for this governance team." />
       )}
       {tab === 'applications' && (
         <RelationTable

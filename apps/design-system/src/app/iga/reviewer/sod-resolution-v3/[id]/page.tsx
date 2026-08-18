@@ -1340,7 +1340,7 @@ function AccessDetailsCard({ access }: { access: SodAccess }) {
           name={access.name}
           initials={access.name.trim().charAt(0).toUpperCase()}
           size="md"
-          shape="soft"
+         
         />
         <span className="min-w-0">
           <span className="block truncate text-h5 leading-tight text-text-primary">
@@ -1794,7 +1794,7 @@ function MainUserCard({
       padding="none"
     >
       <div className="flex items-center gap-3 py-3">
-        <Avatar name={review.userName} size="md" shape="circle" />
+        <Avatar name={review.userName} size="md" kind="person" />
         <div className="min-w-0 flex-1">
           <div className="truncate text-body-strong text-text-primary">{review.userName}</div>
           <div className="truncate text-caption text-text-secondary">{review.userEmail}</div>
@@ -1878,7 +1878,7 @@ function MainReviewerCard({
       >
         {name ? (
           <div className="flex items-center gap-3 py-3">
-            <Avatar name={name} size="md" shape="circle" />
+            <Avatar name={name} size="md" kind="person" />
             <div className="min-w-0 flex-1">
               <div className="truncate text-body-strong text-text-primary">{name}</div>
               <div className="truncate text-caption text-text-secondary">{assigned?.email ?? '—'}</div>

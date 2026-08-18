@@ -200,7 +200,7 @@ export default function ProductTopbar() {
           onClick={(e) => setAcctAnchor(e.currentTarget)}
           className={['grid place-items-center rounded-full transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle', acctAnchor ? 'ring-2 ring-brand-subtle' : ''].join(' ')}
         >
-          <Avatar name={ACCOUNT.name} initials={ACCOUNT.name.trim().charAt(0).toUpperCase()} size="sm" />
+          <Avatar name={ACCOUNT.name} initials={ACCOUNT.name.trim().charAt(0).toUpperCase()} size="sm" kind="person" />
         </button>
         <Menu
           anchorEl={acctAnchor}
@@ -213,7 +213,7 @@ export default function ProductTopbar() {
         >
           {/* identity header */}
           <div className="flex items-center gap-2.5 px-3 pb-2.5 pt-1.5">
-            <Avatar name={ACCOUNT.name} initials={ACCOUNT.name.trim().charAt(0).toUpperCase()} size="md" />
+            <Avatar name={ACCOUNT.name} initials={ACCOUNT.name.trim().charAt(0).toUpperCase()} size="md" kind="person" />
             <div className="min-w-0">
               <div className="truncate text-body-sm-strong text-text-primary">{ACCOUNT.name}</div>
               <div className="truncate text-caption text-text-secondary">{ACCOUNT.email}</div>

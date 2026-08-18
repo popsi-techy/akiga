@@ -21,7 +21,7 @@ import {
 const TABS: TabItem[] = [
   { value: 'overview', label: 'Overview' },
   { value: 'owners', label: 'Assigned Owners' },
-  { value: 'members', label: 'User Identities' },
+  { value: 'members', label: 'Workforce' },
   { value: 'entitlements', label: 'Entitlements' },
 ];
 
@@ -50,7 +50,7 @@ export default function TechnicalRoleDetailPage() {
             <InfoRowGroup>
               <InfoRow icon={infoIcon.risk} label="Risk Score" value={<RiskScoreChip score={role.risk} />} />
               <InfoRow icon={infoIcon.entitlement} label="Entitlements" value={entitlements.length} />
-              <InfoRow icon={infoIcon.people} label="Assigned User Identities" value={members.length} />
+              <InfoRow icon={infoIcon.people} label="Assigned people" value={members.length} />
               <InfoRow icon={infoIcon.owner} label="Owners" value={role.ownerIds.length} />
             </InfoRowGroup>
           </Card>

@@ -38,7 +38,7 @@ function IdentityCard({ identity }: { identity: SeedUserIdentity }) {
   return (
     <div className="w-[288px] text-left">
       <div className="flex items-center gap-2.5 px-3.5 pb-3 pt-3.5">
-        <Avatar name={identity.name} size="md" shape="circle" />
+        <Avatar name={identity.name} size="md" kind="person" />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-h5 leading-tight text-text-primary">{identity.name}</span>
           <span className="block truncate text-caption text-text-tertiary">{identity.email}</span>

@@ -8,8 +8,10 @@
     ]},
     { "group": "resources", "label": "Resources", "items": [
       { "id": "applications", "label": "Applications", "route": "/iga/directory/applications", "icon": "apps", "personas": ["application-owner", "auditor", "administrator"] },
-      { "id": "identities", "label": "Identities", "icon": "person", "personas": ["manager", "application-owner", "auditor", "administrator"], "children": [
-        { "id": "user-identities", "label": "User Identities", "route": "/iga/directory/user-identities", "icon": "account_box" },
+      { "id": "identities", "label": "Identities", "icon": "people", "personas": ["manager", "application-owner", "auditor", "administrator"], "children": [
+        { "id": "all-identities", "label": "All Identities", "route": "/iga/directory/all-identities", "icon": "insights" },
+        { "id": "user-identities", "label": "Workforce", "route": "/iga/directory/user-identities", "icon": "person" },
+        { "id": "external-identities", "label": "External Identities", "route": "/iga/directory/external-identities", "icon": "badge" },
         { "id": "app-accounts", "label": "App Accounts", "route": "/iga/directory/app-accounts", "icon": "manage_accounts" },
         { "id": "orphan-accounts", "label": "Orphan Accounts", "route": "/iga/orphan-accounts", "icon": "link_off" },
         { "id": "iam-groups", "label": "IAM Groups", "route": "/iga/groups", "icon": "group_work" }
@@ -38,7 +40,7 @@
       { "id": "provisioning-tasks", "label": "Provisioning Tasks", "route": "/iga/provisioning-tasks", "icon": "playlist_add_check", "personas": ["administrator"] }
     ]},
     { "group": "analytics", "label": "Analytics", "items": [
-      { "id": "governance-explorer", "label": "Governance Explorer", "route": "/iga/governance-explorer", "icon": "schema", "personas": ["administrator", "auditor"] },
+      { "id": "governance-analytics", "label": "Governance Analytics", "route": "/iga/governance-analytics", "icon": "assessment", "personas": ["administrator", "auditor"] },
       { "id": "reports", "label": "Reports", "route": "/iga/reports", "icon": "assessment", "personas": ["auditor", "administrator"] },
       { "id": "audit-logs", "label": "Audit Logs", "route": "/iga/audit", "icon": "history", "personas": ["auditor", "administrator"] },
 

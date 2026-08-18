@@ -83,7 +83,7 @@ export default function SodResolutionV3ListPage() {
       value: (r) => r.userName,
       render: (r) => (
         <div className="flex items-center gap-3">
-          <Avatar name={r.userName} initials={r.userName.trim().charAt(0).toUpperCase()} size="sm" />
+          <Avatar name={r.userName} initials={r.userName.trim().charAt(0).toUpperCase()} size="sm" kind="person" />
           <div className="min-w-0">
             <div className="truncate text-body-sm-strong text-text-primary">{r.userName}</div>
             <div className="truncate text-caption text-text-secondary">{r.userEmail}</div>

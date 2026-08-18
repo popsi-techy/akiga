@@ -136,3 +136,29 @@ a {
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * Print: a printed or PDF-exported report shows report content only.
+ *
+ * A governance report is an audit artifact that leaves the product — it gets
+ * attached to an email, filed, or handed to an auditor. Navigation chrome, the
+ * configuration panel, per-table search boxes and pagination controls are all
+ * things the reader of a printed copy cannot use, and each one that survives makes
+ * the artifact look like a screenshot of an app rather than a document.
+ *
+ * Anything that is interactive-only carries `ds-print-hide`. Tables also drop
+ * their min-width so every column fits the page instead of being clipped at the
+ * margin, and paginated tables print in full — see the note in ReportTable.
+ */
+@media print {
+  .ds-print-hide {
+    display: none !important;
+  }
+  .ds-print-full table {
+    min-width: 0 !important;
+  }
+  /* Never break a section header away from the table it introduces. */
+  .ds-print-keep {
+    break-inside: avoid;
+  }
+}

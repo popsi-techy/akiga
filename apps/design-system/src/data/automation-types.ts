@@ -217,6 +217,21 @@ export interface ApprovalPolicyRow {
 // =====================================================================
 export type WorkflowStatus = 'draft' | 'active';
 export type WorkflowEventType = 'joiner' | 'mover' | 'leaver';
+/**
+ * The verbs a lifecycle workflow is made of.
+ *
+ * The first nine were enough to *shape* a workflow — filter, branch, wait, assign,
+ * notify. The rest were added with the template library, because a joiner template
+ * that says "create the EntraID account, set the UPN, assign the licence" cannot be
+ * expressed as three Assign Entities blocks without lying about what happens: an
+ * entitlement grant and an account creation are different operations against
+ * different systems, and a leaver workflow that "assigns" a disabled account is
+ * nonsense.
+ *
+ * Each one is a verb an IGA connector actually performs, which is why they are
+ * separate types rather than modes of one "action" block: the canvas has to say
+ * what a step does at a glance, and "Action" says nothing.
+ */
 export type WorkflowBlockType =
   | 'userFilter'
   | 'assignEntities'
@@ -226,7 +241,22 @@ export type WorkflowBlockType =
   | 'delay'
   | 'waitForUser'
   | 'skip'
-  | 'exit';
+  | 'exit'
+  // ---- lifecycle operations (template library) ----
+  /** Create or re-enable an account in a target system. */
+  | 'provisionAccount'
+  /** Write identity attributes, with transformation (UPN, mail domain, title). */
+  | 'setAttributes'
+  /** Assign, downgrade or reclaim a licence. */
+  | 'manageLicense'
+  /** Remove access — the mirror of Assign Entities. */
+  | 'revokeAccess'
+  /** Disable, re-enable, convert or delete an account; revoke sessions and MFA. */
+  | 'accountAction'
+  /** Hand a departing person's mailbox and files to someone who remains. */
+  | 'delegateAccess'
+  /** Start an access certification over what the identity currently holds. */
+  | 'triggerReview';
 
 export interface WorkflowBranch {
   id: string;
@@ -313,4 +343,89 @@ export interface WaitForUserConfig {
   unlimitedRetries: boolean;
   /** Application ids from the directory catalog (IAM connection stand-ins). */
   connectionIds: string[];
+}
+
+// ---- lifecycle operation configs (template library) -------------------
+
+/**
+ * A target system, named rather than picked from the connector registry.
+ *
+ * Templates ship with plausible targets ("Microsoft Entra ID", "Office 365") that
+ * an administrator maps to their own connections when they use one. Storing the
+ * name keeps a template readable in the preview before any connection exists,
+ * which is the point — a preview that says "select a connection" three times has
+ * not previewed anything.
+ */
+export interface TargetSystem {
+  id: string;
+  name: string;
+}
+
+export interface ProvisionAccountConfig {
+  targets: TargetSystem[];
+  /** Create a new account, or re-enable one that already exists (rehire, re-enrol). */
+  mode: 'create' | 'reactivate';
+  /** Keep the previous username, mail and employee id where the record survives. */
+  preserveIdentifiers?: boolean;
+  /** Mailbox, drive and collaboration membership provisioned alongside the account. */
+  services?: string[];
+}
+
+/** One attribute written on the identity, optionally derived from another. */
+export interface AttributeRule {
+  attribute: string;
+  /** A literal, or an expression over source attributes. */
+  value: string;
+  /** Shown as "conditional" on the canvas; the condition itself is authored later. */
+  conditional?: boolean;
+}
+export interface SetAttributesConfig {
+  rules: AttributeRule[];
+}
+
+export interface ManageLicenseConfig {
+  action: 'assign' | 'downgrade' | 'reclaim';
+  /** Licence bundle names, e.g. "Microsoft 365 E3". */
+  licenses: string[];
+  /** Assign only where an attribute or role calls for it. */
+  conditional?: boolean;
+}
+
+export interface RevokeAccessConfig {
+  /** Everything, or only what the previous role granted. */
+  scope: 'all' | 'roleBased' | 'selected';
+  entitlements?: EntitySelection[];
+  technicalRoles?: EntitySelection[];
+  /** Systems the removal reaches. */
+  targets?: TargetSystem[];
+}
+
+export type AccountActionKind =
+  | 'disableSignIn'
+  | 'revokeSessions'
+  | 'blockMfa'
+  | 'convertMailbox'
+  | 'reEnable'
+  | 'archiveData'
+  | 'deleteAccount';
+
+export interface AccountActionConfig {
+  actions: AccountActionKind[];
+  /** Retention before a destructive action runs, in days. */
+  retentionDays?: number;
+}
+
+export interface DelegateAccessConfig {
+  /** Who inherits — resolved at run time rather than named here. */
+  delegateTo: 'manager' | 'successor' | 'namedUser';
+  delegateName?: string;
+  /** Mailbox, OneDrive, or both. */
+  assets: string[];
+}
+
+export interface TriggerReviewConfig {
+  /** What the reviewer is asked to confirm still belongs. */
+  scope: 'previousRole' | 'allAccess';
+  reviewer: 'newManager' | 'previousManager' | 'applicationOwner';
+  dueInDays: number;
 }

@@ -38,7 +38,7 @@ import { IdentityDetailsBody } from './IdentityDetailsBody';
 
 /**
  * The "Assigned Owners" / "Reviewers" tab, shared by every governable Directory
- * entity. Owners are User Identities; assignments persist in the entity-owners
+ * entity. Owners come from the workforce; assignments persist in the entity-owners
  * store (seeded from the entity's initial ownerIds). Modeled on the Emergency
  * Access owners pattern (search + Add drawer with a Selection panel).
  */
@@ -99,7 +99,7 @@ export function EntityOwnersTab({
   );
   const selectedItems = candidates
     .filter((o) => selected.includes(o.id))
-    .map((o) => ({ id: o.id, label: o.name, sublabel: o.email, icon: <Avatar name={o.name} size="sm" /> }));
+    .map((o) => ({ id: o.id, label: o.name, sublabel: o.email, icon: <Avatar name={o.name} size="sm" kind="person" /> }));
 
   const openAdd = () => {
     setSelected([]);
@@ -115,7 +115,7 @@ export function EntityOwnersTab({
 
   const personCell = (o: UserIdentityRow) => (
     <div className="flex items-center gap-3">
-      <Avatar name={o.name} size="sm" />
+      <Avatar name={o.name} size="sm" kind="person" />
       <div className="min-w-0">
         <div className="truncate text-body-sm-strong text-text-primary">{o.name}</div>
         <div className="truncate text-caption text-text-secondary">{o.jobTitle}</div>
@@ -174,7 +174,7 @@ export function EntityOwnersTab({
       value: (o) => o.name,
       render: (o) => (
         <div className="flex items-center gap-3">
-          <Avatar name={o.name} size="sm" />
+          <Avatar name={o.name} size="sm" kind="person" />
           <span className="text-body-sm-strong text-text-primary">{o.name}</span>
         </div>
       ),
@@ -261,7 +261,7 @@ export function EntityOwnersTab({
             <PeekSlot open={peek !== null}>
               {peek && (
                 <PeekPanel
-                  avatar={<Avatar name={peek.name} size="md" shape="circle" />}
+                  avatar={<Avatar name={peek.name} size="md" kind="person" />}
                   title={peek.name}
                   subtitle={`This ${lower}’s identity and access`}
                   onClose={() => setPeek(null)}
@@ -297,7 +297,7 @@ export function EntityOwnersTab({
         open={addOpen}
         onClose={() => setAddOpen(false)}
         title={`Add ${label}s`}
-        subtitle="Owners and reviewers are User Identities."
+        subtitle="Owners and reviewers come from the workforce."
         icon={<PersonAddAltOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
         width={780}
         disablePadding

@@ -146,6 +146,7 @@ export default function DataTableDocs() {
       <Section title="Props">
         <PropsTable
           rows={[
+            { name: 'layout', type: "'auto' | 'fixed'", default: "'auto'", description: 'Column sizing. Prefer `fixed`: it stops the overflow auto layout causes, truncates cells to one line with the full text on hover, and keeps every row the same height. `auto` is the default only for compatibility with tables that have not declared widths.' },
             { name: 'columns', type: 'Column<Row>[]', description: 'Column defs: id, header, sortable, align, width, render, value.' },
             { name: 'rows', type: 'Row[]', description: 'Data (each row needs a unique id).' },
             { name: 'selectable', type: 'boolean', default: 'false', description: 'Row checkboxes + select-all.' },
@@ -172,12 +173,17 @@ export default function DataTableDocs() {
       <Section title="Guidelines">
         <DoDont
           dos={[
+            'Prefer layout="fixed" for a new list, and declare a width on every column. Auto layout lets one long value widen the table past its container and makes truncation impossible.',
+            'Give the identity column the largest share. Under fixed layout a column that does not ask for a width gets the same as the status column beside it.',
+            'Use Column.wrap for a two-line cell or anything that paints outside its box — a chip’s border, an avatar’s ring — which the default clipping would shave.',
             'Provide value() for custom-rendered sortable columns.',
             'Use onSelectionChange to drive bulk actions above the table.',
             'Keep column sets stable across the product.',
             'Always pass meaningful empty-state copy.',
           ]}
           donts={[
+            'Don’t add nowrap to a cell under auto layout hoping for an ellipsis. The minimum width becomes the whole string and the overflow gets worse, not better.',
+            'Don’t let a cell restate its own header. “Department = Engineering” under a column headed Scope spends half the column on the word the header already said — and that half is what survives truncation.',
             'Don’t build one-off tables — extend this via columns.',
             'Don’t render 10k rows unpaginated.',
             'Don’t put primary actions inside every row — use the ⋮ menu.',

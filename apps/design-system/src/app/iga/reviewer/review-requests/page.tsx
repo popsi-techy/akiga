@@ -117,7 +117,7 @@ export default function ReviewRequestsPage() {
       value: (r) => r.requestedForName,
       render: (r) => (
         <div className="flex items-center gap-2.5">
-          <Avatar name={r.requestedForName} initials={r.requestedForName.charAt(0)} size="sm" />
+          <Avatar name={r.requestedForName} initials={r.requestedForName.charAt(0)} size="sm" kind="person" />
           <span className="truncate text-text-primary">{r.requestedForName}</span>
         </div>
       ),
@@ -129,7 +129,7 @@ export default function ReviewRequestsPage() {
       value: (r) => r.requestedByName,
       render: (r) => (
         <div className="flex items-center gap-2.5">
-          <Avatar name={r.requestedByName} initials={r.requestedByName.charAt(0)} size="sm" />
+          <Avatar name={r.requestedByName} initials={r.requestedByName.charAt(0)} size="sm" kind="person" />
           <span className="truncate text-text-primary">{r.requestedByName}</span>
         </div>
       ),

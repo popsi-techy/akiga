@@ -38,7 +38,7 @@ export default function UserIdentityDetailPage() {
   const [tab, setTab] = React.useState('overview');
   const detail = getUserIdentityDetail(id);
 
-  if (!detail) return <DetailNotFound title="User identity not found" backHref="/iga/directory/user-identities" backLabel="Back to User Identities" />;
+  if (!detail) return <DetailNotFound title="User identity not found" backHref="/iga/directory/user-identities" backLabel="Back to Workforce" />;
   const { identity, accounts, technicalRoles, businessRoles } = detail;
   const status = STATUS[identity.status];
 

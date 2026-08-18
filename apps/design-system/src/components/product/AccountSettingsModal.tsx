@@ -134,7 +134,7 @@ function ProfileSection({
 
       {/* identity banner */}
       <div className="mb-6 flex items-center gap-3 rounded-xl border border-border bg-subtle px-4 py-3">
-        <Avatar name={user.name} initials={user.name.trim().charAt(0).toUpperCase()} size="md" />
+        <Avatar name={user.name} initials={user.name.trim().charAt(0).toUpperCase()} size="md" kind="person" />
         <div className="min-w-0">
           <div className="truncate text-h5 text-text-primary">{user.name}</div>
           <div className="truncate text-body-sm text-text-secondary">

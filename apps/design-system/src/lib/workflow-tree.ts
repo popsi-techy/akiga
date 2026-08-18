@@ -14,13 +14,29 @@ import type {
   NotificationConfig,
   DelayConfig,
   WaitForUserConfig,
+  ProvisionAccountConfig,
+  SetAttributesConfig,
+  ManageLicenseConfig,
+  RevokeAccessConfig,
+  AccountActionConfig,
+  DelegateAccessConfig,
+  TriggerReviewConfig,
 } from '@/data/automation-types';
 import { emptyConditionGroup, isConditionGroupValid, nid } from '@/lib/policy-tree';
 import { defaultNotificationConfig, stripHtml } from '@/data/notification-templates';
 
 export type WfPathStep = { nodeId: string; branchId: string };
 export type WfInsertLoc = { path: WfPathStep[]; index: number };
-export type WfSection = 'Filters' | 'Tasks' | 'Branching' | 'Flow Control';
+/**
+ * Palette sections.
+ *
+ * "Lifecycle" is separate from "Tasks" on purpose: a Task is something the
+ * workflow does inside the IGA model (grant an entitlement, send a mail), where a
+ * Lifecycle operation reaches into a connected system and changes an account's
+ * existence or state. Mixing them put "Delete account" next to "Notification" in
+ * one undifferentiated list of nine.
+ */
+export type WfSection = 'Filters' | 'Tasks' | 'Lifecycle' | 'Branching' | 'Flow Control';
 
 export const BLOCK_META: Record<
   WorkflowBlockType,
@@ -35,6 +51,14 @@ export const BLOCK_META: Record<
   waitForUser: { title: 'Wait for user', icon: 'person_search', section: 'Flow Control', branching: false },
   skip: { title: 'Skip', icon: 'skip_next', section: 'Flow Control', branching: false },
   exit: { title: 'Exit', icon: 'logout', section: 'Flow Control', branching: false },
+  // ---- lifecycle operations ----
+  provisionAccount: { title: 'Provision Account', icon: 'badge', section: 'Lifecycle', branching: false },
+  setAttributes: { title: 'Set Attributes', icon: 'tune', section: 'Lifecycle', branching: false },
+  manageLicense: { title: 'Manage Licence', icon: 'license', section: 'Lifecycle', branching: false },
+  revokeAccess: { title: 'Revoke Access', icon: 'block', section: 'Lifecycle', branching: false },
+  accountAction: { title: 'Account Action', icon: 'shield', section: 'Lifecycle', branching: false },
+  delegateAccess: { title: 'Delegate Access', icon: 'handoff', section: 'Lifecycle', branching: false },
+  triggerReview: { title: 'Trigger Review', icon: 'review', section: 'Lifecycle', branching: false },
 };
 
 // 'skip' is hidden from the palette for now (still a valid WorkflowBlockType —
@@ -43,6 +67,13 @@ export const BLOCK_PALETTE: WorkflowBlockType[] = [
   'userFilter',
   'assignEntities',
   'notification',
+  'provisionAccount',
+  'setAttributes',
+  'manageLicense',
+  'revokeAccess',
+  'accountAction',
+  'delegateAccess',
+  'triggerReview',
   'multisplitBranch',
   'wfConditionalBranch',
   'delay',
@@ -50,11 +81,58 @@ export const BLOCK_PALETTE: WorkflowBlockType[] = [
   'exit',
 ];
 
-/** Blocks offered in the components palette for a lifecycle event. */
+/**
+ * Blocks offered in the palette for a lifecycle event.
+ *
+ * Scoped by what the event can sensibly do, not by what has been built: a joiner
+ * never revokes access, and a leaver never provisions an account. Shaping the
+ * palette this way is the cheapest correctness control in the builder — an
+ * operation that cannot appear cannot be mis-assembled.
+ *
+ * Flow control and branching are available to all three, because every event
+ * needs to wait, split and stop.
+ */
+const COMMON: WorkflowBlockType[] = [
+  'userFilter',
+  'notification',
+  'multisplitBranch',
+  'wfConditionalBranch',
+  'delay',
+  'waitForUser',
+  'exit',
+];
+
 export function paletteBlocksForEvent(eventType?: WorkflowEventType | null): WorkflowBlockType[] {
-  if (eventType === 'leaver') return ['notification'];
-  if (eventType === 'mover') return ['userFilter', 'assignEntities'];
+  if (eventType === 'joiner') {
+    return orderLikePalette([...COMMON, 'provisionAccount', 'setAttributes', 'assignEntities', 'manageLicense']);
+  }
+  if (eventType === 'mover') {
+    return orderLikePalette([
+      ...COMMON,
+      'setAttributes',
+      'assignEntities',
+      'revokeAccess',
+      'manageLicense',
+      'triggerReview',
+    ]);
+  }
+  if (eventType === 'leaver') {
+    return orderLikePalette([
+      ...COMMON,
+      'accountAction',
+      'revokeAccess',
+      'manageLicense',
+      'delegateAccess',
+      'setAttributes',
+    ]);
+  }
   return BLOCK_PALETTE;
+}
+
+/** Keeps every event's palette in one canonical order, so blocks do not move about. */
+function orderLikePalette(types: WorkflowBlockType[]): WorkflowBlockType[] {
+  const wanted = new Set(types);
+  return BLOCK_PALETTE.filter((t) => wanted.has(t));
 }
 
 export function defaultAssignEntitiesConfig(): AssignEntitiesConfig {
@@ -75,6 +153,23 @@ export function defaultConfigFor(type: WorkflowBlockType): Record<string, unknow
       unlimitedRetries: false,
       connectionIds: [],
     } as unknown as Record<string, unknown>;
+  }
+  if (type === 'provisionAccount') {
+    return { targets: [], mode: 'create', preserveIdentifiers: false, services: [] } as unknown as Record<string, unknown>;
+  }
+  if (type === 'setAttributes') return { rules: [] } as unknown as Record<string, unknown>;
+  if (type === 'manageLicense') {
+    return { action: 'assign', licenses: [], conditional: false } as unknown as Record<string, unknown>;
+  }
+  if (type === 'revokeAccess') {
+    return { scope: 'all', entitlements: [], technicalRoles: [], targets: [] } as unknown as Record<string, unknown>;
+  }
+  if (type === 'accountAction') return { actions: [] } as unknown as Record<string, unknown>;
+  if (type === 'delegateAccess') {
+    return { delegateTo: 'manager', assets: [] } as unknown as Record<string, unknown>;
+  }
+  if (type === 'triggerReview') {
+    return { scope: 'previousRole', reviewer: 'newManager', dueInDays: 14 } as unknown as Record<string, unknown>;
   }
   return undefined;
 }
@@ -103,6 +198,44 @@ export function isBlockComplete(node: WorkflowNode): boolean {
     case 'skip':
     case 'exit':
       return true;
+    // ---- lifecycle operations ----
+    // Each is complete when it names its OBJECT: a system to act on, an attribute
+    // to write, a licence to move. A template ships some of these deliberately
+    // unfinished — the ones only the administrator can answer — and the gallery
+    // counts them so the reader sees the work before they commit to it.
+    case 'provisionAccount': {
+      const c = node.config as ProvisionAccountConfig | undefined;
+      return Boolean(c && c.targets.length > 0);
+    }
+    case 'setAttributes': {
+      const c = node.config as SetAttributesConfig | undefined;
+      return Boolean(c && c.rules.length > 0 && c.rules.every((r) => r.attribute && r.value));
+    }
+    case 'manageLicense': {
+      const c = node.config as ManageLicenseConfig | undefined;
+      return Boolean(c && c.licenses.length > 0);
+    }
+    case 'revokeAccess': {
+      const c = node.config as RevokeAccessConfig | undefined;
+      if (!c) return false;
+      // 'all' and 'roleBased' are self-describing; only an explicit selection
+      // needs something selected.
+      if (c.scope !== 'selected') return true;
+      return (c.entitlements?.length ?? 0) + (c.technicalRoles?.length ?? 0) > 0;
+    }
+    case 'accountAction': {
+      const c = node.config as AccountActionConfig | undefined;
+      return Boolean(c && c.actions.length > 0);
+    }
+    case 'delegateAccess': {
+      const c = node.config as DelegateAccessConfig | undefined;
+      if (!c || c.assets.length === 0) return false;
+      return c.delegateTo !== 'namedUser' || Boolean(c.delegateName);
+    }
+    case 'triggerReview': {
+      const c = node.config as TriggerReviewConfig | undefined;
+      return Boolean(c && c.dueInDays > 0);
+    }
     case 'delay': {
       const c = node.config as DelayConfig | undefined;
       return Boolean(c && c.days + c.hours + c.minutes > 0);

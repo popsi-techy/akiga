@@ -1,23 +1,22 @@
-import SchemaOutlined from '@mui/icons-material/SchemaOutlined';
-import { PlaceholderPage } from '@/components/product/PlaceholderPage';
+'use client';
+
+import { ReportsListView } from '@/components/product/analytics/ReportsListView';
+import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 
 /**
- * The Governance Explorer feature was removed; the nav entry stays so the route
- * keeps its place in the IA and can be rebuilt without re-teaching where it
- * lives. Uses the same PlaceholderPage as the other not-yet-built entries.
+ * Governance Analytics — the reports list.
  *
- * The governance *data* (`@/data/governance*`) deliberately survives the
- * removal — the Applications detail page reads findings, approval hierarchy and
- * owner resolution from it, and none of that was explorer-specific.
+ * The landing page is the report-management surface, never a generic dashboard: a
+ * dashboard here would answer questions nobody asked and bury the one thing the
+ * feature is for, which is producing a specific, downloadable answer about a
+ * specific part of the organisation.
+ *
+ * Renamed from "Governance Explorer", which was a placeholder for a relationship
+ * explorer. The governance *data* (`@/data/governance*`) predates both names and
+ * survives them — the Applications detail page reads findings, approval hierarchy
+ * and owner resolution from it.
  */
-export default function GovernanceExplorerPage() {
-  return (
-    <PlaceholderPage
-      title="Governance Model"
-      subtitle="How organisation, access, controls and responsibility connect."
-      icon={<SchemaOutlined sx={{ fontSize: 26 }} />}
-      emptyTitle="Nothing to explore yet"
-      emptyMessage="Entities, their relationships, and the governance gaps between them will surface here."
-    />
-  );
+export default function GovernanceAnalyticsPage() {
+  useSetBreadcrumbs([{ label: 'Governance Analytics' }]);
+  return <ReportsListView />;
 }

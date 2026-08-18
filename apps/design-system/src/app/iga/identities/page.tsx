@@ -13,7 +13,7 @@ export default function IdentitiesLandingPage() {
   const appAccounts = listAppAccounts();
 
   const cards = [
-    { title: 'User Identities', description: 'The primary representation of every person in the organization.', href: '/iga/directory/user-identities', count: listUserIdentities().length },
+    { title: 'Workforce', description: 'Everyone who holds access, employees and externals alike.', href: '/iga/directory/user-identities', count: listUserIdentities().length },
     { title: 'App Accounts', description: 'Accounts held by users inside connected applications.', href: '/iga/directory/app-accounts', count: appAccounts.length },
     { title: 'Orphan Accounts', description: 'Accounts no longer associated with an active user identity.', href: '/iga/orphan-accounts', count: appAccounts.filter((a) => a.orphan).length },
     { title: 'IAM Groups', description: 'Directory and application groups that grant access.', href: '/iga/groups', count: GROUPS_COUNT_PLACEHOLDER },

@@ -20,6 +20,20 @@ export interface StatusChipProps {
   label: string;
   /** Leading status dot. Set false for risk/severity badges. @default true */
   dot?: boolean;
+  /**
+   * A leading icon **in place of** the dot — for a chip that labels what a thing
+   * *is* rather than what state it is in.
+   *
+   * A dot is a state light: it says "something is currently true" and its colour
+   * carries the meaning. A classification does not change, so a dot in front of it
+   * implies a liveness it does not have. An icon says the category outright, and at
+   * chip size it is read before the word beside it — which is the point in a column
+   * where every row carries one.
+   *
+   * Pass an outlined MUI icon; the chip sizes it to 13px and takes the intent
+   * colour, so callers pass no `sx`. Supersedes `dot` when both are set.
+   */
+  icon?: React.ReactNode;
   /** Emphasis: subtle tinted (default) or solid fill. @default 'subtle' */
   emphasis?: 'subtle' | 'solid';
 }
@@ -28,6 +42,7 @@ export function StatusChip({
   intent = 'neutral',
   label,
   dot = true,
+  icon,
   emphasis = 'subtle',
 }: StatusChipProps) {
   const s = color.status[intent];
@@ -52,11 +67,20 @@ export function StatusChip({
       className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill px-2 py-0.5 text-caption-medium"
       style={style}
     >
-      {dot && (
-        <span
-          className="h-1.5 w-1.5 shrink-0 rounded-pill"
-          style={{ background: emphasis === 'solid' ? s.onSolid : s.solid }}
-        />
+      {/* An icon replaces the dot rather than joining it: two leading marks make
+          the chip read as a mark plus a mark plus a word, and the gap before the
+          label stops being predictable down a column. */}
+      {icon ? (
+        <span className="grid shrink-0 place-items-center [&>svg]:!text-[13px]" aria-hidden>
+          {icon}
+        </span>
+      ) : (
+        dot && (
+          <span
+            className="h-1.5 w-1.5 shrink-0 rounded-pill"
+            style={{ background: emphasis === 'solid' ? s.onSolid : s.solid }}
+          />
+        )
       )}
       {label}
     </span>

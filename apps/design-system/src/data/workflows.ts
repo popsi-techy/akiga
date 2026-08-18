@@ -2,7 +2,13 @@
  * Workflows service — hybrid persistence (localStorage `iga.workflows.v1`).
  * No seed: an empty list is valid. Load runs the legacy migration.
  */
-import type { AutomationWorkflow, WorkflowEvent, WorkflowEventType, WorkflowRow } from './automation-types';
+import type {
+  AutomationWorkflow,
+  WorkflowEvent,
+  WorkflowEventType,
+  WorkflowNode,
+  WorkflowRow,
+} from './automation-types';
 import { migrateSeq } from '@/lib/workflow-tree';
 
 const STORE_KEY = 'iga.workflows.v1';
@@ -58,6 +64,19 @@ function makeId() {
   return `wf-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 }
 
+/** Fresh ids through a cloned tree, branches included. See `createWorkflow`. */
+function remintIds(nodes: WorkflowNode[]): WorkflowNode[] {
+  return nodes.map((n) => ({
+    ...n,
+    id: `wf-${Math.random().toString(36).slice(2, 9)}`,
+    branches: n.branches?.map((b) => ({
+      ...b,
+      id: `br-${Math.random().toString(36).slice(2, 9)}`,
+      seq: remintIds(b.seq),
+    })),
+  }));
+}
+
 export function listWorkflows(): WorkflowRow[] {
   const { workflows } = readStore();
   return Object.values(workflows)
@@ -83,6 +102,13 @@ export function createWorkflow(input: {
   description?: string;
   /** Optional — builders place the lifecycle event from the Events palette. */
   eventType?: WorkflowEventType;
+  /**
+   * A starting tree, from a template. Node ids are re-minted on the way in —
+   * a template is read from module scope and shared by every preview, so storing
+   * its ids would make two workflows created from one template share node
+   * identity, and editing either would corrupt the other.
+   */
+  root?: WorkflowNode[];
 }): AutomationWorkflow {
   const store = readStore();
   const ts = nowIso();
@@ -92,7 +118,7 @@ export function createWorkflow(input: {
     description: input.description?.trim() || '',
     status: 'draft',
     event: input.eventType ? eventFromType(input.eventType) : null,
-    root: [],
+    root: input.root ? remintIds(structuredClone(input.root)) : [],
     createdAt: ts,
     updatedAt: ts,
   };

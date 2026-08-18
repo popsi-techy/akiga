@@ -1,5 +1,6 @@
 export { RiskScoreChip, RiskDot } from './RiskScoreChip';
 export { EntityAvatar, type EntityKind } from './EntityAvatar';
+export { IdentityKindChip } from './IdentityKindChip';
 export { AccountDetailsBody } from './AccountDetailsBody';
 export { AddApplicationDrawer } from './AddApplicationDrawer';
 export { EntityOwnersTab } from './EntityOwnersTab';

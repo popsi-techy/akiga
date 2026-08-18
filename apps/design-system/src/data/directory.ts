@@ -22,6 +22,7 @@ import {
   type SeedUserIdentity,
   type SeedAppAccount,
   type RiskLevel,
+  type IdentityKind,
   type IdentityStatus,
 } from './seed';
 import {
@@ -89,6 +90,12 @@ export interface UserIdentityRow {
   status: IdentityStatus;
   riskScore: number;
   riskLevel: RiskLevel;
+  /** Internal (on the payroll) or external (contractor, vendor, partner, auditor). */
+  kind: IdentityKind;
+  /** External only — see `SeedUserIdentity`. */
+  organization?: string;
+  sponsorId?: string;
+  accessEndsOn?: string;
 }
 export interface AppAccountRow {
   id: string;
@@ -216,8 +223,34 @@ export function resolveEntitlements(ids: string[]): EntitlementRow[] {
 }
 
 // ---- User Identity ---------------------------------------------------
+/**
+ * Every person, internal and external.
+ *
+ * Deliberately the whole population. This is the canonical directory that owners,
+ * reviewers, approvers and reports all resolve against, so narrowing it to
+ * internals would silently change every count and every lookup in the product.
+ * External Identities is a *view* of the same rows, not a separate directory —
+ * which is why both lists carry the kind pill.
+ */
 export function listUserIdentities(): UserIdentityRow[] {
   return userIdentities.map(toUserRow);
+}
+
+/** The external subset — contractors, vendors, partners, auditors. */
+export function listExternalIdentities(): UserIdentityRow[] {
+  return userIdentities.filter((u) => u.kind === 'external').map(toUserRow);
+}
+
+/**
+ * Has an external identity outlived the date its access was meant to end?
+ *
+ * The reason the external list exists. Nothing in an HR feed announces a
+ * contractor leaving, so an expired-but-enabled account is the most common way
+ * standing access outlives its reason — and it is invisible on a list that only
+ * shows status, because the status is still Active.
+ */
+export function accessExpired(row: UserIdentityRow, today = '2026-08-18'): boolean {
+  return Boolean(row.accessEndsOn && row.accessEndsOn < today && row.status === 'active');
 }
 export function getUserIdentityDetail(id: string) {
   const identity = identityById.get(id);

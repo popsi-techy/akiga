@@ -38,7 +38,7 @@ export function IdentityDetailsBody({
         valueWrap
         value={
           <span className="flex min-w-0 items-center gap-2">
-            <Avatar name={identity.name} size="xs" shape="circle" />
+            <Avatar name={identity.name} size="xs" kind="person" />
             <span className="min-w-0 truncate">{identity.name}</span>
           </span>
         }

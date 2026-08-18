@@ -37,7 +37,7 @@ export default function InfoRowDocs() {
               padding="none"
             >
               <div className="flex items-center gap-3 border-b border-border py-3">
-                <Avatar name="Henry Adams" size="md" shape="circle" />
+                <Avatar name="Henry Adams" size="md" kind="person" />
                 <div className="min-w-0">
                   <div className="text-body-strong text-text-primary">Henry Adams</div>
                   <div className="truncate text-caption text-text-secondary">

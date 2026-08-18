@@ -183,7 +183,7 @@ function RequestedForSection({ request }: { request: AccessRequest }) {
     <Card title="Requested For" icon={<Person />} padding="none">
       <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface">
         <div className="flex items-center gap-3 px-4 py-4">
-          <Avatar name={request.requestedForName} initials={request.requestedForName.charAt(0)} size="md" />
+          <Avatar name={request.requestedForName} initials={request.requestedForName.charAt(0)} size="md" kind="person" />
           <div className="min-w-0 flex-1">
             <div className="text-body-strong text-text-primary">{request.requestedForName}</div>
             <div className="text-body-sm text-text-secondary">{request.requestedForEmail}</div>
@@ -194,7 +194,7 @@ function RequestedForSection({ request }: { request: AccessRequest }) {
         </div>
         <div className="flex flex-wrap items-center gap-2 border-t border-border bg-subtle px-4 py-3 text-body-sm">
           <span className="text-text-secondary">Requested By:</span>
-          <Avatar name={request.requestedByName} initials={request.requestedByName.charAt(0)} size="sm" />
+          <Avatar name={request.requestedByName} initials={request.requestedByName.charAt(0)} size="sm" kind="person" />
           <span className="font-emphasis text-text-primary">{request.requestedByName}</span>
           {request.requestedByTitle && (
             <>

@@ -48,7 +48,7 @@ export function getDashboardData(): DashboardData {
   return {
     kpis: [
       { key: 'applications', label: 'Applications', value: String(orgStats.applications), tone: 'brand' },
-      { key: 'identities', label: 'User Identities', value: String(orgStats.identities), tone: 'info' },
+      { key: 'identities', label: 'Workforce', value: String(orgStats.identities), tone: 'info' },
       { key: 'entitlements', label: 'Entitlements', value: String(orgStats.entitlements), tone: 'success' },
       { key: 'orphans', label: 'Orphan Accounts', value: String(orgStats.orphanAccounts), tone: 'warning' },
     ],

@@ -44,7 +44,7 @@ import {
   type SimNodeState,
 } from '@ds/components';
 import { getWorkflow, updateWorkflow, WORKFLOW_EVENT_META, eventFromType } from '@/data/workflows';
-import type { AutomationWorkflow, WorkflowNode, WorkflowBlockType, WorkflowBranch, WorkflowEvent, WorkflowEventType, AssignEntitiesConfig as AEConfig, UserFilterConfig as UFConfig, MultisplitConfig as MSConfig, NotificationConfig as NConfig, DelayConfig as DlyConfig, WaitForUserConfig as WFUConfig } from '@/data/automation-types';
+import type { AutomationWorkflow, WorkflowNode, WorkflowBlockType, WorkflowBranch, WorkflowEvent, WorkflowEventType, AssignEntitiesConfig as AEConfig, UserFilterConfig as UFConfig, MultisplitConfig as MSConfig, NotificationConfig as NConfig, DelayConfig as DlyConfig, WaitForUserConfig as WFUConfig, ProvisionAccountConfig, SetAttributesConfig, ManageLicenseConfig, RevokeAccessConfig, AccountActionConfig, DelegateAccessConfig, TriggerReviewConfig } from '@/data/automation-types';
 import { BLOCK_META, BLOCK_PALETTE, paletteBlocksForEvent, createBlock, insertBlock, deleteBlock, updateBlock, findBlock, allBlocks, isBlockComplete, defaultConfigFor } from '@/lib/workflow-tree';
 import { countConditionRules, isConditionGroupValid } from '@/lib/policy-tree';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
@@ -55,6 +55,15 @@ import { WfConditionalConfig } from '@/components/product/automation/WfCondition
 import { NotificationConfig } from '@/components/product/automation/NotificationConfig';
 import { DelayConfig } from '@/components/product/automation/DelayConfig';
 import { WaitForUserConfig } from '@/components/product/automation/WaitForUserConfig';
+import {
+  AccountActionConfigPanel,
+  DelegateAccessConfigPanel,
+  ManageLicenseConfigPanel,
+  ProvisionAccountConfigPanel,
+  RevokeAccessConfigPanel,
+  SetAttributesConfigPanel,
+  TriggerReviewConfigPanel,
+} from '@/components/product/automation/LifecycleOpConfig';
 import { EmptyState } from '@/components/product/automation/config-kit';
 import { LaneLabel, ConditionLaneLabel, SplitLaneLabel } from '@/components/product/automation/LaneLabel';
 import { SingleSelectDrawer } from '@/components/product/automation/SingleSelectDrawer';
@@ -1104,6 +1113,16 @@ function WfConfigPanel({
             {node.type === 'wfConditionalBranch' && <WfConditionalConfig node={node} onPatchNode={(patch) => onPatchNode(node.id, patch)} />}
             {node.type === 'delay' && <DelayConfig config={(node.config as unknown as DlyConfig) ?? (defaultConfigFor('delay') as unknown as DlyConfig)} onChange={(cfg) => onConfig(node.id, cfg as unknown as Record<string, unknown>)} />}
             {node.type === 'waitForUser' && <WaitForUserConfig config={(node.config as unknown as WFUConfig) ?? (defaultConfigFor('waitForUser') as unknown as WFUConfig)} onChange={(cfg) => onConfig(node.id, cfg as unknown as Record<string, unknown>)} />}
+            {/* Lifecycle operations. Each reads its own config with the shared
+                default as the fallback, so a node saved before its config existed
+                still opens rather than throwing on undefined. */}
+            {node.type === 'provisionAccount' && <ProvisionAccountConfigPanel config={(node.config as unknown as ProvisionAccountConfig) ?? (defaultConfigFor('provisionAccount') as unknown as ProvisionAccountConfig)} onChange={(cfg) => onConfig(node.id, cfg as unknown as Record<string, unknown>)} />}
+            {node.type === 'setAttributes' && <SetAttributesConfigPanel config={(node.config as unknown as SetAttributesConfig) ?? (defaultConfigFor('setAttributes') as unknown as SetAttributesConfig)} onChange={(cfg) => onConfig(node.id, cfg as unknown as Record<string, unknown>)} />}
+            {node.type === 'manageLicense' && <ManageLicenseConfigPanel config={(node.config as unknown as ManageLicenseConfig) ?? (defaultConfigFor('manageLicense') as unknown as ManageLicenseConfig)} onChange={(cfg) => onConfig(node.id, cfg as unknown as Record<string, unknown>)} />}
+            {node.type === 'revokeAccess' && <RevokeAccessConfigPanel config={(node.config as unknown as RevokeAccessConfig) ?? (defaultConfigFor('revokeAccess') as unknown as RevokeAccessConfig)} onChange={(cfg) => onConfig(node.id, cfg as unknown as Record<string, unknown>)} />}
+            {node.type === 'accountAction' && <AccountActionConfigPanel config={(node.config as unknown as AccountActionConfig) ?? (defaultConfigFor('accountAction') as unknown as AccountActionConfig)} onChange={(cfg) => onConfig(node.id, cfg as unknown as Record<string, unknown>)} />}
+            {node.type === 'delegateAccess' && <DelegateAccessConfigPanel config={(node.config as unknown as DelegateAccessConfig) ?? (defaultConfigFor('delegateAccess') as unknown as DelegateAccessConfig)} onChange={(cfg) => onConfig(node.id, cfg as unknown as Record<string, unknown>)} />}
+            {node.type === 'triggerReview' && <TriggerReviewConfigPanel config={(node.config as unknown as TriggerReviewConfig) ?? (defaultConfigFor('triggerReview') as unknown as TriggerReviewConfig)} onChange={(cfg) => onConfig(node.id, cfg as unknown as Record<string, unknown>)} />}
             {(node.type === 'skip' || node.type === 'exit') && (
               <EmptyState
                 icon={<TaskAltOutlined sx={{ fontSize: 22 }} />}

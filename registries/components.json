@@ -24,19 +24,21 @@
       "source": "apps/design-system/src/design-system/components/Avatar/Avatar.tsx",
       "extends": null,
       "variants": [
-        "soft",
-        "circle",
+        "person",
+        "entity",
         "xs",
         "sm",
         "md",
-        "lg"
+        "lg",
+        "group",
+        "icon"
       ],
       "states": [
         "initials",
         "image"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/avatar/page.tsx",
-      "notes": "soft = rounded-square (radius.avatar 6px) for lists; circle = profile cards with grey outline + 2px surface gap. Letter sizes: xs 12 / sm 16 / md 20 / lg 24. See ADR-0009."
+      "notes": "SHAPE CARRIES MEANING: `kind=\"person\"` is round, `kind=\"entity\"` (default) is a rounded square (radius.avatar 6px). Almost every list here mixes people with things — an owners table, an application, a policy, a governance team all arrive as a letter on a tint — and the shape is what says which before the name is read; it is also the convention readers bring in from Slack, Google and GitHub. The prop asks what the subject IS, not what it should look like: a caller always knows whether it is rendering a person and should not also have to know that people are round. It replaced `shape=\"soft\"|\"circle\"`, which left the mapping to memory and produced an audit log whose actor was round, an owners table where the same people were square, and governance teams that looked like people. The grey outline (ring + 2px surface gap) appears on every person avatar EXCEPT xs — it is what separates a person's tint from the surface behind it, and a screen mixing ringless 32px avatars with ringed 40px ones reads as two components; at 24px the ring is a third of the box's visual radius and reads as a smudge. It paints outside the avatar's own box, so a clipping container shaves it — give that DataTable column `wrap`. Letter sizes: xs 12 / sm 16 / md 20 / lg 24, one character always. See ADR-0009 and the brand-tint contrast waiver. AvatarGroup takes the same `kind` and forwards it — it previously hardcoded a square ring, so a group of people rendered circles inside rounded-square rings. Overlap is box/4, not the box/3 a photo facepile would use: a one-letter avatar loses its only identifying content under a heavier stack, and the +N chip is set at 0.75 of the letter size so a two-glyph count does not outweigh the initials it summarises. `icon` renders a glyph instead of the letter, for a tile standing for a KIND of thing rather than a named one; it supersedes initials/name the way StatusChip's icon supersedes its dot. It replaces an ad-hoc `grid h-8 w-8 place-items-center rounded-md bg-brand-subtle` tile that had been hand-rolled in eight places at three sizes, two radii and two icon colours. The glyph is sized at half the box via `[&>svg]:!text-[1em]`, so one rule covers every avatar size."
     },
     {
       "name": "Button",
@@ -130,7 +132,9 @@
         "fillHeight",
         "selectable",
         "single-select",
-        "paginated"
+        "paginated",
+        "layout-auto",
+        "layout-fixed"
       ],
       "states": [
         "default",
@@ -141,7 +145,7 @@
         "row-hover"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/data-table/page.tsx",
-      "notes": "fillHeight takes the remaining height and scrolls its own body with a sticky header and pinned pagination — the page itself never scrolls on a list screen. Give text cells an explicit width, or a long string will push the trailing columns off screen."
+      "notes": "fillHeight takes the remaining height and scrolls its own body with a sticky header and pinned pagination — the page itself never scrolls on a list screen. `layout` decides column sizing and PREFER 'fixed' for any new list. Under the default 'auto', a cell's minimum width is its longest word, so ONE long value widens the table past its container and the trailing columns scroll off — and truncation cannot fix it, because `nowrap` under auto layout makes the minimum the whole string and the overflow LARGER (measured on the reports list: 82px overflow before, 302px with nowrap alone). 'fixed' ends both: columns take the `width` they declare and share the remainder equally, cells truncate to one line with the full text as a `title`, and every row is one height (75px → 55px rows, 0 overflow on that same list). Its cost is that it stops guessing — a table that does not say which column carries the name gives it the same share as its status column, so declare widths. 'auto' remains the default only for compatibility: twenty-five existing tables would need widths before it could be flipped, and that sweep has not been done. `Column.wrap` opts a single cell out of truncation, for two-line renders and for anything that paints outside its own box (a chip's border, an avatar's ring) which `overflow: hidden` would otherwise shave — the same trade and the same name as `InfoRow.valueWrap`. `Column.width` binds on BOTH the header and the body cell; it used to be applied to the `<th>` alone, which made the hint weaker than it looked."
     },
     {
       "name": "DatePicker",
@@ -189,10 +193,29 @@
       "states": [
         "default",
         "empty",
-        "single-segment"
+        "single-segment",
+        "linked-legend"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/donut-chart/page.tsx",
-      "notes": "SVG part-to-whole breakdown. Categorical colour only; do not reuse the status ramp for categories."
+      "notes": "SVG part-to-whole breakdown. Categorical colour only; do not reuse the status ramp for categories. A segment may carry `href`, which turns its legend row into the link to those rows — the row keeps its own colours, since the swatch already owns the colour in it."
+    },
+    {
+      "name": "BarChart",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/BarChart/BarChart.tsx",
+      "extends": null,
+      "variants": [
+        "single-series",
+        "multi-series",
+        "percent"
+      ],
+      "states": [
+        "default",
+        "zero-value",
+        "empty"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/bar-chart/page.tsx",
+      "notes": "Horizontal ranked bar comparison, no chart library. The SIBLING of DonutChart and not interchangeable: a donut answers \"how does this whole split up\", this answers \"which of these is biggest\" — reach for it when the categories are named things (applications, departments, policies) rather than parts of one quantity. Horizontal because the labels are names: vertical bars must rotate or truncate them, and an unreadable name makes its bar meaningless. Built from DIVS rather than SVG, unlike the donut — a bar is a rectangle, and markup keeps labels and values as real text (selectable, translatable, read in order by a screen reader) instead of needing an aria-label that restates the dataset. Order is the caller's; sort descending before passing or the ranking is just a list. USE ONE COLOUR for a single series — per-bar colour off the status ramp made the largest bar red, which in a governance report reads as \"this one is dangerous\" when the chart is only counting. Reserve per-bar colour for bars that differ in KIND (risk tiers). A zero value keeps its row and draws no bar; the track is always shown, or a short bar reads as a small thing rather than a small share of one scale. Pass `max` to put two charts on a shared scale. Not `Meter`, which is one proportion."
     },
     {
       "name": "Drawer",
@@ -559,7 +582,8 @@
         "success",
         "warning",
         "danger",
-        "neutral"
+        "neutral",
+        "actionable"
       ],
       "states": [
         "default",
@@ -567,7 +591,7 @@
         "with-hint"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/stat-tile/page.tsx",
-      "notes": "KPI tile — label, value, icon in a tinted rounded square. The icon is graphical (WCAG 1.4.11, 3:1) so brand-orange on tint is fine. The only \"resting\" shadow permitted in the system."
+      "notes": "KPI tile — label, value, icon in a tinted rounded square. The icon is graphical (WCAG 1.4.11, 3:1) so brand-orange on tint is fine. The only \"resting\" shadow permitted in the system. `href`/`onClick` makes the WHOLE tile one link. A KPI whose population can be listed should always give one: a tile answers \"how many\" and the reader's next question is always \"which ones\", so a number with no destination is decoration and the reader rebuilds the same filter by hand on another screen. The affordance is the tile's own hover, never a \"View all\" link in the corner — a second target inside a card that is already one target gives the reader two places to aim for one outcome. Omit it only when there is nothing to list (a percentage, a ratio)."
     },
     {
       "name": "OverflowChips",
@@ -600,14 +624,15 @@
         "danger",
         "neutral",
         "subtle",
-        "solid"
+        "solid",
+        "icon"
       ],
       "states": [
         "with-dot",
         "no-dot"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/status-chip/page.tsx",
-      "notes": "The ONE intent→colour mapping. `caution` is the orange fourth step added so High and Medium stop sharing yellow. Risk scores render through RiskScoreChip (dot=false), never a local pill. whitespace-nowrap: a chip is a single mark and must never wrap its label."
+      "notes": "The ONE intent→colour mapping. `caution` is the orange fourth step added so High and Medium stop sharing yellow. Risk scores render through RiskScoreChip (dot=false), never a local pill. whitespace-nowrap: a chip is a single mark and must never wrap its label. `icon` puts a small icon where the dot goes, for a chip that labels what a thing IS rather than what state it is in — Internal/External, an identity type, a category. A dot is a STATE LIGHT: it says \"currently true\" and its colour carries the meaning, so a dot in front of a classification implies a liveness it does not have; an icon states the category and at chip size is read before the word beside it. It SUPERSEDES the dot rather than joining it, because two leading marks make the gap before the label stop being predictable down a column. Pass a plain outlined MUI icon with no sx — the chip forces 13px and the intent colour. On a classification chip the ICON does the identifying and the tint is for making one value findable without reading — so give the calm intent to the unremarkable default and reserve the warmer one for the value that genuinely warrants a second look (Internal `info`, External `caution`). NEVER `danger` on a classification: red belongs to a real fault, and a column of red on a list that is supposed to contain those rows teaches the reader to ignore it. Pick glyphs that are SEPARABLE AT A GLANCE rather than merely different — a reader scanning a column is matching shapes, not reading them. Matching the sidebar's mark for the same concept is a bonus where it is available, but not at the cost of a weaker pair. Consumed by `IdentityKindChip`."
     },
     {
       "name": "Stepper",

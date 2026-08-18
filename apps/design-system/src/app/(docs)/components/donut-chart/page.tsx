@@ -33,7 +33,7 @@ export default function DonutChartDocs() {
       <Section title="Props">
         <PropsTable
           rows={[
-            { name: 'segments', type: 'DonutSegment[]', description: '{ label, value, color } — color is a token.' },
+            { name: 'segments', type: 'DonutSegment[]', description: '{ label, value, color, href? } — color is a token; href makes that legend row link to the rows behind the slice.' },
             { name: 'centerValue / centerLabel', type: 'ReactNode', description: 'Center overlay (e.g. total).' },
             { name: 'size / thickness', type: 'number', default: '180 / 22', description: 'Donut geometry (px).' },
             { name: 'legend', type: 'boolean', default: 'true', description: 'Show the 2-column legend.' },
@@ -44,8 +44,8 @@ export default function DonutChartDocs() {
 
       <Section title="Guidelines">
         <DoDont
-          dos={['Use token colors for segments.', 'Keep to ≤5 segments for legibility.', 'Provide an ariaLabel describing the data.', 'Show the total in the center.']}
-          donts={['Don’t use for time series (use a line/bar later).', 'Don’t rely on color alone — the legend carries labels.', 'Don’t pass raw hex — use tokens.', 'Don’t cram many tiny slices.']}
+          dos={['Use token colors for segments.', 'Keep to ≤5 segments for legibility.', 'Provide an ariaLabel describing the data.', 'Show the total in the center.', 'Give each segment an href when the rows behind it exist somewhere — a legend is the natural place to open them.']}
+          donts={['Don’t use for time series (use a line/bar later).', 'Don’t rely on color alone — the legend carries labels.', 'Don’t pass raw hex — use tokens.', 'Don’t cram many tiny slices.', 'Don’t re-tint a linked legend row blue — the row is the target, and the swatch already owns the colour in it.']}
         />
         <p className="mt-3 text-body-sm text-text-tertiary"><Code>{`import { DonutChart } from '@ds/components';`}</Code></p>
       </Section>

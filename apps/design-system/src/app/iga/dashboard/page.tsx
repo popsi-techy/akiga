@@ -232,7 +232,7 @@ export default function DashboardPage() {
           <div>
             {data.highRiskUsers.map((u) => (
               <ListRow key={u.id}>
-                <Avatar name={u.name} size="sm" />
+                <Avatar name={u.name} size="sm" kind="person" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-body-strong text-text-primary">{u.name}</div>
                   <div className="truncate text-caption text-text-secondary">

@@ -130,6 +130,17 @@ export const emergencySessionsTotal = 24;
  * ------------------------------------------------------------------ */
 export type IdentityStatus = 'active' | 'inactive' | 'leaver-pending' | 'terminated';
 
+/**
+ * Where a person sits relative to the organisation.
+ *
+ * `internal` is on the payroll; `external` is everyone else who holds access —
+ * contractors, vendor engineers, partner staff, auditors. The distinction is not
+ * cosmetic: an external identity carries a sponsor and an end date, is excluded
+ * from birthright access by default, and is the population a reviewer is asked
+ * about first, because it is the one that leaves without an HR event to notice.
+ */
+export type IdentityKind = 'internal' | 'external';
+
 export interface SeedUserIdentity {
   id: string;
   name: string;
@@ -139,27 +150,44 @@ export interface SeedUserIdentity {
   status: IdentityStatus;
   riskLevel: RiskLevel;
   riskScore: number;
+  kind: IdentityKind;
+  /** External only — the company they come from, and who sponsors them here. */
+  organization?: string;
+  sponsorId?: string;
+  /** External only — ISO date the access is due to end. */
+  accessEndsOn?: string;
 }
 
 /** The canonical people directory. Owners/reviewers everywhere reference these. */
 export const userIdentities: SeedUserIdentity[] = [
-  { id: 'o-liam', name: 'Liam Turner', email: 'liam.turner@acme.com', jobTitle: 'Cloud Architect', department: 'Engineering', status: 'active', riskLevel: 'critical', riskScore: 82 },
-  { id: 'o-marcus', name: 'Marcus Lee', email: 'marcus.lee@acme.com', jobTitle: 'IT Administrator', department: 'IT', status: 'active', riskLevel: 'critical', riskScore: 77 },
-  { id: 'o-frank', name: 'Frank Wilson', email: 'frank.wilson@acme.com', jobTitle: 'DevOps Engineer', department: 'Engineering', status: 'active', riskLevel: 'high', riskScore: 71 },
-  { id: 'o-priya', name: 'Priya Sharma', email: 'priya.sharma@acme.com', jobTitle: 'Engineering Manager', department: 'Engineering', status: 'active', riskLevel: 'high', riskScore: 66 },
-  { id: 'o-bob', name: 'Bob Smith', email: 'bob.smith@acme.com', jobTitle: 'Finance Analyst', department: 'Finance', status: 'active', riskLevel: 'high', riskScore: 63 },
-  { id: 'o-nathan', name: 'Nathan Green', email: 'nathan.green@acme.com', jobTitle: 'Data Engineer', department: 'Data', status: 'active', riskLevel: 'high', riskScore: 58 },
-  { id: 'o-catherine', name: 'Catherine Brown', email: 'catherine.brown@acme.com', jobTitle: 'Security Analyst', department: 'Security', status: 'active', riskLevel: 'high', riskScore: 55 },
-  { id: 'o-hana', name: 'Hana Kim', email: 'hana.kim@acme.com', jobTitle: 'Finance Manager', department: 'Finance', status: 'active', riskLevel: 'medium', riskScore: 49 },
-  { id: 'o-henry', name: 'Henry Taylor', email: 'henry.taylor@acme.com', jobTitle: 'Application Owner', department: 'IT', status: 'active', riskLevel: 'medium', riskScore: 44 },
-  { id: 'o-grace', name: 'Grace Lee', email: 'grace.lee@acme.com', jobTitle: 'Support Lead', department: 'Customer Support', status: 'active', riskLevel: 'medium', riskScore: 41 },
-  { id: 'o-emily', name: 'Emily Davis', email: 'emily.davis@acme.com', jobTitle: 'HR Manager', department: 'People', status: 'active', riskLevel: 'medium', riskScore: 35 },
-  { id: 'o-olivia', name: 'Olivia Martin', email: 'olivia.martin@acme.com', jobTitle: 'Compliance Officer', department: 'Compliance', status: 'active', riskLevel: 'medium', riskScore: 29 },
-  { id: 'o-sofia', name: 'Sofia Rossi', email: 'sofia.rossi@acme.com', jobTitle: 'Product Manager', department: 'Product', status: 'active', riskLevel: 'low', riskScore: 24 },
-  { id: 'o-daniel', name: 'Daniel White', email: 'daniel.white@acme.com', jobTitle: 'Sales Representative', department: 'Sales', status: 'active', riskLevel: 'low', riskScore: 18 },
+  { id: 'o-liam', name: 'Liam Turner', email: 'liam.turner@acme.com', jobTitle: 'Cloud Architect', department: 'Engineering', status: 'active', riskLevel: 'critical', riskScore: 82, kind: 'internal' },
+  { id: 'o-marcus', name: 'Marcus Lee', email: 'marcus.lee@acme.com', jobTitle: 'IT Administrator', department: 'IT', status: 'active', riskLevel: 'critical', riskScore: 77, kind: 'internal' },
+  { id: 'o-frank', name: 'Frank Wilson', email: 'frank.wilson@acme.com', jobTitle: 'DevOps Engineer', department: 'Engineering', status: 'active', riskLevel: 'high', riskScore: 71, kind: 'internal' },
+  { id: 'o-priya', name: 'Priya Sharma', email: 'priya.sharma@acme.com', jobTitle: 'Engineering Manager', department: 'Engineering', status: 'active', riskLevel: 'high', riskScore: 66, kind: 'internal' },
+  { id: 'o-bob', name: 'Bob Smith', email: 'bob.smith@acme.com', jobTitle: 'Finance Analyst', department: 'Finance', status: 'active', riskLevel: 'high', riskScore: 63, kind: 'internal' },
+  { id: 'o-nathan', name: 'Nathan Green', email: 'nathan.green@acme.com', jobTitle: 'Data Engineer', department: 'Data', status: 'active', riskLevel: 'high', riskScore: 58, kind: 'internal' },
+  { id: 'o-catherine', name: 'Catherine Brown', email: 'catherine.brown@acme.com', jobTitle: 'Security Analyst', department: 'Security', status: 'active', riskLevel: 'high', riskScore: 55, kind: 'internal' },
+  { id: 'o-hana', name: 'Hana Kim', email: 'hana.kim@acme.com', jobTitle: 'Finance Manager', department: 'Finance', status: 'active', riskLevel: 'medium', riskScore: 49, kind: 'internal' },
+  { id: 'o-henry', name: 'Henry Taylor', email: 'henry.taylor@acme.com', jobTitle: 'Application Owner', department: 'IT', status: 'active', riskLevel: 'medium', riskScore: 44, kind: 'internal' },
+  { id: 'o-grace', name: 'Grace Lee', email: 'grace.lee@acme.com', jobTitle: 'Support Lead', department: 'Customer Support', status: 'active', riskLevel: 'medium', riskScore: 41, kind: 'internal' },
+  { id: 'o-emily', name: 'Emily Davis', email: 'emily.davis@acme.com', jobTitle: 'HR Manager', department: 'People', status: 'active', riskLevel: 'medium', riskScore: 35, kind: 'internal' },
+  { id: 'o-olivia', name: 'Olivia Martin', email: 'olivia.martin@acme.com', jobTitle: 'Compliance Officer', department: 'Compliance', status: 'active', riskLevel: 'medium', riskScore: 29, kind: 'internal' },
+  { id: 'o-sofia', name: 'Sofia Rossi', email: 'sofia.rossi@acme.com', jobTitle: 'Product Manager', department: 'Product', status: 'active', riskLevel: 'low', riskScore: 24, kind: 'internal' },
+  { id: 'o-daniel', name: 'Daniel White', email: 'daniel.white@acme.com', jobTitle: 'Sales Representative', department: 'Sales', status: 'active', riskLevel: 'low', riskScore: 18, kind: 'internal' },
+  // ---- external identities ----------------------------------------------
+  // Not on the payroll, so nothing in the HR feed will announce their leaving.
+  // Each carries the organisation it comes from, an internal sponsor, and the date
+  // its access is due to end — the three fields that make an external reviewable.
+  { id: 'x-arjun', name: 'Arjun Nair', email: 'arjun.nair@northwind-consulting.com', jobTitle: 'Integration Consultant', department: 'IT', status: 'active', riskLevel: 'critical', riskScore: 79, kind: 'external', organization: 'Northwind Consulting', sponsorId: 'o-marcus', accessEndsOn: '2026-09-30' },
+  { id: 'x-mei', name: 'Mei Chen', email: 'mei.chen@brightpath.io', jobTitle: 'Data Migration Engineer', department: 'Data', status: 'active', riskLevel: 'high', riskScore: 68, kind: 'external', organization: 'Brightpath', sponsorId: 'o-nathan', accessEndsOn: '2026-10-15' },
+  { id: 'x-tomas', name: 'Tomas Blum', email: 'tomas.blum@ledgerwise.eu', jobTitle: 'External Auditor', department: 'Compliance', status: 'active', riskLevel: 'medium', riskScore: 46, kind: 'external', organization: 'Ledgerwise', sponsorId: 'o-olivia', accessEndsOn: '2026-08-31' },
+  { id: 'x-fatima', name: 'Fatima Zahra', email: 'fatima.zahra@northwind-consulting.com', jobTitle: 'Change Manager', department: 'IT', status: 'active', riskLevel: 'medium', riskScore: 38, kind: 'external', organization: 'Northwind Consulting', sponsorId: 'o-henry', accessEndsOn: '2026-12-01' },
+  // Expired but still enabled — the case the list exists to surface.
+  { id: 'x-viktor', name: 'Viktor Sorel', email: 'viktor.sorel@brightpath.io', jobTitle: 'QA Contractor', department: 'Engineering', status: 'active', riskLevel: 'high', riskScore: 61, kind: 'external', organization: 'Brightpath', sponsorId: 'o-priya', accessEndsOn: '2026-07-31' },
+  { id: 'x-lena', name: 'Lena Vogt', email: 'lena.vogt@partnerhub.de', jobTitle: 'Partner Support Agent', department: 'Customer Support', status: 'inactive', riskLevel: 'low', riskScore: 21, kind: 'external', organization: 'PartnerHub', sponsorId: 'o-grace', accessEndsOn: '2026-06-30' },
 ];
 
-/** Owners assignable to an emergency access — a projection of User Identities. */
+/** Owners assignable to an emergency access — a projection of the workforce. */
 export interface SeedEAOwner {
   id: string;
   name: string;
@@ -184,7 +212,7 @@ export const approvalPolicySeed: import('./automation-types').ApprovalPolicy[] =
 ];
 
 /** Application + entitlement catalog — selectable in Assign Entities and the Directory.
-    `ownerIds` reference User Identities (see `userIdentities`). */
+    `ownerIds` reference workforce identities (see `userIdentities`). */
 /**
  * How each application is *connected*, as opposed to what it contains.
  *

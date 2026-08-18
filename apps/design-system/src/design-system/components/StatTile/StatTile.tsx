@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Link from 'next/link';
 
 /**
  * StatTile — a KPI tile: label, large value, and an icon in a tinted rounded
@@ -17,6 +18,21 @@ export interface StatTileProps {
   hint?: React.ReactNode;
   /** No shadow at rest; elevates on hover. @default false */
   hoverElevate?: boolean;
+  /**
+   * Where this number can be seen in full.
+   *
+   * **A KPI whose population can be listed should always give it.** A dashboard
+   * tile answers "how many"; the next question is always "which ones", and a tile
+   * that cannot answer it makes the reader go and rebuild the same filter by hand
+   * on another screen. Passing `href` turns the whole tile into one link — not a
+   * small "view" affordance in a corner — because the number is the thing being
+   * clicked.
+   *
+   * Omit it only when there is genuinely nothing to list (a percentage, a ratio).
+   */
+  href?: string;
+  /** Same as `href` for tiles that open a panel rather than navigate. */
+  onClick?: () => void;
 }
 
 const TONES: Record<StatTone, { bg: string; fg: string }> = {
@@ -28,14 +44,21 @@ const TONES: Record<StatTone, { bg: string; fg: string }> = {
   neutral: { bg: 'var(--ds-color-background-subtle)', fg: 'var(--ds-color-icon-default)' },
 };
 
-export function StatTile({ label, value, icon, tone = 'brand', hint, hoverElevate = false }: StatTileProps) {
+export function StatTile({
+  label,
+  value,
+  icon,
+  tone = 'brand',
+  hint,
+  hoverElevate = false,
+  href,
+  onClick,
+}: StatTileProps) {
   const t = TONES[tone];
-  return (
-    <div
-      className={`rounded-lg border border-border bg-surface p-5 ${
-        hoverElevate ? 'transition-shadow duration-200 hover:shadow-md' : ''
-      }`}
-    >
+  const actionable = Boolean(href || onClick);
+
+  const body = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="truncate text-body-sm text-text-secondary">{label}</div>
@@ -51,8 +74,37 @@ export function StatTile({ label, value, icon, tone = 'brand', hint, hoverElevat
           </span>
         )}
       </div>
-    </div>
+      {/* The affordance is the tile's own hover, not a "View all →" link in the
+          corner: a second target inside a card that is already one target gives
+          the reader two places to aim at for one outcome. */}
+    </>
   );
+
+  const shell = [
+    'block w-full rounded-lg border border-border bg-surface p-5 text-left',
+    hoverElevate ? 'transition-shadow duration-200 hover:shadow-md' : '',
+    actionable
+      ? 'cursor-pointer transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle'
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  if (href) {
+    return (
+      <Link href={href} className={shell}>
+        {body}
+      </Link>
+    );
+  }
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={shell}>
+        {body}
+      </button>
+    );
+  }
+  return <div className={shell}>{body}</div>;
 }
 
 export default StatTile;

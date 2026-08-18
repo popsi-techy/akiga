@@ -66,6 +66,7 @@ const groups: { title: string; description: string; items: [string, string, stri
       ['Data Table', '/components/data-table', 'Sortable, selectable, paginated list with states.'],
       ['Stat Tile', '/components/stat-tile', 'KPI tile — label, value, tinted icon.'],
       ['Donut Chart', '/components/donut-chart', 'SVG part-to-whole breakdown.'],
+      ['Bar Chart', '/components/bar-chart', 'Horizontal ranked comparison — which of these is biggest.'],
     ],
   },
   {

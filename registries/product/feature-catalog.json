@@ -3,22 +3,391 @@
   "version": "1.0.0",
   "description": "Master index of product capabilities. Each feature links to its module, entities, rules, personas, and journeys. The queryable answer to 'what does the product do?'",
   "features": [
-    { "id": "dashboard-overview", "name": "Governance dashboard", "module": "dashboard", "entities": [], "rules": [], "personas": ["all"], "journeys": [], "phase": 1 },
-    { "id": "identity-warehouse", "name": "Identity list & detail", "module": "identities", "entities": ["identity", "account", "entitlement", "role"], "rules": ["BR-RISK-001"], "personas": ["administrator", "manager", "auditor"], "journeys": [], "phase": 1 },
-    { "id": "application-registry", "name": "Application list & detail", "module": "applications", "entities": ["application", "entitlement", "account"], "rules": ["BR-OWNERSHIP-001"], "personas": ["application-owner", "administrator"], "journeys": [], "phase": 1 },
-    { "id": "access-catalog-browse", "name": "Browse & search access catalog", "module": "access-catalog", "entities": ["entitlement", "group", "role"], "rules": ["BR-RISK-001"], "personas": ["end-user", "manager"], "journeys": ["request-to-fulfillment"], "phase": 1 },
-    { "id": "access-request", "name": "Request access (catalog → cart → submit)", "module": "access-requests", "entities": ["access-request", "entitlement", "role"], "rules": ["BR-SOD-001", "BR-APPROVAL-001", "BR-DURATION-001"], "personas": ["end-user", "manager"], "journeys": ["request-to-fulfillment"], "phase": 2 },
-    { "id": "approval-inbox", "name": "Approve / reject requests", "module": "approvals", "entities": ["approval-task", "access-request", "workflow"], "rules": ["BR-APPROVAL-001", "BR-APPROVAL-002", "BR-SOD-002"], "personas": ["manager", "application-owner", "role-owner"], "journeys": ["request-to-fulfillment"], "phase": 2 },
-    { "id": "certification-campaign", "name": "Run access certification campaigns", "module": "certifications", "entities": ["certification-campaign", "certification-item"], "rules": ["BR-CERT-001", "BR-CERT-002"], "personas": ["access-reviewer", "manager", "auditor"], "journeys": ["access-certification-campaign"], "phase": 3 },
-    { "id": "sod-policy-management", "name": "Define SoD policies & manage violations", "module": "policies", "entities": ["sod-policy", "sod-violation"], "rules": ["BR-SOD-001", "BR-SOD-002", "BR-SOD-003"], "personas": ["administrator", "auditor"], "journeys": ["sod-violation-remediation"], "phase": 3 },
-    { "id": "risk-scoring", "name": "Risk scoring & exposure", "module": "risk", "entities": ["risk-factor"], "rules": ["BR-RISK-001", "BR-RISK-002"], "personas": ["administrator", "auditor"], "journeys": [], "phase": 3 },
-    { "id": "lifecycle-jml", "name": "Joiner/Mover/Leaver automation", "module": "identities", "entities": ["lifecycle-event", "identity", "account"], "rules": ["BR-LIFECYCLE-001", "BR-LIFECYCLE-002", "BR-LIFECYCLE-003"], "personas": ["administrator", "manager"], "journeys": ["joiner-provisioning", "mover-access-change", "leaver-deprovisioning"], "phase": 4 },
-    { "id": "emergency-access", "name": "Break-glass access", "module": "emergency-access", "entities": ["emergency-access-request"], "rules": ["BR-EMERGENCY-001", "BR-EMERGENCY-002"], "personas": ["administrator", "end-user"], "journeys": ["emergency-access-grant"], "phase": 4 },
-    { "id": "workflow-builder", "name": "Visual workflow builder", "module": "workflows", "entities": ["workflow", "approval-policy"], "rules": ["BR-APPROVAL-001"], "personas": ["administrator"], "journeys": [], "phase": 4 },
-    { "id": "role-management", "name": "Role definition & assignment", "module": "roles", "entities": ["role", "entitlement"], "rules": ["BR-OWNERSHIP-002"], "personas": ["role-owner", "administrator"], "journeys": ["role-definition-and-assignment"], "phase": 4 },
-    { "id": "reports", "name": "Standard reports & exports", "module": "reports", "entities": [], "rules": [], "personas": ["auditor", "administrator"], "journeys": [], "phase": 5 },
-    { "id": "audit-trail", "name": "Immutable audit log & evidence", "module": "audit", "entities": ["audit-event"], "rules": [], "personas": ["auditor", "administrator"], "journeys": [], "phase": 5 },
-    { "id": "connectors-admin", "name": "Connectors & administration", "module": "administration", "entities": ["connector"], "rules": [], "personas": ["administrator"], "journeys": [], "phase": 5 },
-    { "id": "governance-model", "name": "Governance Model (Governance Explorer)", "module": "analytics", "entities": ["department", "location", "business-role", "technical-role", "application", "entitlement", "birthright-policy", "approval-policy", "workflow", "sod-policy", "approval-hierarchy", "delegation", "escalation-rule", "governance-role", "governance-team", "governance-finding"], "rules": ["BR-OWNERSHIP-001", "BR-SOD-001", "BR-APPROVAL-001"], "personas": ["administrator", "auditor"], "journeys": [], "phase": 2 }
+    {
+      "id": "dashboard-overview",
+      "name": "Governance dashboard",
+      "module": "dashboard",
+      "entities": [],
+      "rules": [],
+      "personas": [
+        "all"
+      ],
+      "journeys": [],
+      "phase": 1
+    },
+    {
+      "id": "identity-warehouse",
+      "name": "Identity list & detail",
+      "module": "identities",
+      "entities": [
+        "identity",
+        "account",
+        "entitlement",
+        "role"
+      ],
+      "rules": [
+        "BR-RISK-001"
+      ],
+      "personas": [
+        "administrator",
+        "manager",
+        "auditor"
+      ],
+      "journeys": [],
+      "phase": 1
+    },
+    {
+      "id": "application-registry",
+      "name": "Application list & detail",
+      "module": "applications",
+      "entities": [
+        "application",
+        "entitlement",
+        "account"
+      ],
+      "rules": [
+        "BR-OWNERSHIP-001"
+      ],
+      "personas": [
+        "application-owner",
+        "administrator"
+      ],
+      "journeys": [],
+      "phase": 1
+    },
+    {
+      "id": "access-catalog-browse",
+      "name": "Browse & search access catalog",
+      "module": "access-catalog",
+      "entities": [
+        "entitlement",
+        "group",
+        "role"
+      ],
+      "rules": [
+        "BR-RISK-001"
+      ],
+      "personas": [
+        "end-user",
+        "manager"
+      ],
+      "journeys": [
+        "request-to-fulfillment"
+      ],
+      "phase": 1
+    },
+    {
+      "id": "access-request",
+      "name": "Request access (catalog → cart → submit)",
+      "module": "access-requests",
+      "entities": [
+        "access-request",
+        "entitlement",
+        "role"
+      ],
+      "rules": [
+        "BR-SOD-001",
+        "BR-APPROVAL-001",
+        "BR-DURATION-001"
+      ],
+      "personas": [
+        "end-user",
+        "manager"
+      ],
+      "journeys": [
+        "request-to-fulfillment"
+      ],
+      "phase": 2
+    },
+    {
+      "id": "approval-inbox",
+      "name": "Approve / reject requests",
+      "module": "approvals",
+      "entities": [
+        "approval-task",
+        "access-request",
+        "workflow"
+      ],
+      "rules": [
+        "BR-APPROVAL-001",
+        "BR-APPROVAL-002",
+        "BR-SOD-002"
+      ],
+      "personas": [
+        "manager",
+        "application-owner",
+        "role-owner"
+      ],
+      "journeys": [
+        "request-to-fulfillment"
+      ],
+      "phase": 2
+    },
+    {
+      "id": "certification-campaign",
+      "name": "Run access certification campaigns",
+      "module": "certifications",
+      "entities": [
+        "certification-campaign",
+        "certification-item"
+      ],
+      "rules": [
+        "BR-CERT-001",
+        "BR-CERT-002"
+      ],
+      "personas": [
+        "access-reviewer",
+        "manager",
+        "auditor"
+      ],
+      "journeys": [
+        "access-certification-campaign"
+      ],
+      "phase": 3
+    },
+    {
+      "id": "sod-policy-management",
+      "name": "Define SoD policies & manage violations",
+      "module": "policies",
+      "entities": [
+        "sod-policy",
+        "sod-violation"
+      ],
+      "rules": [
+        "BR-SOD-001",
+        "BR-SOD-002",
+        "BR-SOD-003"
+      ],
+      "personas": [
+        "administrator",
+        "auditor"
+      ],
+      "journeys": [
+        "sod-violation-remediation"
+      ],
+      "phase": 3
+    },
+    {
+      "id": "risk-scoring",
+      "name": "Risk scoring & exposure",
+      "module": "risk",
+      "entities": [
+        "risk-factor"
+      ],
+      "rules": [
+        "BR-RISK-001",
+        "BR-RISK-002"
+      ],
+      "personas": [
+        "administrator",
+        "auditor"
+      ],
+      "journeys": [],
+      "phase": 3
+    },
+    {
+      "id": "lifecycle-jml",
+      "name": "Joiner/Mover/Leaver automation",
+      "module": "identities",
+      "entities": [
+        "lifecycle-event",
+        "identity",
+        "account"
+      ],
+      "rules": [
+        "BR-LIFECYCLE-001",
+        "BR-LIFECYCLE-002",
+        "BR-LIFECYCLE-003"
+      ],
+      "personas": [
+        "administrator",
+        "manager"
+      ],
+      "journeys": [
+        "joiner-provisioning",
+        "mover-access-change",
+        "leaver-deprovisioning"
+      ],
+      "phase": 4
+    },
+    {
+      "id": "emergency-access",
+      "name": "Break-glass access",
+      "module": "emergency-access",
+      "entities": [
+        "emergency-access-request"
+      ],
+      "rules": [
+        "BR-EMERGENCY-001",
+        "BR-EMERGENCY-002"
+      ],
+      "personas": [
+        "administrator",
+        "end-user"
+      ],
+      "journeys": [
+        "emergency-access-grant"
+      ],
+      "phase": 4
+    },
+    {
+      "id": "workflow-builder",
+      "name": "Visual workflow builder",
+      "module": "workflows",
+      "entities": [
+        "workflow",
+        "approval-policy"
+      ],
+      "rules": [
+        "BR-APPROVAL-001"
+      ],
+      "personas": [
+        "administrator"
+      ],
+      "journeys": [],
+      "phase": 4
+    },
+    {
+      "id": "role-management",
+      "name": "Role definition & assignment",
+      "module": "roles",
+      "entities": [
+        "role",
+        "entitlement"
+      ],
+      "rules": [
+        "BR-OWNERSHIP-002"
+      ],
+      "personas": [
+        "role-owner",
+        "administrator"
+      ],
+      "journeys": [
+        "role-definition-and-assignment"
+      ],
+      "phase": 4
+    },
+    {
+      "id": "reports",
+      "name": "Standard reports & exports",
+      "module": "reports",
+      "entities": [],
+      "rules": [],
+      "personas": [
+        "auditor",
+        "administrator"
+      ],
+      "journeys": [],
+      "phase": 5
+    },
+    {
+      "id": "audit-trail",
+      "name": "Immutable audit log & evidence",
+      "module": "audit",
+      "entities": [
+        "audit-event"
+      ],
+      "rules": [],
+      "personas": [
+        "auditor",
+        "administrator"
+      ],
+      "journeys": [],
+      "phase": 5
+    },
+    {
+      "id": "connectors-admin",
+      "name": "Connectors & administration",
+      "module": "administration",
+      "entities": [
+        "connector"
+      ],
+      "rules": [],
+      "personas": [
+        "administrator"
+      ],
+      "journeys": [],
+      "phase": 5
+    },
+    {
+      "id": "governance-model",
+      "name": "Governance Model",
+      "module": "analytics",
+      "entities": [
+        "department",
+        "location",
+        "business-role",
+        "technical-role",
+        "application",
+        "entitlement",
+        "birthright-policy",
+        "approval-policy",
+        "workflow",
+        "sod-policy",
+        "approval-hierarchy",
+        "delegation",
+        "escalation-rule",
+        "governance-role",
+        "governance-team",
+        "governance-finding"
+      ],
+      "rules": [
+        "BR-OWNERSHIP-001",
+        "BR-SOD-001",
+        "BR-APPROVAL-001"
+      ],
+      "personas": [
+        "administrator",
+        "auditor"
+      ],
+      "journeys": [],
+      "phase": 2
+    },
+    {
+      "id": "governance-analytics",
+      "name": "Governance Analytics",
+      "module": "analytics",
+      "entities": [
+        "department",
+        "application",
+        "entitlement",
+        "user-identity",
+        "app-account",
+        "birthright-policy",
+        "approval-policy",
+        "sod-policy",
+        "governance-team",
+        "governance-finding"
+      ],
+      "rules": [
+        "BR-OWNERSHIP-001",
+        "BR-SOD-001"
+      ],
+      "personas": [
+        "administrator",
+        "auditor"
+      ],
+      "journeys": [],
+      "phase": 2
+    },
+    {
+      "id": "workflow-templates",
+      "name": "Workflow Templates (Joiner / Mover / Leaver)",
+      "module": "automation",
+      "entities": [
+        "user-identity",
+        "application",
+        "entitlement",
+        "technical-role",
+        "birthright-policy",
+        "approval-policy"
+      ],
+      "rules": [],
+      "personas": [
+        "administrator"
+      ],
+      "journeys": [],
+      "phase": 2
+    }
   ]
 }

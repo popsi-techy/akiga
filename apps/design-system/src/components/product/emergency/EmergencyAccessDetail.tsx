@@ -140,7 +140,7 @@ function OverviewTab({ ea, onGoToTab }: { ea: EADetail; onGoToTab: (tab: string)
             <div>
               {ea.sessions.map((s) => (
                 <ListRow key={s.id}>
-                  <Avatar name={s.name} size="sm" shape="circle" />
+                  <Avatar name={s.name} size="sm" kind="person" />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-body-strong text-text-primary">{s.name}</div>
                     <div className="truncate text-caption text-text-secondary">{s.subtitle}</div>
@@ -342,7 +342,7 @@ export function EmergencyOwnersTab({ ea, onChanged }: { ea: EADetail; onChanged:
   // visible even when a search hides their row from the table.
   const selectedItems = candidates
     .filter((o) => selectedToAdd.includes(o.id))
-    .map((o) => ({ id: o.id, label: o.name, sublabel: o.email, icon: <Avatar name={o.name} size="sm" /> }));
+    .map((o) => ({ id: o.id, label: o.name, sublabel: o.email, icon: <Avatar name={o.name} size="sm" kind="person" /> }));
   const openAdd = () => {
     setSelectedToAdd([]);
     setAddSearch('');
@@ -428,7 +428,7 @@ export function EmergencyOwnersTab({ ea, onChanged }: { ea: EADetail; onChanged:
       value: (o) => o.name,
       render: (o) => (
         <div className="flex items-center gap-3">
-          <Avatar name={o.name} size="sm" />
+          <Avatar name={o.name} size="sm" kind="person" />
           <span className="text-body-sm-strong text-text-primary">{o.name}</span>
         </div>
       ),
@@ -444,7 +444,7 @@ export function EmergencyOwnersTab({ ea, onChanged }: { ea: EADetail; onChanged:
       value: (o) => o.name,
       render: (o) => (
         <div className="flex items-center gap-3">
-          <Avatar name={o.name} size="sm" />
+          <Avatar name={o.name} size="sm" kind="person" />
           <span className="text-body-sm-strong text-text-primary">{o.name}</span>
         </div>
       ),

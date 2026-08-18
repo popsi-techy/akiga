@@ -18,7 +18,7 @@ export { InfoRow, InfoRowGroup } from './InfoRow/InfoRow';
 export type { InfoRowProps, InfoRowEmphasis } from './InfoRow/InfoRow';
 
 export { Avatar, AvatarGroup, initialsOf } from './Avatar/Avatar';
-export type { AvatarProps, AvatarGroupProps, AvatarSize, AvatarShape } from './Avatar/Avatar';
+export type { AvatarProps, AvatarGroupProps, AvatarSize, AvatarKind } from './Avatar/Avatar';
 
 export { AppIcon, resolveAppIcon } from './AppIcon/AppIcon';
 export type { AppIconProps } from './AppIcon/AppIcon';
@@ -47,6 +47,8 @@ export type { ToastApi, ToastOptions, ToastIntent } from './Toast/ToastProvider'
 export { StatTile } from './StatTile/StatTile';
 export type { StatTileProps, StatTone } from './StatTile/StatTile';
 
+export { BarChart } from './BarChart/BarChart';
+export type { BarChartProps, BarDatum } from './BarChart/BarChart';
 export { DonutChart } from './DonutChart/DonutChart';
 export type { DonutChartProps, DonutSegment } from './DonutChart/DonutChart';
 

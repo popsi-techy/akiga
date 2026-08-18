@@ -87,6 +87,7 @@ export const navigation: NavSection[] = [
       { label: 'Data Table', href: '/components/data-table', status: 'ready' },
       { label: 'Stat Tile', href: '/components/stat-tile', status: 'ready' },
       { label: 'Donut Chart', href: '/components/donut-chart', status: 'ready' },
+      { label: 'Bar Chart', href: '/components/bar-chart', status: 'ready' },
     ],
   },
   {

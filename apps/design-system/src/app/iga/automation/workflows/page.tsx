@@ -157,7 +157,15 @@ export default function WorkflowsListPage() {
           />
         </div>
         <div className="ml-auto">
-          <Button startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
+          {/* Straight to the template gallery, not a name-and-description dialog.
+              Naming a thing before deciding what it does is the wrong order, and a
+              blank builder was the only outcome the dialog could produce — the
+              gallery offers eleven lifecycle processes and the empty canvas in one
+              place, previewing each before anything is created. */}
+          <Button
+            startIcon={<AddIcon />}
+            onClick={() => router.push('/iga/automation/workflows/templates')}
+          >
             Create Workflow
           </Button>
         </div>
@@ -173,7 +181,7 @@ export default function WorkflowsListPage() {
           defaultRowsPerPage={8}
           rowsPerPageOptions={[8, 16, 24]}
           emptyTitle="No workflows yet"
-          emptyMessage="Create a workflow to automate onboarding from a lifecycle event like Joiner."
+          emptyMessage="Start from a lifecycle template — employee onboarding, a mover, an offboarding — or build one from scratch."
         />
       </div>
 

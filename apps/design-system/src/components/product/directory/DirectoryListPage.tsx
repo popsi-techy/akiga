@@ -22,6 +22,7 @@ export function DirectoryListPage<Row extends { id: string }>({
   downloadable = false,
   actions,
   summary,
+  layout,
   filterGroups,
   filterMatches,
 }: {
@@ -30,6 +31,13 @@ export function DirectoryListPage<Row extends { id: string }>({
   searchPlaceholder: string;
   columns: Column<Row>[];
   rows: Row[];
+  /**
+   * Forwarded to `DataTable`. Pass `'fixed'` once every column declares a width —
+   * it stops the horizontal overflow auto layout causes and keeps rows one height.
+   * Left undefined so the directory pages that have not declared widths keep the
+   * behaviour they were built with.
+   */
+  layout?: 'auto' | 'fixed';
   matches: (row: Row, query: string) => boolean;
   onOpen: (id: string) => void;
   emptyTitle: string;
@@ -113,7 +121,7 @@ export function DirectoryListPage<Row extends { id: string }>({
         )}
       </div>
       <div className="min-h-0 flex-1">
-        <DataTable<Row> columns={columns} rows={filtered} onRowClick={(r) => onOpen(r.id)} fillHeight emptyTitle={emptyTitle} emptyMessage={emptyMessage} />
+        <DataTable<Row> columns={columns} rows={filtered} onRowClick={(r) => onOpen(r.id)} layout={layout} fillHeight emptyTitle={emptyTitle} emptyMessage={emptyMessage} />
       </div>
 
       {filterGroups && (

@@ -135,7 +135,7 @@ export function AuditEntryDrawer({
                   <span className="text-text-tertiary">System</span>
                 ) : (
                   <span className="flex min-w-0 items-center gap-2">
-                    <Avatar name={entry.actor} size="xs" shape="circle" />
+                    <Avatar name={entry.actor} size="xs" kind="person" />
                     <span className="min-w-0 truncate">{entry.actor}</span>
                     {/* The row names an address; the icon answers the follow-up —
                         *which* person is that, and should their access worry me —

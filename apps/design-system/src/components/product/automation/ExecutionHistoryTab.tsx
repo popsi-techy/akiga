@@ -226,7 +226,7 @@ function GrantsList({ grants }: { grants: RunGrant[] }) {
           key={`${g.userId}-${g.target}-${i}`}
           className="flex items-start gap-3 border-b border-border px-5 py-3 last:border-b-0"
         >
-          <Avatar name={runUserName(g.userId)} size="sm" />
+          <Avatar name={runUserName(g.userId)} size="sm" kind="person" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-baseline gap-x-2">
               <span className="truncate text-body-sm-strong text-text-primary">{runUserName(g.userId)}</span>

@@ -130,7 +130,11 @@ export function Card({
           {action != null && <div className="shrink-0">{action}</div>}
         </header>
         <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border-subtle bg-surface">
-          {children != null && <div className={framedPad[padding]}>{children}</div>}
+          {/* `flex-1` gives the body a definite height when the card has been
+              stretched by a taller sibling in a grid. Content still sits at the
+              top by default — but a child can now use `h-full` to fill or centre
+              in the slack, which it could not when the body was auto-height. */}
+          {children != null && <div className={`${framedPad[padding]} flex-1`}>{children}</div>}
           {footer != null && (
             <footer className="mt-auto border-t border-border-subtle px-4 py-3 text-body-sm text-text-secondary">
               {footer}

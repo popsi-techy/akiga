@@ -22,7 +22,7 @@ import {
 const TABS: TabItem[] = [
   { value: 'overview', label: 'Overview' },
   { value: 'owners', label: 'Assigned Owners' },
-  { value: 'members', label: 'User Identities' },
+  { value: 'members', label: 'Workforce' },
   { value: 'technical-roles', label: 'Technical Roles' },
   { value: 'entitlements', label: 'Entitlements' },
 ];
@@ -53,7 +53,7 @@ export default function BusinessRoleDetailPage() {
               <InfoRow icon={infoIcon.risk} label="Risk Score" value={<RiskScoreChip score={role.risk} />} />
               <InfoRow icon={infoIcon.technicalRole} label="Technical Roles" value={technicalRoles.length} />
               <InfoRow icon={infoIcon.entitlement} label="Direct Entitlements" value={entitlements.length} />
-              <InfoRow icon={infoIcon.people} label="Assigned User Identities" value={members.length} />
+              <InfoRow icon={infoIcon.people} label="Assigned people" value={members.length} />
               <InfoRow icon={infoIcon.owner} label="Owners" value={role.ownerIds.length} />
             </InfoRowGroup>
           </Card>

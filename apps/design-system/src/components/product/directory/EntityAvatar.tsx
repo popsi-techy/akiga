@@ -21,6 +21,12 @@ export type EntityKind =
  * same letter treatment when there isn't one), because a recognisable product
  * mark identifies an app faster than any letter can.
  *
+ * Shape is the one thing that is not uniform, and it carries meaning: a `user` is
+ * a person, so it gets the round avatar, while everything else — an account, an
+ * app, a role, a team — is a *thing* and takes the rounded square. That is the one
+ * distinction worth spending shape on, since a person and the accounts belonging
+ * to them appear side by side constantly.
+ *
  * Entitlements, accounts, roles and groups used to get a per-kind icon tile: a
  * key, a badge, a hard hat. That looked considered and wasn't — the kind is
  * already stated by the page you are on and the label beside the mark, so the
@@ -30,7 +36,7 @@ export type EntityKind =
 export function EntityAvatar({ kind, name, size = 'sm' }: { kind: EntityKind; name: string; size?: 'sm' | 'md' }) {
   const px = size === 'md' ? 40 : 28;
   if (kind === 'application') return <AppBadge app={name} size={px} />;
-  return <Avatar name={name} size={size} />;
+  return <Avatar name={name} size={size} kind={kind === 'user' ? 'person' : 'entity'} />;
 }
 
 export default EntityAvatar;

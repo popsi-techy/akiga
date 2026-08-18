@@ -93,7 +93,7 @@ export default function AccessRequestAuditPage() {
           </span>
         ) : (
           <span className="flex min-w-0 items-center gap-2.5">
-            <Avatar name={r.actor} size="xs" shape="circle" />
+            <Avatar name={r.actor} size="xs" kind="person" />
             <span className="min-w-0 truncate text-text-secondary">{r.actor}</span>
           </span>
         ),
