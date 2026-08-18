@@ -276,7 +276,10 @@ export default function EmergencyAccessV2Wizard() {
   const stepBody = () => {
     if (step === 0) {
       return (
-        <div className="max-w-2xl space-y-4">
+        // Full column width, like the footer beneath it. A reading-width cap here
+        // held the fields short of the buttons that belong to them, so the step
+        // looked like it had a right margin the rest of the frame did not.
+        <div className="space-y-4">
           <Input
             label="Name"
             required

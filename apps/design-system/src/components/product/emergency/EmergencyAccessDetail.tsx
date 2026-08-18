@@ -224,7 +224,7 @@ export function EmergencyOwnersPicker({ ea, onChanged }: { ea: EADetail; onChang
   const slots = [
     {
       key: 'people' as const,
-      icon: <PersonOutline sx={{ fontSize: 22 }} />,
+      icon: <PersonOutline />,
       empty: 'No owners named',
       emptyHint: 'A named owner answers for this access day to day.',
       editHint: 'Edit who answers for this access day to day.',
@@ -234,7 +234,7 @@ export function EmergencyOwnersPicker({ ea, onChanged }: { ea: EADetail; onChang
     },
     {
       key: 'teams' as const,
-      icon: <GroupsOutlined sx={{ fontSize: 22 }} />,
+      icon: <GroupsOutlined />,
       empty: 'No governance teams',
       emptyHint: 'A team answers for this access at review, where an owner answers day to day.',
       editHint: 'Edit which teams answer for this at review.',

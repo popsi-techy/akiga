@@ -4,26 +4,42 @@ import * as React from 'react';
 import { color } from '../../tokens/tokens';
 
 /**
- * A filled marker is a graphical object, so it takes the status *solid* role —
- * the text roles read heavy as a block of fill. Same rule as Meter and the solid
- * StatusChip, which is why this comes from tokens rather than a utility class.
+ * A filled marker is a graphical object, so it takes a status *fill* or *solid*
+ * role — the text roles read heavy as a block of fill. Same rule as Meter and the
+ * solid StatusChip, which is why this comes from tokens rather than a utility
+ * class.
  *
  * The halo is a spread-only shadow rather than a real ring: a ring would occupy
  * layout and shift the connector line off the marker's centre, where a shadow
  * paints outside the box and leaves the geometry alone.
+ *
+ * 4px, and the weight comes from the colour rather than the spread. Its role is
+ * `halo`, not `subtle`: a tint-strength ring on a card is very nearly the card, so
+ * widening the spread was the wrong lever — two rungs up the ramp is what makes the
+ * marker sit in something, and once it does, 6px reads as a band around the step
+ * instead of a glow behind it.
  */
 const HALO = '0 0 0 4px';
 
+/**
+ * Done takes `success.fill` (#12855A), not `success.solid` (#00695C).
+ *
+ * Solid is a near-black teal, and a column of them sat heavier on the rail than
+ * the orange marker for the step actually being worked on — the completed steps
+ * were the loudest thing in a rail whose job is to show where you are. `fill` is
+ * the role meant for graphical blocks, and it holds white 12px text at 4.63:1,
+ * clear of the 4.5:1 AA floor. `check:contrast` enforces that pairing now.
+ */
 const doneMarker: React.CSSProperties = {
-  background: color.status.success.solid,
+  background: color.status.success.fill,
   color: color.status.success.onSolid,
-  boxShadow: `${HALO} ${color.status.success.subtle}`,
+  boxShadow: `${HALO} ${color.status.success.halo}`,
 };
 
 const activeMarker: React.CSSProperties = {
   background: color.brand.primary,
   color: color.brand.onPrimary,
-  boxShadow: `${HALO} ${color.brand.subtle}`,
+  boxShadow: `${HALO} ${color.brand.halo}`,
 };
 
 /**
@@ -32,10 +48,16 @@ const activeMarker: React.CSSProperties = {
  * `border-style: dashed` hands the dash length to the browser, which sizes it
  * from the border width — so a 1px line gets 1px dashes and reads as a dotted
  * smear. A gradient states the rhythm outright: 6px of line, 2px of gap.
+ *
+ * Always grey, whatever the steps either side of it have done. The line is the
+ * track the steps sit on — a fixed part of the frame — and the markers are what
+ * carry state. Colouring completed segments green made the rail read as a
+ * progress bar with a status of its own, and put a second green on screen
+ * competing with the markers that actually mean something.
  */
-function connector(tone: string): React.CSSProperties {
+function connector(): React.CSSProperties {
   return {
-    backgroundImage: `repeating-linear-gradient(to bottom, ${tone} 0 6px, transparent 6px 8px)`,
+    backgroundImage: `repeating-linear-gradient(to bottom, ${color.border.default} 0 6px, transparent 6px 8px)`,
   };
 }
 
@@ -145,7 +167,7 @@ export function StepTracker({
                 <span
                   aria-hidden
                   className="absolute bottom-0 left-[15px] top-8 w-px"
-                  style={connector(done ? color.status.success.solid : color.border.default)}
+                  style={connector()}
                 />
               )}
 

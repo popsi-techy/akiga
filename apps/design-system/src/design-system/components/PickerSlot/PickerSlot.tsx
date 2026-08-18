@@ -2,9 +2,14 @@
 
 import * as React from 'react';
 import EditOutlined from '@mui/icons-material/EditOutlined';
+import { Avatar } from '../Avatar/Avatar';
 
 export interface PickerSlotProps {
-  /** Outlined, 22px (`sx={{ fontSize: 22 }}`) — it sits in an 44px tinted tile. */
+  /**
+   * Outlined, and sized by the tile rather than by the caller — pass the bare
+   * glyph, no `sx`. It renders through `Avatar`'s icon tile, the same mark the
+   * exception queue uses, so a slot and a finding read as the same family.
+   */
   icon: React.ReactNode;
   /** What is here, or what is missing. The line the reader scans. */
   title: string;
@@ -63,13 +68,18 @@ export function PickerSlot({
   summary,
 }: PickerSlotProps) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-border bg-surface px-5 py-4">
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-subtle text-icon-brand">
-        {icon}
-      </span>
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-surface px-5 py-4">
+      {/* The DS icon tile rather than a hand-rolled one: 40px on `radius.avatar`,
+          with the glyph sized at half the box. It was a 44px `rounded-xl` tile
+          built inline here, which made a slot a slightly different object from
+          every other icon-and-text row in the product. */}
+      <Avatar icon={icon} size="md" />
       <div className="min-w-0 flex-1">
-        <div className="text-body-strong text-text-primary">{title}</div>
-        <p className="mt-0.5 text-body-sm text-text-secondary">{hint}</p>
+        {/* Both lines are held to their own space. The hint used to wrap freely,
+            so a long one grew the row and a column of slots came out ragged —
+            two lines is the most a supporting line is worth. */}
+        <div className="truncate text-body-strong text-text-primary">{title}</div>
+        <p className="mt-0.5 line-clamp-2 text-caption text-text-secondary">{hint}</p>
       </div>
       {/* Hidden on the narrowest screens: the count in the title still says how
           many, and naming them is worth less than keeping the row one line. */}

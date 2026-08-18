@@ -39,7 +39,6 @@ const STATUS: Record<IdentityStatus, { label: string; intent: StatusIntent }> = 
 export default function ExternalIdentitiesListPage() {
   const router = useRouter();
   const rows = listExternalIdentities();
-  const expired = rows.filter((r) => accessExpired(r));
 
   const sponsorName = (id?: string) =>
     id ? getUserIdentityDetail(id)?.identity.name ?? '—' : '—';
@@ -153,24 +152,6 @@ export default function ExternalIdentitiesListPage() {
       emptyTitle="No external identities"
       emptyMessage="Nobody outside the organization currently holds access."
       downloadable
-      summary={
-        expired.length > 0 ? (
-          <div
-            role="status"
-            className="rounded-xl border border-status-danger-border bg-status-danger-subtle px-4 py-3"
-          >
-            <div className="text-body-sm-strong text-status-danger-fg">
-              {expired.length === 1
-                ? '1 external identity is past its access end date and still enabled'
-                : `${expired.length} external identities are past their access end date and still enabled`}
-            </div>
-            <p className="mt-0.5 text-caption text-status-danger-fg">
-              {expired.map((r) => r.name).join(', ')} — no HR event will close these, so they stay open
-              until someone acts.
-            </p>
-          </div>
-        ) : undefined
-      }
     />
   );
 }

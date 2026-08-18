@@ -31,7 +31,7 @@ export default function PickerSlotDocs() {
       >
         <div className="max-w-2xl space-y-4">
           <PickerSlot
-            icon={<AppsOutlined sx={{ fontSize: 22 }} />}
+            icon={<AppsOutlined />}
             title={
               chosen.length === 0
                 ? 'No applications chosen'
@@ -54,9 +54,9 @@ export default function PickerSlotDocs() {
               : { onEdit: () => setChosen([]), editLabel: 'Edit applications' })}
           />
           <PickerSlot
-            icon={<VpnKeyOutlined sx={{ fontSize: 22 }} />}
+            icon={<VpnKeyOutlined />}
             title="No entitlements granted"
-            hint="Individual permissions handed over for the length of a session, then taken back."
+            hint="Single permissions, handed over for one session then taken back."
             action={
               <Button variant="secondary" startIcon={<AddIcon />}>
                 Add Entitlements
@@ -89,7 +89,7 @@ export default function PickerSlotDocs() {
       <Section title="Props">
         <PropsTable
           rows={[
-            { name: 'icon', type: 'ReactNode', description: 'Outlined, 22px — it sits in a 44px tinted tile.' },
+            { name: 'icon', type: 'ReactNode', description: 'Outlined, bare — no sx. Rendered through Avatar’s icon tile (40px, glyph at half the box), the same mark the exception queue uses.' },
             { name: 'title', type: 'string', description: 'What is here, or what is missing. The line the reader scans.' },
             { name: 'hint', type: 'string', description: 'Why it matters, or what editing will change. Never a restatement of the title.' },
             { name: 'action', type: 'ReactNode', default: '—', description: 'The control for an empty slot — normally a `secondary` Button naming what will be added. Pass this OR `onEdit`.' },

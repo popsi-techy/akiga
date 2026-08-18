@@ -126,6 +126,16 @@ for (const [k, s] of Object.entries(color.status)) {
   checks.push({ label: `status.${k}.fg on subtle`, fg: s.fg, bg: s.subtle, min: AA_TEXT });
   checks.push({ label: `status.${k}.onSolid on solid`, fg: s.onSolid, bg: s.solid, min: AA_TEXT });
 }
+// `fill` is the graphical-block role, and where a block carries a numeral — the
+// StepTracker's done marker — the same white sits on it as on `solid`. Enforced
+// only for success, the one fill currently used that way; add the others here if
+// a component starts printing text on them.
+checks.push({
+  label: 'status.success.onSolid on fill',
+  fg: color.status.success.onSolid,
+  bg: color.status.success.fill,
+  min: AA_TEXT,
+});
 
 // --- Graphical / UI contrast (1.4.11, >= 3:1) ---
 checks.push({ label: 'icon.default on surface', fg: color.icon.default, bg: color.surface.default, min: AA_UI });

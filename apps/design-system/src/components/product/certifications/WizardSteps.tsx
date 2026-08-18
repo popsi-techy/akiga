@@ -93,7 +93,7 @@ export function DetailsStep({ draft, patch }: { draft: Certification; patch: Pat
             Applications <span className="text-danger">*</span>
           </div>
           <PickerSlot
-            icon={<AppsOutlined sx={{ fontSize: 22 }} />}
+            icon={<AppsOutlined />}
             title={
               chosen.length === 0
                 ? 'No applications chosen'
@@ -167,7 +167,7 @@ export function UsersStep({ draft, patch }: { draft: Certification; patch: Patch
           ever better was when it was short. */}
       <div className="max-w-2xl">
         <PickerSlot
-          icon={<PersonOutline sx={{ fontSize: 22 }} />}
+          icon={<PersonOutline />}
           title={
             chosen.length === 0
               ? 'No users chosen'

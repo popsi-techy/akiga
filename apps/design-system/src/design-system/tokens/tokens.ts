@@ -67,6 +67,10 @@ export const color = {
     subtle: p.orange[50], //           tint background (avatars, icon squares)
     subtleHover: p.orange[100],
     border: p.orange[200],
+    // The soft ring behind a marker for the thing you are on — the StepTracker's
+    // current step. Two rungs up from `subtle`: a halo at tint strength is
+    // invisible against the card it sits on, which is the whole job.
+    halo: p.orange[200], //            #FFCCB5
   },
   // Status — each role: fg (text/icon), solid (dot/emphasis), subtle (bg), border, onSolid
   // fg meets WCAG AA (>=4.5:1) as small text on its own `subtle` bg;
@@ -90,7 +94,9 @@ export const color = {
   // and is waived, see the note there.
   status: {
     info: { fg: p.blue[900], solid: p.blue[800], fill: p.blue[800], subtle: p.blue[50], border: p.blue[500], onSolid: p.white },
-    success: { fg: p.green[600], solid: p.green[600], fill: p.green[550], subtle: p.green[100], border: p.green[400], onSolid: p.white },
+    // `halo` is the soft ring behind a filled marker (StepTracker's done step) —
+    // two rungs up from `subtle`, which disappears against a card.
+    success: { fg: p.green[600], solid: p.green[600], fill: p.green[550], subtle: p.green[100], border: p.green[400], onSolid: p.white, halo: p.green[200] },
     // `border` is yellow[300] at the owner's direction — two steps softer than the
     // band and below VISIBLE_MIN (1.18:1 on its own tint), so it is carried as a
     // documented waiver in check-contrast.ts rather than by lowering the floor.

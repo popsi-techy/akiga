@@ -36,17 +36,17 @@ const META: Record<
     label: 'Entitlements',
     entity: 'entitlement',
     empty: 'No entitlements granted',
-    hint: 'Individual permissions handed over for the length of a session, then taken back.',
+    hint: 'Single permissions, handed over for one session then taken back.',
     editHint: 'Edit which permissions this access hands over.',
-    icon: <VpnKeyOutlined sx={{ fontSize: 22 }} />,
+    icon: <VpnKeyOutlined />,
   },
   technicalRoles: {
     label: 'Technical Roles',
     entity: 'technical role',
     empty: 'No technical roles granted',
-    hint: 'Bundles of entitlements within one application — quicker to grant, wider to hold.',
+    hint: 'Bundles of entitlements — quicker to grant, wider to hold.',
     editHint: 'Edit which bundles this access hands over.',
-    icon: <LaptopOutlined sx={{ fontSize: 22 }} />,
+    icon: <LaptopOutlined />,
   },
 };
 

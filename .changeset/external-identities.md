@@ -30,8 +30,9 @@ employee does not — originating organization, internal sponsor, access end dat
 for fourteen rows out of twenty on the main list. The last is the point: **nothing in an HR feed
 announces a contractor leaving**, so an external past its end date while still enabled is the most
 common way standing access outlives its reason, and it is invisible on a list showing only status,
-because the status is still Active. The page states that count above the table and marks the row
-"Expired 31 Jul 2026" in the Access ends column.
+because the status is still Active. The row itself carries it: "Expired 31 Jul 2026" in danger in the Access ends column, on
+every list this identity appears in. A red banner above the table used to state the count as well; it came
+out, because the marked row is the thing you act on and the banner only counted it.
 
 `DirectoryListPage` now forwards `layout` to `DataTable`; the new page declares a width per column and
 opts into `fixed`, so seven columns fit with no horizontal scroll and rows stay one height.
