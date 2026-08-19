@@ -9,6 +9,7 @@ import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import {
   appTypeCategories,
   appTypeMatches,
+  getCustomAppType,
   listAppTypes,
   type AppTypeOption,
   type AppTypeCategory,
@@ -117,9 +118,7 @@ export default function OnboardApplicationPage() {
 
         <div ref={scroller} onScroll={onScroll} className="ds-scroll min-h-0 flex-1 overflow-y-auto px-6 py-6">
           {visibleCategories.length === 0 ? (
-            <p className="pt-10 text-center text-body-sm text-text-secondary">
-              No application type matches “{query.trim()}”.
-            </p>
+            <CatalogSearchMiss query={query.trim()} onSelect={pick} />
           ) : (
             <div className="flex flex-col gap-8">
               {visibleCategories.map((cat, i) => (
@@ -160,11 +159,49 @@ export default function OnboardApplicationPage() {
 }
 
 /**
+ * Search found nothing in the catalog. The type they asked for is not here yet;
+ * the custom application type is the way through until it is.
+ *
+ * Same tile as the catalog so picking it is the same action as finding Custom
+ * Application by browsing — not a second, invented control.
+ */
+function CatalogSearchMiss({
+  query,
+  onSelect,
+}: {
+  query: string;
+  onSelect: (t: AppTypeOption) => void;
+}) {
+  const custom = getCustomAppType();
+  return (
+    <div className="flex max-w-2xl items-start gap-5 pt-4">
+      <div className="w-[200px] shrink-0">
+        <AppTypeTile appType={custom} title="Custom application type" onSelect={onSelect} />
+      </div>
+      <p className="pt-2 text-body-sm text-text-secondary">
+        {query
+          ? `“${query}” isn’t in the catalog yet. It will be present shortly — until then, use a custom application type.`
+          : 'Your requested application type will be present shortly — until then, use a custom application type.'}
+      </p>
+    </div>
+  );
+}
+
+/**
  * One catalog tile. A coming-soon type stays in place rather than being hidden
  * — knowing it is on the way is the answer to "can I onboard this?" — but it
  * sinks to the subtle surface and stops being a control.
  */
-function AppTypeTile({ appType, onSelect }: { appType: AppTypeOption; onSelect: (t: AppTypeOption) => void }) {
+function AppTypeTile({
+  appType,
+  onSelect,
+  title,
+}: {
+  appType: AppTypeOption;
+  onSelect: (t: AppTypeOption) => void;
+  /** Optional label when the catalog name is not the words this surface needs. */
+  title?: string;
+}) {
   const soon = appType.status === 'coming-soon';
   return (
     <button
@@ -186,7 +223,7 @@ function AppTypeTile({ appType, onSelect }: { appType: AppTypeOption; onSelect: 
       </div>
       <div className="w-full">
         <p className={`truncate text-body-sm-strong ${soon ? 'text-text-tertiary' : 'text-text-primary'}`}>
-          {appType.name}
+          {title ?? appType.name}
         </p>
         <p className={`mt-0.5 truncate text-caption ${soon ? 'text-text-tertiary' : 'text-text-secondary'}`}>
           {appType.protocols.join(' · ')}

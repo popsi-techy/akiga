@@ -44,9 +44,11 @@ type Section = 'authorization' | 'connection';
 export function ProvisioningSetupTab({
   applicationId,
   applicationName,
+  onChanged,
 }: {
   applicationId: string;
   applicationName: string;
+  onChanged?: () => void;
 }) {
   const toast = useToast();
   const [section, setSection] = React.useState<Section>('authorization');
@@ -71,6 +73,7 @@ export function ProvisioningSetupTab({
   const authorize = (r: AppAuthorization) => {
     setAuthorized(r.id, true);
     refresh();
+    onChanged?.();
     toast.success(`Connected to this application with ${METHOD_LABEL[r.method]}.`);
   };
 
@@ -79,6 +82,7 @@ export function ProvisioningSetupTab({
     deleteAuthorization(removing.id);
     setRemoving(null);
     refresh();
+    onChanged?.();
     toast.success('Authorization removed. IGA can no longer reach this application.');
   };
 
@@ -243,6 +247,7 @@ export function ProvisioningSetupTab({
             applicationId={applicationId}
             applicationName={applicationName}
             authorizations={rows}
+            onChanged={onChanged}
           />
         )}
       </div>
@@ -255,6 +260,7 @@ export function ProvisioningSetupTab({
         onSaved={() => {
           setDrawerOpen(false);
           refresh();
+          onChanged?.();
         }}
       />
 

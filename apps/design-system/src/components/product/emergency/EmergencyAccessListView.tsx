@@ -6,8 +6,7 @@ import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import FilterListOutlined from '@mui/icons-material/FilterListOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined';
-import EditOutlined from '@mui/icons-material/EditOutlined';
-import BlockOutlined from '@mui/icons-material/BlockOutlined';
+import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import {
   DataTable,
   StatusChip,
@@ -15,34 +14,47 @@ import {
   Button,
   Input,
   Menu,
+  Dialog,
   useToast,
   type Column,
 } from '@ds/components';
-import { getEmergencyAccessList, type EARow } from '@/data/emergency-access';
+import { deleteEmergencyAccess, getEmergencyAccessList, type EARow } from '@/data/emergency-access';
+import { EmergencyAccessEmptyState } from './EmergencyAccessEmptyState';
 
 /**
- * The Emergency Access list, shared by both versions of the module.
+ * The Emergency Access list, shared by every version of the module.
  *
- * Identical in every column and action; the versions differ only in what the
- * primary button does — V1 opens a drawer for a name and drops you on a draft,
- * V2 starts a stepper. So the button's behaviour is the caller's, and everything
- * else lives here once.
+ * Identical in every column; the versions differ in what the primary button does
+ * and where a draft row goes. V1 and V3 open a drawer then the tabbed draft; V2
+ * starts or resumes a stepper. Those behaviours are the caller's.
  */
 export function EmergencyAccessListView({
   basePath,
   onCreate,
+  onOpen,
 }: {
   basePath: string;
   onCreate: () => void;
+  /**
+   * Where a row goes. V1 always opens the tabbed profile; V2 sends a draft back
+   * into the stepper at the first unfinished step, and an active profile to the
+   * same tabbed screen.
+   */
+  onOpen?: (row: EARow) => void;
 }) {
   const router = useRouter();
   const toast = useToast();
   const [search, setSearch] = React.useState('');
+  const [pendingDelete, setPendingDelete] = React.useState<EARow | null>(null);
 
   const all = getEmergencyAccessList();
   const rows = all.filter((r) => r.name.toLowerCase().includes(search.trim().toLowerCase()));
+  const firstRun = all.length === 0;
 
-  const open = (id: string) => router.push(`${basePath}/${id}`);
+  const open = (row: EARow) => {
+    if (onOpen) onOpen(row);
+    else router.push(`${basePath}/${row.id}`);
+  };
 
   const columns: Column<EARow>[] = [
     {
@@ -87,64 +99,86 @@ export function EmergencyAccessListView({
       header: 'Actions',
       align: 'right',
       width: 80,
-      render: (r) => {
-        const isActive = r.status.label === 'Active';
-        return (
+      render: (r) => (
           <Menu
             items={[
-              { label: 'View details', icon: <VisibilityOutlined sx={{ fontSize: 18 }} />, onClick: () => open(r.id) },
-              { label: 'Edit basic details', icon: <EditOutlined sx={{ fontSize: 18 }} />, onClick: () => toast.info('Edit basic details'), divider: true },
+              { label: r.status.intent === 'warning' && onOpen ? 'Continue setup' : 'View details', icon: <VisibilityOutlined sx={{ fontSize: 18 }} />, onClick: () => open(r) },
               {
-                label: isActive ? 'Deactivate' : 'Activate',
-                icon: <BlockOutlined sx={{ fontSize: 18 }} />,
-                danger: isActive,
-                onClick: () => toast.success(`${r.name} ${isActive ? 'deactivated' : 'activated'}`),
+                label: 'Delete',
+                icon: <DeleteOutline sx={{ fontSize: 18 }} />,
+                danger: true,
+                onClick: () => setPendingDelete(r),
               },
             ]}
           />
-        );
-      },
+        ),
     },
   ];
 
   return (
     <div className="flex h-full flex-col">
-      <div className="mb-5 shrink-0">
-        <h1 className="text-h2 text-text-primary">Emergency Access</h1>
-        <p className="mt-1 text-body text-text-secondary">
-          Track and manage time-bound, break-glass access to critical systems from one central table.
-        </p>
-      </div>
+      {!firstRun && (
+        <div className="mb-5 shrink-0">
+          <h1 className="text-h2 text-text-primary">Emergency Access</h1>
+          <p className="mt-1 text-body text-text-secondary">
+            Track and manage time-bound, break-glass access to critical systems from one central table.
+          </p>
+        </div>
+      )}
 
-      <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
-        <div className="w-full max-w-sm">
-          <Input
-            placeholder="Search by application"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+      {!firstRun && (
+        <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
+          <div className="w-full max-w-sm">
+            <Input
+              placeholder="Search by application"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+            />
+          </div>
+          <Button variant="secondary" startIcon={<FilterListOutlined />} onClick={() => toast.info('Filters coming soon')}>
+            Filter
+          </Button>
+          <div className="ml-auto">
+            <Button startIcon={<AddIcon />} onClick={onCreate}>
+              Create Emergency Access
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {firstRun ? (
+        <EmergencyAccessEmptyState onCreate={onCreate} />
+      ) : (
+        <div className="min-h-0 flex-1">
+          <DataTable<EARow>
+            columns={columns}
+            rows={rows}
+            onRowClick={(r) => open(r)}
+            fillHeight
+            emptyTitle="No emergency access found"
+            emptyMessage="Try a different search, or create emergency access to grant time-bound access to critical systems."
           />
         </div>
-        <Button variant="secondary" startIcon={<FilterListOutlined />} onClick={() => toast.info('Filters coming soon')}>
-          Filter
-        </Button>
-        <div className="ml-auto">
-          <Button startIcon={<AddIcon />} onClick={onCreate}>
-            Create Emergency Access
-          </Button>
-        </div>
-      </div>
+      )}
 
-      <div className="min-h-0 flex-1">
-        <DataTable<EARow>
-          columns={columns}
-          rows={rows}
-          onRowClick={(r) => open(r.id)}
-          fillHeight
-          emptyTitle="No emergency access found"
-          emptyMessage="Create emergency access to grant time-bound, break-glass access to critical systems."
-        />
-      </div>
+      <Dialog
+        open={Boolean(pendingDelete)}
+        onClose={() => setPendingDelete(null)}
+        tone="danger"
+        title={`Delete ${pendingDelete?.name ?? 'this access'}?`}
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (!pendingDelete) return;
+          deleteEmergencyAccess(pendingDelete.id);
+          toast.success(`“${pendingDelete.name}” deleted`);
+          setPendingDelete(null);
+        }}
+      >
+        {pendingDelete?.status.label === 'Draft'
+          ? 'The profile and everything configured on it are removed. Nothing has been granted under it, so nobody loses access.'
+          : 'Anyone holding access through this profile keeps it until their session ends, and nobody can request it again. Sessions already granted stay in the audit log.'}
+      </Dialog>
     </div>
   );
 }

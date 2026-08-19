@@ -48,12 +48,14 @@ export function EntityOwnersTab({
   seedOwnerIds,
   label = 'Owner',
   emptyHint,
+  onChanged,
 }: {
   entityType: OwnedEntityType;
   entityId: string;
   seedOwnerIds: string[];
   label?: string;
   emptyHint?: string;
+  onChanged?: () => void;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -83,6 +85,7 @@ export function EntityOwnersTab({
   const persist = (ids: string[]) => {
     setOwnerIds(ids);
     setOwners(entityType, entityId, ids);
+    onChanged?.();
   };
 
   const [search, setSearch] = React.useState('');

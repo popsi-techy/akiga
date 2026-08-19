@@ -1,13 +1,15 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ArrowBackOutlined from '@mui/icons-material/ArrowBack';
 import ArrowForwardOutlined from '@mui/icons-material/ArrowForward';
 import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
+import CloseOutlined from '@mui/icons-material/CloseOutlined';
+import EditOutlined from '@mui/icons-material/EditOutlined';
 import SaveOutlined from '@mui/icons-material/SaveOutlined';
-import TuneOutlined from '@mui/icons-material/TuneOutlined';
-import { Button, Card, Input, StepTracker, Tooltip, useToast } from '@ds/components';
+import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import { Avatar, Button, Card, Input, Menu, StatusChip, StepTracker, Tooltip, useToast } from '@ds/components';
 import {
   activateEmergencyAccess,
   createEmergencyAccess,
@@ -27,6 +29,7 @@ import { EligibilityCriteriaTab } from '@/components/product/emergency/Eligibili
 import { AdvancedConfigurationTab } from '@/components/product/emergency/AdvancedConfigurationTab';
 import { EmergencyAssignmentsPicker } from '@/components/product/emergency/EmergencyAssignmentsTab';
 import { EmergencyOwnersPicker } from '@/components/product/emergency/EmergencyAccessDetail';
+import { toastEASetupStep } from '@/components/product/emergency/ea-setup-toast';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 
 type StepDef = {
@@ -64,8 +67,8 @@ type StepDef = {
    * wears an asterisk; offering to skip it as well would have the rail and the
    * footer saying opposite things about the same step.
    *
-   * Worth being specific per step: on a step that arrives with working defaults,
-   * "Skip" would be a lie — nothing is being left undone.
+   * Same words on every skippable step — "Skip step" — so the footer does not
+   * invent a second verb for the same move.
    */
   skipLabel?: string;
 };
@@ -105,18 +108,28 @@ const STEPS: StepDef[] = [
     // Always satisfied: the defaults are real, working values rather than empty
     // fields, so this step can be passed but never left incomplete.
     filled: () => true,
-    skipLabel: 'Keep defaults',
+    skipLabel: 'Skip step',
   },
   {
     label: 'Preview',
-    heading: 'Check it, then switch it on',
-    description: 'Check it, then switch it on',
+    heading: 'Check it, then activate it',
+    description: 'Check it, then activate it',
     // No `filled`: the finish line is not a task, so it never marks itself done.
   },
 ];
 
 /** Where the preview sends the reader for each thing `eaBlockingSteps` can name. */
 const stepForBlocker = (blocker: string) => STEPS.findIndex((s) => s.blocker === blocker);
+
+/** First unfinished wizard step, or Preview once everything before it is in place. */
+function resumeStepIndex(ea: EADetail): number {
+  for (let i = 0; i < STEPS.length - 1; i++) {
+    const s = STEPS[i];
+    const done = s.blocker ? !eaBlockingSteps(ea).includes(s.blocker) : Boolean(s.filled?.(ea));
+    if (!done) return i;
+  }
+  return STEPS.length - 1;
+}
 
 /**
  * Emergency Access V2 — create in a stepper.
@@ -129,7 +142,9 @@ const stepForBlocker = (blocker: string) => STEPS.findIndex((s) => s.blocker ===
  * The profile is created for real at the end of step 1, because every editor
  * after it (assignments, eligibility, owners, limits) is keyed by profile id and
  * writes as you go. That also means leaving halfway leaves a draft behind rather
- * than nothing — the same outcome V1 produces, reached a different way.
+ * than nothing — the same outcome V1 produces, reached a different way. Opening
+ * that draft from the list resumes here, on the first step still empty, rather
+ * than on the tabbed screen V1 uses for the same unfinished object.
  *
  * ## Skipping
  *
@@ -158,25 +173,59 @@ const stepForBlocker = (blocker: string) => STEPS.findIndex((s) => s.blocker ===
  * left empty by pressing "Skip". The button is there to say that passing is
  * allowed; it is not the thing that makes it true.
  */
-export default function EmergencyAccessV2Wizard() {
+function WizardLoading() {
+  return <div className="py-16 text-center text-body-sm text-text-secondary">Loading…</div>;
+}
+
+function EmergencyAccessV2WizardInner() {
   const router = useRouter();
   const toast = useToast();
+  const resumeId = useSearchParams().get('id');
+  const existing = resumeId ? getEmergencyAccess(resumeId) : null;
+  const resumable = existing?.isDraft ? existing : null;
 
   useSetBreadcrumbs([
     { label: 'Emergency Access V2', href: '/iga/emergency-v2' },
-    { label: 'New emergency access' },
+    { label: resumable ? 'Continue setup' : 'New emergency access' },
   ]);
 
-  const [step, setStep] = React.useState(0);
+  const initialStep = resumable ? resumeStepIndex(resumable) : 0;
+  const [step, setStep] = React.useState(initialStep);
   // The furthest step reached, which is what makes a step "skipped" rather than
   // "not yet visited". Jumping back to fix something must not un-skip the steps
   // beyond it, so this only ever climbs.
-  const [reached, setReached] = React.useState(0);
-  const [id, setId] = React.useState<string | null>(null);
-  const [name, setName] = React.useState('');
-  const [description, setDescription] = React.useState('');
+  const [reached, setReached] = React.useState(initialStep);
+  const [id, setId] = React.useState<string | null>(resumable?.id ?? null);
+  const [name, setName] = React.useState(resumable?.name ?? '');
+  const [description, setDescription] = React.useState(resumable?.description ?? '');
   // Bumped by each editor so the preview and the tracker re-read session memory.
   const [, bump] = React.useReducer((n: number) => n + 1, 0);
+  const hydratedId = React.useRef<string | null>(resumable?.id ?? null);
+
+  React.useEffect(() => {
+    if (!resumeId) return;
+    const found = getEmergencyAccess(resumeId);
+    if (found && !found.isDraft) {
+      router.replace(`/iga/emergency-v2/${found.id}`);
+      return;
+    }
+    if (!found) {
+      toast.error('Emergency access not found.');
+      router.replace('/iga/emergency-v2');
+      return;
+    }
+    if (hydratedId.current === found.id) return;
+    hydratedId.current = found.id;
+    setId(found.id);
+    setName(found.name);
+    setDescription(found.description);
+    const next = resumeStepIndex(found);
+    setStep(next);
+    setReached(next);
+  }, [resumeId, router, toast]);
+
+  if (resumeId && existing && !existing.isDraft) return <WizardLoading />;
+  if (resumeId && !existing) return <WizardLoading />;
 
   const ea = id ? getEmergencyAccess(id) : null;
   const blocking = ea ? eaBlockingSteps(ea) : ['basic details'];
@@ -230,6 +279,7 @@ export default function EmergencyAccessV2Wizard() {
     }
     const created = createEmergencyAccess({ name, description });
     setId(created);
+    toastEASetupStep(toast, created, 'basic', false);
     return created;
   };
 
@@ -317,7 +367,7 @@ export default function EmergencyAccessV2Wizard() {
     if (step === 1) return <EmergencyAssignmentsPicker eaId={ea.id} onChanged={bump} />;
     if (step === 2) return <EligibilityCriteriaTab eaId={ea.id} onChanged={bump} />;
     if (step === 3) return <EmergencyOwnersPicker ea={ea} onChanged={bump} />;
-    if (step === 4) return <AdvancedConfigurationTab eaId={ea.id} onChanged={bump} />;
+    if (step === 4) return <AdvancedConfigurationTab eaId={ea.id} onChanged={bump} hideChrome />;
     return <Preview ea={ea} blocking={blocking} onGoToStep={goTo} />;
   };
 
@@ -332,15 +382,58 @@ export default function EmergencyAccessV2Wizard() {
       <div className="grid min-h-0 flex-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex min-h-0 min-w-0 flex-col">
           <div className="shrink-0">
-            {/* No page title: the breadcrumb already names this screen, and the
-                step heading below is the wizard's real subject — the question being
-                asked right now. Two titles stacked made the constant one loudest. */}
-            {/* One heading. The count went because the rail numbers the steps and
-                marks the current one, and the description went because the heading
-                is now written to say the same thing. */}
-            <div className="mb-5">
-              <h2 className="text-h4 text-text-primary">{STEPS[step].heading}</h2>
-            </div>
+            {last && ea ? (
+              /* The preview is the profile, not another question. Name and
+                 description take the heading the other steps use for the prompt,
+                 and the actions sit on the same row so Activate is where you
+                 finish reading the identity rather than under a fifth card. */
+              <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+                <div className="flex min-w-0 items-start gap-3">
+                  <Avatar name={ea.name} initials={ea.initial} size="md" />
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h2 className="text-h4 text-text-primary">{ea.name}</h2>
+                      <StatusChip intent={ea.status.intent} label={ea.status.label} />
+                    </div>
+                    {ea.description ? (
+                      <p className="mt-px text-body-sm text-text-secondary">{ea.description}</p>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  <Button variant="secondary" startIcon={<EditOutlined />} onClick={() => goTo(0)}>
+                    Edit
+                  </Button>
+                  <Tooltip
+                    title={
+                      blocking.length > 0
+                        ? `Add ${blocking.join(' and ')} before this can be activated.`
+                        : 'Let eligible people request this access'
+                    }
+                  >
+                    <span>
+                      <Button startIcon={<CheckCircleOutlined />} disabled={blocking.length > 0} onClick={activate}>
+                        Activate
+                      </Button>
+                    </span>
+                  </Tooltip>
+                  <Menu
+                    ariaLabel="More actions"
+                    items={[
+                      {
+                        label: 'Cancel',
+                        icon: <CloseOutlined sx={{ fontSize: 18 }} />,
+                        onClick: () => router.push('/iga/emergency-v2'),
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="mb-5">
+                <h2 className="text-h4 text-text-primary">{STEPS[step].heading}</h2>
+              </div>
+            )}
           </div>
 
           {/* The only scrolling region on the page. The rail-and-table editors
@@ -348,6 +441,7 @@ export default function EmergencyAccessV2Wizard() {
               than an arbitrary minimum. */}
           <div className="ds-scroll min-h-0 flex-1 overflow-y-auto pr-0.5">{stepBody()}</div>
 
+          {!last && (
           <div className="mt-6 flex shrink-0 flex-wrap items-center gap-3 pt-5">
             {/* Cancel holds the left corner on every step — the same escape in the
                 same place for the whole flow. It does not delete anything: once
@@ -361,8 +455,7 @@ export default function EmergencyAccessV2Wizard() {
             <div className="ml-auto flex items-center gap-2">
               {/* The rail carries this on wide screens; below `lg` the rail is
                   hidden and the count is the only thing left saying how much of
-                  the gate is met. On the last step it lands beside Activate,
-                  which is where "why is this dead" gets asked. */}
+                  the gate is met. */}
               {id && (
                 <div className="mr-1 lg:hidden">
                   <SetupProgress done={EA_REQUIRED_STEPS - blocking.length} total={EA_REQUIRED_STEPS} />
@@ -378,7 +471,7 @@ export default function EmergencyAccessV2Wizard() {
                   same kind of move — both leave this step for the next one — so they
                   belong in the same group, and `secondary` says it is a real choice
                   rather than an aside. Only ungated steps ever render it. */}
-              {!last && STEPS[step].skipLabel && (
+              {STEPS[step].skipLabel && (
                 <Button
                   variant="secondary"
                   className="whitespace-nowrap"
@@ -392,7 +485,7 @@ export default function EmergencyAccessV2Wizard() {
                   whether leaving is the point, and grouping this one with "Save and
                   continue" puts the two save verbs side by side where they can be
                   compared. Only rendered once there is a draft to keep. */}
-              {id && !last && (
+              {id && (
                 <Button
                   variant="secondary"
                   className="whitespace-nowrap"
@@ -404,40 +497,25 @@ export default function EmergencyAccessV2Wizard() {
                   Save as draft
                 </Button>
               )}
-              {last ? (
-                <Tooltip
-                  title={
-                    blocking.length > 0
-                      ? `Add ${blocking.join(' and ')} before this can be activated.`
-                      : 'Let eligible people request this access'
-                  }
-                >
-                  <span>
-                    <Button startIcon={<CheckCircleOutlined />} disabled={blocking.length > 0} onClick={activate}>
-                      Activate
-                    </Button>
-                  </span>
-                </Tooltip>
-              ) : (
-                // Disabled rather than silently refusing the click: a button that
-                // looks live and does nothing reads as a broken app, where a
-                // disabled one with a reason attached reads as a rule.
-                <Tooltip
-                  title={unmet ? `Add ${unmet} before moving on.` : 'Save this step and move on'}
-                >
-                  <span>
-                    <Button
-                      endIcon={<ArrowForwardOutlined />}
-                      disabled={Boolean(unmet)}
-                      onClick={() => goTo(step + 1)}
-                    >
-                      Save and continue
-                    </Button>
-                  </span>
-                </Tooltip>
-              )}
+              {/* Disabled rather than silently refusing the click: a button that
+                  looks live and does nothing reads as a broken app, where a
+                  disabled one with a reason attached reads as a rule. */}
+              <Tooltip
+                title={unmet ? `Add ${unmet} before moving on.` : 'Save this step and move on'}
+              >
+                <span>
+                  <Button
+                    endIcon={<ArrowForwardOutlined />}
+                    disabled={Boolean(unmet)}
+                    onClick={() => goTo(step + 1)}
+                  >
+                    Save and continue
+                  </Button>
+                </span>
+              </Tooltip>
             </div>
           </div>
+          )}
         </div>
 
         {/* No minimum height: it takes the row's height and spreads the steps
@@ -458,6 +536,21 @@ export default function EmergencyAccessV2Wizard() {
 }
 
 /**
+ * `useSearchParams` — read above for the `?id=` that continues an existing draft
+ * — has no value during a static prerender, so Next refuses to prerender the
+ * route unless the component reading it sits under a Suspense boundary. Without
+ * this the production build fails on this page while `next dev` is perfectly
+ * happy, because dev renders every route on demand.
+ */
+export default function EmergencyAccessV2Wizard() {
+  return (
+    <React.Suspense fallback={<WizardLoading />}>
+      <EmergencyAccessV2WizardInner />
+    </React.Suspense>
+  );
+}
+
+/**
  * One section of the preview: a taxonomy label over a single panel.
  *
  * The same shape the SoD resolution preview uses. A `Card` per section gave each
@@ -465,7 +558,7 @@ export default function EmergencyAccessV2Wizard() {
  * around two rows of text — and five of them stacked made the page read as five
  * objects rather than one thing being checked. `overline` is exactly this job:
  * it names what kind of thing follows and carries no meaning you would lose by
- * deleting it, which is true of "What it is" and false of a card title.
+ * deleting it, which is true of "What it hands over" and false of a card title.
  */
 function PreviewSection({
   label,
@@ -591,11 +684,6 @@ function Preview({
         </Card>
       )}
 
-      <PreviewSection label="What it is">
-        <SummaryRow label="Name">{ea.name || none}</SummaryRow>
-        <SummaryRow label="Description">{ea.description || none}</SummaryRow>
-      </PreviewSection>
-
       <PreviewSection label="What it hands over">
         <SummaryRow label="Grants">{grants.length ? grants.join(' and ') : none}</SummaryRow>
         <SummaryRow label="Who may request it">
@@ -616,10 +704,19 @@ function Preview({
         <SummaryRow label="Requestable on">{days.length === 7 ? 'Every day' : days.join(', ') || none}</SummaryRow>
       </PreviewSection>
 
-      <p className="text-caption text-text-tertiary">
-        <TuneOutlined sx={{ fontSize: 14 }} className="mr-1 align-text-bottom" />
-        Everything here stays editable on the profile after it is switched on.
-      </p>
+      <div
+        role="note"
+        className="flex items-start gap-2.5 rounded-lg border border-[var(--ds-color-status-info-border)] bg-[var(--ds-color-status-info-subtle)] px-3 py-2.5"
+      >
+        <InfoOutlined
+          sx={{ fontSize: 18, color: 'var(--ds-color-status-info-fg)' }}
+          className="mt-0.5 shrink-0"
+          aria-hidden
+        />
+        <p className="text-body-sm text-[var(--ds-color-status-info-fg)]">
+          Everything here stays editable on the profile after it is activated.
+        </p>
+      </div>
     </div>
   );
 }

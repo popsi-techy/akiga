@@ -6,10 +6,8 @@ import { EmergencyAccessListView } from '@/components/product/emergency/Emergenc
 /**
  * Emergency Access V2 — create in a stepper, finish on a live profile.
  *
- * Same list, same detail screen as V1. The difference is what happens after the
- * button: V1 asks for a name and leaves you on a draft with a checklist of what
- * is still missing; V2 walks the same five pieces in order and ends on a preview
- * you activate from.
+ * Same list as V1. A draft row resumes the stepper at the first unfinished step;
+ * an active row opens the tabbed profile the live object is managed on.
  */
 export default function EmergencyAccessV2ListPage() {
   const router = useRouter();
@@ -17,6 +15,13 @@ export default function EmergencyAccessV2ListPage() {
     <EmergencyAccessListView
       basePath="/iga/emergency-v2"
       onCreate={() => router.push('/iga/emergency-v2/new')}
+      onOpen={(row) => {
+        if (row.status.intent === 'warning') {
+          router.push(`/iga/emergency-v2/new?id=${encodeURIComponent(row.id)}`);
+        } else {
+          router.push(`/iga/emergency-v2/${row.id}`);
+        }
+      }}
     />
   );
 }

@@ -3,6 +3,8 @@ export { EntityAvatar, type EntityKind } from './EntityAvatar';
 export { IdentityKindChip } from './IdentityKindChip';
 export { AccountDetailsBody } from './AccountDetailsBody';
 export { AddApplicationDrawer } from './AddApplicationDrawer';
+export { ApplicationSetupCard } from './ApplicationSetupCard';
+export { ApplicationBasicDetailsDrawer } from './ApplicationBasicDetailsDrawer';
 export { EntityOwnersTab } from './EntityOwnersTab';
 export { ApplicationApprovalPolicyTab } from './ApplicationApprovalPolicyTab';
 export { ReconciliationTab } from './ReconciliationTab';

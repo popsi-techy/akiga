@@ -34,10 +34,12 @@ export function ConnectionConfiguration({
   applicationId,
   applicationName,
   authorizations,
+  onChanged,
 }: {
   applicationId: string;
   applicationName: string;
   authorizations: AppAuthorization[];
+  onChanged?: () => void;
 }) {
   const toast = useToast();
   const [rows, setRows] = React.useState<ConnectionEvent[]>([]);
@@ -62,6 +64,7 @@ export function ConnectionConfiguration({
     deleteConnectionEvent(removing.id);
     setRemoving(null);
     refresh();
+    onChanged?.();
     toast.success('Event removed. It will not run again.');
   };
 
@@ -232,6 +235,7 @@ export function ConnectionConfiguration({
         onSaved={() => {
           setMapping(null);
           refresh();
+          onChanged?.();
         }}
       />
 
@@ -244,6 +248,7 @@ export function ConnectionConfiguration({
         onSaved={() => {
           setDrawerOpen(false);
           refresh();
+          onChanged?.();
         }}
       />
 

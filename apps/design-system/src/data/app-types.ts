@@ -51,6 +51,11 @@ export function listAppTypes(): AppTypeOption[] {
   return appTypes;
 }
 
+/** The fallback type when the catalog has no match for a search. */
+export function getCustomAppType(): AppTypeOption {
+  return appTypes.find((t) => t.id === 'at-custom')!;
+}
+
 /** True when the type answers a free-text search of name or protocol. */
 export function appTypeMatches(t: AppTypeOption, query: string): boolean {
   const q = query.trim().toLowerCase();

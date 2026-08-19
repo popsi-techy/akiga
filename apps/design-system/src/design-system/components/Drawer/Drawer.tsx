@@ -17,6 +17,8 @@ export interface DrawerProps {
   subtitle?: React.ReactNode;
   /** Leading icon rendered in a brand-tint tile (e.g. a MUI icon). */
   icon?: React.ReactNode;
+  /** Leading mark without the brand tile — e.g. an {@link AppIcon} logo. */
+  leading?: React.ReactNode;
   /** Right-aligned footer actions (e.g. Cancel + primary Button). */
   footer?: React.ReactNode;
   /** Panel width in px. @default 480 */
@@ -27,7 +29,18 @@ export interface DrawerProps {
   children?: React.ReactNode;
 }
 
-export function Drawer({ open, onClose, title, subtitle, icon, footer, width = 480, disablePadding = false, children }: DrawerProps) {
+export function Drawer({
+  open,
+  onClose,
+  title,
+  subtitle,
+  icon,
+  leading,
+  footer,
+  width = 480,
+  disablePadding = false,
+  children,
+}: DrawerProps) {
   const titleId = React.useId();
   return (
     <MuiDrawer
@@ -41,10 +54,14 @@ export function Drawer({ open, onClose, title, subtitle, icon, footer, width = 4
     >
       <div className="flex h-full flex-col">
         <header className="flex items-center gap-4 border-b border-border px-6 py-6">
-          {icon && (
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-avatar bg-brand-subtle text-icon-brand">
-              {icon}
-            </span>
+          {leading ? (
+            <span className="shrink-0">{leading}</span>
+          ) : (
+            icon && (
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-avatar bg-brand-subtle text-icon-brand">
+                {icon}
+              </span>
+            )
           )}
           <div className="min-w-0 flex-1">
             <h2 id={titleId} className="text-h4 leading-tight text-text-primary">

@@ -92,7 +92,7 @@ export function InfoRow({ label, value, icon, className = '', valueWrap = false 
         className={[
           'min-w-0 py-3 text-left',
           valueWrap ? '' : 'truncate',
-          labelLeads ? 'text-body-sm text-text-secondary' : 'text-body-sm-strong text-text-primary',
+          labelLeads ? 'text-body-sm text-text-secondary' : 'text-body-sm-medium text-text-primary',
         ]
           .filter(Boolean)
           .join(' ')}

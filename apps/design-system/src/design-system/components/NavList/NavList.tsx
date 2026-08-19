@@ -35,7 +35,7 @@ export function NavList({ items, value, onChange, ariaLabel }: NavListProps) {
             aria-selected={active}
             onClick={() => onChange(item.id)}
             className={[
-              'flex w-full items-center gap-2.5 rounded-md border px-3 py-2.5 text-left text-body-sm-strong transition-colors',
+              'flex w-full items-center gap-2.5 rounded-md border px-3 py-2.5 text-left text-body-sm-medium transition-colors',
               active ? 'border-brand bg-surface text-text-primary' : 'border-transparent text-text-primary hover:bg-surface-hover',
             ].join(' ')}
           >

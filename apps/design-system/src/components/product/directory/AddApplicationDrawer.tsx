@@ -1,11 +1,16 @@
 'use client';
 
 import * as React from 'react';
-import Apps from '@mui/icons-material/Apps';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
-import { Button, Drawer, Input, Switch, Tooltip } from '@ds/components';
+import { AppIcon, Button, Drawer, Input, Switch, Tooltip } from '@ds/components';
 import type { AppTypeOption } from '@/data/app-types';
 import { onboardApplication } from '@/data/applications-store';
+
+/** Short name for “Onboard {name} Application” — Google Workspace reads as Google. */
+function onboardAppLabel(name: string): string {
+  if (name === 'Google Workspace') return 'Google';
+  return name.replace(/ Application$/, '');
+}
 
 /**
  * Add Application — the second half of onboarding.
@@ -28,7 +33,7 @@ export function AddApplicationDrawer({
   onCreated: (id: string) => void;
 }) {
   const [name, setName] = React.useState('');
-  const [prefix, setPrefix] = React.useState('');
+  const [description, setDescription] = React.useState('');
   const [accessUrl, setAccessUrl] = React.useState('');
   const [enableProvisioning, setEnableProvisioning] = React.useState(false);
   const [identitySource, setIdentitySource] = React.useState(false);
@@ -40,7 +45,7 @@ export function AddApplicationDrawer({
   React.useEffect(() => {
     if (!open) return;
     setName('');
-    setPrefix('');
+    setDescription('');
     setAccessUrl('');
     setEnableProvisioning(false);
     setIdentitySource(false);
@@ -57,7 +62,7 @@ export function AddApplicationDrawer({
     if (!trimmed || !appType) return;
     const app = onboardApplication({
       name: trimmed,
-      prefix,
+      description,
       accessUrl,
       enableProvisioning,
       identitySource,
@@ -74,13 +79,9 @@ export function AddApplicationDrawer({
     <Drawer
       open={open}
       onClose={onClose}
-      icon={<Apps sx={{ fontSize: 22 }} />}
-      title="Add Application"
-      subtitle={
-        appType
-          ? `Configure a new ${appType.name} application to manage identities, access, and permissions.`
-          : 'Configure a new application to manage identities, access, and permissions.'
-      }
+      leading={appType ? <AppIcon app={appType.name} size={44} variant="subtle" /> : undefined}
+      title={appType ? `Onboard ${onboardAppLabel(appType.name)} Application` : 'Onboard Application'}
+      subtitle="Name it and set how IGA manages access."
       width={520}
       footer={
         <>
@@ -102,11 +103,14 @@ export function AddApplicationDrawer({
           error={nameError}
         />
         <Input
-          label="Application Prefix"
-          hint="Prepended to account names imported from this application, so their origin is readable at a glance."
-          placeholder="Enter Application Prefix"
-          value={prefix}
-          onChange={(e) => setPrefix(e.target.value)}
+          label="Description"
+          hint="Shown on the application profile and in lists — what this instance is for."
+          placeholder="What this application is for"
+          size="sm"
+          multiline
+          minRows={3}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
         />
 
         <div className="space-y-3">

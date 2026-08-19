@@ -252,10 +252,7 @@ function OverviewTab({
   onActivate: () => void;
   blocking: string[];
 }) {
-  const steps = sodPolicyNextSteps(policy).map((s) => ({
-    ...s,
-    icon: s.id === 'ruleset' ? <RuleOutlined sx={{ fontSize: 18 }} /> : <GroupsOutlined sx={{ fontSize: 18 }} />,
-  }));
+  const steps = sodPolicyNextSteps(policy);
   const canActivate = blocking.length === 0;
 
   return (
@@ -263,6 +260,7 @@ function OverviewTab({
       <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
         {policy.status === 'draft' ? (
           <NextStepsCard
+            title="Recommended next steps to activate this policy"
             steps={steps}
             onStep={(id) => onGoToTab(steps.find((s) => s.id === id)?.tab ?? 'overview')}
             footer={
@@ -277,6 +275,7 @@ function OverviewTab({
                 </Button>
               </>
             }
+            stepCtaVariant={canActivate ? 'secondary' : 'primary'}
           />
         ) : (
           <Card title="What this policy catches" icon={<Policy />} padding="lg">

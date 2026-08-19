@@ -14,8 +14,8 @@ import type { AppTypeCategory } from './app-types';
 export interface OnboardedApplication {
   id: string;
   name: string;
-  /** Prepended to account names imported from this application. */
-  prefix: string;
+  /** Shown on the profile and in application lists. */
+  description: string;
   accessUrl: string;
   enableProvisioning: boolean;
   identitySource: boolean;
@@ -25,6 +25,8 @@ export interface OnboardedApplication {
   appTypeId: string;
   appType: string;
   appTypeCategory: AppTypeCategory;
+  /** Setup until the connector is connected; then active in the catalog. */
+  status: 'setup' | 'active';
   createdAt: string; // ISO
   updatedAt: string; // ISO
 }
@@ -55,13 +57,18 @@ function writeStore(s: Store) {
   if (hasWindow()) window.localStorage.setItem(STORE_KEY, JSON.stringify(s));
 }
 
+function normalizeOnboarded(raw: OnboardedApplication): OnboardedApplication {
+  return { ...raw, status: raw.status ?? 'setup' };
+}
+
 /** Newest first — the application you just onboarded is the one you are looking for. */
 export function listOnboardedApplications(): OnboardedApplication[] {
-  return Object.values(readStore().applications).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  return Object.values(readStore().applications).map(normalizeOnboarded).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
 export function getOnboardedApplication(id: string): OnboardedApplication | null {
-  return readStore().applications[id] ?? null;
+  const app = readStore().applications[id];
+  return app ? normalizeOnboarded(app) : null;
 }
 
 /** Prefixed so it can never collide with a seeded `app-okta`-style id. */
@@ -69,7 +76,7 @@ const makeId = () => `app-new-${Math.random().toString(36).slice(2, 10)}`;
 
 export interface OnboardApplicationInput {
   name: string;
-  prefix: string;
+  description: string;
   accessUrl: string;
   enableProvisioning: boolean;
   identitySource: boolean;
@@ -86,8 +93,9 @@ export function onboardApplication(input: OnboardApplicationInput): OnboardedApp
     ...input,
     id: makeId(),
     name: input.name.trim() || input.appType,
-    prefix: input.prefix.trim(),
+    description: input.description.trim(),
     accessUrl: input.accessUrl.trim(),
+    status: 'setup',
     createdAt: now,
     updatedAt: now,
   };
@@ -101,4 +109,34 @@ export function deleteOnboardedApplication(id: string): void {
   const store = readStore();
   delete store.applications[id];
   writeStore(store);
+}
+
+export function updateApplicationBasics(
+  id: string,
+  basics: { name: string; description: string },
+): OnboardedApplication | null {
+  const store = readStore();
+  const app = store.applications[id];
+  if (!app) return null;
+  const now = new Date().toISOString();
+  const next = normalizeOnboarded({
+    ...app,
+    name: basics.name.trim() || app.name,
+    description: basics.description.trim(),
+    updatedAt: now,
+  });
+  store.applications[id] = next;
+  writeStore(store);
+  return next;
+}
+
+export function connectApplication(id: string): OnboardedApplication | null {
+  const store = readStore();
+  const app = store.applications[id];
+  if (!app || app.status === 'active') return app ? normalizeOnboarded(app) : null;
+  const now = new Date().toISOString();
+  const next = normalizeOnboarded({ ...app, status: 'active', updatedAt: now });
+  store.applications[id] = next;
+  writeStore(store);
+  return next;
 }

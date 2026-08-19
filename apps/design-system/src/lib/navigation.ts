@@ -78,6 +78,7 @@ export const navigation: NavSection[] = [
       { label: 'Nav Card', href: '/components/nav-card', status: 'ready' },
       { label: 'Menu', href: '/components/menu', status: 'ready' },
       { label: 'Stepper', href: '/components/stepper', status: 'ready' },
+      { label: 'Setup Bar', href: '/components/setup-bar', status: 'ready' },
       { label: 'Step Tracker', href: '/components/step-tracker', status: 'ready' },
     ],
   },

@@ -165,6 +165,8 @@ export function getEmergencyAccessList(): EARow[] {
 
 export interface EASessionView {
   id: string;
+  /** The directory identity who held the session, so a row can open the person. */
+  identityId: string;
   name: string;
   subtitle: string;
   when: string;
@@ -198,6 +200,7 @@ export function getEmergencyAccess(id: string): EADetail | null {
     const idn = identities.find((u) => u.id === s.identityId);
     return {
       id: `${s.identityId}-${i}`,
+      identityId: s.identityId,
       name: idn?.name ?? 'Unknown',
       subtitle: idn ? `${idn.title} · ${idn.app}` : '',
       when: s.when,
@@ -328,6 +331,49 @@ export function deactivateEmergencyAccess(id: string): void {
 
 const deactivatedIds = new Set<string>();
 
+export type EASetupStepId = 'basic' | 'assignments' | 'eligibility' | 'owners' | 'advanced';
+
+/**
+ * Every piece of setting up a profile, in the order it wants doing.
+ *
+ * One ordered list, because this order is read in four places — the creation
+ * drawer's preview of what comes next, the profile's checklist, the tab strip, and
+ * the "Add X and Y" sentence — and it has already had to change once. A fourth
+ * hardcoded copy is the one that drifts silently, because nothing fails when it
+ * disagrees; it just tells a different story on a different screen.
+ *
+ * Labels only. Whether a step is *required* comes from `isRequiredSetupStep`, so the
+ * asterisks and the Activate gate cannot disagree, and the per-screen extras — a
+ * hint, a CTA, which tab it opens — stay with the screen that needs them.
+ */
+export const EA_SETUP_STEPS: { id: EASetupStepId; label: string }[] = [
+  { id: 'basic', label: 'Basic details' },
+  { id: 'assignments', label: 'Assignments' },
+  { id: 'eligibility', label: 'Eligibility criteria' },
+  { id: 'owners', label: 'Owners' },
+  { id: 'advanced', label: 'Advanced configuration' },
+];
+
+/**
+ * The steps a floating setup bar walks — the real tabs, not a checklist.
+ *
+ * Basic details is dropped: V3 creates the profile in a drawer, so that step is
+ * already done when the bar appears. Four steps keeps the DS Stepper's cap.
+ * Labels stay short so they fit beside Back / Next / Activate.
+ */
+export const EA_GUIDED_STEPS: { id: Exclude<EASetupStepId, 'basic'>; label: string; tab: string }[] = [
+  { id: 'assignments', label: 'Assignments', tab: 'assignments' },
+  { id: 'eligibility', label: 'Eligibility', tab: 'eligibility' },
+  { id: 'owners', label: 'Owners', tab: 'owners' },
+  { id: 'advanced', label: 'Limits', tab: 'advanced' },
+];
+
+/** First unfinished guided tab, or the last one once everything is in place. */
+export function firstUnfinishedGuidedTab(ea: EADetail): string {
+  const unfinished = EA_GUIDED_STEPS.find((s) => !isEASetupStepDone(s.id, ea));
+  return unfinished?.tab ?? EA_GUIDED_STEPS[EA_GUIDED_STEPS.length - 1].tab;
+}
+
 /**
  * The checks that gate activation, as data rather than a chain of `if`s.
  *
@@ -339,26 +385,39 @@ const deactivatedIds = new Set<string>();
  * governed, not functional, and blocking activation on a missing owner would
  * stop someone turning on break-glass access during an incident.
  */
-const EA_REQUIRED_CHECKS: { label: string; satisfied: (ea: EADetail) => boolean }[] = [
+const EA_REQUIRED_CHECKS: { id: EASetupStepId; label: string; satisfied: (ea: EADetail) => boolean }[] = [
   {
+    id: 'basic',
     label: 'basic details',
     satisfied: (ea) => ea.name.trim() !== '' && ea.description.trim() !== '',
   },
+  // Assignments before eligibility, matching the wizard, the checklist and the tab
+  // strip. What the access hands over is the thing being built; who may ask for it
+  // is a rule about that thing, so it cannot sensibly be decided first. This array
+  // is also what the "Add X and Y" sentence reads, so it has to agree with the lists
+  // the reader just scanned.
   {
-    label: 'eligibility criteria',
-    satisfied: (ea) => ea.eligibilityGroups.length > 0,
-  },
-  {
+    id: 'assignments',
     label: 'assignments',
     satisfied: (ea) => {
       const a = getEAAssignments(ea.id);
       return a.entitlements.length + a.technicalRoles.length > 0;
     },
   },
+  {
+    id: 'eligibility',
+    label: 'eligibility criteria',
+    satisfied: (ea) => ea.eligibilityGroups.length > 0,
+  },
 ];
 
 /** How many things must be configured before a draft can be switched on. */
 export const EA_REQUIRED_STEPS = EA_REQUIRED_CHECKS.length;
+
+/** Whether a setup step gates activation — read off the gate, never re-declared. */
+export function isRequiredSetupStep(id: EASetupStepId): boolean {
+  return EA_REQUIRED_CHECKS.some((c) => c.id === id);
+}
 
 /**
  * What still stands between a draft and being switched on, named in the reader's
@@ -371,6 +430,72 @@ export const EA_REQUIRED_STEPS = EA_REQUIRED_CHECKS.length;
  */
 export function eaBlockingSteps(ea: EADetail): string[] {
   return EA_REQUIRED_CHECKS.filter((c) => !c.satisfied(ea)).map((c) => c.label);
+}
+
+/** Whether a checklist step is done — the same facts the setup card ticks. */
+export function isEASetupStepDone(id: EASetupStepId, ea: EADetail): boolean {
+  switch (id) {
+    case 'basic':
+      return ea.name.trim() !== '' && ea.description.trim() !== '';
+    case 'assignments': {
+      const a = getEAAssignments(ea.id);
+      return a.entitlements.length + a.technicalRoles.length > 0;
+    }
+    case 'eligibility':
+      return ea.eligibilityGroups.length > 0;
+    case 'owners':
+      return ea.ownersCount > 0;
+    case 'advanced':
+      return true;
+  }
+}
+
+const SETUP_NEXT_ACTION: Record<EASetupStepId, string> = {
+  basic: 'add basic details',
+  assignments: 'add assignments',
+  eligibility: 'add eligibility criteria',
+  owners: 'add owners',
+  advanced: 'review advanced configuration',
+};
+
+/**
+ * What to toast after a setup step *becomes* done. Null when the step was already
+ * done (a later edit) or is still unfinished (a removal), so those saves keep
+ * their own "saved" / "removed" copy instead of nagging about progress.
+ */
+export function eaSetupCompletionNotice(
+  completedId: EASetupStepId,
+  eaAfter: EADetail,
+  wasDoneBefore: boolean,
+): { title: string; message: string } | null {
+  if (!eaAfter.isDraft || wasDoneBefore || !isEASetupStepDone(completedId, eaAfter)) return null;
+
+  const completedLabel = EA_SETUP_STEPS.find((s) => s.id === completedId)?.label ?? completedId;
+  const remainingRequired = EA_REQUIRED_CHECKS.filter((c) => !c.satisfied(eaAfter));
+
+  if (remainingRequired.length > 0) {
+    return {
+      title: `${completedLabel} complete`,
+      message: `Next, ${SETUP_NEXT_ACTION[remainingRequired[0].id]}.`,
+    };
+  }
+
+  if (isRequiredSetupStep(completedId)) {
+    return {
+      title: 'Required steps complete',
+      message: 'Activate now, or add owners and limits.',
+    };
+  }
+
+  const nextOptional = EA_SETUP_STEPS.find(
+    (s) => !isRequiredSetupStep(s.id) && !isEASetupStepDone(s.id, eaAfter),
+  );
+  return {
+    title: `${completedLabel} complete`,
+    message: nextOptional
+      ? `Next, ${SETUP_NEXT_ACTION[nextOptional.id]}.`
+      : 'Ready to activate.',
+  };
 }
 
 /**

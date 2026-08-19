@@ -270,6 +270,8 @@ export interface SodNextStep {
   done: boolean;
   /** Blocks activation. Owners do not — an unowned control still catches conflicts. */
   required: boolean;
+  /** What the checklist's CTA says when this is the step to do next. */
+  cta: string;
   tab: string;
 }
 
@@ -284,7 +286,8 @@ export function sodPolicyNextSteps(row: SodPolicyRow): SodNextStep[] {
     {
       id: 'ruleset',
       label: 'Create the ruleset',
-      hint: 'The access combination that counts as a conflict',
+      hint: 'The combination of access that counts as a conflict when one person holds all of it.',
+      cta: 'Build ruleset',
       done: row.accessCount >= 2,
       required: true,
       tab: 'ruleset',
@@ -292,7 +295,8 @@ export function sodPolicyNextSteps(row: SodPolicyRow): SodNextStep[] {
     {
       id: 'owners',
       label: 'Add owners',
-      hint: 'Who answers for this policy at review',
+      hint: 'Who answers for this policy when the conflicts it finds come up for review.',
+      cta: 'Add owners',
       done: row.ownerCount > 0,
       required: false,
       tab: 'owners',

@@ -97,6 +97,9 @@ export type { NavCardProps } from './NavCard/NavCard';
 export { Stepper } from './Stepper/Stepper';
 export type { StepperProps, StepperStep } from './Stepper/Stepper';
 
+export { SetupBar } from './SetupBar/SetupBar';
+export type { SetupBarProps } from './SetupBar/SetupBar';
+
 export { StepTracker } from './StepTracker/StepTracker';
 export type { StepTrackerProps, StepTrackerStep, StepTrackerStatus } from './StepTracker/StepTracker';
 

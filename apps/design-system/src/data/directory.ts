@@ -288,10 +288,13 @@ type CatalogApp = (typeof catalogApps)[number];
  * than the seed: an IAM-sourced type means the app was discovered through an
  * IAM, and provisioning follows the toggle the admin just set.
  */
+const onboardedDescription = (a: OnboardedApplication) =>
+  a.description.trim() || `Onboarded from ${a.appType}.`;
+
 const onboardedApp = (a: OnboardedApplication): CatalogApp => ({
   id: a.id,
   name: a.name,
-  description: `Onboarded from ${a.appType}.`,
+  description: onboardedDescription(a),
   ownerIds: [],
   entitlements: [],
 });
@@ -299,7 +302,7 @@ const onboardedApp = (a: OnboardedApplication): CatalogApp => ({
 const onboardedRow = (a: OnboardedApplication): ApplicationRow => ({
   id: a.id,
   name: a.name,
-  description: `Onboarded from ${a.appType}.`,
+  description: onboardedDescription(a),
   ownerCount: 0,
   accountCount: 0,
   entitlementCount: 0,
@@ -343,7 +346,12 @@ export function getApplicationDetail(id: string) {
   if (onboarded) {
     // Typed empties, so the two branches produce one return type rather than a
     // union that callers have to narrow before they can sort or filter.
-    return { app: onboardedApp(onboarded), accounts: [] as AppAccountRow[], entitlements: [] as EntitlementRow[] };
+    return {
+      app: onboardedApp(onboarded),
+      accounts: [] as AppAccountRow[],
+      entitlements: [] as EntitlementRow[],
+      onboarded,
+    };
   }
   const app = appById.get(id);
   if (!app) return null;

@@ -12,6 +12,7 @@ import {
   setEmergencyAccessEligibility,
   type EligibilityGroup,
 } from '@/data/emergency-access';
+import { toastEASetupStep } from '@/components/product/emergency/ea-setup-toast';
 import { eligibilityGroupDisplayName, touchEligibilityGroup } from '@/data/eligibility-criteria';
 import { EligibilityGroupCard } from './EligibilityGroupCard';
 import { EligibilityCriteriaDrawer } from './EligibilityCriteriaDrawer';
@@ -58,12 +59,17 @@ export function EligibilityCriteriaTab({
 
   const handleApply = (group: EligibilityGroup) => {
     const next = touchEligibilityGroup(group);
+    const wasDone = groups.length > 0;
     if (editing) {
       persist(groups.map((g) => (g.id === editing.id ? next : g)));
-      toast.success('Eligibility group updated');
+      if (!toastEASetupStep(toast, eaId, 'eligibility', wasDone)) {
+        toast.success('Eligibility group updated');
+      }
     } else {
       persist([...groups, next]);
-      toast.success('Eligibility group created');
+      if (!toastEASetupStep(toast, eaId, 'eligibility', wasDone)) {
+        toast.success('Eligibility group created');
+      }
     }
   };
 

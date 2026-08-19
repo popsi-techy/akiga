@@ -3,7 +3,8 @@
 import * as React from 'react';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import AppsOutlined from '@mui/icons-material/AppsOutlined';
-import { Drawer, Input, Button, Avatar, Checkbox, DataTable, SelectionPanel, type Column } from '@ds/components';
+import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import { Drawer, Input, Button, Avatar, Checkbox, DataTable, SelectionPanel, Tooltip, type Column } from '@ds/components';
 import type { EntitySelection } from '@/data/automation-types';
 import { listApps } from '@/data/catalog';
 import { RiskScoreChip } from '@/components/product/directory';
@@ -113,6 +114,28 @@ export function EntityCatalogDrawer({
     return parts.length ? `${parts.join(', ')} selected` : '0 selected';
   };
 
+  /**
+   * What Add actually writes. An app chip is baseline access — every entitlement
+   * on that app — unless the reader has already picked a subset on the Entitlements
+   * tab. Add used to look only at `entSel`, so a panel full of "baseline access"
+   * still left the button dead.
+   */
+  const toApply = (): EntitySelection[] => {
+    const byId = new Map<string, EntitySelection>();
+    for (const app of apps.filter((a) => appSel.has(a.id))) {
+      const picked = app.entitlements.filter((e) => entSel.includes(e.id));
+      const ents = picked.length > 0 ? picked : app.entitlements;
+      for (const e of ents) {
+        byId.set(e.id, { id: e.id, name: e.name, appName: app.name });
+      }
+    }
+    for (const e of entRows.filter((row) => entSel.includes(row.id))) {
+      if (!byId.has(e.id)) byId.set(e.id, { id: e.id, name: e.name, appName: e.appName });
+    }
+    return [...byId.values()];
+  };
+  const applying = toApply();
+
   const TabBtn = ({ id, label, count }: { id: 'apps' | 'entitlements'; label: string; count: number }) => (
     <button type="button" onClick={() => setTab(id)} className={['rounded-[5px] px-3 py-1 transition-colors', tab === id ? 'bg-surface text-text-primary shadow-xs' : 'text-text-secondary'].join(' ')}>
       {label} {count > 0 && <span className="text-text-tertiary">({count})</span>}
@@ -131,13 +154,24 @@ export function EntityCatalogDrawer({
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button disabled={entSel.length === 0} onClick={() => { onApply(entRows.filter((e) => entSel.includes(e.id)).map((e) => ({ id: e.id, name: e.name, appName: e.appName }))); onClose(); }}>Add {entSel.length ? `(${entSel.length})` : ''}</Button>
+          <Button disabled={applying.length === 0} onClick={() => { onApply(applying); onClose(); }}>Add {applying.length ? `(${applying.length})` : ''}</Button>
         </>
       }
     >
       <div className="flex h-full">
         <div className="flex min-w-0 flex-1 flex-col px-6 py-5">
           <div className="mb-4 flex shrink-0 flex-col gap-3">
+            <div
+              role="note"
+              className="flex items-start gap-2.5 rounded-lg border border-[var(--ds-color-status-info-border)] bg-[var(--ds-color-status-info-subtle)] px-3 py-2.5"
+            >
+              <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[var(--ds-color-status-info-solid)] text-white">
+                <InfoOutlined sx={{ fontSize: 14 }} aria-hidden />
+              </span>
+              <p className="min-w-0 text-body-sm text-[var(--ds-color-status-info-fg)]">
+                Select apps to get baseline access, then open Entitlements to add additional entitlements.
+              </p>
+            </div>
             <div className="flex self-start rounded-md bg-subtle p-0.5 text-caption-strong">
               <TabBtn id="apps" label="Apps" count={appSel.size} />
               <TabBtn id="entitlements" label="Entitlements" count={entSel.length} />
@@ -155,8 +189,25 @@ export function EntityCatalogDrawer({
             <div className="ds-scroll -mx-1 grid min-h-0 flex-1 grid-cols-2 content-start gap-3 overflow-y-auto px-1">
               {filteredApps.map((a) => {
                 const on = appSel.has(a.id);
+                const entCount = a.entitlements.length;
                 return (
-                  <button key={a.id} type="button" onClick={() => toggleApp(a.id)} className={['flex flex-col gap-2 rounded-xl border p-3 text-left transition-colors', on ? 'border-brand bg-surface' : 'border-border bg-surface hover:border-border-strong'].join(' ')}>
+                  <div
+                    key={a.id}
+                    role="checkbox"
+                    aria-checked={on}
+                    tabIndex={0}
+                    onClick={() => toggleApp(a.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === ' ' || e.key === 'Enter') {
+                        e.preventDefault();
+                        toggleApp(a.id);
+                      }
+                    }}
+                    className={[
+                      'flex cursor-pointer flex-col gap-2 rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle',
+                      on ? 'border-brand bg-surface' : 'border-border bg-surface hover:border-border-strong',
+                    ].join(' ')}
+                  >
                     <div className="flex items-center gap-2.5">
                       <Avatar name={a.name} size="sm" />
                       <span className="min-w-0 flex-1 truncate text-body-sm-strong text-text-primary">{a.name}</span>
@@ -164,7 +215,38 @@ export function EntityCatalogDrawer({
                       <Checkbox checked={on} presentational />
                     </div>
                     <p className="truncate text-caption leading-5 text-text-secondary">{a.description}</p>
-                  </button>
+                    <Tooltip title={on ? 'View entitlements' : 'Select this app first to view its entitlements'}>
+                      <span
+                        role={on ? 'link' : undefined}
+                        tabIndex={on ? 0 : undefined}
+                        aria-label={
+                          on
+                            ? `View ${entCount} entitlement${entCount === 1 ? '' : 's'}`
+                            : `${entCount} entitlement${entCount === 1 ? '' : 's'}. Select this app first to view them.`
+                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (on) setTab('entitlements');
+                        }}
+                        onKeyDown={(e) => {
+                          if (!on) return;
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setTab('entitlements');
+                          }
+                        }}
+                        className={[
+                          'self-start rounded-pill px-2 py-0.5 text-caption-strong transition-colors',
+                          on
+                            ? 'cursor-pointer bg-[var(--ds-color-status-info-subtle)] text-[var(--ds-color-status-info-fg)] hover:bg-brand-subtle hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle'
+                            : 'cursor-default bg-subtle text-text-tertiary',
+                        ].join(' ')}
+                      >
+                        {entCount} entitlement{entCount === 1 ? '' : 's'}
+                      </span>
+                    </Tooltip>
+                  </div>
                 );
               })}
             </div>

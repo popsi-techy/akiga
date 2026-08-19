@@ -11,8 +11,8 @@ import Info from '@mui/icons-material/Info';
 import WatchLater from '@mui/icons-material/WatchLater';
 import HourglassEmptyOutlined from '@mui/icons-material/HourglassEmptyOutlined';
 import GroupsOutlined from '@mui/icons-material/GroupsOutlined';
-import RepeatOutlined from '@mui/icons-material/RepeatOutlined';
-import PauseCircleOutline from '@mui/icons-material/PauseCircleOutline';
+import DateRangeOutlined from '@mui/icons-material/DateRangeOutlined';
+import ScheduleOutlined from '@mui/icons-material/ScheduleOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import FilterListOutlined from '@mui/icons-material/FilterListOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
@@ -28,6 +28,8 @@ import {
   StatusChip,
   Avatar,
   Button,
+  SetupBar,
+  Stepper,
   Menu,
   DataTable,
   Dialog,
@@ -44,6 +46,7 @@ import {
   type TabItem,
 } from '@ds/components';
 import {
+  updateEmergencyAccessBasics,
   getEmergencyAccess,
   getAvailableOwners,
   getEAOwners,
@@ -57,7 +60,15 @@ import {
   setEAGovernanceTeams,
   getEAAssignments,
   listOwnerCandidates,
+  getAdvancedConfig,
+  EA_WEEKDAYS,
+  EA_GUIDED_STEPS,
+  firstUnfinishedGuidedTab,
+  isEASetupStepDone,
+  isRequiredSetupStep,
+  type EAAdvancedConfig,
   type EADetail,
+  type EASessionView,
 } from '@/data/emergency-access';
 import type { SeedEAOwner } from '@/data/seed';
 import { listGovernanceTeamRows, type GovernanceTeamRow } from '@/data/directory';
@@ -66,6 +77,7 @@ import { EligibilityCriteriaTab } from '@/components/product/emergency/Eligibili
 import { AdvancedConfigurationTab } from '@/components/product/emergency/AdvancedConfigurationTab';
 import { EmergencyAssignmentsTab } from '@/components/product/emergency/EmergencyAssignmentsTab';
 import { EmergencySetupCard } from '@/components/product/emergency/EmergencySetupCard';
+import { toastEASetupStep } from '@/components/product/emergency/ea-setup-toast';
 import { formatDateTime } from '@/lib/datetime';
 
 /**
@@ -92,18 +104,31 @@ import { formatDateTime } from '@/lib/datetime';
  * the Overview card's "Recent Sessions (24)" heading, and a draft has none by
  * definition.
  */
-function tabsFor(ea: EADetail): TabItem[] {
+function tabsFor(ea: EADetail, setupLabel: boolean): TabItem[] {
   const assignments = getEAAssignments(ea.id);
   return [
-    { value: 'overview', label: 'Overview' },
-    { value: 'owners', label: 'Owners', count: ea.ownersCount + getEAGovernanceTeams(ea.id).length },
-    { value: 'eligibility', label: 'Eligibility Criteria', count: ea.eligibilityGroups.length },
+    {
+      value: 'overview',
+      /**
+       * "Setup" while the profile is a draft, because that is what the tab holds:
+       * a checklist of what is still missing and the action that switches it on.
+       * "Overview" names a summary of something that exists — which is what this
+       * tab becomes once the profile is live and starts reporting sessions.
+       *
+       * The `value` stays `overview` deliberately. It is what `onGoToTab` and every
+       * checklist row route to, so renaming it would be renaming the destination to
+       * change a word on a label.
+       */
+      label: setupLabel ? 'Setup' : 'Overview',
+    },
     { value: 'sessions', label: 'Sessions' },
     {
       value: 'assignments',
       label: 'Assignments',
       count: assignments.entitlements.length + assignments.technicalRoles.length,
     },
+    { value: 'eligibility', label: 'Eligibility Criteria', count: ea.eligibilityGroups.length },
+    { value: 'owners', label: 'Owners', count: ea.ownersCount + getEAGovernanceTeams(ea.id).length },
     { value: 'advanced', label: 'Advanced Configuration' },
   ];
 }
@@ -126,18 +151,171 @@ function TabPlaceholder({ label }: { label: string }) {
   );
 }
 
-function OverviewTab({ ea, onGoToTab }: { ea: EADetail; onGoToTab: (tab: string) => void }) {
+/**
+ * Who has actually used this access, and when.
+ *
+ * The audit question this tab exists for. Break-glass is judged after the fact — the
+ * point of a profile is that someone can grant themselves something dangerous, so the
+ * record of who did is the control. A placeholder here was the one tab where "not
+ * built yet" cost the reader something real.
+ *
+ * Three columns and no more: who, whether they still hold it, and when. The seed
+ * carries `when` as a rendered string rather than an instant, so nothing here computes
+ * a duration — inventing one from a display string is how a number nobody can defend
+ * ends up in an audit view.
+ *
+ * Rows open the person, not the session. A session is an event with nothing behind it;
+ * the identity is where a reviewer goes next — and the row would otherwise be a dead
+ * end, which this page's own rule forbids.
+ */
+function SessionsTab({ ea }: { ea: EADetail }) {
+  const router = useRouter();
+
+  const columns: Column<EASessionView>[] = [
+    {
+      id: 'who',
+      header: 'Requester',
+      sortable: true,
+      width: '46%',
+      wrap: true,
+      value: (r) => r.name,
+      render: (r) => (
+        <div className="flex items-center gap-3">
+          <Avatar name={r.name} size="sm" kind="person" />
+          <div className="min-w-0">
+            <div className="truncate text-body-sm-medium text-text-primary">{r.name}</div>
+            <div className="truncate text-caption text-text-secondary">{r.subtitle}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'state',
+      header: 'Status',
+      sortable: true,
+      width: 140,
+      wrap: true,
+      value: (r) => (r.ongoing ? 'Ongoing' : 'Ended'),
+      // `success` for a live session, not `warning`: someone holding break-glass
+      // access right now is the system working, and tinting it as a problem would
+      // teach a reviewer to read every ongoing session as an incident.
+      render: (r) =>
+        r.ongoing ? (
+          <StatusChip intent="success" label="Ongoing" />
+        ) : (
+          <StatusChip intent="neutral" label="Ended" />
+        ),
+    },
+    {
+      id: 'when',
+      header: 'When',
+      sortable: true,
+      width: '34%',
+      value: (r) => r.when,
+    },
+  ];
+
+  return (
+    <DataTable<EASessionView>
+      columns={columns}
+      rows={ea.sessions}
+      onRowClick={(r) => router.push(`/iga/directory/user-identities/${r.identityId}`)}
+      layout="fixed"
+      fillHeight
+      emptyTitle="No sessions yet"
+      emptyMessage="Nobody has requested this access. Sessions appear here as people use it."
+    />
+  );
+}
+
+/**
+ * Sessions on a draft: empty for a reason, and the reason is the whole message.
+ *
+ * The generic "isn't built yet" placeholder was the wrong answer here. A draft has no
+ * sessions because nobody can request it yet — that is a fact about the profile, not a
+ * gap in the product, and telling the reader the screen is unfinished sends them
+ * looking for a feature instead of at the switch that would fill it.
+ *
+ * No Activate button. The header's already carries the gate and its progress; a second
+ * one here would be a copy that has to be kept in step, and on an unfinished draft it
+ * would be dead on arrival. Naming where it lives is enough.
+ */
+function DraftSessionsEmptyState({ blocking }: { blocking: string[] }) {
+  return (
+    <Card className="h-full">
+      <div className="flex h-full flex-col items-center justify-center gap-4 px-6 py-16 text-center">
+        <span className="grid h-12 w-12 place-items-center rounded-full bg-subtle text-icon">
+          <HistoryOutlined sx={{ fontSize: 24 }} />
+        </span>
+        <div className="space-y-1">
+          <div className="text-h5 text-text-primary">No sessions yet</div>
+          <p className="mx-auto max-w-md text-body-sm text-text-secondary">
+            {blocking.length > 0
+              ? // What is missing, in the same words the checklist and the Activate
+                // button use — so the three cannot tell the reader different stories.
+                `Nobody can request this access until it is switched on. Add ${blocking.join(
+                    ' and ',
+                  )}, then activate it from the header and sessions will appear here.`
+              : 'Nobody can request this access until it is switched on. Activate it from the header and sessions will appear here as people use it.'}
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function sessionLengthLabel(hrs: number): string {
+  if (hrs >= 24 && hrs % 24 === 0) {
+    const days = hrs / 24;
+    return `${days} Day${days === 1 ? '' : 's'}`;
+  }
+  return `${hrs} Hr${hrs === 1 ? '' : 's'}`;
+}
+
+function allowedDaysLabel(cfg: EAAdvancedConfig): string {
+  if (cfg.days.length === 7) return 'Any Day';
+  const key = [...cfg.days].sort().join(',');
+  if (key === 'fri,mon,thu,tue,wed') return 'Weekdays';
+  if (key === 'sat,sun') return 'Weekends';
+  const days = EA_WEEKDAYS.filter((d) => cfg.days.includes(d.id)).map((d) => d.short);
+  return days.join(', ') || 'Not set';
+}
+
+function formatClock(value: string): string {
+  const [hours, minutes] = value.split(':').map(Number);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return value;
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const hour = hours % 12 || 12;
+  return `${String(hour).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${period}`;
+}
+
+function requestWindowLabel(cfg: EAAdvancedConfig): string {
+  if (cfg.windowStart === cfg.windowEnd) return 'All day';
+  return `${formatClock(cfg.windowStart)} - ${formatClock(cfg.windowEnd)}`;
+}
+
+function OverviewTab({
+  ea,
+  onGoToTab,
+  onEditBasics,
+  onActivate,
+  guided = false,
+}: {
+  ea: EADetail;
+  onGoToTab: (tab: string) => void;
+  onEditBasics: () => void;
+  onActivate?: () => void;
+  /** V3: setup lives in the floating bar, so Overview stays a summary. */
+  guided?: boolean;
+}) {
+  const cfg = getAdvancedConfig(ea.id);
+  const showChecklist = ea.isDraft && !guided;
+
   return (
     <div className="ds-scroll h-full overflow-y-auto pr-0.5">
-      {/* One column while it is a draft. Both of the right-hand cards are things a
-          draft has nothing to say about, and a 340px gutter holding nothing reads as
-          a panel that failed to load rather than as a deliberate empty. The setup
-          checklist takes the width instead. */}
-      <div className={`grid gap-5 ${ea.isDraft ? '' : 'lg:grid-cols-[1fr_340px]'}`}>
-        {/* A draft has no sessions and cannot get any until it is switched on, so
-            the slot carries what to do about that instead. */}
-        {ea.isDraft ? (
-          <EmergencySetupCard ea={ea} onGoToTab={onGoToTab} />
+      <div className="grid items-start gap-5 lg:grid-cols-[1fr_340px]">
+        {showChecklist ? (
+          <EmergencySetupCard ea={ea} onGoToTab={onGoToTab} onEditBasics={onEditBasics} onActivate={onActivate} />
         ) : (
           <Card title={`Recent Sessions (${ea.sessionsTotal})`} icon={<Person />} padding="none">
             <div>
@@ -160,37 +338,140 @@ function OverviewTab({ ea, onGoToTab }: { ea: EADetail; onGoToTab: (tab: string)
         )}
 
         <div className="space-y-5">
-          {/* Draft has nothing to report here: these are the module's defaults,
-              not limits anyone chose, and stating them as facts about the profile
-              invites a reader to trust numbers no one has looked at. They appear
-              once the profile is live — and until then, Advanced Configuration is
-              where they are actually set. */}
-          {!ea.isDraft && (
-            <Card title="Information" icon={<Info />} padding="none">
+          {(!ea.isDraft || guided) && (
+            <Card title="Advanced Configuration Info" icon={<Info />} padding="none">
               <InfoRowGroup>
-                <InfoRow icon={<HourglassEmptyOutlined sx={{ fontSize: 18 }} />} label="Max. Duration" value={`${ea.config.maxDurationHrs} Hrs`} />
-                <InfoRow icon={<GroupsOutlined sx={{ fontSize: 18 }} />} label="Max. Concurrent Users" value={String(ea.config.maxConcurrent)} />
-                <InfoRow icon={<RepeatOutlined sx={{ fontSize: 18 }} />} label="Max. Requests Per Day" value={String(ea.config.maxRequestsPerDay)} />
-                <InfoRow icon={<PauseCircleOutline sx={{ fontSize: 18 }} />} label="Cooldown Period" value={`${ea.config.cooldownHrs} Hrs`} />
+                <InfoRow
+                  icon={<DateRangeOutlined sx={{ fontSize: 18 }} />}
+                  label="Allowed Days"
+                  value={allowedDaysLabel(cfg)}
+                  valueWrap
+                />
+                <InfoRow
+                  icon={<ScheduleOutlined sx={{ fontSize: 18 }} />}
+                  label="Request Window"
+                  value={requestWindowLabel(cfg)}
+                />
+                <InfoRow
+                  icon={<HourglassEmptyOutlined sx={{ fontSize: 18 }} />}
+                  label="Max. Duration"
+                  value={sessionLengthLabel(cfg.maxDurationHrs)}
+                />
+                <InfoRow
+                  icon={<GroupsOutlined sx={{ fontSize: 18 }} />}
+                  label="Max. Concurrent Users"
+                  value={String(cfg.maxConcurrent)}
+                />
               </InfoRowGroup>
             </Card>
           )}
 
-          {/* Also draft-only-hidden: a profile created a moment ago has the same
-              instant in both rows, so the card spends two lines saying one thing.
-              Once it has been live and edited the pair starts to differ, which is
-              the point at which it is worth reading. */}
-          {!ea.isDraft && (
-            <Card title="Timeline" icon={<WatchLater />} padding="none">
-              <InfoRowGroup>
-                <InfoRow icon={<HistoryOutlined sx={{ fontSize: 18 }} />} label="Last Updated On" value={formatDateTime(ea.timeline.updatedOn)} />
-                <InfoRow icon={<CalendarTodayOutlined sx={{ fontSize: 18 }} />} label="Created On" value={formatDateTime(ea.timeline.createdOn)} />
-              </InfoRowGroup>
-            </Card>
-          )}
+          <Card title="Timeline" icon={<WatchLater />} padding="none">
+            <InfoRowGroup>
+              <InfoRow icon={<HistoryOutlined sx={{ fontSize: 18 }} />} label="Last Updated On" value={formatDateTime(ea.timeline.updatedOn)} />
+              <InfoRow icon={<CalendarTodayOutlined sx={{ fontSize: 18 }} />} label="Created On" value={formatDateTime(ea.timeline.createdOn)} />
+            </InfoRowGroup>
+          </Card>
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Editing the two fields the profile is identified by.
+ *
+ * A drawer rather than a tab or an inline form: this is a short, self-contained edit
+ * reached from two different places — the header button and the setup checklist — and
+ * a tab would make the reader leave whatever they were reading to perform it. It also
+ * keeps the pair together; name and description are read as one thing everywhere they
+ * appear, so they are edited as one thing.
+ *
+ * Local draft state, committed on save. Typing straight into the store would make
+ * Cancel meaningless and would repaint the header on every keystroke.
+ */
+function BasicDetailsDrawer({
+  open,
+  ea,
+  onClose,
+  onSaved,
+}: {
+  open: boolean;
+  ea: EADetail;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const toast = useToast();
+  const [name, setName] = React.useState(ea.name);
+  const [description, setDescription] = React.useState(ea.description);
+
+  // Re-seed each time it opens, so a cancelled edit does not persist as the starting
+  // point of the next one.
+  React.useEffect(() => {
+    if (open) {
+      setName(ea.name);
+      setDescription(ea.description);
+    }
+  }, [open, ea.name, ea.description]);
+
+  const valid = name.trim() !== '' && description.trim() !== '';
+
+  const save = () => {
+    if (!valid) return;
+    const wasDone = ea.name.trim() !== '' && ea.description.trim() !== '';
+    updateEmergencyAccessBasics(ea.id, { name, description });
+    if (!toastEASetupStep(toast, ea.id, 'basic', wasDone)) {
+      toast.success('Basic details saved.');
+    }
+    onSaved();
+    onClose();
+  };
+
+  return (
+    <Drawer
+      open={open}
+      onClose={onClose}
+      title="Basic details"
+      subtitle="What this access is called, and what it is for."
+      icon={<EditOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          {/* Both fields are required because activation already demands them — the
+              same gate `eaBlockingSteps` reads. Letting this save an empty
+              description would hand the reader a profile that cannot go live and no
+              hint as to why. */}
+          <Button disabled={!valid} onClick={save}>
+            Save
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <Input
+          label="Name"
+          required
+          size="sm"
+          hint="Shown wherever this access is requested or reviewed."
+          placeholder="e.g. Bitbucket production"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <Input
+          label="Description"
+          required
+          size="sm"
+          multiline
+          minRows={3}
+          hint="Read by whoever approves the request. Say what it is for, and when it should be used."
+          placeholder="What this access is for, and when it should be used"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </div>
+    </Drawer>
   );
 }
 
@@ -208,6 +489,7 @@ function OverviewTab({ ea, onGoToTab }: { ea: EADetail; onGoToTab: (tab: string)
  * with them until they reached the detail page.
  */
 export function EmergencyOwnersPicker({ ea, onChanged }: { ea: EADetail; onChanged: () => void }) {
+  const toast = useToast();
   const [owners, setOwners] = React.useState<SeedEAOwner[]>([]);
   const [teamIds, setTeamIds] = React.useState<string[]>([]);
   const [open, setOpen] = React.useState<'people' | 'teams' | null>(null);
@@ -222,8 +504,10 @@ export function EmergencyOwnersPicker({ ea, onChanged }: { ea: EADetail; onChang
   const allTeams = listGovernanceTeamRows();
 
   const commitOwners = (ids: string[]) => {
+    const wasDone = owners.length > 0;
     setOwners(setEAOwners(ea.id, candidates.filter((o) => ids.includes(o.id))));
     onChanged();
+    toastEASetupStep(toast, ea.id, 'owners', wasDone);
   };
   const commitTeams = (ids: string[]) => {
     setTeamIds(setEAGovernanceTeams(ea.id, ids));
@@ -329,8 +613,10 @@ export function EmergencyOwnersTab({ ea, onChanged }: { ea: EADetail; onChanged:
   const [owners, setOwners] = React.useState<SeedEAOwner[]>([]);
   React.useEffect(() => setOwners(getEAOwners(ea.id)), [ea.id]);
   const persistOwners = (next: SeedEAOwner[]) => {
+    const wasDone = owners.length > 0;
     setOwners(setEAOwners(ea.id, next));
     onChanged();
+    toastEASetupStep(toast, ea.id, 'owners', wasDone);
   };
 
   const rows = owners.filter(
@@ -573,7 +859,9 @@ export function EmergencyOwnersTab({ ea, onChanged }: { ea: EADetail; onChanged:
                 const added = candidates.filter((o) => selectedToAdd.includes(o.id));
                 persistOwners([...owners, ...added]);
                 setAddOpen(false);
-                toast.success(`${added.length} owner${added.length === 1 ? '' : 's'} added`);
+                if (owners.length > 0) {
+                  toast.success(`${added.length} owner${added.length === 1 ? '' : 's'} added`);
+                }
               }}
             >
               Add Owners
@@ -631,20 +919,32 @@ export function EmergencyOwnersTab({ ea, onChanged }: { ea: EADetail; onChanged:
 }
 
 /**
- * The Emergency Access detail screen, shared by both versions of the module.
+ * The Emergency Access detail screen, shared by every version of the module.
  *
- * V1 and V2 differ only in how a profile is *created* — V1 opens a drawer and
- * drops you on a draft with a checklist, V2 walks a stepper and drops you on an
- * active profile. Once the profile exists, there is one screen for it, so this
- * lives here rather than being copied into a second route.
+ * The versions differ in how a draft is *finished* — V1 a checklist tab, V2 a
+ * create stepper, V3 a floating bar under the real tabs. Once the profile is
+ * live, this is one screen, so it lives here rather than being copied.
  *
  * `basePath` is the version that opened it: the same profile can be reached from
- * either list, and leaving (delete, not-found) must go back where you came from.
+ * any list, and leaving (delete, not-found) must go back where you came from.
  */
 export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: string }) {
+  /**
+   * V1 only, for now — the owner is comparing the modules side by side, so the
+   * Setup tab rename lands on one of them first. `basePath` is already how this
+   * component knows which version opened it.
+   */
+  const isV1 = basePath === '/iga/emergency';
+  const isV3 = basePath === '/iga/emergency-v3';
+
+  const [basicsOpen, setBasicsOpen] = React.useState(false);
   const router = useRouter();
   const toast = useToast();
-  const [tab, setTab] = React.useState('overview');
+  const [tab, setTab] = React.useState(() => {
+    if (!isV3) return 'overview';
+    const draft = getEmergencyAccess(id);
+    return draft?.isDraft ? firstUnfinishedGuidedTab(draft) : 'overview';
+  });
   const [deactivateOpen, setDeactivateOpen] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   // Bumped after activation so the page re-reads the session-memory status.
@@ -658,7 +958,7 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
     activateEmergencyAccess(ea.id);
     toast.success(`“${ea.name}” is active. It can now be requested.`);
     bump();
-    setTab('sessions');
+    setTab('overview');
   };
 
   if (!ea) {
@@ -674,6 +974,23 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
       </div>
     );
   }
+
+  const guidedTabIndex = EA_GUIDED_STEPS.findIndex((s) => s.tab === tab);
+  const guidedIndex =
+    guidedTabIndex >= 0
+      ? guidedTabIndex
+      : EA_GUIDED_STEPS.findIndex((s) => s.tab === firstUnfinishedGuidedTab(ea));
+  const guidedStep = EA_GUIDED_STEPS[Math.max(0, guidedIndex)];
+  const atLastGuided = guidedIndex >= EA_GUIDED_STEPS.length - 1;
+  const nextBlocked =
+    isRequiredSetupStep(guidedStep.id) && !isEASetupStepDone(guidedStep.id, ea);
+  const canActivate = blocking.length === 0;
+  const showSetupBar = isV3 && ea.isDraft;
+
+  const goGuided = (index: number) => {
+    const next = EA_GUIDED_STEPS[index];
+    if (next) setTab(next.tab);
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -692,13 +1009,16 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="secondary" startIcon={<EditOutlined />} onClick={() => toast.info('Edit basic details')}>
+            {/* Was a `toast.info` stub. It opens the real editor now — the same one
+                the setup checklist's "Edit details" reaches, so there is one place
+                these two fields are changed. */}
+            <Button variant="secondary" startIcon={<EditOutlined />} onClick={() => setBasicsOpen(true)}>
               Basic Details
             </Button>
             {/* A draft has never been on, so the only thing to offer is turning
                 it on — and only once it would actually work. Same rule as the
                 Overview checklist, from one definition. */}
-            {ea.isDraft ? (
+            {ea.isDraft && !isV3 ? (
               <Tooltip
                 title={
                   blocking.length > 0
@@ -707,47 +1027,28 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
                 }
               >
                 <span>
-                  {/* The progress lives in the button now, rather than in a meter
-                      standing next to it. A disabled control that shows how close it
-                      is answers "why is this dead" and "how much is left" where the
-                      reader is already looking, and it stops the header carrying two
-                      elements that describe one thing.
-
-                      The label carries the count while it is unmet and becomes the
-                      verb when it is — so the button reads as a state that resolves
-                      into an action, and the ring's last step closing into a tick is
-                      the moment that says so. */}
                   <Button
                     startIcon={
                       <ProgressRing
                         value={EA_REQUIRED_STEPS - blocking.length}
                         total={EA_REQUIRED_STEPS}
-                        // Green while the button is grey. Inheriting would draw the
-                        // one informative part in the disabled colour — the same
-                        // green a completed step has always used in the checklist.
                         accent={blocking.length > 0 ? 'var(--ds-color-status-success-fill)' : undefined}
                       />
                     }
                     disabled={blocking.length > 0}
                     onClick={activate}
                   >
-                    {/* Counts what is *left*, and names what finishing it buys.
-                        "1 of 3 required" made the reader do the subtraction and then
-                        guess what the 3 were for; "2 steps to activate" states the
-                        work and the reward, and keeps the word the button is about to
-                        become — so the label resolves into "Activate" rather than
-                        being replaced by it. */}
                     {blocking.length > 0
-                      ? `${blocking.length} step${blocking.length === 1 ? '' : 's'} to activate`
+                      ? `${blocking.length} required step${blocking.length === 1 ? '' : 's'} to activate`
                       : 'Activate'}
                   </Button>
                 </span>
               </Tooltip>
-            ) : (
+            ) : !ea.isDraft ? (
               <Button variant="secondary" startIcon={<BlockOutlined />} onClick={() => setDeactivateOpen(true)}>
                 Deactivate
               </Button>
-            )}
+            ) : null}
             <Menu
               items={[
                 {
@@ -760,18 +1061,87 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
             />
           </div>
         </div>
-        <Tabs items={tabsFor(ea)} value={tab} onChange={setTab} noBorder aria-label="Emergency access details" />
+        <Tabs
+          items={tabsFor(ea, isV1 && ea.isDraft)}
+          value={tab}
+          onChange={setTab}
+          noBorder
+          aria-label="Emergency access details"
+        />
       </div>
 
       {/* Tab content — fills the remaining height */}
       <div className="min-h-0 flex-1 pt-5">
-        {tab === 'overview' && <OverviewTab ea={ea} onGoToTab={setTab} />}
+        {tab === 'overview' && (
+          <OverviewTab
+            ea={ea}
+            onGoToTab={setTab}
+            onEditBasics={() => setBasicsOpen(true)}
+            onActivate={activate}
+            guided={isV3}
+          />
+        )}
         {tab === 'owners' && <EmergencyOwnersTab ea={ea} onChanged={bump} />}
-        {tab === 'eligibility' && <EligibilityCriteriaTab eaId={ea.id} />}
-        {tab === 'sessions' && <TabPlaceholder label="Sessions" />}
-        {tab === 'assignments' && <EmergencyAssignmentsTab eaId={id} />}
-        {tab === 'advanced' && <AdvancedConfigurationTab eaId={ea.id} />}
+        {tab === 'eligibility' && <EligibilityCriteriaTab eaId={ea.id} onChanged={bump} />}
+        {tab === 'sessions' &&
+          (ea.isDraft ? (
+            <DraftSessionsEmptyState blocking={blocking} />
+          ) : (
+            <SessionsTab ea={ea} />
+          ))}
+        {tab === 'assignments' && <EmergencyAssignmentsTab eaId={id} onChanged={bump} />}
+        {tab === 'advanced' && <AdvancedConfigurationTab eaId={ea.id} onChanged={bump} />}
       </div>
+
+      {showSetupBar && (
+        <div className="shrink-0 pt-3">
+          <SetupBar
+            progress={
+              <Stepper
+                steps={EA_GUIDED_STEPS.map((s) => ({ label: s.label }))}
+                current={Math.max(0, guidedIndex)}
+                onStepClick={goGuided}
+                showBack={false}
+              />
+            }
+            actions={
+              <>
+                <Button
+                  variant="secondary"
+                  disabled={guidedIndex <= 0}
+                  onClick={() => goGuided(guidedIndex - 1)}
+                >
+                  Back
+                </Button>
+                {!atLastGuided && (
+                  <Tooltip
+                    title={
+                      nextBlocked
+                        ? `Add ${guidedStep.label.toLowerCase()} before continuing.`
+                        : 'Go to the next setup step'
+                    }
+                  >
+                    <span>
+                      <Button
+                        variant={canActivate ? 'secondary' : 'primary'}
+                        disabled={nextBlocked}
+                        onClick={() => goGuided(guidedIndex + 1)}
+                      >
+                        Next
+                      </Button>
+                    </span>
+                  </Tooltip>
+                )}
+              </>
+            }
+            primary={
+              canActivate ? (
+                <Button onClick={activate}>Activate</Button>
+              ) : undefined
+            }
+          />
+        </div>
+      )}
 
       <Dialog
         open={deactivateOpen}
@@ -784,7 +1154,8 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
           deactivateEmergencyAccess(ea.id);
           toast.success(`“${ea.name}” deactivated. It is a draft again.`);
           bump();
-          setTab('overview');
+          const again = getEmergencyAccess(ea.id);
+          setTab(isV3 && again ? firstUnfinishedGuidedTab(again) : 'overview');
         }}
       >
         Active users will lose emergency access immediately. This action is logged and the access can
@@ -809,6 +1180,16 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
           ? 'The profile and everything configured on it are removed. Nothing has been granted under it, so nobody loses access.'
           : 'Anyone holding access through this profile keeps it until their session ends, and nobody can request it again. Sessions already granted stay in the audit log.'}
       </Dialog>
+
+      {/* `bump` on save, the same reducer every other mutation on this page uses —
+          the header's name and the checklist's "Basic details" tick both read from
+          the store on render, so one re-render updates all of them. */}
+      <BasicDetailsDrawer
+        open={basicsOpen}
+        ea={ea}
+        onClose={() => setBasicsOpen(false)}
+        onSaved={bump}
+      />
     </div>
   );
 }

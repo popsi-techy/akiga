@@ -22,9 +22,11 @@ import {
 import { AppBadge } from '../sod/labels';
 import { EntityCatalogDrawer } from '../automation/EntityCatalogDrawer';
 import { TableSelectDrawer } from '../automation/TableSelectDrawer';
-import { listTechnicalRoles } from '@/data/catalog';
+import { listApps, listTechnicalRoles } from '@/data/catalog';
 import { getEAAssignments, setEAAssignments, type EAAssignments } from '@/data/emergency-access';
+import { toastEASetupStep } from '@/components/product/emergency/ea-setup-toast';
 import type { EntitySelection } from '@/data/automation-types';
+import { RiskScoreChip } from '@/components/product/directory';
 
 type Kind = keyof EAAssignments;
 
@@ -58,6 +60,7 @@ const countLabel = (n: number, entity: string) => `${n} ${entity}${n === 1 ? '' 
  * read and write assignments exactly the same way.
  */
 function useAssignments(eaId: string, onChanged?: () => void) {
+  const toast = useToast();
   const [assignments, setAssignments] = React.useState<EAAssignments>({
     entitlements: [],
     technicalRoles: [],
@@ -65,8 +68,11 @@ function useAssignments(eaId: string, onChanged?: () => void) {
   // Session-memory store, so read it after mount like the other EA tabs.
   React.useEffect(() => setAssignments(getEAAssignments(eaId)), [eaId]);
   const patch = (next: Partial<EAAssignments>) => {
-    setAssignments((prev) => setEAAssignments(eaId, { ...prev, ...next }));
+    const wasDone = assignments.entitlements.length + assignments.technicalRoles.length > 0;
+    const saved = setEAAssignments(eaId, { ...assignments, ...next });
+    setAssignments(saved);
     onChanged?.();
+    toastEASetupStep(toast, eaId, 'assignments', wasDone);
   };
   return { assignments, patch };
 }
@@ -207,9 +213,28 @@ export function EmergencyAssignmentsTab({
 
   const meta = META[kind];
   const current = assignments[kind];
+  const roleById = React.useMemo(() => new Map(listTechnicalRoles().map((r) => [r.id, r])), []);
+  const entitlementById = React.useMemo(() => {
+    const map = new Map<string, { description: string; risk: number }>();
+    for (const app of listApps()) {
+      for (const e of app.entitlements) {
+        map.set(e.id, { description: e.description, risk: e.risk });
+      }
+    }
+    return map;
+  }, []);
+  const detailFor = (r: EntitySelection) =>
+    kind === 'technicalRoles' ? roleById.get(r.id) : entitlementById.get(r.id);
   const q = search.trim().toLowerCase();
   const filtered = q
-    ? current.filter((r) => r.name.toLowerCase().includes(q) || (r.appName ?? '').toLowerCase().includes(q))
+    ? current.filter((r) => {
+        const detail = detailFor(r);
+        return (
+          r.name.toLowerCase().includes(q) ||
+          (r.appName ?? '').toLowerCase().includes(q) ||
+          (detail?.description ?? '').toLowerCase().includes(q)
+        );
+      })
     : current;
   const remove = (id: string) =>
     patch({ [kind]: current.filter((i) => i.id !== id) } as Partial<EAAssignments>);
@@ -246,6 +271,30 @@ export function EmergencyAssignmentsTab({
           },
         ]
       : []),
+    {
+      id: 'description',
+      header: 'Description',
+      sortable: true,
+      value: (r) => detailFor(r)?.description ?? '',
+      render: (r) => (
+        <span className="text-text-secondary">{detailFor(r)?.description ?? '—'}</span>
+      ),
+    },
+    {
+      id: 'risk',
+      header: 'Risk Score',
+      sortable: true,
+      width: 140,
+      value: (r) => detailFor(r)?.risk ?? -1,
+      render: (r) => {
+        const risk = detailFor(r)?.risk;
+        return risk == null ? (
+          <span className="text-text-disabled">—</span>
+        ) : (
+          <RiskScoreChip score={risk} />
+        );
+      },
+    },
     {
       id: 'actions',
       header: 'Actions',
@@ -318,9 +367,7 @@ export function EmergencyAssignmentsTab({
             emptyMessage={
               search
                 ? `Nothing granted by this access is called “${search.trim()}”.`
-                : // The hint that used to sit above the table: it is only worth
-                  // reading when there is nothing else to read.
-                  `${meta.hint} Add ${meta.entity}s and anyone who activates this access receives them for the length of their session.`
+                : `Add ${meta.entity}s and anyone who activates this access receives them for the length of their session.`
             }
           />
         </div>
