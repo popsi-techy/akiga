@@ -40,3 +40,54 @@ Two fixes found along the way: the description field is now marked required, whi
 demanded all along while the form presented it as optional; and "Cancel" no longer appears once the
 profile exists, where it did the same thing as "Save and close" while implying it threw the draft
 away.
+
+**Skip sits in the footer, immediately left of the forward action, as a `secondary` button.** It spent a
+round in the step heading as a text link, which was wrong once "Skip all" went: passing a step and saving it
+are the same kind of move — both leave this step for the next one — so they belong in the same group, and
+`secondary` makes it a peer of Back rather than an aside. The order is Cancel · … · Back · Skip step · Save as
+draft · Save and continue.
+
+**The left corner is Cancel on every step, and "Save as draft" sits beside "Save and continue".** The left
+button used to change its name mid-flow — "Cancel" on step 1, "Save and close" after — which made one
+position mean two things. Now the escape is the same escape for the whole flow (and still keeps the draft
+once step 1 has committed; leaving never deletes anything), while saving-and-leaving lives with the other
+save verbs on the right, where the two can be compared. It renders only once there is a draft to keep, so
+step 1 shows just Cancel and Save and continue.
+
+Step 1 still shows neither, because it has no `skipLabel` — every editor after it writes against a profile
+id, so there is nothing to attach anything to until basics have been through once.
+
+**Step bodies fill the wizard column.** Basic details carried `max-w-2xl` and the assignments, owners and
+preview bodies carried `max-w-3xl`, so each step stopped short of the footer that acts on it and the
+column looked like it had a right margin its own buttons did not. All four are uncapped; these are
+icon-and-control rows, not prose, so there is no line length to protect. Nothing else moved — the
+assignments and owners *tabs* on the profile detail page are two-pane table editors and never rendered
+these blocks, so the caps were wizard-only despite living in shared files.
+
+**Skipping is now offered only where nothing is gated, and "Skip all" is gone.**
+
+Assignments and eligibility criteria both carry a `blocker`, so the profile cannot be switched on without
+them — and a "Skip" beside a step the rail marks with a required asterisk is the app arguing with itself.
+Owners and limits gate nothing, so they keep theirs ("Skip step" and "Keep defaults" respectively).
+`StepDef.skipLabel` now documents the invariant: never set it on a step with a `blocker`.
+
+**A gated step now cannot be passed at all.** Removing its skip button was half the job — "Save and
+continue" still advanced whether the step was filled or not, so a required step could sit behind the reader
+marked "Skipped — still required", which is the app allowing something it then refuses to honour. The button
+is disabled until the step's own `blocker` clears, with the reason on its tooltip, and `goTo` refuses forward
+movement independently so the rail cannot route around the button. Backward movement is never blocked — the
+reader can always return to anything already reached, including from a step they cannot yet leave.
+
+One consequence: a required step can no longer end up `skipped`. That state is derived from sitting behind
+`reached` while empty, and nothing gated can now get behind `reached` while empty — so the rail's
+"Skipped — still required" marker is reachable only for the optional steps, which is the only place it was
+ever true.
+
+Step 1 is exempt from the tooltip gate, and not as a convenience: before it commits there is no profile, so
+`eaBlockingSteps` names `basic details` by definition and the button would be dead with no way to revive it.
+Its gate stays `commitBasics`, which does better than a tooltip anyway — it marks the offending field. A
+picker step has no field to mark, which is why the others need the tooltip.
+
+"Skip all" and its `skipToProfile` handler are deleted outright. It existed to hand a reader who wanted no
+stepper over to the profile's tabbed screen, but that reader can reach the same place with "Save and close",
+which is one row below and already says what it does.

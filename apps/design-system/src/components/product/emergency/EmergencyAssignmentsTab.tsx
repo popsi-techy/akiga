@@ -144,7 +144,11 @@ export function EmergencyAssignmentsPicker({
   const [open, setOpen] = React.useState<Kind | null>(null);
 
   return (
-    <div className="max-w-3xl space-y-4">
+    // Full width of whatever holds it. A reading-width cap here held the content
+    // short of the buttons that act on it, so the surface looked like it had a
+    // right margin its own footer did not — and these rows are icon-and-control,
+    // not prose, so there is no line length to protect.
+    <div className="space-y-4">
       {(['entitlements', 'technicalRoles'] as Kind[]).map((kind) => {
         const items = assignments[kind];
         const meta = META[kind];

@@ -43,6 +43,33 @@ const activeMarker: React.CSSProperties = {
 };
 
 /**
+ * Skipped is a solid fill with a white numeral, like done and current — not the
+ * outline-and-tint the unreached steps wear.
+ *
+ * It had the outline treatment on the reasoning that a skipped step is *empty*, so
+ * the solid fills should mean "has an outcome". Beside the others that read as an
+ * absence: same construction as the steps below it, differing only in hue, so a
+ * step the reader passed over looked like one they had not got to. Skipped is a
+ * state, and it now looks like one.
+ *
+ * `warning.fill` (#B45309) and not `warning.solid` (#FACC15): yellow at full
+ * strength carries white at 1.53:1, which is why its `onSolid` is near-black ink —
+ * and a black-on-yellow disc would outshout the step the reader is actually on.
+ * The amber holds white at 5.02:1, clear of AA and stronger than either of the
+ * other two markers. `check:contrast` enforces it.
+ *
+ * The dashed border goes with the change: a dash cannot read against a solid fill,
+ * so "passed over" is carried by hue alone from here.
+ */
+const skippedMarker: React.CSSProperties = {
+  background: color.status.warning.fill,
+  // `text.inverse`, not `warning.onSolid` — that role is near-black, paired with
+  // the bright `solid` yellow rather than with this amber `fill`.
+  color: color.text.inverse,
+  boxShadow: `${HALO} ${color.status.warning.halo}`,
+};
+
+/**
  * The connector, drawn as a repeating gradient rather than a dashed border.
  *
  * `border-style: dashed` hands the dash length to the browser, which sizes it
@@ -152,6 +179,25 @@ export function StepTracker({
           const clickable = Boolean(onStepClick) && (i < current || Boolean(step.status));
           const last = i === steps.length - 1;
 
+          /**
+           * Rendered *inside* the label, after its text, exactly as `Input` puts its
+           * asterisk inside its own label after a literal space.
+           *
+           * As a sibling in the flex row it sat at the edge of the label's box, which
+           * is the same place as its last word only while the label fits on one line.
+           * On a wrapping label it drifted to the right margin, next to whatever mark
+           * followed — and a required marker modifies the word it follows or it says
+           * nothing. The space is literal because `gap` cannot apply inside a text run.
+           */
+          const requiredMark = step.required ? (
+            <>
+              <span aria-hidden className="text-danger">
+                {' *'}
+              </span>
+              <span className="sr-only">Required</span>
+            </>
+          ) : null;
+
           return (
             <li
               key={step.label}
@@ -166,29 +212,39 @@ export function StepTracker({
               {!last && (
                 <span
                   aria-hidden
-                  className="absolute bottom-0 left-[15px] top-8 w-px"
+                  // `left` and `top` are the marker's geometry, not free numbers:
+                  // 13px puts the 1px line under the centre of a 28px box, and
+                  // top-7 starts it where that box ends. Both move if the size does.
+                  className="absolute bottom-0 left-[13px] top-7 w-px"
                   style={connector()}
                 />
               )}
 
               <span
                 className={[
-                  'relative z-[1] grid h-8 w-8 shrink-0 place-items-center rounded-full text-caption-strong tabular-nums',
-                  done || active
-                    ? ''
-                    : `border border-border bg-surface text-text-tertiary ${skipped ? 'border-dashed' : ''}`,
+                  'relative z-[1] grid h-7 w-7 shrink-0 place-items-center rounded-full text-caption-strong tabular-nums',
+                  // Only the unreached steps are drawn as an outline. Done, current
+                  // and skipped are all solid fills, set in the style objects above.
+                  done || active || skipped ? '' : 'border border-border bg-surface text-text-tertiary',
                 ].join(' ')}
-                style={done ? doneMarker : active ? activeMarker : undefined}
+                style={done ? doneMarker : active ? activeMarker : skipped ? skippedMarker : undefined}
               >
                 {i + 1}
               </span>
 
-              <span className="min-w-0 flex-1 pt-1">
+              <span className="min-w-0 flex-1 pt-0.5">
                 {/* `gap-1`, about the width of a space at this size — the same
                     spacing `Input` gets by rendering its asterisk inside the label
                     after a literal `{' '}`. A required marker modifies the word it
                     follows; wider than a space and it reads as its own item. */}
-                <span className="flex items-center gap-1">
+                <span className="flex items-start gap-2">
+                  {/* Label and its asterisk are one unit. The skipped mark is a
+                      separate flex item, so it can be pushed right without dragging
+                      the asterisk with it — which is what happened when all three
+                      sat in one row and the label wrapped: the marker for "this step
+                      is required" ended up beside "SKIPPED" instead of the word it
+                      modifies. */}
+                  <span className="min-w-0">
                   {clickable ? (
                     <button
                       type="button"
@@ -199,6 +255,7 @@ export function StepTracker({
                       ].join(' ')}
                     >
                       {step.label}
+                      {requiredMark}
                     </button>
                   ) : (
                     <span
@@ -209,38 +266,27 @@ export function StepTracker({
                       aria-current={active ? 'step' : undefined}
                     >
                       {step.label}
+                      {requiredMark}
                     </span>
                   )}
-                  {/* The same marker a required field carries, so "required" means
-                      one thing across forms, checklists and this rail. Nothing
-                      here has a `required` attribute for assistive tech to read,
-                      so the word is kept rather than dropped with the glyph. */}
-                  {step.required && (
-                    <>
-                      <span aria-hidden className="shrink-0 text-body-sm-strong text-danger">
-                        *
-                      </span>
-                      <span className="sr-only">Required</span>
-                    </>
+                  </span>
+                  {/* Skipped rides on the header row, at its trailing edge, rather
+                      than replacing the description below it. The description says
+                      what the step is for, which is exactly what a reader deciding
+                      whether to go back and fill it in needs — taking it away to
+                      print one word was trading the useful line for the obvious
+                      one. `ml-auto` pins it right so the marks form a column down
+                      the rail instead of drifting with the label's length. */}
+                  {skipped && (
+                    <span className="ml-auto shrink-0 text-caption-strong uppercase text-[var(--ds-color-status-warning-fg)]">
+                      Skipped
+                    </span>
                   )}
                 </span>
-                {/* A skipped step's description has done its job — the reader has
-                    already decided against it. What they need instead is whether
-                    passing it cost them anything. */}
-                {skipped ? (
-                  <span
-                    className={`mt-0.5 block text-body-sm ${
-                      step.required ? 'text-danger' : 'text-text-tertiary'
-                    }`}
-                  >
-                    {step.required ? 'Skipped — still required' : 'Skipped'}
+                {step.description && (
+                  <span className="mt-0.5 block text-body-sm text-text-secondary">
+                    {step.description}
                   </span>
-                ) : (
-                  step.description && (
-                    <span className="mt-0.5 block text-body-sm text-text-secondary">
-                      {step.description}
-                    </span>
-                  )
                 )}
               </span>
             </li>

@@ -6,7 +6,6 @@ import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import FilterListOutlined from '@mui/icons-material/FilterListOutlined';
 import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
-import HelpOutline from '@mui/icons-material/HelpOutline';
 import { Button, Checkbox, Input, Menu, useToast } from '@ds/components';
 import {
   getEligibilityGroups,
@@ -14,7 +13,7 @@ import {
   type EligibilityGroup,
 } from '@/data/emergency-access';
 import { eligibilityGroupDisplayName, touchEligibilityGroup } from '@/data/eligibility-criteria';
-import { EligibilityAddCard, EligibilityGroupCard } from './EligibilityGroupCard';
+import { EligibilityGroupCard } from './EligibilityGroupCard';
 import { EligibilityCriteriaDrawer } from './EligibilityCriteriaDrawer';
 
 export function EligibilityCriteriaTab({
@@ -173,9 +172,12 @@ export function EligibilityCriteriaTab({
               ]}
             />
           )}
-          <div className="ml-auto flex shrink-0 items-center gap-1.5 whitespace-nowrap text-caption text-text-secondary">
-            <HelpOutline sx={{ fontSize: 15, color: 'var(--ds-color-icon-default)' }} aria-hidden />
-            <span>Users matching any group below can request this emergency access.</span>
+          {/* The action lives here, opposite the search, where every other list in
+              the product keeps it. */}
+          <div className="ml-auto shrink-0">
+            <Button size="sm" startIcon={<AddIcon />} onClick={openCreate}>
+              Add Eligibility Group
+            </Button>
           </div>
         </div>
 
@@ -190,7 +192,6 @@ export function EligibilityCriteriaTab({
         )}
 
         <div className="grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <EligibilityAddCard onClick={openCreate} />
           {filtered.map(({ group, index }) => (
             <EligibilityGroupCard
               key={group.id}

@@ -230,6 +230,68 @@ visual language ([`docs/product/07-experience/visual-language.md`](./docs/produc
 throwaway spike that MUST NOT be merged into the product. To ship, its outcome must be
 promoted through the full "create in DS → document → record → changeset" path.
 
+### 7.1 Verification is tiered to the change
+
+Checking is not a virtue in itself — it is a cost paid to buy confidence, and the price must match
+what is actually uncertain. A full `next build` after a one-line class edit buys nothing that
+`tsc` and the gates did not already prove, and it costs a minute plus a dev-server restart. Twenty
+of those is an afternoon.
+
+Pick the cheapest tier that can actually catch what might be wrong:
+
+| The change | What to run | Roughly |
+|---|---|---|
+| Class, token, or copy only | `npm run verify` | seconds |
+| Component API, imports, or seed data | `npm run verify` + a DOM check of the specific claim | seconds |
+| New route, new component, or several files | the above, then `npm run build:check` **once** at the end | ~1 min |
+
+`npm run verify` is `typecheck` + all three gates. It is the default. `npm run build:check` writes to
+`.next-check` (see `distDir` in `next.config.mjs`) precisely so it cannot wipe the `.next` a running
+`next dev` is serving — a build over a live preview is what makes the app appear to break and sends
+you chasing a regression that does not exist.
+
+**Batch the work, then verify once.** Five related edits deserve one verification, not five.
+
+**Measure what is uncertain; do not measure arithmetic.** Reading the DOM is the right instrument
+when the outcome is genuinely in question — does this table overflow, does the ring get clipped, is
+this pairing above AA, is the name truncated at this width. Confirming that a constant you just
+changed from `6px` to `4px` now reports `4px` proves only that CSS works.
+
+**Prefer a seed over a click-path.** If verifying a state means walking a wizard or filling a
+drawer, the real defect is that the state has no seeded example — fix that once and every future
+reader, reviewer and author reaches it in one navigation. See `SEEDED_GROUPS` in
+`data/eligibility-criteria.ts` for the shape.
+
+**One changeset per coherent unit of work**, written when that unit is done. A changeset rewritten
+three times as a value moves 4px → 6px → 4px is churn, and its final text will describe the journey
+instead of the decision.
+
+None of this licenses shipping unverified. The gates are not optional, `tsc` is not optional, and a
+claim about rendered output still needs evidence from rendered output. What changes is that the
+evidence is chosen to fit the risk.
+
+### 7.2 Scroll freely; never paint a scrollbar
+
+Regions scroll — the app frame's `<main>`, the navigation rail, wizard step bodies, drawer and modal
+bodies, canvas panels, a card holding a long condition list. That is not the problem. **The visible
+bar is.** A grey track and thumb down the right edge of a panel is chrome the reader did not ask for,
+it steals width from the content beside it, and two of them on one screen is worse still.
+
+**Every scrolling region MUST carry `.ds-scroll`.** That class is the product's only scroll treatment
+and it hides the bar in every engine — `scrollbar-width: none`, `-ms-overflow-style: none`, and
+`::-webkit-scrollbar { display: none }` — while leaving wheel, trackpad, keyboard and touch scrolling
+untouched. A bare `overflow-y-auto` is the defect, not the scrolling.
+
+Do **not** answer a visible scrollbar by deleting the overflow. The regions genuinely need to scroll:
+the nav rail is ~755px of destinations in a 638px viewport at laptop heights, so removing its overflow
+strands the last few. Hide the bar, keep the behaviour.
+
+**The cost, stated plainly:** a hidden bar is a missing affordance — nothing announces that more
+content is below. That is the accepted trade for chrome (VS Code, Linear and Slack all make it), and
+content regions carry their own cues: a row cut mid-height, a card half in view. If one region ever
+genuinely needs the hint back, give *that* region a visible bar deliberately rather than reverting the
+rule.
+
 ---
 
 ## 8. Rules for Creating Components

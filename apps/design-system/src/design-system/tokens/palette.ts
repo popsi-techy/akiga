@@ -85,7 +85,9 @@ export const palette = {
     500: '#FACC15',
     600: '#EAB308',
     700: '#B2910B',
-    750: '#B45309', // graphical fill — amber, since yellow cannot reach 3:1 on white
+    750: '#AF6400', // graphical fill — amber, since yellow cannot reach 3:1 on white.
+    //      Gold-leaning and as light as white text allows: white on it is 4.52:1,
+    //      and the StepTracker's skipped marker prints a numeral on it.
     800: '#856404',
     900: '#704F00',
   },

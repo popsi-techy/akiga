@@ -34,6 +34,14 @@ because the status is still Active. The row itself carries it: "Expired 31 Jul 2
 every list this identity appears in. A red banner above the table used to state the count as well; it came
 out, because the marked row is the thing you act on and the banner only counted it.
 
+The name cell's second line is the **email**, not the job title. None of this page's seven columns is an
+address — they are all about the external relationship — so the one thing you need in order to contact a
+contractor about access that is about to lapse was absent from the screen. The job title is still
+searchable and still on the identity's own page. Name went to 28% and Type and Access ends gave up the
+slack they held over their chips; two of six addresses still do not fit at any width this table can
+spare, so the line carries a `title` — half an email is worth nothing, and `DataTable` only adds one
+automatically to cells it renders itself.
+
 `DirectoryListPage` now forwards `layout` to `DataTable`; the new page declares a width per column and
 opts into `fixed`, so seven columns fit with no horizontal scroll and rows stay one height.
 

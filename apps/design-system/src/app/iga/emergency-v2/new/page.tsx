@@ -5,11 +5,7 @@ import { useRouter } from 'next/navigation';
 import ArrowBackOutlined from '@mui/icons-material/ArrowBack';
 import ArrowForwardOutlined from '@mui/icons-material/ArrowForward';
 import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
-import Assignment from '@mui/icons-material/Assignment';
-import Groups from '@mui/icons-material/Groups';
-import Notes from '@mui/icons-material/Notes';
 import SaveOutlined from '@mui/icons-material/SaveOutlined';
-import Settings from '@mui/icons-material/Settings';
 import TuneOutlined from '@mui/icons-material/TuneOutlined';
 import { Button, Card, Input, StepTracker, Tooltip, useToast } from '@ds/components';
 import {
@@ -62,7 +58,11 @@ type StepDef = {
    */
   filled?: (ea: EADetail) => boolean;
   /**
-   * What passing this step is called. Absent means it cannot be passed.
+   * What passing this step is called. Absent means no skip is offered.
+   *
+   * **Only ever set on a step with no `blocker`.** A step that gates activation
+   * wears an asterisk; offering to skip it as well would have the rail and the
+   * footer saying opposite things about the same step.
    *
    * Worth being specific per step: on a step that arrives with working defaults,
    * "Skip" would be a lie — nothing is being left undone.
@@ -84,14 +84,12 @@ const STEPS: StepDef[] = [
     heading: 'Choose what a session grants',
     description: 'What a requester is handed for the length of a session',
     blocker: 'assignments',
-    skipLabel: 'Skip step',
   },
   {
     label: 'Eligibility criteria',
     heading: 'Decide who can request it',
     description: 'Who is allowed to ask for it',
     blocker: 'eligibility criteria',
-    skipLabel: 'Skip step',
   },
   {
     label: 'Owners',
@@ -135,22 +133,23 @@ const stepForBlocker = (blocker: string) => STEPS.findIndex((s) => s.blocker ===
  *
  * ## Skipping
  *
- * Any step but the first can be passed, one at a time or all at once, because the
- * common reason for stopping is not knowing something yet — which entitlements to
- * grant, who should own it — and a wizard that will not let you past that point
- * turns "come back to it" into "start again".
+ * **Only steps that gate nothing offer a skip.** Owners and limits do; assignments
+ * and eligibility criteria do not, because both carry a `blocker` and the profile
+ * cannot be switched on without them. Offering to skip a step and then refusing to
+ * activate without it is the app arguing with itself — the asterisk on the rail
+ * already says the step is required, and a "Skip" beside it said the opposite.
  *
- * Skipping a *required* step is allowed. It is a deferral, not a waiver: what it
- * costs is that the flow ends at a draft instead of something switched on, and
- * that price is quoted in three places before it is paid — an asterisk on the
- * rail against every step that gates activation, a `skipped` marker naming the
- * ones passed over, and a count beside the finish that never claims more than the
- * gate allows.
+ * A gated step cannot be passed at all. "Save and continue" is disabled until the
+ * step's own `blocker` clears, with the reason on its tooltip, and `goTo` refuses
+ * forward movement independently so the rail cannot route around the button.
+ * *Backward* movement is never blocked: the reader can always return to anything
+ * they have already reached, including from a step they cannot yet leave.
  *
- * "Skip all" leaves the stepper for the profile's tabbed screen rather than
- * running to the preview: a reader skipping everything is asking not to be walked
- * through this, and the tabbed screen is the surface for that — see
- * {@link skipToProfile}.
+ * One consequence worth knowing: a required step can no longer end up `skipped`.
+ * That state is derived from being behind `reached` while empty, and nothing can
+ * now get behind `reached` while empty and gated — so the rail's "Skipped — still
+ * required" marker is reachable only for the optional steps, which is the only
+ * place it was ever true.
  *
  * Nothing records the skip. A step is skipped when the reader has been past it
  * and it is still empty, which is derived from the data and the furthest step
@@ -234,35 +233,37 @@ export default function EmergencyAccessV2Wizard() {
     return created;
   };
 
-  const goTo = (next: number) => {
-    if (step === 0 && next > 0 && !commitBasics()) return;
-    setStep(next);
-    setReached((r) => Math.max(r, next));
-  };
+  /**
+   * The current step's own requirement, if it has one and it is not met yet.
+   *
+   * This is the same `blocking` array the rail's asterisks and the Activate button
+   * read, so a step cannot be considered passable here while being called required
+   * three inches to the right.
+   */
+  const unmet =
+    // Step 1 is excluded, and not as a convenience: before it commits there is no
+    // profile, so `blocking` names `basic details` by definition and the button
+    // would be dead with no way to ever revive it. Its gate is `commitBasics`,
+    // which can do better than a tooltip anyway — it marks the offending field.
+    // A picker step has no field to mark, which is why the others need the tooltip.
+    step > 0 && STEPS[step].blocker && blocking.includes(STEPS[step].blocker!)
+      ? STEPS[step].blocker!
+      : null;
 
   /**
-   * Out of the stepper and onto the profile's own tabbed screen.
+   * Forward movement out of a gated step is refused until the gate is met.
    *
-   * Not to the preview, which is where this used to land. Skipping every
-   * remaining step is the reader saying they do not want to be walked through
-   * this — which is V1's model, and the tabbed profile is the surface built for
-   * it: the same five pieces of setup, reachable in any order, with a checklist
-   * that names what is still outstanding and the Activate button beside it.
-   *
-   * That checklist is also strictly better than the preview's "still needed"
-   * card — it lists the optional steps too, and marks the one that arrives
-   * satisfied as "Default applied" — so sending them to the preview first meant
-   * showing a worse version of the same answer on the way to the real one.
-   *
-   * The preview keeps the job it is actually for: the last look before
-   * activating, for a reader who filled the steps in.
+   * Going *back* is always allowed, and so is jumping to any step already reached
+   * — the reader needs to re-read what they wrote without being held hostage by
+   * the step they are standing on.
    */
-  const skipToProfile = () => {
-    // `id` is always set here: the control is only offered on steps that carry a
-    // `skipLabel`, and step 1 — the step that creates the profile — has none.
-    if (!id) return;
-    toast.success('Saved as a draft. Finish the rest from these tabs whenever you like.');
-    router.push(`/iga/emergency-v2/${id}`);
+  const goTo = (next: number) => {
+    if (step === 0 && next > 0 && !commitBasics()) return;
+    // `next > step` only: this must not block Back, and must not block the rail
+    // sending the reader to a step behind them.
+    if (next > step && unmet) return;
+    setStep(next);
+    setReached((r) => Math.max(r, next));
   };
 
   const activate = () => {
@@ -348,26 +349,14 @@ export default function EmergencyAccessV2Wizard() {
           <div className="ds-scroll min-h-0 flex-1 overflow-y-auto pr-0.5">{stepBody()}</div>
 
           <div className="mt-6 flex shrink-0 flex-wrap items-center gap-3 pt-5">
-            {/* One leave-without-finishing button, not two. Before step 1 commits
-                there is nothing saved, so leaving is a cancel; after it, the draft
-                exists whatever the button says — and offering both "Cancel" and
-                "Save and close" for the same outcome invites the reader to think
-                one of them throws the draft away. */}
-            {id ? (
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  toast.success('Saved as a draft. You can pick it up from the list.');
-                  router.push('/iga/emergency-v2');
-                }}
-              >
-                Save and close
-              </Button>
-            ) : (
-              <Button variant="secondary" onClick={() => router.push('/iga/emergency-v2')}>
-                Cancel
-              </Button>
-            )}
+            {/* Cancel holds the left corner on every step — the same escape in the
+                same place for the whole flow. It does not delete anything: once
+                step 1 has committed, the draft survives leaving, whatever door the
+                reader leaves through. Naming that action is "Save as draft"'s job,
+                on the other side, next to the buttons that also save. */}
+            <Button variant="secondary" onClick={() => router.push('/iga/emergency-v2')}>
+              Cancel
+            </Button>
 
             <div className="ml-auto flex items-center gap-2">
               {/* The rail carries this on wide screens; below `lg` the rail is
@@ -379,37 +368,40 @@ export default function EmergencyAccessV2Wizard() {
                   <SetupProgress done={EA_REQUIRED_STEPS - blocking.length} total={EA_REQUIRED_STEPS} />
                 </div>
               )}
-              {/* Skipping is a family of its own — passing this step, or passing
-                  all of them — so it sits apart from the back/forward pair rather
-                  than becoming a fourth button in it. */}
-              {!last && STEPS[step].skipLabel && (
-                <>
-                  <Button variant="tertiary" className="whitespace-nowrap" onClick={() => goTo(step + 1)}>
-                    {STEPS[step].skipLabel}
-                  </Button>
-                  {/* Only worth offering while more than one step remains: with a
-                      single step left, "the rest" and "this step" are the same
-                      action under two names. */}
-                  {/* Two words each, matching "Skip step", because the pair is
-                      read as a pair: the difference between them is the object,
-                      and matched lengths put that word where the eye lands. It
-                      also keeps all five controls on one row at 1024, the width
-                      where the rail first appears and the column is tightest.
-
-                      Offered on every skippable step, including the last one.
-                      While this jumped to the preview it had to be hidden there —
-                      "the rest" and "this step" collapsed into the same action —
-                      but leaving for the profile is its own destination, and it is
-                      no less useful on the final step than the first. */}
-                  <Button variant="tertiary" className="whitespace-nowrap" onClick={skipToProfile}>
-                    Skip all
-                  </Button>
-                  <span aria-hidden className="mx-1 h-5 w-px bg-border" />
-                </>
-              )}
               {step > 0 && (
                 <Button variant="secondary" startIcon={<ArrowBackOutlined />} onClick={() => setStep(step - 1)}>
                   Back
+                </Button>
+              )}
+              {/* Directly left of the forward action, as a peer of Back rather than
+                  a text link in the heading: passing a step and saving it are the
+                  same kind of move — both leave this step for the next one — so they
+                  belong in the same group, and `secondary` says it is a real choice
+                  rather than an aside. Only ungated steps ever render it. */}
+              {!last && STEPS[step].skipLabel && (
+                <Button
+                  variant="secondary"
+                  className="whitespace-nowrap"
+                  onClick={() => goTo(step + 1)}
+                >
+                  {STEPS[step].skipLabel}
+                </Button>
+              )}
+              {/* Saving-and-leaving sits with the other saving buttons, not in the
+                  far corner with Cancel. Both exits keep the draft; what differs is
+                  whether leaving is the point, and grouping this one with "Save and
+                  continue" puts the two save verbs side by side where they can be
+                  compared. Only rendered once there is a draft to keep. */}
+              {id && !last && (
+                <Button
+                  variant="secondary"
+                  className="whitespace-nowrap"
+                  onClick={() => {
+                    toast.success('Saved as a draft. You can pick it up from the list.');
+                    router.push('/iga/emergency-v2');
+                  }}
+                >
+                  Save as draft
                 </Button>
               )}
               {last ? (
@@ -427,9 +419,22 @@ export default function EmergencyAccessV2Wizard() {
                   </span>
                 </Tooltip>
               ) : (
-                <Button endIcon={<ArrowForwardOutlined />} onClick={() => goTo(step + 1)}>
-                  Save and continue
-                </Button>
+                // Disabled rather than silently refusing the click: a button that
+                // looks live and does nothing reads as a broken app, where a
+                // disabled one with a reason attached reads as a rule.
+                <Tooltip
+                  title={unmet ? `Add ${unmet} before moving on.` : 'Save this step and move on'}
+                >
+                  <span>
+                    <Button
+                      endIcon={<ArrowForwardOutlined />}
+                      disabled={Boolean(unmet)}
+                      onClick={() => goTo(step + 1)}
+                    >
+                      Save and continue
+                    </Button>
+                  </span>
+                </Tooltip>
               )}
             </div>
           </div>
@@ -449,6 +454,36 @@ export default function EmergencyAccessV2Wizard() {
         </aside>
       </div>
     </div>
+  );
+}
+
+/**
+ * One section of the preview: a taxonomy label over a single panel.
+ *
+ * The same shape the SoD resolution preview uses. A `Card` per section gave each
+ * one an icon, a tinted shell and a framed inner panel — three pieces of chrome
+ * around two rows of text — and five of them stacked made the page read as five
+ * objects rather than one thing being checked. `overline` is exactly this job:
+ * it names what kind of thing follows and carries no meaning you would lose by
+ * deleting it, which is true of "What it is" and false of a card title.
+ */
+function PreviewSection({
+  label,
+  count,
+  children,
+}: {
+  label: string;
+  count?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <h3 className="mb-3 text-overline uppercase text-text-tertiary">
+        {label}
+        {count != null && <span className="tabular-nums"> ({count})</span>}
+      </h3>
+      <div className="rounded-xl border border-border bg-surface px-4">{children}</div>
+    </section>
   );
 }
 
@@ -500,7 +535,11 @@ function Preview({
     .sort((a, b) => (a.step < 0 ? 1 : b.step < 0 ? -1 : a.step - b.step));
 
   return (
-    <div className="max-w-3xl space-y-5">
+    // Full width of whatever holds it. A reading-width cap here held the content
+    // short of the buttons that act on it, so the surface looked like it had a
+    // right margin its own footer did not — and these rows are icon-and-control,
+    // not prose, so there is no line length to protect.
+    <div className="space-y-6">
       {blocking.length > 0 && (
         // Names what is missing and offers one button per missing thing, derived
         // from the gate itself — a preview that only says "incomplete", or that
@@ -552,38 +591,30 @@ function Preview({
         </Card>
       )}
 
-      <Card title="What it is" icon={<Notes />} padding="none">
-        <div>
-          <SummaryRow label="Name">{ea.name || none}</SummaryRow>
-          <SummaryRow label="Description">{ea.description || none}</SummaryRow>
-        </div>
-      </Card>
+      <PreviewSection label="What it is">
+        <SummaryRow label="Name">{ea.name || none}</SummaryRow>
+        <SummaryRow label="Description">{ea.description || none}</SummaryRow>
+      </PreviewSection>
 
-      <Card title="What it hands over" icon={<Assignment />} padding="none">
-        <div>
-          <SummaryRow label="Grants">{grants.length ? grants.join(' and ') : none}</SummaryRow>
-          <SummaryRow label="Who may request it">
-            {ea.eligibilityGroups.length
-              ? `${ea.eligibilityGroups.length} rule${ea.eligibilityGroups.length === 1 ? '' : 's'}`
-              : none}
-          </SummaryRow>
-        </div>
-      </Card>
+      <PreviewSection label="What it hands over">
+        <SummaryRow label="Grants">{grants.length ? grants.join(' and ') : none}</SummaryRow>
+        <SummaryRow label="Who may request it">
+          {ea.eligibilityGroups.length
+            ? `${ea.eligibilityGroups.length} rule${ea.eligibilityGroups.length === 1 ? '' : 's'}`
+            : none}
+        </SummaryRow>
+      </PreviewSection>
 
-      <Card title="Who answers for it" icon={<Groups />} padding="none">
-        <div>
-          <SummaryRow label="Owners">{owners.length ? `${owners.length} named` : none}</SummaryRow>
-          <SummaryRow label="Governance teams">{teams.length ? `${teams.length} chosen` : none}</SummaryRow>
-        </div>
-      </Card>
+      <PreviewSection label="Who answers for it">
+        <SummaryRow label="Owners">{owners.length ? `${owners.length} named` : none}</SummaryRow>
+        <SummaryRow label="Governance teams">{teams.length ? `${teams.length} chosen` : none}</SummaryRow>
+      </PreviewSection>
 
-      <Card title="Limits" icon={<Settings />} padding="none">
-        <div>
-          <SummaryRow label="Session length">Up to {cfg.maxDurationHrs} hrs</SummaryRow>
-          <SummaryRow label="At the same time">{cfg.maxConcurrent} people</SummaryRow>
-          <SummaryRow label="Requestable on">{days.length === 7 ? 'Every day' : days.join(', ') || none}</SummaryRow>
-        </div>
-      </Card>
+      <PreviewSection label="Limits">
+        <SummaryRow label="Session length">Up to {cfg.maxDurationHrs} hrs</SummaryRow>
+        <SummaryRow label="At the same time">{cfg.maxConcurrent} people</SummaryRow>
+        <SummaryRow label="Requestable on">{days.length === 7 ? 'Every day' : days.join(', ') || none}</SummaryRow>
+      </PreviewSection>
 
       <p className="text-caption text-text-tertiary">
         <TuneOutlined sx={{ fontSize: 14 }} className="mr-1 align-text-bottom" />

@@ -26,10 +26,13 @@ export interface InputProps
   helperText?: React.ReactNode;
   /** Error message; presence sets the error state. */
   error?: string;
-  size?: 'sm' | 'md';
+  size?: 'xs' | 'sm' | 'md';
   startAdornment?: React.ReactNode;
   endAdornment?: React.ReactNode;
 }
+
+/** Vertical padding that lands each size on its `controlHeight`, at 14px/20px text. */
+const PAD_Y: Record<'xs' | 'sm' | 'md', string> = { xs: '6px', sm: '8px', md: '10px' };
 
 export function Input({
   label,
@@ -81,7 +84,7 @@ export function Input({
       <TextField
         id={fieldId}
         variant="outlined"
-        size={size === 'sm' ? 'small' : 'medium'}
+        size={size === 'md' ? 'medium' : 'small'}
         required={required}
         error={Boolean(error)}
         helperText={error || helperText}
@@ -101,11 +104,11 @@ export function Input({
         }}
         sx={{
           '& .MuiInputBase-root': { borderRadius: 'var(--ds-radius-md)', fontSize: typography.body.fontSize, backgroundColor: 'var(--ds-color-surface-default)' },
-          // Shared control-height scale (sm 36px / md 40px) — matches Button & Select
-          // so controls always align in a toolbar. Multiline keeps auto height.
+          // Shared control-height scale (xs 32 / sm 36 / md 40) — matches Button &
+          // Select so controls always align in a toolbar. Multiline keeps auto height.
           '& .MuiInputBase-input:not(.MuiInputBase-inputMultiline)': {
-            paddingTop: size === 'sm' ? '8px' : '10px',
-            paddingBottom: size === 'sm' ? '8px' : '10px',
+            paddingTop: PAD_Y[size],
+            paddingBottom: PAD_Y[size],
           },
           '& .MuiFormHelperText-root': { marginLeft: 0, marginTop: '6px', fontSize: typography.caption.fontSize },
         }}

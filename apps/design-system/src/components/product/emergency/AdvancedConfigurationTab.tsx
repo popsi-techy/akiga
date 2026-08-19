@@ -111,9 +111,13 @@ function CompactNumber({
 }) {
   return (
     <div className={widthClass}>
+      {/* `xs`, the 32px step: these are stepper-width numerals in a column of
+          settings rows, where the 36px default reads as a stack of boxes rather
+          than a set of values. Every control on this tab takes the same step, so
+          the rows still line up — the scale only breaks if sizes are mixed. */}
       <Input
         type="number"
-        size="sm"
+        size="xs"
         fullWidth
         inputProps={{ min, max, 'aria-label': ariaLabel }}
         value={String(value)}
@@ -321,7 +325,7 @@ export function AdvancedConfigurationTab({
               options={TIMEZONES}
               value={config.timezone}
               onChange={(v) => update('timezone', v)}
-              size="sm"
+              size="xs"
               fullWidth
             />
 
@@ -333,7 +337,7 @@ export function AdvancedConfigurationTab({
                 <div className="min-w-0 flex-1">
                   <Input
                     type="time"
-                    size="sm"
+                    size="xs"
                     fullWidth
                     value={config.windowStart}
                     onChange={(e) => update('windowStart', e.target.value)}
@@ -344,7 +348,7 @@ export function AdvancedConfigurationTab({
                 <div className="min-w-0 flex-1">
                   <Input
                     type="time"
-                    size="sm"
+                    size="xs"
                     fullWidth
                     value={config.windowEnd}
                     onChange={(e) => update('windowEnd', e.target.value)}
@@ -368,7 +372,7 @@ export function AdvancedConfigurationTab({
                   const preset = DAY_PRESETS.find((item) => item.value === value);
                   if (preset) update('days', [...preset.days]);
                 }}
-                size="sm"
+                size="xs"
                 fullWidth
               />
             </div>

@@ -103,7 +103,7 @@ export const color = {
     // Yellow is the highest-chroma family here, so it survives a lower ratio than a
     // pale blue would; even so this is the faintest outline in the set. If a Medium
     // chip ever needs to read as clearly bounded, [400] (1.33:1) is the step back.
-    warning: { fg: p.yellow[800], solid: p.yellow[500], fill: p.yellow[750], subtle: p.yellow[50], border: p.yellow[300], onSolid: p.ink[900] },
+    warning: { fg: p.yellow[800], solid: p.yellow[500], fill: p.yellow[750], subtle: p.yellow[50], border: p.yellow[300], onSolid: p.ink[900], halo: p.yellow[200] },
     // Between warning and danger — the orange step. Exists so a four-level scale
     // (e.g. Risk Score) has a distinct hue per level instead of reusing one twice.
     // `subtle` is orange[50], matching every other intent's [50]-weight tint. It was
@@ -291,6 +291,16 @@ export const layout = {
  * Input, Select). Same size ⇒ identical height, so controls always align.
  * ------------------------------------------------------------------ */
 export const controlHeight = {
+  /**
+   * Very dense numeric and settings grids — a column of stepper-width fields where
+   * 36px reads as a stack of boxes rather than a set of values.
+   *
+   * Deliberately NOT the product default: `xs` buys density by giving up the
+   * comfortable target, so it belongs where the fields are small, numerous and
+   * adjacent. Anywhere a control sits beside a `sm` Button it must be `sm` too, or
+   * the toolbar stops lining up — which is the whole reason this scale exists.
+   */
+  xs: '32px',
   sm: '36px',
   md: '40px',
   lg: '48px',

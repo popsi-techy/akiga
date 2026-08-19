@@ -45,11 +45,16 @@ const config: Config = {
         stat: ['1.5rem', { lineHeight: '1.75rem', letterSpacing: '-0.01em', fontWeight: '700' }],
       },
       // Inline emphasis for text whose size is inherited or set dynamically — a run
-      // inside a paragraph, an Avatar's initials. It is the ONLY weight utility the
-      // system permits: `font-medium` / `font-semibold` / `font-bold` let each call
-      // site invent a step, which is how the scale drifted. Pair with a `text-*`
-      // class and you have re-created the banned pattern — use the -strong partner.
-      fontWeight: { emphasis: '600' },
+      // inside a paragraph, an Avatar's initials, a value inside a chip whose size
+      // its parent sets. These are the ONLY weight utilities the system permits:
+      // `font-medium` / `font-semibold` / `font-bold` let each call site invent a
+      // step, which is how the scale drifted. Pair either with a `text-*` class and
+      // you have re-created the banned pattern — use the -strong / -medium partner.
+      //
+      // `emphasis` is the firm step (600), `emphasis-soft` the soft one (500) — the
+      // same two steps every sized token offers as `-strong` and `-medium`, so a run
+      // with an inherited size is not forced to choose between 600 and nothing.
+      fontWeight: { emphasis: '600', 'emphasis-soft': '500' },
       colors: {
         canvas: 'var(--ds-color-background-canvas)',
         subtle: 'var(--ds-color-background-subtle)',

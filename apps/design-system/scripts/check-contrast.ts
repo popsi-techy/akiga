@@ -136,6 +136,15 @@ checks.push({
   bg: color.status.success.fill,
   min: AA_TEXT,
 });
+// The StepTracker's skipped marker: white on the amber `warning.fill`. It cannot use
+// `warning.onSolid`, which is near-black because it is paired with the far brighter
+// `warning.solid` — so the pairing this component actually ships gets its own check.
+checks.push({
+  label: 'text.inverse on status.warning.fill',
+  fg: color.text.inverse,
+  bg: color.status.warning.fill,
+  min: AA_TEXT,
+});
 
 // --- Graphical / UI contrast (1.4.11, >= 3:1) ---
 checks.push({ label: 'icon.default on surface', fg: color.icon.default, bg: color.surface.default, min: AA_UI });

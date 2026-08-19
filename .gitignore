@@ -3,6 +3,8 @@ node_modules/
 
 # Next.js build output
 .next/
+# Local verification builds — see next.config.mjs distDir / npm run build:check
+.next-check/
 out/
 next-env.d.ts
 *.tsbuildinfo

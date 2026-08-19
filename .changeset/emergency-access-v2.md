@@ -14,3 +14,14 @@ goes. Each wizard step embeds the same editor its tab uses, so what you configur
 and what you maintain afterwards cannot drift apart. Restores `updateEmergencyAccessBasics` and the
 `onChanged` callbacks on the eligibility, assignments and advanced-config editors, which V2 needs
 to re-read readiness as you go.
+
+**The preview step now reads like the SoD resolution preview.** Each section was a `Card` — an icon, a
+tinted shell and a framed inner panel around two rows of text — and four of them stacked made the step
+look like four objects rather than one thing being checked. They are now an `overline` taxonomy label over
+a single bordered panel, the same shape `sod-resolution-v3` uses for "User access that will be revoked".
+
+`overline` is exactly this job by the visual language's own definition: it names what kind of thing
+follows and carries no meaning you would lose by deleting it, which is true of "What it is" and false of
+a card title. The four card icons went with the cards — `check:icons` counts 43 now, down from 47 — and
+the `PreviewSection` helper takes an optional count, so a section can carry `(n)` the way the SoD preview
+does when there is something to count.

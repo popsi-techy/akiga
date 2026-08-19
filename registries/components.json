@@ -41,6 +41,24 @@
       "notes": "SHAPE CARRIES MEANING: `kind=\"person\"` is round, `kind=\"entity\"` (default) is a rounded square (radius.avatar 6px). Almost every list here mixes people with things — an owners table, an application, a policy, a governance team all arrive as a letter on a tint — and the shape is what says which before the name is read; it is also the convention readers bring in from Slack, Google and GitHub. The prop asks what the subject IS, not what it should look like: a caller always knows whether it is rendering a person and should not also have to know that people are round. It replaced `shape=\"soft\"|\"circle\"`, which left the mapping to memory and produced an audit log whose actor was round, an owners table where the same people were square, and governance teams that looked like people. The grey outline (ring + 2px surface gap) appears on every person avatar EXCEPT xs — it is what separates a person's tint from the surface behind it, and a screen mixing ringless 32px avatars with ringed 40px ones reads as two components; at 24px the ring is a third of the box's visual radius and reads as a smudge. It paints outside the avatar's own box, so a clipping container shaves it — give that DataTable column `wrap`. Letter sizes: xs 12 / sm 16 / md 20 / lg 24, one character always. See ADR-0009 and the brand-tint contrast waiver. AvatarGroup takes the same `kind` and forwards it — it previously hardcoded a square ring, so a group of people rendered circles inside rounded-square rings. Overlap is box/4, not the box/3 a photo facepile would use: a one-letter avatar loses its only identifying content under a heavier stack, and the +N chip is set at 0.75 of the letter size so a two-glyph count does not outweigh the initials it summarises. `icon` renders a glyph instead of the letter, for a tile standing for a KIND of thing rather than a named one; it supersedes initials/name the way StatusChip's icon supersedes its dot. It replaces an ad-hoc `grid h-8 w-8 place-items-center rounded-md bg-brand-subtle` tile that had been hand-rolled in eight places at three sizes, two radii and two icon colours. The glyph is sized at half the box via `[&>svg]:!text-[1em]`, so one rule covers every avatar size."
     },
     {
+      "name": "BarChart",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/BarChart/BarChart.tsx",
+      "extends": null,
+      "variants": [
+        "single-series",
+        "multi-series",
+        "percent"
+      ],
+      "states": [
+        "default",
+        "zero-value",
+        "empty"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/bar-chart/page.tsx",
+      "notes": "Horizontal ranked bar comparison, no chart library. The SIBLING of DonutChart and not interchangeable: a donut answers \"how does this whole split up\", this answers \"which of these is biggest\" — reach for it when the categories are named things (applications, departments, policies) rather than parts of one quantity. Horizontal because the labels are names: vertical bars must rotate or truncate them, and an unreadable name makes its bar meaningless. Built from DIVS rather than SVG, unlike the donut — a bar is a rectangle, and markup keeps labels and values as real text (selectable, translatable, read in order by a screen reader) instead of needing an aria-label that restates the dataset. Order is the caller's; sort descending before passing or the ranking is just a list. USE ONE COLOUR for a single series — per-bar colour off the status ramp made the largest bar red, which in a governance report reads as \"this one is dangerous\" when the chart is only counting. Reserve per-bar colour for bars that differ in KIND (risk tiers). A zero value keeps its row and draws no bar; the track is always shown, or a short bar reads as a small thing rather than a small share of one scale. Pass `max` to put two charts on a shared scale. Not `Meter`, which is one proportion."
+    },
+    {
       "name": "Button",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/Button/Button.tsx",
@@ -105,23 +123,6 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/components/checkbox/page.tsx",
       "notes": "The unchecked outline uses border.control, the token added for exactly this: WCAG 1.4.11 asks 3:1 on a control boundary and the hairline borders cannot reach it. Prefer the `label` prop over wrapping in a <label>, which would leave the text dead."
-    },
-    {
-      "name": "Radio",
-      "status": "stable",
-      "source": "apps/design-system/src/design-system/components/Radio/Radio.tsx",
-      "extends": null,
-      "variants": [
-        "presentational"
-      ],
-      "states": [
-        "unselected",
-        "selected",
-        "disabled",
-        "focus-visible"
-      ],
-      "docs": "apps/design-system/src/app/(docs)/components/radio/page.tsx",
-      "notes": "The single-choice partner to Checkbox, sharing its 18px metrics and the border.control token so single- and multi-select tables align on the same optical column. A radio never un-checks itself, so onChange reports selection rather than a toggle. Consumed by DataTable selectionMode=\"single\"."
     },
     {
       "name": "DataTable",
@@ -200,24 +201,6 @@
       "notes": "SVG part-to-whole breakdown. Categorical colour only; do not reuse the status ramp for categories. A segment may carry `href`, which turns its legend row into the link to those rows — the row keeps its own colours, since the swatch already owns the colour in it."
     },
     {
-      "name": "BarChart",
-      "status": "stable",
-      "source": "apps/design-system/src/design-system/components/BarChart/BarChart.tsx",
-      "extends": null,
-      "variants": [
-        "single-series",
-        "multi-series",
-        "percent"
-      ],
-      "states": [
-        "default",
-        "zero-value",
-        "empty"
-      ],
-      "docs": "apps/design-system/src/app/(docs)/components/bar-chart/page.tsx",
-      "notes": "Horizontal ranked bar comparison, no chart library. The SIBLING of DonutChart and not interchangeable: a donut answers \"how does this whole split up\", this answers \"which of these is biggest\" — reach for it when the categories are named things (applications, departments, policies) rather than parts of one quantity. Horizontal because the labels are names: vertical bars must rotate or truncate them, and an unreadable name makes its bar meaningless. Built from DIVS rather than SVG, unlike the donut — a bar is a rectangle, and markup keeps labels and values as real text (selectable, translatable, read in order by a screen reader) instead of needing an aria-label that restates the dataset. Order is the caller's; sort descending before passing or the ranking is just a list. USE ONE COLOUR for a single series — per-bar colour off the status ramp made the largest bar red, which in a governance report reads as \"this one is dangerous\" when the chart is only counting. Reserve per-bar colour for bars that differ in KIND (risk tiers). A zero value keeps its row and draws no bar; the track is always shown, or a short bar reads as a small thing rather than a small share of one scale. Pass `max` to put two charts on a shared scale. Not `Meter`, which is one proportion."
-    },
-    {
       "name": "Drawer",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/Drawer/Drawer.tsx",
@@ -234,6 +217,22 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/components/drawer/page.tsx",
       "notes": "Right-anchored panel for long forms and browsing surfaces where the page behind still matters. Use Modal for a short centered form, Dialog for a confirm. elevation.lg."
+    },
+    {
+      "name": "FilterDrawer",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/FilterDrawer/FilterDrawer.tsx",
+      "extends": null,
+      "variants": [
+        "checkbox-group"
+      ],
+      "states": [
+        "empty",
+        "staged",
+        "applied"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/filter-drawer/page.tsx",
+      "notes": "The product's one filtering surface: categories in a left rail, the selected category's options as a searchable, paginated checkbox table on the right. A drawer, matching every other pick-from-a-catalog surface (Add Owners, Add Technical Roles, Assign Reviewer). Staged — nothing changes until Apply, so Cancel has something to discard and the list never reorders under the cursor mid-decision. One option kind today (checkbox list); FilterGroup is shaped to take ranges and dates as further kinds without disturbing it."
     },
     {
       "name": "FlowCanvas",
@@ -333,22 +332,6 @@
       "notes": "Tones resolve to the status *fill* roles, not the text roles: a bar is a graphical object under WCAG 1.4.11, and the text roles read heavy as a solid block. Always show the number in text as well — the bar is the shape, not the value."
     },
     {
-      "name": "FilterDrawer",
-      "status": "stable",
-      "source": "apps/design-system/src/design-system/components/FilterDrawer/FilterDrawer.tsx",
-      "extends": null,
-      "variants": [
-        "checkbox-group"
-      ],
-      "states": [
-        "empty",
-        "staged",
-        "applied"
-      ],
-      "docs": "apps/design-system/src/app/(docs)/components/filter-drawer/page.tsx",
-      "notes": "The product's one filtering surface: categories in a left rail, the selected category's options as a searchable, paginated checkbox table on the right. A drawer, matching every other pick-from-a-catalog surface (Add Owners, Add Technical Roles, Assign Reviewer). Staged — nothing changes until Apply, so Cancel has something to discard and the list never reorders under the cursor mid-decision. One option kind today (checkbox list); FilterGroup is shaped to take ranges and dates as further kinds without disturbing it."
-    },
-    {
       "name": "Modal",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/Modal/Modal.tsx",
@@ -402,6 +385,60 @@
       "notes": "Vertical in-panel section switcher, reported as role=tablist. Use over Tabs when labels are long, the set may grow, or each item carries a count. Supplies no chrome of its own — put it inside a bordered panel."
     },
     {
+      "name": "OverflowChips",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/OverflowChips/OverflowChips.tsx",
+      "extends": null,
+      "variants": [
+        "grouped",
+        "single",
+        "empty"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus-visible"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/overflow-chips/page.tsx",
+      "notes": "A few named things plus a +n that reveals the rest, for rows whose height must not change with their contents (table cells, label/value rows, a summary beside a button). With an overflow the set sits in ONE tinted pill — the named chip and the +n are halves of a single value, and loose chips read as two values; with nothing to collapse a lone chip is left ungrouped. The +n is plain text, never a second outlined chip: it is a remainder, not an item. Promoted from product code once a second surface needed it."
+    },
+    {
+      "name": "PickerSlot",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/PickerSlot/PickerSlot.tsx",
+      "extends": null,
+      "variants": [
+        "empty",
+        "filled"
+      ],
+      "states": [
+        "default",
+        "empty",
+        "filled",
+        "hover",
+        "focus-visible"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/picker-slot/page.tsx",
+      "notes": "One row standing in for a collection chosen elsewhere: the row states what is chosen and offers the single control that changes it, while the choosing happens in a Drawer where there is room for search, paging and a SelectionPanel. THE INVARIANT: one row in both states — the count plus `summary` chips replace the \"nothing chosen\" copy IN PLACE, so the surface does not change shape under the reader the moment they pick something (no card growing into a table, no control moving). Anything that breaks that breaks the component. `action` is the empty-state control (normally a `secondary` Button naming what gets added); `onEdit` is the filled-state control and renders the standard BARE pencil — pass one or the other, never both, since two controls make the reader work out which applies. The pencil is unboxed on purpose: a second outlined control beside the chips reads as a button competing with the step's own primary action. `summary` is normally `OverflowChips` and is hidden below `sm`, where keeping the row to one line beats naming the items. Use this instead of embedding the real table when the surface is narrow — a rail-and-table editor squeezed into a wizard column scrolls sideways and clips its own copy, and that detail is not what the step is asking. Use the table itself on a detail page, where the collection is the subject rather than one answer among six. Promoted out of the access-certification wizard when the emergency-access V2 stepper needed the same row; both read and write the same store as their detail-page tab, so a wizard and its tab cannot drift apart. The leading mark is `Avatar` with an `icon` (40px on radius.avatar, glyph at half the box), not the 44px rounded-xl tile this built inline — a slot was otherwise a slightly different object from every other icon-and-text row. Callers pass a bare glyph; no `sx` fontSize. Title truncates and the hint clamps to two lines, so one long hint cannot leave a column of slots ragged — keep hints to one line where the column is narrow."
+    },
+    {
+      "name": "ProgressRing",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/ProgressRing/ProgressRing.tsx",
+      "extends": null,
+      "variants": [
+        "default",
+        "complete"
+      ],
+      "states": [
+        "empty",
+        "partial",
+        "complete"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/progress-ring/page.tsx",
+      "notes": "\"N of M done\" as a ring small enough to live inside a button, for a control disabled until a countable set is finished — it answers \"why is this dead\" and \"how far off\" where the reader already is, instead of a separate meter beside the button. Colour is inherited (currentColor) and never set, so the ring dims with a disabled host and turns with it when the host goes primary. aria-hidden: the caller's label states the count. Prefer SetupProgress when the indicator stands alone (segments need room to be counted); Meter for a continuous proportion. The only animation is the completion moment — the arc transitions on change and the final step swaps in a tick drawn via the `ds-check-draw` keyframe."
+    },
+    {
       "name": "QuickFilter",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/QuickFilter/QuickFilter.tsx",
@@ -418,6 +455,23 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/components/quick-filter/page.tsx",
       "notes": "Standalone single-select filter chips where null means \"show all\", and clicking the active chip clears it. Chip height follows the shared control scale (sm 36 / md 40) so it lines up with the Input beside it in a table toolbar."
+    },
+    {
+      "name": "Radio",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Radio/Radio.tsx",
+      "extends": null,
+      "variants": [
+        "presentational"
+      ],
+      "states": [
+        "unselected",
+        "selected",
+        "disabled",
+        "focus-visible"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/radio/page.tsx",
+      "notes": "The single-choice partner to Checkbox, sharing its 18px metrics and the border.control token so single- and multi-select tables align on the same optical column. A radio never un-checks itself, so onChange reports selection rather than a toggle. Consumed by DataTable selectionMode=\"single\"."
     },
     {
       "name": "RadioCardGroup",
@@ -537,25 +591,6 @@
       "notes": "Multi-select rows with leading visual, description and trailing content. variant=\"plain\" exists so the list can sit inside an already-bordered panel without becoming a card inside a card. tone=\"danger\" for access about to be revoked."
     },
     {
-      "name": "PickerSlot",
-      "status": "stable",
-      "source": "apps/design-system/src/design-system/components/PickerSlot/PickerSlot.tsx",
-      "extends": null,
-      "variants": [
-        "empty",
-        "filled"
-      ],
-      "states": [
-        "default",
-        "empty",
-        "filled",
-        "hover",
-        "focus-visible"
-      ],
-      "docs": "apps/design-system/src/app/(docs)/components/picker-slot/page.tsx",
-      "notes": "One row standing in for a collection chosen elsewhere: the row states what is chosen and offers the single control that changes it, while the choosing happens in a Drawer where there is room for search, paging and a SelectionPanel. THE INVARIANT: one row in both states — the count plus `summary` chips replace the \"nothing chosen\" copy IN PLACE, so the surface does not change shape under the reader the moment they pick something (no card growing into a table, no control moving). Anything that breaks that breaks the component. `action` is the empty-state control (normally a `secondary` Button naming what gets added); `onEdit` is the filled-state control and renders the standard BARE pencil — pass one or the other, never both, since two controls make the reader work out which applies. The pencil is unboxed on purpose: a second outlined control beside the chips reads as a button competing with the step's own primary action. `summary` is normally `OverflowChips` and is hidden below `sm`, where keeping the row to one line beats naming the items. Use this instead of embedding the real table when the surface is narrow — a rail-and-table editor squeezed into a wizard column scrolls sideways and clips its own copy, and that detail is not what the step is asking. Use the table itself on a detail page, where the collection is the subject rather than one answer among six. Promoted out of the access-certification wizard when the emergency-access V2 stepper needed the same row; both read and write the same store as their detail-page tab, so a wizard and its tab cannot drift apart. The leading mark is `Avatar` with an `icon` (40px on radius.avatar, glyph at half the box), not the 44px rounded-xl tile this built inline — a slot was otherwise a slightly different object from every other icon-and-text row. Callers pass a bare glyph; no `sx` fontSize. Title truncates and the hint clamps to two lines, so one long hint cannot leave a column of slots ragged — keep hints to one line where the column is narrow."
-    },
-    {
       "name": "SelectionPanel",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/SelectionPanel/SelectionPanel.tsx",
@@ -594,24 +629,6 @@
       "notes": "KPI tile — label, value, icon in a tinted rounded square. The icon is graphical (WCAG 1.4.11, 3:1) so brand-orange on tint is fine. The only \"resting\" shadow permitted in the system. `href`/`onClick` makes the WHOLE tile one link. A KPI whose population can be listed should always give one: a tile answers \"how many\" and the reader's next question is always \"which ones\", so a number with no destination is decoration and the reader rebuilds the same filter by hand on another screen. The affordance is the tile's own hover, never a \"View all\" link in the corner — a second target inside a card that is already one target gives the reader two places to aim for one outcome. Omit it only when there is nothing to list (a percentage, a ratio)."
     },
     {
-      "name": "OverflowChips",
-      "status": "stable",
-      "source": "apps/design-system/src/design-system/components/OverflowChips/OverflowChips.tsx",
-      "extends": null,
-      "variants": [
-        "grouped",
-        "single",
-        "empty"
-      ],
-      "states": [
-        "default",
-        "hover",
-        "focus-visible"
-      ],
-      "docs": "apps/design-system/src/app/(docs)/components/overflow-chips/page.tsx",
-      "notes": "A few named things plus a +n that reveals the rest, for rows whose height must not change with their contents (table cells, label/value rows, a summary beside a button). With an overflow the set sits in ONE tinted pill — the named chip and the +n are halves of a single value, and loose chips read as two values; with nothing to collapse a lone chip is left ungrouped. The +n is plain text, never a second outlined chip: it is a remainder, not an item. Promoted from product code once a second surface needed it."
-    },
-    {
       "name": "StatusChip",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/StatusChip/StatusChip.tsx",
@@ -635,24 +652,6 @@
       "notes": "The ONE intent→colour mapping. `caution` is the orange fourth step added so High and Medium stop sharing yellow. Risk scores render through RiskScoreChip (dot=false), never a local pill. whitespace-nowrap: a chip is a single mark and must never wrap its label. `icon` puts a small icon where the dot goes, for a chip that labels what a thing IS rather than what state it is in — Internal/External, an identity type, a category. A dot is a STATE LIGHT: it says \"currently true\" and its colour carries the meaning, so a dot in front of a classification implies a liveness it does not have; an icon states the category and at chip size is read before the word beside it. It SUPERSEDES the dot rather than joining it, because two leading marks make the gap before the label stop being predictable down a column. Pass a plain outlined MUI icon with no sx — the chip forces 13px and the intent colour. On a classification chip the ICON does the identifying and the tint is for making one value findable without reading — so give the calm intent to the unremarkable default and reserve the warmer one for the value that genuinely warrants a second look (Internal `info`, External `caution`). NEVER `danger` on a classification: red belongs to a real fault, and a column of red on a list that is supposed to contain those rows teaches the reader to ignore it. Pick glyphs that are SEPARABLE AT A GLANCE rather than merely different — a reader scanning a column is matching shapes, not reading them. Matching the sidebar's mark for the same concept is a bonus where it is available, but not at the cost of a weaker pair. Consumed by `IdentityKindChip`."
     },
     {
-      "name": "Stepper",
-      "status": "stable",
-      "source": "apps/design-system/src/design-system/components/Stepper/Stepper.tsx",
-      "extends": null,
-      "variants": [
-        "default",
-        "no-back"
-      ],
-      "states": [
-        "complete",
-        "current",
-        "upcoming",
-        "clickable"
-      ],
-      "docs": "apps/design-system/src/app/(docs)/components/stepper/page.tsx",
-      "notes": "Steps keep their number throughout, so \"step 2\" means the same thing on every screen. showBack=false on a step that owns its own way back (a final review with an explicit Edit). Cap at four steps."
-    },
-    {
       "name": "StepTracker",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/StepTracker/StepTracker.tsx",
@@ -673,6 +672,24 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/components/step-tracker/page.tsx",
       "notes": "Vertical numbered progress rail for a multi-step form, with a sentence per step. Sibling of Stepper, not a replacement: Stepper is a strip above a canvas that reports position, this is a column beside a form that also explains the steps. Steps behind the reader are clickable; going forward belongs to the form action, which is what decides whether the current step may be left. Completed and current markers keep their NUMBER (never a tick, so \"step 3 of 5\" stays checkable) and wear a 4px halo; markers use the status *solid* role via tokens because a filled marker is a graphic, not text. Connectors are a repeating-linear-gradient (6px dash, 2px gap) — border-style: dashed sizes dashes from the border width and reads as dots at 1px. Steps are top-aligned with one spacing between them; a taller panel leaves space at the bottom rather than stretching the gaps, so the rhythm is a decision and not a function of the viewport. Per-step `status` ('done' | 'skipped') overrides the position-derived state for flows a reader can pass through without finishing — omitted, state comes from `current`, which would mark everything behind the reader done. A skipped marker is the upcoming outline turned DASHED, borrowing the connector's language (dashed = not settled), and its second line replaces the description with the consequence: a skipped required step reads \"Skipped — still required\" in the danger tone. Skipped steps stay clickable, or skipping becomes a one-way door. Per-step `required` renders the same danger asterisk a required field carries, with the word kept for screen readers since nothing here has a `required` attribute; it belongs on the rail rather than only on a final screen so \"can I pass this?\" is answered at the step. Callers should DERIVE status from their data (behind the reader + still empty = skipped) rather than record what was clicked, so filling a step in later clears the mark by itself."
+    },
+    {
+      "name": "Stepper",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Stepper/Stepper.tsx",
+      "extends": null,
+      "variants": [
+        "default",
+        "no-back"
+      ],
+      "states": [
+        "complete",
+        "current",
+        "upcoming",
+        "clickable"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/stepper/page.tsx",
+      "notes": "Steps keep their number throughout, so \"step 2\" means the same thing on every screen. showBack=false on a step that owns its own way back (a final review with an explicit Edit). Cap at four steps."
     },
     {
       "name": "Switch",

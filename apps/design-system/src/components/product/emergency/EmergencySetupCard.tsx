@@ -6,10 +6,7 @@ import TuneOutlined from '@mui/icons-material/TuneOutlined';
 import AssignmentOutlined from '@mui/icons-material/AssignmentOutlined';
 import GroupsOutlined from '@mui/icons-material/GroupsOutlined';
 import SettingsOutlined from '@mui/icons-material/SettingsOutlined';
-import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
-import { Button, useToast } from '@ds/components';
 import {
-  activateEmergencyAccess,
   eaBlockingSteps,
   getEAAssignments,
   type EADetail,
@@ -34,7 +31,6 @@ interface Step extends NextStep {
  * from turning on access during an incident over a missing owner.
  */
 export function EmergencySetupCard({ ea, onGoToTab }: { ea: EADetail; onGoToTab: (tab: string) => void }) {
-  const toast = useToast();
   // Read during render, not in an effect: the store is a module-level Map seeded
   // deterministically, so the server and client agree — and an effect would show
   // every step as "Pending" for one frame before correcting itself.
@@ -96,32 +92,24 @@ export function EmergencySetupCard({ ea, onGoToTab }: { ea: EADetail; onGoToTab:
   const blocking = eaBlockingSteps(ea);
   const canActivate = blocking.length === 0;
 
-  const activate = () => {
-    if (!canActivate) return;
-    activateEmergencyAccess(ea.id);
-    toast.success(`“${ea.name}” is active. It can now be requested.`);
-    // The page reads status on render, so send the reader to the tab that now
-    // has something in it.
-    onGoToTab('sessions');
-  };
-
   return (
     <NextStepsCard
       steps={steps}
       onStep={(id) => onGoToTab(steps.find((s) => s.id === id)?.tab ?? 'overview')}
       footer={
-        <>
-          <p className="min-w-0 flex-1 text-body-sm text-text-secondary">
-            {canActivate
-              ? 'Everything required is in place. Activating lets eligible people request this access.'
-              : // Names what is missing rather than just disabling the button —
-                // a dead control with no reason is the most common dead end.
-                `Add ${blocking.join(' and ')} before this can be activated.`}
-          </p>
-          <Button startIcon={<CheckCircleOutlined />} disabled={!canActivate} onClick={activate}>
-            Activate
-          </Button>
-        </>
+        /* The sentence stays; the Activate button that used to sit beside it does
+           not. The header's own Activate now carries the progress ring and the same
+           gate, so this was a second control for one action — two places to press,
+           two things to keep in step, and the reader having to work out whether they
+           differ. The checklist's job is to say what is left; the header's is to do
+           it. */
+        <p className="min-w-0 flex-1 text-body-sm text-text-secondary">
+          {canActivate
+            ? 'Everything required is in place — activate from the header above.'
+            : // Names what is missing rather than leaving the reader to infer it
+              // from a control that has gone quiet somewhere else on the page.
+              `Add ${blocking.join(' and ')} before this can be activated.`}
+        </p>
       }
     />
   );

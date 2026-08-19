@@ -173,11 +173,64 @@ export function eligibilityConditionText(c: EligibilityCondition): string {
   return `${left} = ${right}`;
 }
 
-/** In-memory eligibility store keyed by emergency-access profile id. */
-const store = new Map<string, EligibilityGroup[]>();
-
 /** Fallback for groups created before `updatedAt` existed (stable demo stamp). */
 const LEGACY_UPDATED_AT = '2020-08-12T12:23:00.000Z';
+
+/**
+ * Seeded groups, so the populated state of this feature is reachable without
+ * building one by hand.
+ *
+ * Nothing used to seed this, which meant every profile opened on the empty state
+ * and the whole populated Eligibility tab — the group cards, the bulk-select bar,
+ * the search — could only be seen by walking a drawer with two selects. That is a
+ * cost paid by anyone reviewing the screen, not just the person who built it.
+ *
+ * Two profiles, deliberately different shapes: one group with a single condition,
+ * and a profile with two groups where one carries two conditions (an AND) — which
+ * is what exercises the card's condition preview and the "matching any group"
+ * copy. Timestamps are fixed instants, like every other seed here, so nothing
+ * re-renders differently between server and client.
+ */
+const SEEDED_GROUPS: Record<string, EligibilityGroup[]> = {
+  'ea-bitbucket-prod': [
+    {
+      id: 'eg-bitbucket-1',
+      name: 'Platform engineers',
+      updatedAt: '2026-07-14T09:20:00.000Z',
+      conditions: [{ id: 'ec-bb-1', attribute: 'department', operator: 'equals', value: 'Engineering' }],
+    },
+  ],
+  'ea-github-staging': [
+    {
+      id: 'eg-github-1',
+      name: 'Engineering leads',
+      updatedAt: '2026-07-28T15:05:00.000Z',
+      conditions: [
+        { id: 'ec-gh-1', attribute: 'department', operator: 'equals', value: 'Engineering' },
+        { id: 'ec-gh-2', attribute: 'jobTitle', operator: 'equals', value: 'Engineering Manager' },
+      ],
+    },
+    {
+      id: 'eg-github-2',
+      name: 'IT administrators',
+      updatedAt: '2026-08-03T11:40:00.000Z',
+      conditions: [{ id: 'ec-gh-3', attribute: 'department', operator: 'equals', value: 'IT' }],
+    },
+  ],
+};
+
+/**
+ * In-memory eligibility store keyed by emergency-access profile id.
+ *
+ * Seeded from `SEEDED_GROUPS` with a deep copy, so an edit in one session cannot
+ * reach back and mutate the seed for the next one.
+ */
+const store = new Map<string, EligibilityGroup[]>(
+  Object.entries(SEEDED_GROUPS).map(([id, groups]) => [
+    id,
+    groups.map((g) => ({ ...g, conditions: g.conditions.map((c) => ({ ...c })) })),
+  ]),
+);
 
 export function getEligibilityGroups(eaId: string): EligibilityGroup[] {
   const groups = store.get(eaId) ?? [];

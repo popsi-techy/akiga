@@ -23,4 +23,9 @@ moving the marker to `fill` would have taken its 12px white numeral outside the 
 `success.fill` measures **4.64:1**, clear of the 4.5:1 AA floor — enforced now rather than asserted, at 51
 pairings, and the check is scoped to success because it is the only fill currently carrying text.
 
+**The marker is 28px, down from 32.** The connector's offsets are derived from that box rather than
+hand-picked — `left-[13px]` puts the 1px line under the centre of a 28px marker and `top-7` starts it
+where the marker ends — so the two cannot drift apart the next time the size moves. The label's top
+padding came down a step with it.
+
 The connector stays grey in every state, which landed just before this.

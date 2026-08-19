@@ -48,7 +48,11 @@ export default function ExternalIdentitiesListPage() {
       id: 'name',
       header: 'Name',
       sortable: true,
-      width: '24%',
+      // Wider than the 24% it held with a job title under it: an external address
+      // carries the contractor's own domain, so it runs longer than any internal
+      // one. The extra came from Type and Access ends, both of which had slack
+      // over their chip.
+      width: '28%',
       wrap: true,
       value: (r) => r.name,
       render: (r) => (
@@ -56,7 +60,17 @@ export default function ExternalIdentitiesListPage() {
           <EntityAvatar kind="user" name={r.name} />
           <div className="min-w-0">
             <div className="truncate text-body-sm-strong text-text-primary">{r.name}</div>
-            <div className="truncate text-caption text-text-secondary">{r.jobTitle}</div>
+            {/* Email, not the job title. This list has no Email column — the seven
+                it does have are all about the external relationship — so the
+                address was absent from the page entirely, and it is the thing you
+                need to contact a contractor about their expiring access. The job
+                title is still searchable and still on the identity's own page.
+                `title` because the longest external address still will not fit at
+                any width this table can spare, and half an email is worth nothing —
+                `DataTable` only adds one automatically to cells it renders itself. */}
+            <div className="truncate text-caption text-text-secondary" title={r.email}>
+              {r.email}
+            </div>
           </div>
         </div>
       ),
@@ -65,7 +79,7 @@ export default function ExternalIdentitiesListPage() {
       id: 'kind',
       header: 'Type',
       sortable: true,
-      width: 120,
+      width: 104,
       wrap: true,
       value: () => 'External',
       // Kept even though every row is external: the same row can be reached from
@@ -91,7 +105,7 @@ export default function ExternalIdentitiesListPage() {
       id: 'accessEndsOn',
       header: 'Access ends',
       sortable: true,
-      width: 150,
+      width: 140,
       wrap: true,
       value: (r) => r.accessEndsOn ?? '',
       render: (r) => {

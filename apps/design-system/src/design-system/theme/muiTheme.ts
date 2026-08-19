@@ -92,9 +92,25 @@ export const muiTheme = createTheme({
           borderRadius: radius.md,
           fontWeight: fontWeight.medium,
           paddingInline: '16px',
-          // Clear disabled affordance for every variant (a disabled filled button
-          // must not read as active). Dim rather than recolor so the intent stays.
-          '&.Mui-disabled': { opacity: 0.45 },
+          /**
+           * Disabled: grey, flat, and still legible.
+           *
+           * It used to be `opacity: 0.45` with the comment "dim rather than recolor"
+           * — but MUI recolors a disabled contained button anyway, to
+           * rgba(0,0,0,0.26) on rgba(0,0,0,0.12), so the result was a recolor AND a
+           * dim, and the label came out at barely over 1:1. A disabled control still
+           * has to say what it is: a button reading "2 steps to activate" is useless
+           * if the reader cannot make out the words.
+           *
+           * These are the product's own tokens rather than MUI's blacks, and there is
+           * no opacity on top. It still cannot be mistaken for active — flat grey
+           * beside a filled orange is unambiguous — it can simply be read.
+           */
+          '&.Mui-disabled': {
+            backgroundColor: 'var(--ds-color-background-subtle)',
+            color: 'var(--ds-color-text-tertiary)',
+            borderColor: 'var(--ds-color-border-default)',
+          },
         },
       },
     },

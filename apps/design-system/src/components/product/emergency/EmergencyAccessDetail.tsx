@@ -20,7 +20,6 @@ import AddIcon from '@mui/icons-material/Add';
 import PersonAddAltOutlined from '@mui/icons-material/PersonAddAltOutlined';
 import HistoryOutlined from '@mui/icons-material/HistoryOutlined';
 import CalendarTodayOutlined from '@mui/icons-material/CalendarTodayOutlined';
-import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
 import {
   Tabs,
   Card,
@@ -38,6 +37,7 @@ import {
   NavList,
   OverflowChips,
   PickerSlot,
+  ProgressRing,
   Tooltip,
   useToast,
   type Column,
@@ -66,7 +66,6 @@ import { EligibilityCriteriaTab } from '@/components/product/emergency/Eligibili
 import { AdvancedConfigurationTab } from '@/components/product/emergency/AdvancedConfigurationTab';
 import { EmergencyAssignmentsTab } from '@/components/product/emergency/EmergencyAssignmentsTab';
 import { EmergencySetupCard } from '@/components/product/emergency/EmergencySetupCard';
-import { SetupProgress } from '@/components/product/SetupProgress';
 import { formatDateTime } from '@/lib/datetime';
 
 /**
@@ -130,7 +129,11 @@ function TabPlaceholder({ label }: { label: string }) {
 function OverviewTab({ ea, onGoToTab }: { ea: EADetail; onGoToTab: (tab: string) => void }) {
   return (
     <div className="ds-scroll h-full overflow-y-auto pr-0.5">
-      <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
+      {/* One column while it is a draft. Both of the right-hand cards are things a
+          draft has nothing to say about, and a 340px gutter holding nothing reads as
+          a panel that failed to load rather than as a deliberate empty. The setup
+          checklist takes the width instead. */}
+      <div className={`grid gap-5 ${ea.isDraft ? '' : 'lg:grid-cols-[1fr_340px]'}`}>
         {/* A draft has no sessions and cannot get any until it is switched on, so
             the slot carries what to do about that instead. */}
         {ea.isDraft ? (
@@ -173,12 +176,18 @@ function OverviewTab({ ea, onGoToTab }: { ea: EADetail; onGoToTab: (tab: string)
             </Card>
           )}
 
-          <Card title="Timeline" icon={<WatchLater />} padding="none">
-            <InfoRowGroup>
-              <InfoRow icon={<HistoryOutlined sx={{ fontSize: 18 }} />} label="Last Updated On" value={formatDateTime(ea.timeline.updatedOn)} />
-              <InfoRow icon={<CalendarTodayOutlined sx={{ fontSize: 18 }} />} label="Created On" value={formatDateTime(ea.timeline.createdOn)} />
-            </InfoRowGroup>
-          </Card>
+          {/* Also draft-only-hidden: a profile created a moment ago has the same
+              instant in both rows, so the card spends two lines saying one thing.
+              Once it has been live and edited the pair starts to differ, which is
+              the point at which it is worth reading. */}
+          {!ea.isDraft && (
+            <Card title="Timeline" icon={<WatchLater />} padding="none">
+              <InfoRowGroup>
+                <InfoRow icon={<HistoryOutlined sx={{ fontSize: 18 }} />} label="Last Updated On" value={formatDateTime(ea.timeline.updatedOn)} />
+                <InfoRow icon={<CalendarTodayOutlined sx={{ fontSize: 18 }} />} label="Created On" value={formatDateTime(ea.timeline.createdOn)} />
+              </InfoRowGroup>
+            </Card>
+          )}
         </div>
       </div>
     </div>
@@ -245,7 +254,11 @@ export function EmergencyOwnersPicker({ ea, onChanged }: { ea: EADetail; onChang
   ];
 
   return (
-    <div className="max-w-3xl space-y-4">
+    // Full width of whatever holds it. A reading-width cap here held the content
+    // short of the buttons that act on it, so the surface looked like it had a
+    // right margin its own footer did not — and these rows are icon-and-control,
+    // not prose, so there is no line length to protect.
+    <div className="space-y-4">
       {slots.map((s) => (
         <PickerSlot
           key={s.key}
@@ -270,14 +283,10 @@ export function EmergencyOwnersPicker({ ea, onChanged }: { ea: EADetail; onChang
       ))}
 
       {/* Neither is required to switch the access on — `EA_REQUIRED_CHECKS` leaves
-          ownership out on purpose, because blocking break-glass access on a
-          missing owner would stop someone turning it on during an incident. Worth
-          saying so, or the reader assumes the step is another gate. */}
-      <p className="text-caption text-text-tertiary">
-        Optional, and worth doing anyway: ownership is what makes this reviewable later. It can be
-        set after the access is switched on.
-      </p>
-
+          ownership out on purpose, because blocking break-glass access on a missing
+          owner would stop someone turning it on during an incident. That used to be
+          spelled out here in a footnote; the rail carries it instead, by simply not
+          marking this step required while the others wear an asterisk. */}
       <TableSelectDrawer
         open={open === 'people'}
         onClose={() => setOpen(null)}
@@ -683,12 +692,6 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {/* Beside the button it gates, so "why is Activate dead" and "how far
-                off am I" are answered in the same glance. Drafts only: once live
-                there is nothing left to count. */}
-            {ea.isDraft && (
-              <SetupProgress done={EA_REQUIRED_STEPS - blocking.length} total={EA_REQUIRED_STEPS} />
-            )}
             <Button variant="secondary" startIcon={<EditOutlined />} onClick={() => toast.info('Edit basic details')}>
               Basic Details
             </Button>
@@ -704,12 +707,39 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
                 }
               >
                 <span>
+                  {/* The progress lives in the button now, rather than in a meter
+                      standing next to it. A disabled control that shows how close it
+                      is answers "why is this dead" and "how much is left" where the
+                      reader is already looking, and it stops the header carrying two
+                      elements that describe one thing.
+
+                      The label carries the count while it is unmet and becomes the
+                      verb when it is — so the button reads as a state that resolves
+                      into an action, and the ring's last step closing into a tick is
+                      the moment that says so. */}
                   <Button
-                    startIcon={<CheckCircleOutlined />}
+                    startIcon={
+                      <ProgressRing
+                        value={EA_REQUIRED_STEPS - blocking.length}
+                        total={EA_REQUIRED_STEPS}
+                        // Green while the button is grey. Inheriting would draw the
+                        // one informative part in the disabled colour — the same
+                        // green a completed step has always used in the checklist.
+                        accent={blocking.length > 0 ? 'var(--ds-color-status-success-fill)' : undefined}
+                      />
+                    }
                     disabled={blocking.length > 0}
                     onClick={activate}
                   >
-                    Activate
+                    {/* Counts what is *left*, and names what finishing it buys.
+                        "1 of 3 required" made the reader do the subtraction and then
+                        guess what the 3 were for; "2 steps to activate" states the
+                        work and the reward, and keeps the word the button is about to
+                        become — so the label resolves into "Activate" rather than
+                        being replaced by it. */}
+                    {blocking.length > 0
+                      ? `${blocking.length} step${blocking.length === 1 ? '' : 's'} to activate`
+                      : 'Activate'}
                   </Button>
                 </span>
               </Tooltip>

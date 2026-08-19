@@ -26,10 +26,9 @@ const PREVIEW_COUNT = 2;
 const OUTER_RADIUS = 'rounded-2xl';
 const OUTER_PAD = 'p-3'; // 12px — also the basis of INNER_RADIUS below
 const INNER_RADIUS = 'rounded-[max(4px,calc(var(--ds-radius-2xl)-12px))]';
-const OUTER_RX = 16; // keep SVG dash outline in sync with rounded-2xl
 
 /**
- * Shared floor for the group card and the add card so a grid row stays even.
+ * Floor for the group card so a grid row stays even.
  * Sized to the tallest preview we render — PREVIEW_COUNT chips plus the AND
  * badge (98px) on top of 138px of chrome — so two conditions never scroll.
  */
@@ -96,7 +95,7 @@ export function EligibilityGroupCard({
             checked={selected}
             onChange={onSelectChange}
             ariaLabel={`Select ${title}`}
-            label={<span className="block truncate text-body-strong text-text-primary">{title}</span>}
+            label={<span className="block truncate text-body-medium text-text-primary">{title}</span>}
           />
         </div>
         <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -126,7 +125,7 @@ export function EligibilityGroupCard({
           {conditions.length} condition{conditions.length === 1 ? '' : 's'}
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+        <div className="ds-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
           {preview.map((c, i) => (
             <React.Fragment key={c.id}>
               {i > 0 && <AndBadge />}
@@ -151,62 +150,6 @@ export function EligibilityGroupCard({
         </div>
       </Tooltip>
     </div>
-  );
-}
-
-export function EligibilityAddCard({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        'relative flex h-full flex-col bg-subtle text-left transition-colors hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle',
-        CARD_MIN_H,
-        OUTER_RADIUS,
-        OUTER_PAD,
-      ].join(' ')}
-    >
-      {/* Custom dashed outline — dash 4 / gap 4 (CSS border-dashed can't set lengths). */}
-      <svg
-        className="pointer-events-none absolute inset-0 h-full w-full overflow-visible text-border"
-        aria-hidden
-      >
-        <rect
-          x="0.5"
-          y="0.5"
-          width="99.7%"
-          height="99.7%"
-          rx={OUTER_RX}
-          ry={OUTER_RX}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1"
-          strokeDasharray="4 4"
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
-      <div
-        className={[
-          'relative flex min-h-0 flex-1 flex-col items-center justify-center border border-border-subtle bg-surface px-5 py-6',
-          INNER_RADIUS,
-        ].join(' ')}
-      >
-        <div className="flex w-full max-w-[240px] flex-col items-center gap-4 text-center">
-          <span className="grid h-11 w-11 place-items-center rounded-full bg-subtle text-icon">
-            <AddIcon sx={{ fontSize: 26 }} />
-          </span>
-          <div className="flex w-full flex-col items-center gap-1.5">
-            <span className="text-body-strong text-text-primary">
-              Add Eligibility Criteria Group
-            </span>
-            <span className="text-caption leading-snug text-text-secondary">
-              Emergency access is available to anyone who satisfies the eligibility rules of at least
-              one group.
-            </span>
-          </div>
-        </div>
-      </div>
-    </button>
   );
 }
 

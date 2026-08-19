@@ -135,9 +135,15 @@ is a data console. Compactness is not permission to be flat.
 
 **A `text-*` class is the complete type style.** Size, line height, tracking and weight
 all come from the token. To emphasise, switch to the `-strong` partner — never add
-`font-semibold` to a size class. The two exceptions are named: `font-emphasis` (600) for
-text whose size is inherited or set dynamically, and `font-normal` (400) to de-emphasise a
-run inside a stronger parent. `npm run check:type` fails the build on anything else.
+`font-semibold` to a size class. The exceptions are named: `font-emphasis` (600) and
+`font-emphasis-soft` (500) for text whose size is inherited or set dynamically, and
+`font-normal` (400) to de-emphasise a run inside a stronger parent. `npm run check:type`
+fails the build on anything else.
+
+`font-emphasis-soft` exists because the inherited-size case needs both steps, not just the
+firm one. A shared label rendered inside a 13px chip on one screen and a 12px pill on
+another cannot pin a `-medium` class without resizing one of them, and before this it had
+to choose between 600 and nothing.
 
 **Three weights, and when each applies.** Every body size has `…` (400), `…-medium` (500)
 and `…-strong` (600).
@@ -255,9 +261,15 @@ Base unit **4px**. Every dimension is a multiple. No 5px, no 15px, no 18px paddi
 
 | Size | Height | Use |
 |---|---|---|
+| `xs` | 32px | Very dense numeric and settings grids — stepper-width fields, many and adjacent |
 | `sm` | 36px | **Default in the product.** Toolbars, table filters, dense forms |
 | `md` | 40px | Standalone forms, primary page actions |
 | `lg` | 48px | Rare — a single hero action |
+
+`xs` buys density by giving up a comfortable target, so it belongs only where the fields are small,
+numerous and side by side — a column of settings rows where 36px reads as a stack of boxes rather than
+a set of values. **A region commits to one size.** An `xs` field beside a `sm` Button is the failure
+this scale exists to prevent, so when a surface steps down, everything on it steps down.
 
 Every control of the same size shares that height (Button, Input, Select, DatePicker, TimePicker), so
 a toolbar row lines up without adjustment. **Never hand-tune a control's height to fit a layout** —

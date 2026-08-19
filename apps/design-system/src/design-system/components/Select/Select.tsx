@@ -26,7 +26,7 @@ export interface SelectProps {
   error?: string;
   required?: boolean;
   disabled?: boolean;
-  size?: 'sm' | 'md';
+  size?: 'xs' | 'sm' | 'md';
   fullWidth?: boolean;
   id?: string;
   /**
@@ -86,7 +86,7 @@ export function Select({
         id={fieldId}
         select
         variant="outlined"
-        size={size === 'sm' ? 'small' : 'medium'}
+        size={size === 'md' ? 'medium' : 'small'}
         required={required}
         disabled={disabled}
         error={Boolean(error)}
@@ -121,8 +121,8 @@ export function Select({
           }),
           // Shared control-height scale (sm 36px / md 40px) — matches Button & Input.
           '& .MuiSelect-select': {
-            paddingTop: size === 'sm' ? '8px' : '10px',
-            paddingBottom: size === 'sm' ? '8px' : '10px',
+            paddingTop: size === 'xs' ? '6px' : size === 'sm' ? '8px' : '10px',
+            paddingBottom: size === 'xs' ? '6px' : size === 'sm' ? '8px' : '10px',
           },
           '& .MuiFormHelperText-root': { marginLeft: 0, marginTop: '6px', fontSize: typography.caption.fontSize },
         }}

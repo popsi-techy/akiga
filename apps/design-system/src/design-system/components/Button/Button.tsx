@@ -11,7 +11,7 @@ import { controlHeight as CONTROL_HEIGHT } from '../../tokens/tokens';
  * rather than restyling MUI ad hoc. Custom logic added only for `loading`.
  */
 export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'danger';
-export type ButtonSize = 'sm' | 'md' | 'lg';
+export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
 export interface ButtonProps
   extends Omit<MuiButtonProps, 'variant' | 'color' | 'size'> {
@@ -24,6 +24,8 @@ export interface ButtonProps
 }
 
 const sizeMap: Record<ButtonSize, MuiButtonProps['size']> = {
+  // `xs` rides MUI's `small` and takes its height from the shared scale below.
+  xs: 'small',
   sm: 'small',
   md: 'medium',
   lg: 'large',
