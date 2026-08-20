@@ -347,7 +347,7 @@
         "scrolled"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/modal/page.tsx",
-      "notes": "Centered counterpart to Drawer, for short forms and rich decisions. Body scrolls; the panel caps at 85vh. showClose=false when dismissing without deciding would leave things inconsistent — the footer must then offer a way back. elevation.xl."
+      "notes": "Centered counterpart to Drawer, for short forms and rich decisions. Body scrolls; the panel caps at 85vh — unless `height` is set, in which case the body fills the leftover and does not scroll (for a canvas that pans itself). showClose=false when dismissing without deciding would leave things inconsistent — the footer must then offer a way back. elevation.xl."
     },
     {
       "name": "NavCard",

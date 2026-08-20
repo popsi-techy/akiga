@@ -3,10 +3,6 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
-import ArrowForwardOutlined from '@mui/icons-material/ArrowForward';
-import AppsOutlined from '@mui/icons-material/AppsOutlined';
-import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
-import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
 import { AppIcon, Input, NavList, resolveAppIcon } from '@ds/components';
 import { AddApplicationDrawer } from '@/components/product/directory';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
@@ -19,18 +15,19 @@ import {
   type AppTypeCategory,
 } from '@/data/app-types';
 
-const CATEGORY_ICON: Record<AppTypeCategory, React.ReactNode> = {
-  application: <AppsOutlined sx={{ fontSize: 18 }} />,
-  iam: <ShieldOutlined sx={{ fontSize: 18 }} />,
-  pam: <VpnKeyOutlined sx={{ fontSize: 18 }} />,
+/** One-line support under the section name — short enough to sit beside it. */
+const CATEGORY_LINE: Record<AppTypeCategory, string> = {
+  application: 'Onboard a business app directly',
+  iam: 'Discover many apps at once',
+  pam: 'Privileged and break-glass access',
 };
 
 /**
  * Onboard an application — the application-type catalog.
  *
- * Custom sits above the catalog: it is the way through when the type is not
- * listed yet, so it must be findable without scrolling. The rail still jumps
- * and tracks the catalog sections rather than filtering them.
+ * Same frame as the workflow template catalog: a category rail that jumps, a
+ * dashed custom option in that rail, then a grid of type tiles. Clicking a tile
+ * opens the onboard drawer.
  */
 export default function OnboardApplicationPage() {
   useSetBreadcrumbs([
@@ -52,9 +49,6 @@ export default function OnboardApplicationPage() {
   const catalog = matched.filter((t) => t.id !== 'at-custom');
   const byCategory = (id: AppTypeCategory) => catalog.filter((t) => t.category === id);
   const visibleCategories = appTypeCategories.filter((cat) => byCategory(cat.id).length > 0);
-
-  const customMatches = appTypeMatches(custom, query);
-  const showCustom = customMatches || catalog.length === 0;
 
   const jumpTo = (id: AppTypeCategory) => {
     setActive(id);
@@ -91,31 +85,33 @@ export default function OnboardApplicationPage() {
     setPicked(t);
   };
 
+  const q = query.trim();
+
   return (
     <div className="-mx-8 -my-6 flex h-[calc(100%+3rem)]">
-      <aside className="flex w-[264px] shrink-0 flex-col gap-3 border-r border-border bg-surface px-4 py-5">
-        <p className="px-1 text-caption-strong uppercase tracking-wider text-text-tertiary">Type</p>
-        <NavList
-          ariaLabel="Application type"
-          value={active}
-          onChange={(id) => jumpTo(id as AppTypeCategory)}
-          items={appTypeCategories.map((cat) => ({
-            id: cat.id,
-            label: cat.label,
-            count: byCategory(cat.id).length,
-          }))}
-        />
+      <aside className="flex w-[264px] shrink-0 flex-col gap-5 border-r border-border bg-surface px-4 py-5">
+        <h1 className="px-1 text-h4 text-text-primary">Select an application type</h1>
+        <div className="flex flex-col gap-3">
+          <CustomRailCard appType={custom} onSelect={pick} />
+          <NavList
+            ariaLabel="Application type"
+            value={active}
+            onChange={(id) => jumpTo(id as AppTypeCategory)}
+            items={appTypeCategories.map((cat) => ({
+              id: cat.id,
+              label: cat.label,
+              count: byCategory(cat.id).length,
+            }))}
+          />
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="shrink-0 border-b border-border px-6 pb-5 pt-5">
-          <h1 className="text-h4 text-text-primary">Select an application type</h1>
-          <p className="mt-1 text-body-sm text-text-secondary">
-            Start with a custom connector, or pick a type from the catalog.
-          </p>
-          <div className="mt-4 w-full max-w-md">
+        <div className="shrink-0 px-6 pt-5">
+          <div className="w-full max-w-md">
             <Input
               placeholder="Search by name or protocol…"
+              aria-label="Search application types"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
@@ -123,19 +119,14 @@ export default function OnboardApplicationPage() {
           </div>
         </div>
 
-        <div ref={scroller} onScroll={onScroll} className="ds-scroll min-h-0 flex-1 overflow-y-auto px-6 py-6">
-          {showCustom && catalog.length === 0 && query.trim() ? (
-            <div className="flex max-w-3xl flex-col gap-4">
-              <p className="text-body-sm text-text-secondary">
-                “{query.trim()}” isn’t in the catalog yet. It will be present shortly — until then,
-                use a custom application.
-              </p>
-              <CustomTypeCard appType={custom} onSelect={pick} />
-            </div>
+        <div ref={scroller} onScroll={onScroll} className="ds-scroll min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-5">
+          {catalog.length === 0 && q ? (
+            <p className="text-body-sm text-text-secondary">
+              “{q}” isn’t in the catalog yet. It will be present shortly — until then, use a custom
+              application.
+            </p>
           ) : (
             <div className="flex flex-col gap-8">
-              {showCustom && <CustomTypeCard appType={custom} onSelect={pick} />}
-
               {visibleCategories.map((cat) => (
                 <section
                   key={cat.id}
@@ -144,16 +135,13 @@ export default function OnboardApplicationPage() {
                     else sections.current.delete(cat.id);
                   }}
                 >
-                  <div className="flex items-start gap-3">
-                    <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-subtle text-icon">
-                      {CATEGORY_ICON[cat.id]}
-                    </span>
-                    <div className="min-w-0">
-                      <h2 className="text-h5 text-text-primary">{cat.label}</h2>
-                      <p className="mt-0.5 text-body-sm text-text-secondary">{cat.description}</p>
-                    </div>
+                  <div className="flex min-w-0 items-baseline gap-2">
+                    <h2 className="shrink-0 text-h5 text-text-primary">{cat.label}</h2>
+                    <p className="min-w-0 truncate text-caption text-text-tertiary">
+                      {CATEGORY_LINE[cat.id]}
+                    </p>
                   </div>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                     {byCategory(cat.id).map((t) => (
                       <AppTypeTile key={t.id} appType={t} onSelect={pick} />
                     ))}
@@ -176,11 +164,12 @@ export default function OnboardApplicationPage() {
 }
 
 /**
- * The escape hatch, pinned above the catalog. Same pick action as a tile —
- * the layout is what tells you this is the default way through, not a second
- * kind of control.
+ * The empty-catalog option, in the same rail as the type list.
+ *
+ * Dashed so it reads as "not a catalog type" — the same treatment From scratch
+ * has on the workflow template gallery. Clicking opens the onboard drawer.
  */
-function CustomTypeCard({
+function CustomRailCard({
   appType,
   onSelect,
 }: {
@@ -191,30 +180,15 @@ function CustomTypeCard({
     <button
       type="button"
       onClick={() => onSelect(appType)}
-      className="group flex w-full items-center gap-5 rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-border-strong hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+      className="flex w-full items-center gap-2.5 rounded-md border border-dashed border-border px-3 py-2.5 text-left transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
     >
-      <span className="grid h-16 w-16 shrink-0 place-items-center rounded-xl bg-brand-subtle text-icon-brand">
-        <TypeGlyph name={appType.name} size={32} />
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-subtle text-icon">
+        <TypeGlyph name={appType.name} size={18} />
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-h5 text-text-primary">Custom application</span>
-        <span className="mt-1 block text-body-sm text-text-secondary">
-          Connect any system that isn’t in the catalog, over REST. Use this when the type you need
-          is still on the way.
-        </span>
-        <span className="mt-2.5 flex flex-wrap gap-1.5">
-          {appType.protocols.map((p) => (
-            <span key={p} className="rounded-pill bg-subtle px-2.5 py-1 text-caption-medium text-text-secondary">
-              {p}
-            </span>
-          ))}
-        </span>
+      <span className="min-w-0">
+        <span className="block text-body-sm-strong text-text-primary">Custom application</span>
+        <span className="block text-caption text-text-secondary">Any system over REST</span>
       </span>
-      <ArrowForwardOutlined
-        sx={{ fontSize: 20 }}
-        className="shrink-0 text-icon transition-transform group-hover:translate-x-0.5 group-hover:text-text-primary"
-        aria-hidden
-      />
     </button>
   );
 }
@@ -248,7 +222,7 @@ function AppTypeTile({
       <TypeMark name={appType.name} size={40} muted={soon} />
       <span className="min-w-0 flex-1">
         <span className="flex items-start justify-between gap-2">
-          <span className={`truncate text-body-sm-strong ${soon ? 'text-text-tertiary' : 'text-text-primary'}`}>
+          <span className={`truncate text-body-sm-medium ${soon ? 'text-text-tertiary' : 'text-text-primary'}`}>
             {appType.name}
           </span>
           {soon && (

@@ -6,13 +6,9 @@ import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 /**
  * Choose a starting point for a workflow.
  *
- * A full page rather than a modal: the preview renders a real flow, which can be
- * wider and taller than a dialog, and choosing how to automate someone's first day
- * is not a decision to make through a letterbox.
- *
- * The page title lives in the picker rail. The right pane is the chosen template —
- * stacking a second "Start a workflow" header above the preview was the hierarchy
- * problem this layout is here to kill.
+ * Same catalog frame as application types: a lifecycle rail, a featured empty
+ * canvas, then a grid of template cards. Clicking a card opens a modal with the
+ * real flow — the same renderer the builder uses — before the workflow is named.
  */
 export default function WorkflowTemplatesPage() {
   useSetBreadcrumbs([

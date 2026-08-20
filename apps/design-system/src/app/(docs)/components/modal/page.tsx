@@ -81,6 +81,7 @@ export default function ModalDocs() {
             { name: 'icon', type: 'ReactNode', description: 'Leading icon in a brand-tint tile.' },
             { name: 'footer', type: 'ReactNode', description: 'Right-aligned actions — secondary first, primary last.' },
             { name: 'width', type: 'number', default: '480', description: 'Panel width in px; caps at 94vw.' },
+            { name: 'height', type: 'number | string', description: 'Fixed panel height. Body fills the leftover and does not scroll — for a canvas that pans itself. Omit for short forms (content-sized, cap 85vh, body scrolls).' },
             { name: 'showClose', type: 'boolean', default: 'true', description: 'Set false when the decision must be made in the footer.' },
             { name: 'children', type: 'ReactNode', description: 'Body content. Scrolls internally; the panel caps at 85vh.' },
           ]}
@@ -93,7 +94,7 @@ export default function ModalDocs() {
             'Keep it to one question or one short form — if it needs sections, use a Drawer.',
             'Put the primary action last in the footer, after the secondary.',
             'Set showClose={false} when dismissing without deciding would leave things inconsistent.',
-            'Let the body scroll; never let the modal grow past 85vh.',
+            'Let the body scroll on short forms; never let an unsized modal grow past 85vh. Pass height only for a self-panning canvas.',
           ]}
           donts={[
             'Don’t use a Modal for a simple confirm — that is Dialog.',

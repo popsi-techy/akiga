@@ -53,8 +53,11 @@ type StepDef = {
    * list of required steps means the rail's asterisks, the preview's "still
    * needed" and the Activate button can never disagree about what is required —
    * they are three readings of one array in `data/emergency-access`.
+   *
+   * Use `blockers` when one screen collects more than one of those checks.
    */
   blocker?: string;
+  blockers?: string[];
   /**
    * Is there anything here yet? Only for steps activation does not gate — the
    * gated ones answer this through `blocker`.
@@ -67,7 +70,7 @@ type StepDef = {
    * wears an asterisk; offering to skip it as well would have the rail and the
    * footer saying opposite things about the same step.
    *
-   * Same words on every skippable step — "Skip step" — so the footer does not
+   * Same word on every skippable step — "Skip" — so the footer does not
    * invent a second verb for the same move.
    */
   skipLabel?: string;
@@ -75,18 +78,12 @@ type StepDef = {
 
 const STEPS: StepDef[] = [
   {
-    label: 'Basic details',
-    heading: 'Name and describe this access',
-    description: 'What this access is called, and what it is for',
-    blocker: 'basic details',
+    label: 'Name and assignments',
+    heading: 'Name this access and what it grants',
+    description: 'What this access is called, and what a session grants',
+    blockers: ['basic details', 'assignments'],
     // No skip: every editor after this one writes against a profile id, so there
     // is nothing to attach anything to until this step has been through once.
-  },
-  {
-    label: 'Assignments',
-    heading: 'Choose what a session grants',
-    description: 'What a requester is handed for the length of a session',
-    blocker: 'assignments',
   },
   {
     label: 'Eligibility criteria',
@@ -99,7 +96,7 @@ const STEPS: StepDef[] = [
     heading: 'Choose who answers at review',
     description: 'Who answers for it at review',
     filled: (ea) => getEAOwners(ea.id).length + getEAGovernanceTeams(ea.id).length > 0,
-    skipLabel: 'Skip step',
+    skipLabel: 'Skip',
   },
   {
     label: 'Limits and timing',
@@ -108,7 +105,7 @@ const STEPS: StepDef[] = [
     // Always satisfied: the defaults are real, working values rather than empty
     // fields, so this step can be passed but never left incomplete.
     filled: () => true,
-    skipLabel: 'Skip step',
+    skipLabel: 'Skip',
   },
   {
     label: 'Preview',
@@ -119,13 +116,16 @@ const STEPS: StepDef[] = [
 ];
 
 /** Where the preview sends the reader for each thing `eaBlockingSteps` can name. */
-const stepForBlocker = (blocker: string) => STEPS.findIndex((s) => s.blocker === blocker);
+const stepBlockers = (s: StepDef) => s.blockers ?? (s.blocker ? [s.blocker] : []);
+const stepForBlocker = (blocker: string) => STEPS.findIndex((s) => stepBlockers(s).includes(blocker));
 
 /** First unfinished wizard step, or Preview once everything before it is in place. */
 function resumeStepIndex(ea: EADetail): number {
   for (let i = 0; i < STEPS.length - 1; i++) {
     const s = STEPS[i];
-    const done = s.blocker ? !eaBlockingSteps(ea).includes(s.blocker) : Boolean(s.filled?.(ea));
+    const done = stepBlockers(s).length
+      ? stepBlockers(s).every((b) => !eaBlockingSteps(ea).includes(b))
+      : Boolean(s.filled?.(ea));
     if (!done) return i;
   }
   return STEPS.length - 1;
@@ -134,25 +134,24 @@ function resumeStepIndex(ea: EADetail): number {
 /**
  * Emergency Access V2 — create in a stepper.
  *
- * The same five pieces V1 leaves on a checklist, asked in order and finished
- * with a preview. The trade the two versions are exploring: V1 lets you build in
+ * The same pieces V1 leaves on a checklist, asked in order and finished
+ * with a preview. Basic details and assignments share the first screen so
+ * naming the access and saying what it grants are one decision, not two
+ * stops. The trade the two versions are exploring: V1 lets you build in
  * any order and live with a half-finished draft on the list; V2 walks you
  * through and ends with something switched on.
  *
- * The profile is created for real at the end of step 1, because every editor
- * after it (assignments, eligibility, owners, limits) is keyed by profile id and
- * writes as you go. That also means leaving halfway leaves a draft behind rather
- * than nothing — the same outcome V1 produces, reached a different way. Opening
- * that draft from the list resumes here, on the first step still empty, rather
- * than on the tabbed screen V1 uses for the same unfinished object.
+ * The profile is created as soon as it has a name, because the assignment
+ * pickers on the same screen are keyed by profile id and write as you go.
  *
  * ## Skipping
  *
- * **Only steps that gate nothing offer a skip.** Owners and limits do; assignments
- * and eligibility criteria do not, because both carry a `blocker` and the profile
- * cannot be switched on without them. Offering to skip a step and then refusing to
- * activate without it is the app arguing with itself — the asterisk on the rail
- * already says the step is required, and a "Skip" beside it said the opposite.
+ * **Only steps that gate nothing offer a skip.** Owners and limits do; the first
+ * screen (basics + assignments) and eligibility criteria do not, because they
+ * carry blockers and the profile cannot be switched on without them. Offering to
+ * skip a step and then refusing to activate without it is the app arguing with
+ * itself — the asterisk on the rail already says the step is required, and a
+ * "Skip" beside it said the opposite.
  *
  * A gated step cannot be passed at all. "Save and continue" is disabled until the
  * step's own `blocker` clears, with the reason on its tooltip, and `goTo` refuses
@@ -195,7 +194,11 @@ function EmergencyAccessV2WizardInner() {
   // "not yet visited". Jumping back to fix something must not un-skip the steps
   // beyond it, so this only ever climbs.
   const [reached, setReached] = React.useState(initialStep);
-  const [id, setId] = React.useState<string | null>(resumable?.id ?? null);
+  const [id, setId] = React.useState<string | null>(() => {
+    if (resumable?.id) return resumable.id;
+    if (resumeId) return null;
+    return createEmergencyAccess({ name: '', description: '' });
+  });
   const [name, setName] = React.useState(resumable?.name ?? '');
   const [description, setDescription] = React.useState(resumable?.description ?? '');
   // Bumped by each editor so the preview and the tracker re-read session memory.
@@ -238,7 +241,7 @@ function EmergencyAccessV2WizardInner() {
   const railSteps = STEPS.map((s, i) => ({
     label: s.label,
     description: s.description,
-    required: Boolean(s.blocker),
+    required: stepBlockers(s).length > 0,
     status: ((): 'done' | 'skipped' | undefined => {
       // Nothing can be done before the profile exists. `blocking` only names the
       // basics until then, so asking it about assignments would answer "not
@@ -247,9 +250,10 @@ function EmergencyAccessV2WizardInner() {
       // A gated step reports real data, so it counts wherever the reader is. An
       // ungated one only reports once they could have seen it: "Limits" arrives
       // already satisfied by its defaults, and marking it done on arrival at step
-      // 2 would take credit, in green, for a decision nobody has made yet.
-      const done = s.blocker
-        ? !blocking.includes(s.blocker)
+      // 1 would take credit, in green, for a decision nobody has made yet.
+      const gates = stepBlockers(s);
+      const done = gates.length
+        ? gates.every((b) => !blocking.includes(b))
         : i <= reached && Boolean(s.filled?.(ea));
       if (done) return 'done';
       return i < reached ? 'skipped' : undefined;
@@ -290,15 +294,18 @@ function EmergencyAccessV2WizardInner() {
    * read, so a step cannot be considered passable here while being called required
    * three inches to the right.
    */
-  const unmet =
-    // Step 1 is excluded, and not as a convenience: before it commits there is no
-    // profile, so `blocking` names `basic details` by definition and the button
-    // would be dead with no way to ever revive it. Its gate is `commitBasics`,
-    // which can do better than a tooltip anyway — it marks the offending field.
-    // A picker step has no field to mark, which is why the others need the tooltip.
-    step > 0 && STEPS[step].blocker && blocking.includes(STEPS[step].blocker!)
-      ? STEPS[step].blocker!
-      : null;
+  const currentGates = stepBlockers(STEPS[step]);
+  const unmet = (() => {
+    if (currentGates.length === 0) return null;
+    // Name and description can be marked on the fields themselves. Assignments
+    // cannot, so once basics are in, the tooltip names that remaining gate.
+    if (step === 0) {
+      if (!name.trim() || !description.trim()) return 'basic details';
+      if (!ea || blocking.includes('assignments')) return 'assignments';
+      return null;
+    }
+    return currentGates.find((g) => blocking.includes(g)) ?? null;
+  })();
 
   /**
    * Forward movement out of a gated step is refused until the gate is met.
@@ -324,13 +331,18 @@ function EmergencyAccessV2WizardInner() {
     router.push(`/iga/emergency-v2/${ea.id}`);
   };
 
+  const persistBasics = (nextName: string, nextDescription: string) => {
+    if (id) updateEmergencyAccessBasics(id, { name: nextName, description: nextDescription });
+  };
+
   const stepBody = () => {
     if (step === 0) {
       return (
         // Full column width, like the footer beneath it. A reading-width cap here
         // held the fields short of the buttons that belong to them, so the step
         // looked like it had a right margin the rest of the frame did not.
-        <div className="space-y-4">
+        <div className="space-y-6">
+          <div className="space-y-4">
           <Input
             label="Name"
             required
@@ -338,7 +350,11 @@ function EmergencyAccessV2WizardInner() {
             placeholder="e.g. Bitbucket production"
             size="sm"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              const next = e.target.value;
+              setName(next);
+              persistBasics(next, description);
+            }}
           />
           <Input
             label="Description"
@@ -352,22 +368,25 @@ function EmergencyAccessV2WizardInner() {
             multiline
             minRows={3}
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => {
+              setDescription(e.target.value);
+              persistBasics(name, e.target.value);
+            }}
           />
+          </div>
+          <div>
+            <h3 className="mb-4 text-h5 text-text-primary">Assignments</h3>
+            {id && <EmergencyAssignmentsPicker eaId={id} onChanged={bump} />}
+          </div>
         </div>
       );
     }
     if (!ea) return null;
     // The editors are the same components the tabs use, so what you configure
     // here and what you maintain later can never drift apart.
-    //
-    // Assignments is the exception, and only in shape: the tab's rail-and-table
-    // needs a page's width, so the step asks with the picker slots the
-    // access-certification wizard uses. Same store, same drawers.
-    if (step === 1) return <EmergencyAssignmentsPicker eaId={ea.id} onChanged={bump} />;
-    if (step === 2) return <EligibilityCriteriaTab eaId={ea.id} onChanged={bump} />;
-    if (step === 3) return <EmergencyOwnersPicker ea={ea} onChanged={bump} />;
-    if (step === 4) return <AdvancedConfigurationTab eaId={ea.id} onChanged={bump} hideChrome />;
+    if (step === 1) return <EligibilityCriteriaTab eaId={ea.id} onChanged={bump} />;
+    if (step === 2) return <EmergencyOwnersPicker ea={ea} onChanged={bump} />;
+    if (step === 3) return <AdvancedConfigurationTab eaId={ea.id} onChanged={bump} hideChrome />;
     return <Preview ea={ea} blocking={blocking} onGoToStep={goTo} />;
   };
 
@@ -445,10 +464,9 @@ function EmergencyAccessV2WizardInner() {
           <div className="mt-6 flex shrink-0 flex-wrap items-center gap-3 pt-5">
             {/* Cancel holds the left corner on every step — the same escape in the
                 same place for the whole flow. It does not delete anything: once
-                step 1 has committed, the draft survives leaving, whatever door the
-                reader leaves through. Naming that action is "Save as draft"'s job,
-                on the other side, next to the buttons that also save. */}
-            <Button variant="secondary" onClick={() => router.push('/iga/emergency-v2')}>
+                a draft exists, it survives leaving. Saving is "Save and continue",
+                which writes this step and moves on. */}
+            <Button variant="tertiary" onClick={() => router.push('/iga/emergency-v2')}>
               Cancel
             </Button>
 
@@ -478,23 +496,6 @@ function EmergencyAccessV2WizardInner() {
                   onClick={() => goTo(step + 1)}
                 >
                   {STEPS[step].skipLabel}
-                </Button>
-              )}
-              {/* Saving-and-leaving sits with the other saving buttons, not in the
-                  far corner with Cancel. Both exits keep the draft; what differs is
-                  whether leaving is the point, and grouping this one with "Save and
-                  continue" puts the two save verbs side by side where they can be
-                  compared. Only rendered once there is a draft to keep. */}
-              {id && (
-                <Button
-                  variant="secondary"
-                  className="whitespace-nowrap"
-                  onClick={() => {
-                    toast.success('Saved as a draft. You can pick it up from the list.');
-                    router.push('/iga/emergency-v2');
-                  }}
-                >
-                  Save as draft
                 </Button>
               )}
               {/* Disabled rather than silently refusing the click: a button that

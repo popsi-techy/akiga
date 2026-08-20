@@ -158,7 +158,7 @@ export default function ApplicationDetailPage() {
       rows: steps.filter((s) => s.required).map(stepRow),
     },
     {
-      heading: 'Recommended',
+      heading: 'Additional',
       headingHint: 'optional, and does not block connection',
       rows: steps.filter((s) => !s.required).map(stepRow),
     },

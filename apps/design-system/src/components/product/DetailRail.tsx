@@ -4,23 +4,6 @@ import * as React from 'react';
 import CheckCircle from '@mui/icons-material/CheckCircle';
 import { StatusChip } from '@ds/components';
 
-/** A step nobody has started, drawn to the same box as the tick it will become. */
-function PendingRing() {
-  return (
-    <svg className="block" width="16" height="16" viewBox="0 0 18 18" aria-hidden="true" focusable="false">
-      <circle
-        cx="9"
-        cy="9"
-        r="7.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeDasharray="2.5 2.5"
-      />
-    </svg>
-  );
-}
-
 export interface DetailRailRow {
   /** Stable key. For a setup step this is the step id; otherwise the section value. */
   id: string;
@@ -132,7 +115,7 @@ export function DetailRail({
                 item.done ? 'text-success' : 'text-icon-subtle'
               }`}
             >
-              {item.done ? <CheckCircle sx={{ fontSize: 16 }} /> : <PendingRing />}
+              <CheckCircle sx={{ fontSize: 16 }} />
             </span>
           )}
           <span className="min-w-0 flex-1">

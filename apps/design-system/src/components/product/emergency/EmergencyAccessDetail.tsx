@@ -1128,10 +1128,10 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
     {
       heading: 'Required to activate',
       headingHint: 'these steps gate activation',
-      rows: setupSteps.filter((s) => s.required).map(stepRow),
+      rows: setupSteps.filter((s) => s.required && s.id !== 'basic').map(stepRow),
     },
     {
-      heading: 'Recommended',
+      heading: 'Additional',
       headingHint: 'optional, and does not block activation',
       rows: setupSteps.filter((s) => !s.required).map(stepRow),
     },
@@ -1251,12 +1251,6 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
             groups={railGroups}
             currentTab={shownTab}
             onGoTo={(row) => {
-              // `basic` is the one row that is not a section — it opens the same drawer
-              // the header's Basic Details button does, so there is one editor.
-              if (row.id === 'basic') {
-                setBasicsOpen(true);
-                return;
-              }
               setTab(row.tab);
             }}
           />
@@ -1264,8 +1258,9 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           {/* No tab strip where the rail is: the two were the same list, and V1 keeps the
               rail. A vertical list has room the strip does not — per-row completion on a
-              draft, counts that do not compete with the label for width, and a row for
-              Basic details, which was never a tab. V2 and V3 still navigate here. */}
+              draft, and counts that do not compete with the label for width. V2 and V3
+              still navigate here. Name and description live on the header, not as a
+              rail row. */}
           {!showRail && (
             <div className="shrink-0 border-b border-border px-8">
               <Tabs
@@ -1392,8 +1387,8 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
       </Dialog>
 
       {/* `bump` on save, the same reducer every other mutation on this page uses —
-          the header's name and the checklist's "Basic details" tick both read from
-          the store on render, so one re-render updates all of them. */}
+          the header's name reads from the store on render, so one re-render
+          updates it. */}
       <BasicDetailsDrawer
         open={basicsOpen}
         ea={ea}

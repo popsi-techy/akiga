@@ -21,20 +21,36 @@ export interface ModalProps {
   footer?: React.ReactNode;
   /** Panel width in px. @default 480 */
   width?: number;
+  /**
+   * Panel height. When set, the body fills whatever is left under the header
+   * and footer and does not scroll — for a canvas or preview that pans itself.
+   * Omit it for short forms: the panel sizes to content and caps at 85vh, and
+   * the body scrolls.
+   */
+  height?: number | string;
   /** Show the header close (✕) button. @default true */
   showClose?: boolean;
   children?: React.ReactNode;
 }
 
-export function Modal({ open, onClose, title, subtitle, icon, footer, width = 480, showClose = true, children }: ModalProps) {
+export function Modal({ open, onClose, title, subtitle, icon, footer, width = 480, height, showClose = true, children }: ModalProps) {
   const titleId = React.useId();
+  const filled = height != null;
   return (
     <MuiDialog
       open={open}
       onClose={onClose}
-      PaperProps={{ sx: { width, maxWidth: '94vw', borderRadius: 'var(--ds-radius-xl)' }, 'aria-labelledby': titleId }}
+      PaperProps={{
+        sx: {
+          width,
+          maxWidth: '94vw',
+          borderRadius: 'var(--ds-radius-xl)',
+          ...(filled ? { height, maxHeight: height } : {}),
+        },
+        'aria-labelledby': titleId,
+      }}
     >
-      <div className="flex max-h-[85vh] flex-col">
+      <div className={filled ? 'flex h-full flex-col' : 'flex max-h-[85vh] flex-col'}>
         <header className="flex items-start gap-3 px-5 pb-1 pt-4">
           {icon && (
             <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-subtle text-icon-brand">
@@ -59,7 +75,15 @@ export function Modal({ open, onClose, title, subtitle, icon, footer, width = 48
           )}
         </header>
 
-        <div className="ds-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div
+          className={
+            filled
+              ? 'min-h-0 flex-1 overflow-hidden px-5 py-4'
+              : 'ds-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4'
+          }
+        >
+          {children}
+        </div>
 
         {footer && (
           <footer className="flex items-center justify-end gap-2 border-t border-border px-5 py-3">{footer}</footer>
