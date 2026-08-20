@@ -11,14 +11,23 @@ import {
   InfoRow,
   InfoRowGroup,
   Menu,
-  ProgressRing,
   StatusChip,
   Tooltip,
   useToast,
   type TabItem,
 } from '@ds/components';
 import { getApplicationDetail } from '@/data/directory';
-import { APP_REQUIRED_STEPS, appBlockingSteps } from '@/data/application-setup';
+import { appBlockingSteps } from '@/data/application-setup';
+import {
+  DetailRail,
+  type DetailRailGroup,
+  type DetailRailRow,
+} from '@/components/product/DetailRail';
+import {
+  applicationSetupSteps,
+  type ApplicationSetupStep,
+} from '@/components/product/directory/applicationSetupSteps';
+import { infoIcon } from '@/components/product/directory/infoIcons';
 import { connectApplication } from '@/data/applications-store';
 import {
   DetailShell,
@@ -26,7 +35,6 @@ import {
   RelationTable,
   EntityAvatar,
   ApplicationOverviewTab,
-  ApplicationSetupCard,
   ApplicationBasicDetailsDrawer,
   EntityOwnersTab,
   ApplicationApprovalPolicyTab,
@@ -52,9 +60,16 @@ const BASE_TABS: TabItem[] = [
   { value: 'owners', label: 'Owners' },
 ];
 
-function tabsFor(isSetup: boolean, accounts: number, entitlements: number): TabItem[] {
+/**
+ * The sections this page has, which the rail is derived from.
+ *
+ * Overview keeps its name in both states now. It was relabelled "Setup" while the
+ * checklist lived inside it; the checklist is the rail, so the tab that held it is a
+ * summary again — of what the application *is* during setup, and of what it holds once
+ * connected.
+ */
+function sectionsFor(accounts: number, entitlements: number): TabItem[] {
   return BASE_TABS.map((t) => {
-    if (t.value === 'overview') return { ...t, label: isSetup ? 'Setup' : 'Overview' };
     if (t.value === 'accounts') return { ...t, count: accounts };
     if (t.value === 'entitlements') return { ...t, count: entitlements };
     return t;
@@ -66,13 +81,40 @@ export default function ApplicationDetailPage() {
   const router = useRouter();
   const toast = useToast();
   const [tab, setTab] = React.useState('overview');
+  /**
+   * Which rail row was pressed, where a section has more than one.
+   *
+   * Authorization and Connection events are both configured on Provisioning Setup, so the
+   * section alone cannot say which row the reader is on. Cleared whenever the section
+   * changes by any other route — `connect()` returns to Overview, where one row matches
+   * and the override would only be a stale claim about a different section.
+   */
+  const [activeRow, setActiveRow] = React.useState<string | undefined>(undefined);
+  const goToSection = (value: string, rowId?: string) => {
+    setTab(value);
+    setActiveRow(rowId);
+  };
   const [basicsOpen, setBasicsOpen] = React.useState(false);
   const [, bump] = React.useReducer((n: number) => n + 1, 0);
 
-  const detail = getApplicationDetail(id);
+  /**
+   * The onboarding store is `localStorage`-backed, so it is empty during SSR and full on
+   * the client. Reading it while rendering made the two disagree and React threw a
+   * hydration error on any application that had been onboarded — the server rendered
+   * "not found" or a connected profile, the client a profile in setup.
+   *
+   * So it is read after mount, like every other session-memory store in this codebase,
+   * and nothing renders until then. Unlike the emergency-access stores this one survives
+   * a reload, which is exactly why it cannot be read during the first render.
+   */
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+
+  const detail = mounted ? getApplicationDetail(id) : null;
   const onboarded = detail?.onboarded;
   const isSetup = onboarded?.status === 'setup';
 
+  if (!mounted) return null;
   if (!detail) {
     return <DetailNotFound title="Application not found" backHref={LIST_HREF} backLabel="Back to Applications" />;
   }
@@ -81,12 +123,55 @@ export default function ApplicationDetailPage() {
   const gov = getGovEntity(app.id);
   const blocking = onboarded ? appBlockingSteps(onboarded) : [];
 
+  /**
+   * What the rail lists — one derivation, not one per state.
+   *
+   * A connected application shows the same grouped, ticked list one in setup does; it
+   * just leads with the sections that are not setup steps. So connecting an application
+   * does not restyle its navigation, and the ticks keep earning their place afterwards —
+   * "this connected application still has no owners" is a governance gap worth seeing
+   * without opening anything.
+   *
+   * Steps come from the step definition and non-step sections from the same list the tab
+   * strip would have rendered, so the rail cannot offer a section this page does not have,
+   * or miss one it does.
+   */
+  const sections = sectionsFor(accounts.length, entitlements.length);
+  const steps = onboarded ? applicationSetupSteps(onboarded) : [];
+  const countFor = (value: string) => sections.find((s) => s.value === value)?.count;
+  const stepRow = (step: ApplicationSetupStep): DetailRailRow => ({
+    id: step.id,
+    label: step.label,
+    tab: step.tab,
+    count: countFor(step.tab),
+    done: step.done,
+  });
+  const railGroups: DetailRailGroup[] = [
+    {
+      rows: sections
+        .filter((s) => !steps.some((step) => step.tab === s.value))
+        .map((s) => ({ id: s.value, label: s.label, tab: s.value, count: s.count })),
+    },
+    {
+      heading: 'Required to connect',
+      headingHint: 'these steps gate connection',
+      rows: steps.filter((s) => s.required).map(stepRow),
+    },
+    {
+      heading: 'Recommended',
+      headingHint: 'optional, and does not block connection',
+      rows: steps.filter((s) => !s.required).map(stepRow),
+    },
+  ].filter((g) => g.rows.length > 0);
+
   const connect = () => {
     if (!onboarded || blocking.length > 0) return;
     connectApplication(onboarded.id);
     toast.success(`“${onboarded.name}” is connected. IGA can now reach this application.`);
     bump();
-    setTab('overview');
+    // Through `goToSection` so the row override is cleared with the section: leaving it
+    // set would have a Provisioning step still claiming to be current on Overview.
+    goToSection('overview');
   };
 
   return (
@@ -110,6 +195,11 @@ export default function ApplicationDetailPage() {
             >
               Basic Details
             </Button>
+            {/* A plain button that is simply disabled until nothing blocks. It used to
+                carry a progress ring and a "N required steps to connect" label, from when
+                the header was the only place to learn how far setup had got — the rail
+                reports that step by step now, so the ring was the same state said twice
+                and the crowded-out half was the button's one action. */}
             {isSetup && onboarded ? (
               <Tooltip
                 title={
@@ -119,20 +209,8 @@ export default function ApplicationDetailPage() {
                 }
               >
                 <span>
-                  <Button
-                    startIcon={
-                      <ProgressRing
-                        value={APP_REQUIRED_STEPS - blocking.length}
-                        total={APP_REQUIRED_STEPS}
-                        accent={blocking.length > 0 ? 'var(--ds-color-status-success-fill)' : undefined}
-                      />
-                    }
-                    disabled={blocking.length > 0}
-                    onClick={connect}
-                  >
-                    {blocking.length > 0
-                      ? `${blocking.length} required step${blocking.length === 1 ? '' : 's'} to connect`
-                      : 'Connect'}
+                  <Button disabled={blocking.length > 0} onClick={connect}>
+                    Connect
                   </Button>
                 </span>
               </Tooltip>
@@ -149,32 +227,54 @@ export default function ApplicationDetailPage() {
             />
           </>
         }
-        tabs={tabsFor(isSetup, accounts.length, entitlements.length)}
+        tabs={sections}
         tab={tab}
         onTab={setTab}
+        rail={
+          <DetailRail
+            ariaLabel={isSetup ? 'Setup checklist' : 'Application sections'}
+            groups={railGroups}
+            currentTab={tab}
+            currentId={activeRow}
+            onGoTo={(row) => {
+              // `basic` is the one row that is not a section — it opens the same drawer
+              // the header's Basic Details button does, so there is one editor. It does
+              // not become current, because nothing about the section behind it changed.
+              if (row.id === 'basic') {
+                setBasicsOpen(true);
+                return;
+              }
+              goToSection(row.tab, row.id);
+            }}
+          />
+        }
       >
         {tab === 'overview' &&
           (isSetup && onboarded ? (
+            /* During setup this is what the application *is*, not what it holds — it holds
+               nothing until IGA can reach it. The checklist that used to sit beside these
+               facts is the rail now, so the card is the whole section rather than its
+               sidebar. Kept to a reading width for the same reason a paragraph is. */
             <div className="ds-scroll h-full overflow-y-auto pr-0.5">
-              <div className="grid items-start gap-5 lg:grid-cols-[1fr_340px]">
-                <ApplicationSetupCard
-                  app={onboarded}
-                  onGoToTab={setTab}
-                  onEditBasics={() => setBasicsOpen(true)}
-                  onConnect={connect}
-                />
+              <div className="max-w-xl">
                 <Card title="Application type" icon={<Info />} padding="none">
                   <InfoRowGroup>
-                    <InfoRow label="Type" value={onboarded.appType} />
+                    <InfoRow icon={infoIcon.type} label="Type" value={onboarded.appType} />
                     <InfoRow
+                      icon={infoIcon.sync}
                       label="Provisioning"
                       value={onboarded.enableProvisioning ? 'Enabled' : 'Off'}
                     />
                     <InfoRow
+                      icon={infoIcon.people}
                       label="Identity source"
                       value={onboarded.identitySource ? 'Yes' : 'No'}
                     />
-                    <InfoRow label="Requestable" value={onboarded.requestable ? 'Yes' : 'No'} />
+                    <InfoRow
+                      icon={infoIcon.baseline}
+                      label="Requestable"
+                      value={onboarded.requestable ? 'Yes' : 'No'}
+                    />
                   </InfoRowGroup>
                 </Card>
               </div>

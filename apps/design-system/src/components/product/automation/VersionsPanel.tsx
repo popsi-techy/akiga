@@ -57,15 +57,22 @@ function seedVersions(doc: VersionedDoc): VersionRow[] {
 }
 
 /**
- * Right-rail version history for automation builders — search, active tip,
- * earlier drafts. Overflow → Delete (confirmed).
+ * Version history for automation builders — search, active tip, earlier drafts.
+ * Overflow → Delete (confirmed). Sits on either rail; the workflow builder
+ * uses the left so the canvas can stay in view while browsing.
  */
 export function VersionsPanel({
   doc,
   onClose,
+  side = 'right',
+  selectedId,
+  onSelect,
 }: {
   doc: VersionedDoc | null;
   onClose: () => void;
+  side?: 'left' | 'right';
+  selectedId?: string | null;
+  onSelect?: (id: string) => void;
 }) {
   const toast = useToast();
   const [query, setQuery] = React.useState('');
@@ -75,9 +82,11 @@ export function VersionsPanel({
   const [pendingDelete, setPendingDelete] = React.useState<VersionRow | null>(null);
 
   React.useEffect(() => {
-    setVersions(doc ? seedVersions(doc) : []);
+    const next = doc ? seedVersions(doc) : [];
+    setVersions(next);
     setQuery('');
     setPendingDelete(null);
+    if (onSelect && !selectedId && next[0]) onSelect(next[0].id);
   }, [doc?.id, doc?.status, doc?.updatedAt]);
 
   const q = query.trim().toLowerCase();
@@ -100,7 +109,12 @@ export function VersionsPanel({
   };
 
   return (
-    <aside className="flex w-[340px] shrink-0 flex-col border-l border-border bg-surface">
+    <aside
+      className={[
+        'flex w-[340px] shrink-0 flex-col border-border bg-surface',
+        side === 'left' ? 'border-r' : 'border-l',
+      ].join(' ')}
+    >
       <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
         <div className="min-w-0 text-body-strong text-text-primary">Versions</div>
         <button
@@ -141,6 +155,8 @@ export function VersionsPanel({
                 <VersionCard
                   version={current}
                   emphasized
+                  selected={selectedId === current.id}
+                  onSelect={onSelect}
                   onDelete={() => setPendingDelete(current)}
                 />
               ) : (
@@ -161,7 +177,12 @@ export function VersionsPanel({
                 <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
                   {others.map((v) => (
                     <li key={v.id}>
-                      <VersionCard version={v} onDelete={() => setPendingDelete(v)} />
+                      <VersionCard
+                        version={v}
+                        selected={selectedId === v.id}
+                        onSelect={onSelect}
+                        onDelete={() => setPendingDelete(v)}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -191,19 +212,39 @@ export function VersionsPanel({
 function VersionCard({
   version,
   emphasized = false,
+  selected = false,
+  onSelect,
   onDelete,
 }: {
   version: VersionRow;
   emphasized?: boolean;
+  selected?: boolean;
+  onSelect?: (id: string) => void;
   onDelete: () => void;
 }) {
+  const selectable = Boolean(onSelect);
   return (
     <article
+      role={selectable ? 'option' : undefined}
+      aria-selected={selectable ? selected : undefined}
+      tabIndex={selectable ? 0 : undefined}
+      onClick={selectable ? () => onSelect?.(version.id) : undefined}
+      onKeyDown={
+        selectable
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSelect?.(version.id);
+              }
+            }
+          : undefined
+      }
       className={[
         'rounded-lg px-3 py-3 transition-colors',
-        emphasized
+        emphasized || selected
           ? 'bg-[var(--ds-color-status-info-subtle)]'
           : 'bg-subtle hover:bg-sunken',
+        selectable ? 'cursor-pointer' : '',
       ].join(' ')}
     >
       <div className="flex items-start gap-2">
@@ -217,17 +258,22 @@ function VersionCard({
             <time dateTime={version.at}>{formatVersionAt(version.at)}</time>
           </div>
         </div>
-        <Menu
-          ariaLabel={`Actions for ${version.name}`}
-          items={[
-            {
-              label: 'Delete',
-              icon: <DeleteOutlineOutlined sx={{ fontSize: 18 }} />,
-              danger: true,
-              onClick: onDelete,
-            },
-          ]}
-        />
+        <div
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          <Menu
+            ariaLabel={`Actions for ${version.name}`}
+            items={[
+              {
+                label: 'Delete',
+                icon: <DeleteOutlineOutlined sx={{ fontSize: 18 }} />,
+                danger: true,
+                onClick: onDelete,
+              },
+            ]}
+          />
+        </div>
       </div>
     </article>
   );

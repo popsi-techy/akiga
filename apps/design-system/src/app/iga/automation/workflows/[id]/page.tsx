@@ -7,6 +7,7 @@ import EditOutlined from '@mui/icons-material/EditOutlined';
 import ContentCopyOutlined from '@mui/icons-material/ContentCopyOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
+import BlockOutlined from '@mui/icons-material/BlockOutlined';
 import WatchLater from '@mui/icons-material/WatchLater';
 import Bolt from '@mui/icons-material/Bolt';
 import { Avatar, Button, Card, Dialog, InfoRow, InfoRowGroup, Menu, StatusChip, Tabs, useToast } from '@ds/components';
@@ -51,6 +52,7 @@ export default function WorkflowDetailPage() {
   const [workflow, setWorkflow] = React.useState<AutomationWorkflow | null>(null);
   const [loaded, setLoaded] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
+  const [deactivateOpen, setDeactivateOpen] = React.useState(false);
   const [tab, setTab] = React.useState('workflow');
 
   const stats = React.useMemo(() => workflowRunStats(params.id), [params.id]);
@@ -97,6 +99,18 @@ export default function WorkflowDetailPage() {
     toast.success(`“${saved.name}” activated`);
   };
 
+  /**
+   * Deactivating confirms; activating does not. Turning a workflow on is visible
+   * on the next lifecycle event. Turning it off is silent — identities already
+   * processed keep what it granted — so the confirm is the only signal.
+   */
+  const deactivate = () => {
+    const saved = updateWorkflow({ ...workflow, status: 'draft' });
+    setWorkflow(saved);
+    setDeactivateOpen(false);
+    toast.success(`“${saved.name}” deactivated. It is a draft again.`);
+  };
+
   const event = workflow.event;
 
   return (
@@ -124,7 +138,7 @@ export default function WorkflowDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {workflow.status === 'draft' && (
+            {workflow.status === 'draft' ? (
               <Button
                 variant="secondary"
                 startIcon={<CheckCircleOutlined />}
@@ -139,6 +153,14 @@ export default function WorkflowDetailPage() {
                 }
               >
                 Activate
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                startIcon={<BlockOutlined />}
+                onClick={() => setDeactivateOpen(true)}
+              >
+                Deactivate
               </Button>
             )}
             <Button startIcon={<EditOutlined />} onClick={openBuilder}>
@@ -202,6 +224,19 @@ export default function WorkflowDetailPage() {
         )}
         {tab === 'history' && <ExecutionHistoryTab workflowId={workflow.id} />}
       </div>
+
+      <Dialog
+        open={deactivateOpen}
+        onClose={() => setDeactivateOpen(false)}
+        title="Deactivate this workflow?"
+        confirmLabel="Deactivate"
+        cancelLabel="Keep active"
+        onConfirm={deactivate}
+      >
+        New lifecycle events will stop running this workflow, and it returns to{' '}
+        <strong className="text-text-primary">Draft</strong> so you can keep editing it. Identities
+        already processed keep the access it granted — deactivating never revokes.
+      </Dialog>
 
       <Dialog
         open={deleteOpen}

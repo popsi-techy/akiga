@@ -5,17 +5,21 @@ import { useRouter } from 'next/navigation';
 import ArrowForwardOutlined from '@mui/icons-material/ArrowForward';
 import DrawOutlined from '@mui/icons-material/DrawOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
-import TaskAltOutlined from '@mui/icons-material/TaskAltOutlined';
-import { Button, Input, useToast } from '@ds/components';
-import { createWorkflow } from '@/data/workflows';
+import StorageOutlined from '@mui/icons-material/StorageOutlined';
+import BadgeOutlined from '@mui/icons-material/BadgeOutlined';
+import MailOutline from '@mui/icons-material/MailOutline';
+import AccountTreeOutlined from '@mui/icons-material/AccountTreeOutlined';
+import MenuBookOutlined from '@mui/icons-material/MenuBookOutlined';
+import HubOutlined from '@mui/icons-material/HubOutlined';
+import type { SvgIconComponent } from '@mui/icons-material';
+import { Button, Drawer, Input, SegmentedControl, StatusChip, useToast } from '@ds/components';
+import { createWorkflow, listWorkflows } from '@/data/workflows';
 import {
   WORKFLOW_TEMPLATES,
   templateAsWorkflow,
-  templateStepCount,
   type WorkflowTemplate,
 } from '@/data/workflow-templates';
 import type { WorkflowEventType } from '@/data/automation-types';
-import { isBlockComplete } from '@/lib/workflow-tree';
 import { EVENT_ICONS } from './workflow-visuals';
 import { WorkflowFlowPreview } from './WorkflowFlowPreview';
 
@@ -29,44 +33,41 @@ const EVENT_LABEL: Record<WorkflowEventType, string> = {
 /** `null` is the scratch option, which lives in the same list as the templates. */
 type Selection = string | null;
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** A unique draft name so two empties created the same day do not collide in the list. */
+function scratchDraft() {
+  const n = listWorkflows().filter((w) => /^New workflow/i.test(w.name)).length + 1;
+  const d = new Date();
+  return {
+    name: `New workflow ${n} · ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`,
+    description: 'An empty canvas. Add a lifecycle event, then the steps this process needs.',
+  };
+}
+
 /**
  * The workflow template gallery.
  *
- * ## Why selection is the preview
+ * A landing/choice page: the pick is the protagonist. The list is a quiet index;
+ * the flow on the right is what you are choosing. Selecting previews — there is
+ * no Preview button. One Use action, in brand, in the identity band.
  *
- * Eleven templates is exactly the number where a card grid stops working: the
- * reader cannot choose without looking inside, and looking inside costs a
- * navigation each time — eleven round trips to answer one question. So the list
- * and the preview sit side by side and **selecting a template previews it**. There
- * is no Preview button, because previewing is not a separate act; the affordance
- * disappears and browsing costs an arrow key.
- *
- * ## Why the preview is the real renderer
- *
- * `WorkflowFlowPreview` is the same component the workflow detail page uses, fed a
- * template rendered as an `AutomationWorkflow`. A template *is* a node tree, so
- * what the gallery shows and what the builder opens cannot diverge. A hand-drawn
- * illustration of the flow would be prettier for a week and wrong forever after
- * the first template edit.
- *
- * ## Why "before you switch this on" is not hidden
- *
- * Every template declares what an administrator must still confirm — connections,
- * naming standards, licence SKUs, retention windows. Putting that list *beside the
- * Use button rather than after it* is the difference between a template and a
- * surprise, and it is what makes the one-click commit safe to offer. A template
- * that claimed to be complete would be discovered as incomplete at the worst
- * moment, which is halfway through someone's first day.
+ * `WorkflowFlowPreview` is the same renderer the builder uses, so what you saw
+ * is what you get.
  */
 export function WorkflowTemplateGallery() {
   const router = useRouter();
   const toast = useToast();
   const [query, setQuery] = React.useState('');
-  // The first template is selected on arrival: an empty right-hand pane asking the
-  // reader to pick something before it shows anything is a wasted first screen.
-  const [selected, setSelected] = React.useState<Selection>(WORKFLOW_TEMPLATES[0].id);
+  const [lifecycle, setLifecycle] = React.useState<WorkflowEventType>('joiner');
+  const [selected, setSelected] = React.useState<Selection>(null);
+  const [draftOpen, setDraftOpen] = React.useState(false);
+  const [draftSource, setDraftSource] = React.useState<WorkflowTemplate | 'scratch' | null>(null);
+  const [draftName, setDraftName] = React.useState('');
+  const [draftDescription, setDraftDescription] = React.useState('');
 
   const q = query.trim().toLowerCase();
+  const searching = q.length > 0;
   const matches = React.useMemo(
     () =>
       WORKFLOW_TEMPLATES.filter(
@@ -79,139 +80,213 @@ export function WorkflowTemplateGallery() {
       ),
     [q],
   );
+  const visible = React.useMemo(
+    () => (searching ? matches : matches.filter((t) => t.event === lifecycle)),
+    [searching, matches, lifecycle],
+  );
 
-  // Keep the selection valid while filtering, so the preview never shows a
-  // template the reader can no longer see in the list.
   React.useEffect(() => {
-    if (selected !== null && !matches.some((t) => t.id === selected)) {
-      setSelected(matches[0]?.id ?? null);
+    if (selected !== null && !visible.some((t) => t.id === selected)) {
+      setSelected(visible[0]?.id ?? null);
     }
-  }, [matches, selected]);
+  }, [visible, selected]);
 
   const template = selected ? WORKFLOW_TEMPLATES.find((t) => t.id === selected) ?? null : null;
 
-  const use = (t: WorkflowTemplate) => {
-    const wf = createWorkflow({
-      name: t.name,
-      description: t.summary,
-      eventType: t.event,
-      root: t.root,
-    });
-    toast.success(`“${t.name}” created from template`);
-    router.push(`/iga/automation/workflows/${wf.id}/builder`);
+  const pickLifecycle = (event: WorkflowEventType) => {
+    setLifecycle(event);
+    const first = WORKFLOW_TEMPLATES.find((t) => t.event === event);
+    if (first) setSelected(first.id);
   };
 
-  const startBlank = () => {
-    const wf = createWorkflow({});
-    router.push(`/iga/automation/workflows/${wf.id}/builder`);
+  const openDraft = (source: WorkflowTemplate | 'scratch') => {
+    if (source === 'scratch') {
+      const draft = scratchDraft();
+      setDraftName(draft.name);
+      setDraftDescription(draft.description);
+    } else {
+      setDraftName(source.name);
+      setDraftDescription(source.summary);
+    }
+    setDraftSource(source);
+    setDraftOpen(true);
   };
 
-  /** ↑/↓ moves through the list, including the scratch row at the end. */
+  const closeDraft = () => {
+    setDraftOpen(false);
+    setDraftSource(null);
+    setDraftName('');
+    setDraftDescription('');
+  };
+
+  const confirmDraft = () => {
+    const name = draftName.trim();
+    if (!name || draftSource === null) return;
+    const wf =
+      draftSource === 'scratch'
+        ? createWorkflow({ name, description: draftDescription.trim() })
+        : createWorkflow({
+            name,
+            description: draftDescription.trim(),
+            eventType: draftSource.event,
+            root: draftSource.root,
+          });
+    const fromTemplate = draftSource !== 'scratch';
+    closeDraft();
+    toast.success(fromTemplate ? `“${wf.name}” created from template` : `“${wf.name}” created`);
+    router.push(`/iga/automation/workflows/${wf.id}/builder?from=templates`);
+  };
+
   const onListKeyDown = (e: React.KeyboardEvent) => {
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
     e.preventDefault();
-    const order: Selection[] = [...matches.map((t) => t.id), null];
+    const order: Selection[] = [null, ...visible.map((t) => t.id)];
     const i = order.indexOf(selected);
     const next = order[Math.min(order.length - 1, Math.max(0, i + (e.key === 'ArrowDown' ? 1 : -1)))];
     setSelected(next);
   };
 
   return (
-    <div className="flex h-full min-h-0 gap-6">
-      {/* ---- the list ---- */}
-      <div className="flex w-[340px] shrink-0 flex-col">
-        <div className="shrink-0">
+    <>
+    <div className="flex h-full min-h-0 flex-1">
+      <div className="flex w-[320px] shrink-0 flex-col border-r border-border bg-surface">
+        <div className="shrink-0 space-y-3 px-3 pb-3 pt-4">
+          <h1 className="text-h4 text-text-primary">Explore templates</h1>
           <Input
-            placeholder="Search templates"
+            placeholder="Search"
             aria-label="Search templates"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
           />
-        </div>
-
-        <div
-          className="ds-scroll mt-3 min-h-0 flex-1 overflow-y-auto pr-1"
-          role="listbox"
-          aria-label="Workflow templates"
-          tabIndex={0}
-          onKeyDown={onListKeyDown}
-        >
-          {EVENT_ORDER.map((event) => {
-            const group = matches.filter((t) => t.event === event);
-            if (group.length === 0) return null;
-            const Icon = EVENT_ICONS[event];
-            return (
-              <div key={event} className="mb-5 last:mb-0">
-                <div className="mb-2 flex items-center gap-2">
-                  <Icon sx={{ fontSize: 15 }} />
-                  <span className="text-overline text-text-tertiary">
-                    {EVENT_LABEL[event]} · {group.length}
-                  </span>
-                </div>
-                <ul className="space-y-1.5">
-                  {group.map((t) => (
-                    <li key={t.id}>
-                      <TemplateRow
-                        template={t}
-                        selected={selected === t.id}
-                        onSelect={() => setSelected(t.id)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-
-          {matches.length === 0 && (
-            <p className="px-1 py-3 text-body-sm text-text-tertiary">
-              No template matches “{query.trim()}”. Clear the search, or start from scratch.
-            </p>
-          )}
-
-          {/* In the same list, not off to one side: "none of these" is one of the
-              options, and making it a separate surface implies it is a lesser one. */}
           <button
             type="button"
-            role="option"
-            aria-selected={selected === null}
+            aria-pressed={selected === null}
             onClick={() => setSelected(null)}
             className={[
-              'mt-2 flex w-full items-center gap-3 rounded-lg border border-dashed px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle',
+              'flex w-full items-center gap-2.5 rounded-md border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle',
               selected === null
-                ? 'border-brand bg-brand-subtle'
-                : 'border-border-strong hover:bg-surface-hover',
+                ? 'border-solid border-brand bg-surface text-text-primary'
+                : 'border-dashed border-border hover:bg-surface-hover',
             ].join(' ')}
           >
-            <DrawOutlined sx={{ fontSize: 18 }} className="shrink-0 text-icon" />
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-subtle text-icon">
+              <DrawOutlined sx={{ fontSize: 18 }} />
+            </span>
             <span className="min-w-0">
-              <span className="block text-body-sm-strong text-text-primary">Start from scratch</span>
-              <span className="block text-caption text-text-secondary">An empty canvas</span>
+              <span className="block text-body-sm-strong text-text-primary">From scratch</span>
+              <span className="block text-caption text-text-secondary">Empty canvas</span>
             </span>
           </button>
+          {!searching && (
+            <SegmentedControl
+              size="sm"
+              fullWidth
+              ariaLabel="Lifecycle"
+              value={lifecycle}
+              onChange={pickLifecycle}
+              options={EVENT_ORDER.map((event) => ({
+                value: event,
+                label: EVENT_LABEL[event],
+                count: WORKFLOW_TEMPLATES.filter((t) => t.event === event).length,
+              }))}
+            />
+          )}
+        </div>
+
+        <div className="relative min-h-0 flex-1 overflow-hidden">
+          <div
+            className="ds-scroll ds-scroll-gutter h-full overflow-y-auto pb-4"
+            role="listbox"
+            aria-label="Workflow templates"
+            tabIndex={0}
+            onKeyDown={onListKeyDown}
+          >
+            {visible.length > 0 ? (
+              <ul className="flex flex-col gap-2">
+                {visible.map((t) => (
+                  <li key={t.id}>
+                    <TemplateRow
+                      template={t}
+                      selected={selected === t.id}
+                      showEvent={searching}
+                      onSelect={() => {
+                        setSelected(t.id);
+                        setLifecycle(t.event);
+                      }}
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-1 py-3 text-body-sm text-text-secondary">
+                Nothing matches “{query.trim()}”. Start from scratch, or clear the search.
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* ---- the preview ---- */}
-      <div className="ds-scroll min-w-0 flex-1 overflow-y-auto">
+      <div className="flex min-w-0 flex-1 flex-col bg-canvas">
         {template ? (
-          <TemplatePreview template={template} onUse={() => use(template)} />
+          <TemplatePreview template={template} onUse={() => openDraft(template)} />
         ) : (
-          <ScratchPreview onStart={startBlank} />
+          <ScratchPreview onStart={() => openDraft('scratch')} />
         )}
       </div>
     </div>
+      <Drawer
+        open={draftOpen}
+        onClose={closeDraft}
+        title="Name this workflow"
+        subtitle="You can change this later. Nothing is created until you open the builder."
+        icon={<DrawOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
+        footer={
+          <>
+            <Button variant="secondary" onClick={closeDraft}>
+              Cancel
+            </Button>
+            <Button
+              endIcon={<ArrowForwardOutlined />}
+              onClick={confirmDraft}
+              disabled={!draftName.trim()}
+            >
+              {draftSource === 'scratch' ? 'Open builder' : 'Use this template'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-5">
+          <Input
+            label="Name"
+            size="sm"
+            value={draftName}
+            onChange={(e) => setDraftName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && confirmDraft()}
+          />
+          <Input
+            label="Description"
+            size="sm"
+            multiline
+            minRows={3}
+            value={draftDescription}
+            onChange={(e) => setDraftDescription(e.target.value)}
+          />
+        </div>
+      </Drawer>
+    </>
   );
 }
 
 function TemplateRow({
   template,
   selected,
+  showEvent,
   onSelect,
 }: {
   template: WorkflowTemplate;
   selected: boolean;
+  showEvent?: boolean;
   onSelect: () => void;
 }) {
   return (
@@ -221,150 +296,142 @@ function TemplateRow({
       aria-selected={selected}
       onClick={onSelect}
       className={[
-        'w-full rounded-lg border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle',
-        selected ? 'border-brand bg-brand-subtle' : 'border-border hover:bg-surface-hover',
+        'flex w-full flex-col rounded-lg border p-1.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle',
+        selected ? 'border-brand bg-surface' : 'border-border hover:border-border-strong',
       ].join(' ')}
     >
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="min-w-0 truncate text-body-sm-strong text-text-primary">{template.name}</span>
-        <span className="shrink-0 text-caption tabular-nums text-text-tertiary">
-          {templateStepCount(template)} steps
+      <span className="relative block rounded-md bg-subtle px-3 pb-4 pt-6">
+        <span className="absolute right-2 top-2">
+          <StatusChip intent="info" label={template.audience} dot={false} />
         </span>
-      </div>
-      <span className="mt-0.5 block text-caption text-text-secondary">
-        {template.audience} · {template.systems.length} systems
+        <TemplateIllustration template={template} />
+      </span>
+      <span className="block px-2 py-2.5">
+        {showEvent && (
+          <span className="mb-0.5 block text-overline uppercase text-text-tertiary">
+            {EVENT_LABEL[template.event]}
+          </span>
+        )}
+        <span className="block text-body-sm-strong text-text-primary">{template.name}</span>
+        <span className="mt-0.5 block text-caption text-text-secondary">{template.summary}</span>
       </span>
     </button>
   );
 }
 
 /**
- * The preview pane.
- *
- * Reading order is the order the questions arrive in: what is this, when does it
- * run, what does it touch, what does it actually do, and what will I still have to
- * do myself. The Use button repeats at the top and the bottom, because the flow can
- * be long enough to scroll and a reader who has just finished reading the caveats
- * should not have to scroll back to act on them.
+ * Connector strip: source system → lifecycle event → destination system.
+ * Same shape as a product-card hero — circles on a dashed line — so the rail
+ * scans as a gallery of processes, not a list of paragraphs.
+ */
+function systemGlyph(name: string): SvgIconComponent {
+  const n = name.toLowerCase();
+  if (n.includes('peoplesoft') || n.includes('hrms') || n.includes('sis')) return StorageOutlined;
+  if (n.includes('entra') || n.includes('azure')) return BadgeOutlined;
+  if (n.includes('office') || n.includes('365')) return MailOutline;
+  if (n.includes('active directory')) return AccountTreeOutlined;
+  if (n.includes('blackboard') || n.includes('lms')) return MenuBookOutlined;
+  return HubOutlined;
+}
+
+function Node({
+  icon: Icon,
+  size,
+  emphasis,
+  title,
+}: {
+  icon: SvgIconComponent;
+  size: 'sm' | 'md';
+  emphasis?: boolean;
+  title: string;
+}) {
+  return (
+    <span
+      title={title}
+      className={[
+        'grid shrink-0 place-items-center rounded-pill border bg-surface shadow-xs',
+        size === 'md' ? 'h-9 w-9' : 'h-7 w-7',
+        emphasis ? 'border-brand-subtle text-text-primary' : 'border-border text-icon',
+      ].join(' ')}
+    >
+      <Icon sx={{ fontSize: size === 'md' ? 18 : 14 }} />
+    </span>
+  );
+}
+
+function TemplateIllustration({ template }: { template: WorkflowTemplate }) {
+  const EventIcon = EVENT_ICONS[template.event];
+  const source = template.systems[0];
+  const dest = template.systems.find((s) => s !== source) ?? template.systems[1];
+  const showDest = Boolean(dest && dest !== source);
+
+  return (
+    <span className="mx-auto flex h-11 w-max items-center" aria-hidden>
+      {source && <Node icon={systemGlyph(source)} size="sm" title={source} />}
+      {source && <span className="w-5 shrink-0 border-t border-dashed border-border" />}
+      <Node icon={EventIcon} size="md" emphasis title={EVENT_LABEL[template.event]} />
+      {showDest && <span className="w-5 shrink-0 border-t border-dashed border-border" />}
+      {showDest && dest && <Node icon={systemGlyph(dest)} size="sm" title={dest} />}
+    </span>
+  );
+}
+
+/**
+ * Identity band + the flow. The flow is the evidence; everything else recedes.
  */
 function TemplatePreview({ template, onUse }: { template: WorkflowTemplate; onUse: () => void }) {
   const workflow = React.useMemo(() => templateAsWorkflow(template), [template]);
-  const Icon = EVENT_ICONS[template.event];
-
-  /**
-   * How many steps arrive ready, and how many are waiting on the administrator.
-   *
-   * The flow below shows some steps reading "Not configured", which without this
-   * count looks like a broken template rather than a deliberate blank. Stating the
-   * split up front turns those into the expected shape of the work: this template
-   * hands you six steps, four of them done.
-   */
-  const total = template.root.length;
-  const ready = template.root.filter(isBlockComplete).length;
+  const EventIcon = EVENT_ICONS[template.event];
 
   return (
-    <div className="pb-10">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <Icon sx={{ fontSize: 15 }} />
-            <span className="text-overline text-text-tertiary">
-              {EVENT_LABEL[template.event]} · {template.audience}
-            </span>
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="shrink-0 px-6 py-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-h4 text-text-primary">{template.name}</h2>
+              <StatusChip intent="neutral" label={EVENT_LABEL[template.event]} icon={<EventIcon />} />
+            </div>
+            <p className="mt-1 max-w-2xl text-body-sm text-text-secondary">{template.summary}</p>
           </div>
-          <h2 className="mt-1 text-h3 text-text-primary">{template.name}</h2>
-          <p className="mt-1 max-w-2xl text-body-sm text-text-secondary">{template.summary}</p>
-        </div>
-        <Button endIcon={<ArrowForwardOutlined />} onClick={onUse}>
-          Use this template
-        </Button>
-      </div>
-
-      <p className="mt-3 text-body-sm text-text-secondary">
-        <span className="text-body-sm-strong text-text-primary">
-          {total} steps · {ready} ready
-        </span>
-        {ready < total && (
-          <> · {total - ready} waiting on details only you can fill in — listed below the flow.</>
-        )}
-      </p>
-
-      <div className="mt-4 flex flex-wrap items-center gap-1.5">
-        {template.systems.map((s) => (
-          <span
-            key={s}
-            className="rounded-pill border border-border bg-surface px-2.5 py-0.5 text-caption-medium text-text-secondary"
-          >
-            {s}
-          </span>
-        ))}
-      </div>
-
-      <section className="mt-6">
-        <h3 className="text-overline text-text-tertiary">The flow</h3>
-        {/* The real renderer, fed the real tree — see the note on this file. */}
-        <div className="mt-3 overflow-hidden rounded-xl border border-border bg-subtle">
-          <WorkflowFlowPreview workflow={workflow} />
-        </div>
-      </section>
-
-      <section className="mt-6 rounded-xl border border-border bg-surface p-5">
-        <h3 className="text-body-strong text-text-primary">Before you switch this on</h3>
-        <p className="mt-0.5 text-body-sm text-text-secondary">
-          The template brings sensible defaults. These are the parts only you can confirm — you will land
-          in the builder with everything editable.
-        </p>
-        <ul className="mt-3 space-y-2">
-          {template.needsAttention.map((n) => (
-            <li key={n} className="flex gap-2.5">
-              <TaskAltOutlined sx={{ fontSize: 16 }} className="mt-0.5 shrink-0 text-icon-subtle" />
-              <span className="text-body-sm text-text-primary">{n}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-border pt-4">
           <Button endIcon={<ArrowForwardOutlined />} onClick={onUse}>
             Use this template
           </Button>
-          <span className="text-caption text-text-tertiary">
-            Creates a draft. Nothing runs until you activate it.
-          </span>
         </div>
-      </section>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-hidden px-6 pb-6">
+        <div className="h-full min-h-0 overflow-hidden rounded-xl border border-border">
+          <WorkflowFlowPreview workflow={workflow} />
+        </div>
+      </div>
     </div>
   );
 }
 
 function ScratchPreview({ onStart }: { onStart: () => void }) {
   return (
-    <div className="pb-10">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <span className="text-overline text-text-tertiary">No template</span>
-          <h2 className="mt-1 text-h3 text-text-primary">Start from scratch</h2>
-          <p className="mt-1 max-w-2xl text-body-sm text-text-secondary">
-            An empty canvas. Choose the lifecycle event first — it decides which operations the palette
-            offers, since a joiner never revokes access and a leaver never provisions an account.
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="shrink-0 px-6 py-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-h4 text-text-primary">From scratch</h2>
+            <p className="mt-1 max-w-2xl text-body-sm text-text-secondary">
+              An empty canvas. Pick a lifecycle event in the builder, then add the steps this process needs.
+            </p>
+          </div>
+          <Button endIcon={<ArrowForwardOutlined />} onClick={onStart}>
+            Open builder
+          </Button>
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 overflow-hidden px-6 pb-6">
+        <div className="grid h-full min-h-0 place-items-center overflow-hidden rounded-xl border border-border bg-subtle px-6">
+          <p className="max-w-sm text-center text-body-sm text-text-secondary">
+            Pick a template to see the flow it builds, or open the builder and assemble your own.
           </p>
         </div>
-        <Button endIcon={<ArrowForwardOutlined />} onClick={onStart}>
-          Open empty builder
-        </Button>
       </div>
-
-      <div className="mt-6 rounded-xl border border-dashed border-border-strong bg-subtle px-6 py-14 text-center">
-        <div className="text-h5 text-text-primary">Nothing to preview yet</div>
-        <p className="mx-auto mt-1 max-w-sm text-body-sm text-text-secondary">
-          Pick a template on the left to see exactly what it builds, or open the empty builder and
-          assemble your own.
-        </p>
-      </div>
-
-      <p className="mt-4 text-caption text-text-tertiary">
-        A template is only a starting point — everything it creates is editable, and you can strip it back
-        to nothing. Starting from one is usually faster than starting from zero, even when you keep little
-        of it.
-      </p>
     </div>
   );
 }

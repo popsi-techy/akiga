@@ -8,6 +8,7 @@ export default function SegmentedControlDocs() {
   const [view, setView] = React.useState<'map' | 'explorer'>('map');
   const [density, setDensity] = React.useState<'outline' | 'detailed'>('detailed');
   const [range, setRange] = React.useState<'7d' | '30d' | '90d'>('30d');
+  const [kind, setKind] = React.useState<'entitlements' | 'roles'>('entitlements');
 
   return (
     <>
@@ -60,6 +61,17 @@ export default function SegmentedControlDocs() {
             />
           </div>
         </Example>
+        <Example label="count — how much is behind each segment">
+          <SegmentedControl<'entitlements' | 'roles'>
+            ariaLabel="Assignment type"
+            value={kind}
+            onChange={setKind}
+            options={[
+              { value: 'entitlements', label: 'Entitlements', count: 12 },
+              { value: 'roles', label: 'Technical Roles', count: 0 },
+            ]}
+          />
+        </Example>
       </Section>
 
       <Section
@@ -68,7 +80,8 @@ export default function SegmentedControlDocs() {
       >
         <PropsTable
           rows={[
-            { name: 'options', type: 'SegmentedOption<T>[]', description: 'The segments: value + label. Keep it to two to four.' },
+            { name: 'options', type: 'SegmentedOption<T>[]', description: 'The segments: value + label, and an optional count. Keep it to two to four.' },
+            { name: 'options[].count', type: 'number', description: 'How many things are behind the segment, as a plain trailing number — not NavList’s filled pill, which would compete with the selected-segment fill for the same “this one” signal. Zero shows: on a switcher an absent count makes the reader click to find out it was empty.' },
             { name: 'value', type: 'T', description: 'The selected value. Always one — this control has no empty state.' },
             { name: 'onChange', type: '(value: T) => void', description: 'Fires with the chosen value.' },
             { name: 'size', type: "'sm' | 'md'", default: "'md'", description: 'sm for dense chrome; md for standalone use.' },

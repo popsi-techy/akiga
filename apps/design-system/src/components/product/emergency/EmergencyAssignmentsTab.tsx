@@ -3,23 +3,25 @@
 import * as React from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
-import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
 import LaptopOutlined from '@mui/icons-material/LaptopOutlined';
 import {
   Button,
-  Card,
   DataTable,
+  InfoRow,
+  InfoRowGroup,
   Input,
-  Menu,
-  NavList,
   OverflowChips,
   PickerSlot,
+  SegmentedControl,
   useToast,
   type Column,
 } from '@ds/components';
 import { AppBadge } from '../sod/labels';
+import { PeekPanel, PeekSlot } from '../directory/PeekPanel';
+import { RowActions } from '../RowActions';
+import { infoIcon } from '../directory/infoIcons';
 import { EntityCatalogDrawer } from '../automation/EntityCatalogDrawer';
 import { TableSelectDrawer } from '../automation/TableSelectDrawer';
 import { listApps, listTechnicalRoles } from '@/data/catalog';
@@ -209,6 +211,8 @@ export function EmergencyAssignmentsTab({
   const [kind, setKind] = React.useState<Kind>('entitlements');
   const [search, setSearch] = React.useState('');
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+  /** The row whose details are open in the peek panel beside the table. */
+  const [peek, setPeek] = React.useState<EntitySelection | null>(null);
   const { assignments, patch } = useAssignments(eaId, onChanged);
 
   const meta = META[kind];
@@ -260,7 +264,17 @@ export function EmergencyAssignmentsTab({
         </div>
       ),
     },
-    ...(kind === 'entitlements'
+    /*
+      Application and Description stand down while the panel is open.
+
+      The panel takes 380px of a ~776px region, which is not enough for five columns —
+      they overflowed, and the first thing to scroll out of reach was the Actions cell
+      holding the button that had just been pressed. Since the panel states both fields
+      itself, dropping them is not a loss of information: the table keeps what you scan
+      by, the panel holds what you opened it for. This is the ordinary master–detail
+      trade, made explicit rather than left to a hidden scrollbar.
+    */
+    ...(kind === 'entitlements' && peek === null
       ? [
           {
             id: 'application',
@@ -271,15 +285,19 @@ export function EmergencyAssignmentsTab({
           },
         ]
       : []),
-    {
-      id: 'description',
-      header: 'Description',
-      sortable: true,
-      value: (r) => detailFor(r)?.description ?? '',
-      render: (r) => (
-        <span className="text-text-secondary">{detailFor(r)?.description ?? '—'}</span>
-      ),
-    },
+    ...(peek === null
+      ? [
+          {
+            id: 'description',
+            header: 'Description',
+            sortable: true,
+            value: (r: EntitySelection) => detailFor(r)?.description ?? '',
+            render: (r: EntitySelection) => (
+              <span className="text-text-secondary">{detailFor(r)?.description ?? '—'}</span>
+            ),
+          },
+        ]
+      : []),
     {
       id: 'risk',
       header: 'Risk Score',
@@ -299,66 +317,79 @@ export function EmergencyAssignmentsTab({
       id: 'actions',
       header: 'Actions',
       align: 'right' as const,
-      width: 80,
+      width: 88,
       render: (r: EntitySelection) => (
-        <Menu
-          items={[
-            {
-              label: `Remove ${meta.entity}`,
-              icon: <DeleteOutline sx={{ fontSize: 18 }} />,
-              danger: true,
-              onClick: () => {
-                remove(r.id);
-                toast.success(`${r.name} removed`);
-              },
-            },
-          ]}
+        <RowActions
+          onInfo={() => setPeek(r)}
+          infoLabel={`View details for ${r.name}`}
+          onRemove={() => {
+            remove(r.id);
+            if (peek?.id === r.id) setPeek(null);
+            toast.success(`${r.name} removed`);
+          }}
+          removeLabel={`Remove ${r.name}`}
+          removeTooltip={`Remove ${meta.entity}`}
         />
       ),
     },
   ];
 
   return (
-    <div className="grid h-full gap-5 lg:grid-cols-[264px_minmax(0,1fr)]">
-      <Card padding="sm" className="h-full">
-        <NavList
+    <div className="flex h-full min-h-0 flex-col">
+      {/*
+        The two kinds of assignment are a segmented control at the top, not a list in a
+        card down the left.
+
+        Both are the same choice — one of two, always two — but the card spent a 264px
+        column and the full height of the page on it, next to a table that wanted the
+        width. A segmented control states the same choice in a single row and gives the
+        table back the page.
+
+        It also fixes a hierarchy problem: `NavList` is styled like navigation, so the
+        page had a navigation rail on the left, a second navigation-looking list beside it,
+        and no way to tell from the styling that one moved between sections and the other
+        only switched a table. A segmented control does not look like navigation.
+      */}
+      {/* 20px below the switcher, 12px below the toolbar: the switcher chooses which
+          dataset you are looking at, the toolbar acts within it. The larger gap binds the
+          toolbar and its table into one unit under the switcher, rather than leaving three
+          bands equally spaced and equally related. */}
+      <div className="mb-5 flex shrink-0 flex-wrap items-center gap-3">
+        <SegmentedControl<Kind>
           ariaLabel="Assignment type"
           value={kind}
-          onChange={(id) => setKind(id as Kind)}
-          items={[
+          onChange={setKind}
+          options={[
+            { value: 'entitlements', label: 'Entitlements', count: assignments.entitlements.length },
             {
-              id: 'entitlements',
-              icon: <VpnKeyOutlined sx={{ fontSize: 18 }} />,
-              label: 'Entitlements',
-              count: assignments.entitlements.length,
-            },
-            {
-              id: 'technicalRoles',
-              icon: <LaptopOutlined sx={{ fontSize: 18 }} />,
+              value: 'technicalRoles',
               label: 'Technical Roles',
               count: assignments.technicalRoles.length,
             },
           ]}
         />
-      </Card>
+      </div>
 
-      <div className="flex h-full min-h-0 flex-col">
-        <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
-          <div className="w-full max-w-sm">
-            <Input
-              placeholder={`Search ${meta.entity}s`}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
-            />
-          </div>
-          <div className="ml-auto">
-            <Button startIcon={<AddIcon />} onClick={() => setDrawerOpen(true)}>
-              Add {meta.label}
-            </Button>
-          </div>
+      <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
+        <div className="w-full max-w-sm">
+          <Input
+            placeholder={`Search ${meta.entity}s`}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+          />
         </div>
-        <div className="min-h-0 flex-1">
+        <div className="ml-auto">
+          <Button startIcon={<AddIcon />} onClick={() => setDrawerOpen(true)}>
+            Add {meta.label}
+          </Button>
+        </div>
+      </div>
+      {/* The panel takes width from the table rather than covering it, so the row you
+          opened stays visible and the next one is a click away — pick another and the
+          panel swaps. Same slot the directory's peeks use, so the chrome cannot drift. */}
+      <div className="flex min-h-0 flex-1">
+        <div className="min-h-0 min-w-0 flex-1">
           <DataTable<EntitySelection>
             columns={columns}
             rows={filtered}
@@ -371,6 +402,56 @@ export function EmergencyAssignmentsTab({
             }
           />
         </div>
+
+        <PeekSlot open={peek !== null}>
+          {peek && (
+            <PeekPanel
+              avatar={
+                peek.appName ? (
+                  <AppBadge app={peek.appName} size={32} />
+                ) : (
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand-subtle text-brand">
+                    <LaptopOutlined sx={{ fontSize: 18 }} />
+                  </span>
+                )
+              }
+              title={peek.name}
+              subtitle={peek.appName ?? 'Technical role'}
+              onClose={() => setPeek(null)}
+            >
+              {/* The description is prose, so it reads as a paragraph rather than being
+                  squeezed into a label/value row. Everything measurable goes below it. */}
+              {detailFor(peek)?.description && (
+                <p className="pt-3 text-body-sm text-text-secondary">
+                  {detailFor(peek)?.description}
+                </p>
+              )}
+              <div className="pt-3">
+                <InfoRowGroup>
+                  <InfoRow
+                    icon={infoIcon.type}
+                    label="Type"
+                    value={kind === 'technicalRoles' ? 'Technical role' : 'Entitlement'}
+                  />
+                  {peek.appName && (
+                    <InfoRow icon={infoIcon.application} label="Application" value={peek.appName} />
+                  )}
+                  <InfoRow
+                    icon={infoIcon.risk}
+                    label="Risk Score"
+                    value={
+                      detailFor(peek)?.risk == null ? (
+                        '—'
+                      ) : (
+                        <RiskScoreChip score={detailFor(peek)!.risk} />
+                      )
+                    }
+                  />
+                </InfoRowGroup>
+              </div>
+            </PeekPanel>
+          )}
+        </PeekSlot>
       </div>
 
       <AssignmentDrawers

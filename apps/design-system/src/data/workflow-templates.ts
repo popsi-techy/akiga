@@ -65,7 +65,8 @@ export interface WorkflowTemplate {
   /** The population it serves, for the gallery's second-level grouping. */
   audience: 'Employee' | 'Student' | 'Contractor';
   name: string;
-  /** One sentence. What it does, not how. */
+  /** One sentence, short enough to finish in three caption lines in the gallery rail. */
+  summary: string;
   summary: string;
   /** The systems it touches, for the card's chips. */
   systems: string[];
@@ -85,7 +86,7 @@ const employeeOnboarding: WorkflowTemplate = {
   audience: 'Employee',
   name: 'Employee onboarding',
   summary:
-    'A new hire in the HRMS becomes a working identity: account, mailbox, licence, role-based access, and a welcome mail to them and their manager.',
+    'A new hire gets an account, mailbox, licence, birthright access, and a welcome to them and their manager.',
   systems: ['PeopleSoft HCM', 'Microsoft Entra ID', 'Office 365'],
   needsAttention: [
     'Map the HRMS connection that raises the new-hire event',
@@ -124,7 +125,7 @@ const employeeRehire: WorkflowTemplate = {
   audience: 'Employee',
   name: 'Employee rehire',
   summary:
-    'Someone returning keeps their identity and history: the existing record is re-enabled and given access for the new role, not the old one.',
+    'A returning employee keeps their identity. The account is re-enabled with access for the new role.',
   systems: ['PeopleSoft HCM', 'Active Directory', 'Microsoft Entra ID', 'Office 365'],
   needsAttention: [
     'Confirm your policy on reusing the previous username and mail address',
@@ -156,7 +157,7 @@ const studentEnrolment: WorkflowTemplate = {
   audience: 'Student',
   name: 'Student enrolment',
   summary:
-    'A new admission in the student system gets an account, a mailbox, class membership and access to the LMS, library and student portal.',
+    'A new admission gets an account, mailbox, class membership, and access to the LMS, library and portal.',
   systems: ['PeopleSoft SIS', 'Microsoft Entra ID', 'Office 365', 'Blackboard'],
   needsAttention: [
     'Map the SIS connection that raises the admission event',
@@ -187,7 +188,7 @@ const studentReturning: WorkflowTemplate = {
   audience: 'Student',
   name: 'Returning student',
   summary:
-    'A student back from withdrawal, leave or a gap year is restored on the same identity, with access rebuilt from their current programme.',
+    'A student back from leave is restored on the same identity, with access rebuilt from their programme.',
   systems: ['PeopleSoft SIS', 'Microsoft Entra ID', 'Blackboard'],
   needsAttention: [
     'Confirm the identity is restored rather than duplicated',
@@ -214,7 +215,7 @@ const contractorJoiner: WorkflowTemplate = {
   audience: 'Contractor',
   name: 'Contractor onboarding',
   summary:
-    'A contractor gets a time-boxed identity carrying its contract end date, and the minimum access their engagement needs — nothing inherited by default.',
+    'A contractor gets a time-boxed identity and only the access their engagement needs.',
   systems: ['PeopleSoft HCM', 'Microsoft Entra ID'],
   needsAttention: [
     'Confirm the contract end date is written onto the account as its expiry',
@@ -252,7 +253,7 @@ const employeeMove: WorkflowTemplate = {
   audience: 'Employee',
   name: 'Employee role or department change',
   summary:
-    'A change of department, role, manager or campus updates attributes and access, and puts the previous role’s permissions in front of a reviewer instead of leaving them to accumulate.',
+    'A change of department, role or manager updates attributes and access, and puts the old permissions in review.',
   systems: ['PeopleSoft HCM', 'Microsoft Entra ID', 'Office 365'],
   needsAttention: [
     'Confirm which HRMS fields count as a move (department, title, cost centre, reporting line)',
@@ -294,7 +295,7 @@ const studentMove: WorkflowTemplate = {
   audience: 'Student',
   name: 'Student programme change',
   summary:
-    'A change of major, programme, college or enrolment status rebuilds class membership and application access — including the suspension and leave-of-absence cases.',
+    'A change of major, programme or enrolment rebuilds class membership and application access.',
   systems: ['PeopleSoft SIS', 'Microsoft Entra ID', 'Blackboard'],
   needsAttention: [
     'Confirm which SIS statuses mean suspension, probation and leave of absence',
@@ -321,7 +322,7 @@ const employeeOffboarding: WorkflowTemplate = {
   audience: 'Employee',
   name: 'Employee offboarding',
   summary:
-    'Day-zero containment then an orderly wind-down: sign-in and sessions killed immediately, access and licence reclaimed, mailbox and files handed to the manager, account deleted after the retention window.',
+    'Sign-in is killed at once, then access, licence, mailbox and files are wound down after retention.',
   systems: ['PeopleSoft HCM', 'Microsoft Entra ID', 'Office 365'],
   needsAttention: [
     'Confirm your retention window before deletion — the template assumes 30 days',
@@ -354,7 +355,7 @@ const studentGraduation: WorkflowTemplate = {
   audience: 'Student',
   name: 'Student graduation',
   summary:
-    'A graduate keeps full access through a grace period for transcripts and final admin, then becomes an alumni identity on the alumni domain with alumni-tier services.',
+    'Access stays through a grace period for transcripts, then becomes an alumni identity.',
   systems: ['PeopleSoft SIS', 'Microsoft Entra ID', 'Office 365'],
   needsAttention: [
     'Confirm the grace period — the template assumes 30 days',
@@ -381,7 +382,7 @@ const studentWithdrawal: WorkflowTemplate = {
   audience: 'Student',
   name: 'Student dismissal or withdrawal',
   summary:
-    'Application access stops at once; mail stays reachable briefly for administrative correspondence, then everything is deactivated and archived. No alumni conversion.',
+    'Application access stops at once; mail stays briefly, then the account is deactivated. No alumni conversion.',
   systems: ['PeopleSoft SIS', 'Microsoft Entra ID', 'Blackboard'],
   needsAttention: [
     'Confirm the mail grace period — the template assumes 14 days',
@@ -403,7 +404,7 @@ const contractorEnd: WorkflowTemplate = {
   audience: 'Contractor',
   name: 'Contractor contract end',
   summary:
-    'A week before the contract date everyone is warned; on the date the account is disabled, access removed and the licence reclaimed — unless the contract was extended.',
+    'Everyone is warned a week before the contract ends; on the date the account is disabled unless it was extended.',
   systems: ['PeopleSoft HCM', 'Microsoft Entra ID'],
   needsAttention: [
     'Confirm the advance-warning window — the template assumes 7 days',

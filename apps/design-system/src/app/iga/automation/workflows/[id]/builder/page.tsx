@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ArrowBackOutlined from '@mui/icons-material/ArrowBackOutlined';
 import SaveOutlined from '@mui/icons-material/SaveOutlined';
 import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
@@ -99,6 +99,10 @@ export default function WorkflowBuilderPage() {
   const router = useRouter();
   const toast = useToast();
   const params = useParams<{ id: string }>();
+  const fromTemplates = useSearchParams().get('from') === 'templates';
+  const backHref = fromTemplates
+    ? '/iga/automation/workflows/templates'
+    : `/iga/automation/workflows/${params.id}`;
 
   const [loaded, setLoaded] = React.useState(false);
   const [hist, setHist] = React.useState<Hist | null>(null);
@@ -110,6 +114,7 @@ export default function WorkflowBuilderPage() {
   const [backConfirm, setBackConfirm] = React.useState(false);
   const [removeEventConfirm, setRemoveEventConfirm] = React.useState(false);
   const [versionsOpen, setVersionsOpen] = React.useState(false);
+  const [versionId, setVersionId] = React.useState<string | null>(null);
   const [paletteTab, setPaletteTab] = React.useState<'events' | 'components'>('events');
   const [draggingKind, setDraggingKind] = React.useState<string | null>(null);
   const [policyNodeId, setPolicyNodeId] = React.useState<string | null>(null); // Assign Entities → attach policy from canvas
@@ -268,7 +273,7 @@ export default function WorkflowBuilderPage() {
   const redo = () => setHist((h) => (h && h.future.length ? { doc: h.future[0], past: [...h.past, h.doc], future: h.future.slice(1) } : h));
 
   const handleInsert = (loc: FlowInsertLoc, kind: string) => {
-    if (!doc) return;
+    if (!doc || versionsOpen) return;
     if (isEventKind(kind)) {
       if (doc.event) {
         toast.error('A lifecycle event is already on the canvas');
@@ -291,12 +296,12 @@ export default function WorkflowBuilderPage() {
     setConfigOpen(true);
   };
   const handleDelete = (id: string) => {
-    if (!doc) return;
+    if (!doc || versionsOpen) return;
     commit({ ...doc, root: deleteBlock(doc.root, id) });
     if (selectedId === id) setSelectedId(null);
   };
   const removeEvent = () => {
-    if (!doc) return;
+    if (!doc || versionsOpen) return;
     commit({ ...doc, event: null, root: [] });
     setSelectedId(null);
     setPaletteTab('events');
@@ -307,12 +312,17 @@ export default function WorkflowBuilderPage() {
     if (doc.root.length > 0) setRemoveEventConfirm(true);
     else removeEvent();
   };
-  const setNodeConfig = (id: string, config: Record<string, unknown> | undefined) =>
+  const setNodeConfig = (id: string, config: Record<string, unknown> | undefined) => {
+    if (versionsOpen) return;
     setHist((h) => (h ? { ...h, doc: { ...h.doc, root: updateBlock(h.doc.root, id, { config }) } } : h));
-  const setNodePatch = (id: string, patch: Partial<WorkflowNode>) =>
+  };
+  const setNodePatch = (id: string, patch: Partial<WorkflowNode>) => {
+    if (versionsOpen) return;
     setHist((h) => (h ? { ...h, doc: { ...h.doc, root: updateBlock(h.doc.root, id, patch) } } : h));
+  };
   /** Reset a block's config (and branches) back to its type defaults. */
   const resetBlock = (node: WorkflowNode) => {
+    if (versionsOpen) return;
     const fresh = createBlock(node.type);
     setNodePatch(node.id, { config: fresh.config, branches: fresh.branches });
   };
@@ -320,12 +330,15 @@ export default function WorkflowBuilderPage() {
   const incomplete = doc ? allBlocks(doc.root).filter((n) => !isBlockComplete(n)) : [];
   const canActivate = Boolean(doc?.event) && incomplete.length === 0;
 
-  const save = () => {
+  const detailHref = `/iga/automation/workflows/${params.id}`;
+
+  const save = (opts?: { goToDetail?: boolean }) => {
     if (!doc) return;
     const saved = updateWorkflow(doc);
     setHist((h) => (h ? { ...h, doc: saved } : h));
     setSavedSnapshot(JSON.stringify(saved));
     toast.success('Workflow saved');
+    if (opts?.goToDetail) router.push(detailHref);
   };
   const saveAndActivate = () => {
     if (!doc) return;
@@ -335,10 +348,12 @@ export default function WorkflowBuilderPage() {
     setHist((h) => (h ? { ...h, doc: saved } : h));
     setSavedSnapshot(JSON.stringify(saved));
     toast.success('Workflow activated');
+    router.push(detailHref);
   };
-  /** Back goes to this workflow's detail page, not the list — the builder is
-      opened from the detail, so returning to the list would skip a level. */
-  const goBack = () => (dirty ? setBackConfirm(true) : router.push(`/iga/automation/workflows/${params.id}`));
+  /** Back returns to wherever the builder was opened: the template gallery, or
+      this workflow's detail. Save still lands on detail — that is leaving the
+      create flow, not abandoning it. */
+  const goBack = () => (dirty ? setBackConfirm(true) : router.push(backHref));
 
   // Without this the frame falls back to a generic "Automation Details" crumb.
   // Same trail as the approval-policy builder: list → this record → the editor.
@@ -384,6 +399,7 @@ export default function WorkflowBuilderPage() {
     const complete = isBlockComplete(node);
     const selected = selectedId === node.id;
     const displayTitle = node.name?.trim() || meta.title;
+    const inspectOnly = versionsOpen;
 
     // Conditional Branch renders as a rhombus (diamond) rather than a card.
     if (node.type === 'wfConditionalBranch') {
@@ -403,9 +419,11 @@ export default function WorkflowBuilderPage() {
               )}
             </span>
           </button>
-          <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(node.id); }} aria-label={`Delete ${meta.title}`} className="absolute right-8 top-8 z-10 hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid">
-            <CloseIcon sx={{ fontSize: 14 }} />
-          </button>
+          {!inspectOnly && (
+            <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(node.id); }} aria-label={`Delete ${meta.title}`} className="absolute right-8 top-8 z-10 hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid">
+              <CloseIcon sx={{ fontSize: 14 }} />
+            </button>
+          )}
         </div>
       );
     }
@@ -513,16 +531,35 @@ export default function WorkflowBuilderPage() {
             <div className="mt-2 rounded-lg border border-border bg-surface">
               {c.approvalPolicyId ? (
                 <div className="flex items-center gap-2.5 px-3 py-2.5">
-                  <button type="button" onClick={(e) => { e.stopPropagation(); setPolicyNodeId(node.id); }} className="flex min-w-0 flex-1 items-center gap-2.5 text-left">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedId(node.id);
+                      setConfigOpen(true);
+                      if (!inspectOnly) setPolicyNodeId(node.id);
+                    }}
+                    className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                  >
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand-subtle text-brand"><ShieldOutlined sx={{ fontSize: 17 }} /></span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-body-medium text-text-primary">{c.approvalPolicyName}</span>
                       <span className="block text-caption text-text-secondary">Approval policy</span>
                     </span>
                   </button>
-                  <button type="button" onClick={(e) => { e.stopPropagation(); setNodeConfig(node.id, { ...c, approvalPolicyId: undefined, approvalPolicyName: undefined }); }} aria-label="Remove approval policy" className="shrink-0 rounded-md p-1 text-icon transition-colors hover:text-danger">
-                    <DeleteOutline sx={{ fontSize: 17 }} />
-                  </button>
+                  {!inspectOnly && (
+                    <button type="button" onClick={(e) => { e.stopPropagation(); setNodeConfig(node.id, { ...c, approvalPolicyId: undefined, approvalPolicyName: undefined }); }} aria-label="Remove approval policy" className="shrink-0 rounded-md p-1 text-icon transition-colors hover:text-danger">
+                      <DeleteOutline sx={{ fontSize: 17 }} />
+                    </button>
+                  )}
+                </div>
+              ) : inspectOnly ? (
+                <div className="flex w-full items-center gap-2.5 px-3 py-2.5">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-dashed border-border text-icon"><AddIcon sx={{ fontSize: 17 }} /></span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-body-medium text-text-primary">No approval policy</span>
+                    <span className="block text-caption text-text-secondary">Not attached on this version</span>
+                  </span>
                 </div>
               ) : (
                 <button type="button" onClick={(e) => { e.stopPropagation(); setPolicyNodeId(node.id); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-surface-hover">
@@ -535,9 +572,11 @@ export default function WorkflowBuilderPage() {
               )}
             </div>
           </div>
-          <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(node.id); }} aria-label="Delete Assign Entities" className="absolute -right-2 -top-2 hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid">
-            <CloseIcon sx={{ fontSize: 14 }} />
-          </button>
+          {!inspectOnly && (
+            <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(node.id); }} aria-label="Delete Assign Entities" className="absolute -right-2 -top-2 hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid">
+              <CloseIcon sx={{ fontSize: 14 }} />
+            </button>
+          )}
         </div>
       );
     }
@@ -574,9 +613,11 @@ export default function WorkflowBuilderPage() {
               <span className={['min-w-0 truncate text-body-sm-strong', sideLabel === 'Not set' ? 'text-text-tertiary' : 'text-text-secondary'].join(' ')}>{sideLabel}</span>
             )}
           </button>
-          <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(node.id); }} aria-label={`Delete ${meta.title}`} className="absolute -right-2 -top-2 hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid">
-            <CloseIcon sx={{ fontSize: 14 }} />
-          </button>
+          {!inspectOnly && (
+            <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(node.id); }} aria-label={`Delete ${meta.title}`} className="absolute -right-2 -top-2 hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid">
+              <CloseIcon sx={{ fontSize: 14 }} />
+            </button>
+          )}
         </div>
       );
     }
@@ -627,9 +668,11 @@ export default function WorkflowBuilderPage() {
               </div>
             )}
           </div>
-          <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(node.id); }} aria-label={`Delete ${meta.title}`} className="absolute -right-2 -top-2 hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid">
-            <CloseIcon sx={{ fontSize: 14 }} />
-          </button>
+          {!inspectOnly && (
+            <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(node.id); }} aria-label={`Delete ${meta.title}`} className="absolute -right-2 -top-2 hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid">
+              <CloseIcon sx={{ fontSize: 14 }} />
+            </button>
+          )}
         </div>
       );
     }
@@ -653,9 +696,11 @@ export default function WorkflowBuilderPage() {
             <WarningAmberOutlined sx={{ fontSize: 17, color: 'var(--ds-color-status-warning-fg)' }} titleAccess="Incomplete" />
           )}
         </button>
-        <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(node.id); }} aria-label={`Delete ${meta.title}`} className="absolute -right-2 -top-2 hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid">
-          <CloseIcon sx={{ fontSize: 14 }} />
-        </button>
+        {!inspectOnly && (
+          <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(node.id); }} aria-label={`Delete ${meta.title}`} className="absolute -right-2 -top-2 hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid">
+            <CloseIcon sx={{ fontSize: 14 }} />
+          </button>
+        )}
       </div>
     );
   };
@@ -692,17 +737,19 @@ export default function WorkflowBuilderPage() {
             </span>
           </span>
         </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            requestRemoveEvent();
-          }}
-          aria-label={`Remove ${doc.event.label}`}
-          className="absolute -right-2 -top-2 hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid"
-        >
-          <CloseIcon sx={{ fontSize: 14 }} />
-        </button>
+        {!versionsOpen && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              requestRemoveEvent();
+            }}
+            aria-label={`Remove ${doc.event.label}`}
+            className="absolute -right-2 -top-2 hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid"
+          >
+            <CloseIcon sx={{ fontSize: 14 }} />
+          </button>
+        )}
       </div>
     );
   };
@@ -723,7 +770,7 @@ export default function WorkflowBuilderPage() {
       {/* header */}
       <div className="flex shrink-0 items-center justify-between border-b border-border bg-canvas px-5 py-2.5">
         <div className="flex items-center gap-3">
-          <button type="button" onClick={goBack} aria-label="Back to workflow details" className="grid h-8 w-8 place-items-center rounded-md text-icon hover:bg-surface-hover"><ArrowBackOutlined sx={{ fontSize: 20 }} /></button>
+          <button type="button" onClick={goBack} aria-label={fromTemplates ? 'Back to templates' : 'Back to workflow details'} className="grid h-8 w-8 place-items-center rounded-md text-icon hover:bg-surface-hover"><ArrowBackOutlined sx={{ fontSize: 20 }} /></button>
           <Avatar name={doc?.name ?? 'Workflow'} initials={(doc?.name ?? 'W').charAt(0).toUpperCase()} size="sm" />
           {/* Name owns the title weight; version is a qualifier — same baseline, quieter
               type and colour — so “Version 1” never competes with the workflow name.
@@ -750,13 +797,15 @@ export default function WorkflowBuilderPage() {
               if (testPhase === 'running') exitTestRun();
               else startTestRun();
             }}
-            disabled={!doc || !doc.event || (doc.root?.length ?? 0) === 0}
+            disabled={!doc || !doc.event || (doc.root?.length ?? 0) === 0 || versionsOpen}
             title={
-              !doc?.event
-                ? 'Add a lifecycle event before running a test'
-                : !doc?.root?.length
-                  ? 'Add steps before running a test'
-                  : undefined
+              versionsOpen
+                ? 'Exit versions to run a test'
+                : !doc?.event
+                  ? 'Add a lifecycle event before running a test'
+                  : !doc?.root?.length
+                    ? 'Add steps before running a test'
+                    : undefined
             }
           >
             {testPhase === 'running' ? 'Stop' : testPhase === 'done' ? 'Run again' : 'Test run'}
@@ -764,19 +813,36 @@ export default function WorkflowBuilderPage() {
           <Button
             variant="secondary"
             startIcon={<HistoryOutlined />}
+            aria-pressed={versionsOpen}
+            sx={
+              versionsOpen
+                ? {
+                    color: 'var(--ds-color-text-brand)',
+                    borderColor: 'var(--ds-color-brand-border)',
+                    backgroundColor: 'var(--ds-color-brand-subtle)',
+                    '&:hover': {
+                      borderColor: 'var(--ds-color-brand-border)',
+                      backgroundColor: 'var(--ds-color-brand-subtleHover)',
+                    },
+                  }
+                : undefined
+            }
             onClick={() => {
               if (versionsOpen) {
                 setVersionsOpen(false);
+                setVersionId(null);
                 return;
               }
               if (testPhase !== 'idle') exitTestRun();
               setVersionsOpen(true);
-              setConfigOpen(true);
+              setConfigOpen(false);
+              setSelectedId(null);
+              setPolicyNodeId(null);
             }}
           >
             Versions
           </Button>
-          <Button variant="secondary" startIcon={<SaveOutlined />} onClick={save} disabled={!dirty}>Save</Button>
+          <Button variant="secondary" startIcon={<SaveOutlined />} onClick={() => save({ goToDetail: true })} disabled={!dirty}>Save</Button>
           <Button startIcon={<CheckCircleOutlined />} onClick={saveAndActivate} disabled={!canActivate} title={!doc?.event ? 'Event required' : incomplete.length ? `${incomplete.length} blocks incomplete` : undefined}>Save &amp; Activate</Button>
           <Menu items={[{ label: 'Duplicate (soon)', onClick: () => toast.info('Coming soon') }, { label: 'Export JSON (soon)', onClick: () => toast.info('Coming soon') }]} />
         </div>
@@ -792,8 +858,19 @@ export default function WorkflowBuilderPage() {
       )}
 
       <div className="flex min-h-0 flex-1">
-        {/* palette */}
-        {paletteOpen ? (
+        {/* palette — replaced by the version slider while browsing history */}
+        {versionsOpen ? (
+          <VersionsPanel
+            side="left"
+            doc={doc}
+            selectedId={versionId}
+            onSelect={setVersionId}
+            onClose={() => {
+              setVersionsOpen(false);
+              setVersionId(null);
+            }}
+          />
+        ) : paletteOpen ? (
           <div className="flex w-[248px] shrink-0 flex-col border-r border-border bg-surface">
             <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-3">
               <SegmentedControl
@@ -954,20 +1031,21 @@ export default function WorkflowBuilderPage() {
               onClearSelection={() => setSelectedId(null)}
               view={view}
               onViewChange={setView}
-              onUndo={undo}
-              onRedo={redo}
               canUndo={(hist?.past.length ?? 0) > 0}
               canRedo={(hist?.future.length ?? 0) > 0}
               emptyHint={doc.event ? 'Add component' : 'Drop lifecycle event'}
-              draggingKind={testPhase === 'idle' ? draggingKind : null}
+              draggingKind={testPhase === 'idle' && !versionsOpen ? draggingKind : null}
               isTerminal={(n) => (n as WorkflowNode).type === 'exit'}
-              readOnly={testPhase !== 'idle'}
+              readOnly={testPhase !== 'idle' || versionsOpen}
+              onUndo={versionsOpen ? undefined : undo}
+              onRedo={versionsOpen ? undefined : redo}
               simulation={simulation}
             />
           )}
         </div>
 
-        {/* right rail — Test Run, Versions, or Configuration (one at a time) */}
+        {/* right rail — Test Run or Configuration. Versions closes this rail;
+            clicking a step opens details again, read-only. */}
         {testPhase !== 'idle' ? (
           <TestRunPanel
             phase={testPhase}
@@ -977,27 +1055,29 @@ export default function WorkflowBuilderPage() {
             onRunAgain={startTestRun}
             onExit={exitTestRun}
           />
-        ) : versionsOpen ? (
-          <VersionsPanel doc={doc} onClose={() => setVersionsOpen(false)} />
         ) : configOpen ? (
           <WfConfigPanel
             doc={doc}
             selectedId={selectedId}
+            readOnly={versionsOpen}
             onCollapse={() => setConfigOpen(false)}
-            onPatchEvent={(patch) => doc?.event && patchDoc({ event: { ...doc.event, ...patch } })}
+            onPatchEvent={(patch) => {
+              if (versionsOpen || !doc?.event) return;
+              patchDoc({ event: { ...doc.event, ...patch } });
+            }}
             onConfig={setNodeConfig}
             onPatchNode={setNodePatch}
             onReset={resetBlock}
             onSave={save}
           />
-        ) : (
+        ) : versionsOpen ? null : (
           <div className="flex w-11 shrink-0 flex-col items-center border-l border-border bg-surface pt-3">
             <button type="button" onClick={() => setConfigOpen(true)} aria-label="Expand configuration" className="grid h-7 w-7 place-items-center rounded text-icon hover:bg-surface-hover"><KeyboardDoubleArrowLeft sx={{ fontSize: 18 }} /></button>
           </div>
         )}
       </div>
 
-      <Dialog open={backConfirm} onClose={() => setBackConfirm(false)} title="Discard unsaved changes?" tone="danger" confirmLabel="Discard" cancelLabel="Keep editing" onConfirm={() => router.push(`/iga/automation/workflows/${params.id}`)}>
+      <Dialog open={backConfirm} onClose={() => setBackConfirm(false)} title="Discard unsaved changes?" tone="danger" confirmLabel="Discard" cancelLabel="Keep editing" onConfirm={() => router.push(backHref)}>
         You have unsaved changes to this workflow. Leaving now will discard them.
       </Dialog>
       <Dialog
@@ -1012,7 +1092,7 @@ export default function WorkflowBuilderPage() {
         Removing the event will also clear all components on the canvas.
       </Dialog>
       {/* Attach-policy drawer opened from an Assign Entities block on the canvas. */}
-      {policyNodeId && doc && (() => {
+      {policyNodeId && doc && !versionsOpen && (() => {
         const n = findBlock(doc.root, policyNodeId);
         const cfg = (n?.config as AEConfig | undefined) ?? { entitlements: [], technicalRoles: [], businessRoles: [] };
         const active = listApprovalPolicies().filter((p) => p.status === 'active');
@@ -1038,6 +1118,7 @@ export default function WorkflowBuilderPage() {
 function WfConfigPanel({
   doc,
   selectedId,
+  readOnly = false,
   onCollapse,
   onPatchEvent,
   onConfig,
@@ -1047,6 +1128,7 @@ function WfConfigPanel({
 }: {
   doc: AutomationWorkflow | null;
   selectedId: string | null;
+  readOnly?: boolean;
   onCollapse: () => void;
   onPatchEvent: (patch: Partial<WorkflowEvent>) => void;
   onConfig: (id: string, config: Record<string, unknown> | undefined) => void;
@@ -1056,13 +1138,13 @@ function WfConfigPanel({
 }) {
   const isEvent = selectedId === EVENT_SEL;
   const node = doc && selectedId && selectedId !== EVENT_SEL ? findBlock(doc.root, selectedId) : null;
-  const title = isEvent ? 'Event' : node ? BLOCK_META[node.type].title : 'Configuration';
+  const title = isEvent ? 'Event' : node ? BLOCK_META[node.type].title : readOnly ? 'Details' : 'Configuration';
   const complete = node ? isBlockComplete(node) : true;
 
   return (
     <div className="flex w-[364px] shrink-0 flex-col border-l border-border bg-surface">
       <div className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-3">
-        {node ? (
+        {node && !readOnly ? (
           <input
             value={node.name ?? BLOCK_META[node.type].title}
             placeholder={BLOCK_META[node.type].title}
@@ -1072,7 +1154,9 @@ function WfConfigPanel({
             className="-ml-1 min-w-0 max-w-full truncate rounded border border-transparent bg-transparent px-1 py-0.5 text-body-sm-strong text-text-primary placeholder:text-text-primary transition-colors [field-sizing:content] hover:border-border focus:border-brand focus:outline-none"
           />
         ) : (
-          <span className="min-w-0 truncate text-body-sm-strong text-text-primary">{title}</span>
+          <span className="min-w-0 truncate text-body-sm-strong text-text-primary">
+            {node ? (node.name?.trim() || BLOCK_META[node.type].title) : title}
+          </span>
         )}
         <div className="ml-auto flex shrink-0 items-center gap-2">
           {node && (complete ? <StatusChip intent="success" label="Configured" /> : <StatusChip intent="warning" label="Incomplete" />)}
@@ -1083,7 +1167,7 @@ function WfConfigPanel({
 
       <div className="ds-scroll flex-1 overflow-y-auto p-4">
         {isEvent && (
-          <div className="space-y-4">
+          <div className={['space-y-4', readOnly ? 'pointer-events-none' : ''].filter(Boolean).join(' ')}>
             {doc?.event ? (
               <>
                 <div>
@@ -1092,8 +1176,8 @@ function WfConfigPanel({
                     {WORKFLOW_EVENT_META[doc.event.type].label} — placed from the Events palette.
                   </p>
                 </div>
-                <Input label="Event name" size="sm" value={doc.event.label} onChange={(e) => onPatchEvent({ label: e.target.value })} />
-                <Input label="Description" size="sm" multiline minRows={3} value={doc.event.description} onChange={(e) => onPatchEvent({ description: e.target.value })} />
+                <Input label="Event name" size="sm" value={doc.event.label} disabled={readOnly} onChange={(e) => onPatchEvent({ label: e.target.value })} />
+                <Input label="Description" size="sm" multiline minRows={3} value={doc.event.description} disabled={readOnly} onChange={(e) => onPatchEvent({ description: e.target.value })} />
               </>
             ) : (
               <EmptyState
@@ -1105,7 +1189,10 @@ function WfConfigPanel({
           </div>
         )}
         {node && (
-          <div className="space-y-4">
+          <div
+            className={['space-y-4', readOnly ? 'pointer-events-none' : ''].filter(Boolean).join(' ')}
+            aria-disabled={readOnly || undefined}
+          >
             {node.type === 'userFilter' && <UserFilterConfig config={(node.config as unknown as UFConfig) ?? (defaultConfigFor('userFilter') as unknown as UFConfig)} onChange={(cfg) => onConfig(node.id, cfg as unknown as Record<string, unknown>)} />}
             {node.type === 'assignEntities' && <AssignEntitiesConfig config={(node.config as unknown as AEConfig) ?? (defaultConfigFor('assignEntities') as unknown as AEConfig)} onChange={(cfg) => onConfig(node.id, cfg as unknown as Record<string, unknown>)} />}
             {node.type === 'notification' && <NotificationConfig config={(node.config as unknown as NConfig) ?? (defaultConfigFor('notification') as unknown as NConfig)} onChange={(cfg) => onConfig(node.id, cfg as unknown as Record<string, unknown>)} />}
@@ -1136,19 +1223,25 @@ function WfConfigPanel({
           <EmptyState
             icon={<TaskAltOutlined sx={{ fontSize: 22 }} />}
             title="Nothing selected"
-            message="Select the event or a block on the canvas to configure it."
+            message={
+              readOnly
+                ? 'Select a step on the canvas to view its details.'
+                : 'Select the event or a block on the canvas to configure it.'
+            }
           />
         )}
       </div>
 
-      <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border px-4 py-3">
-        {node && (
-          <Button variant="secondary" onClick={() => onReset(node)}>
-            Reset
-          </Button>
-        )}
-        <Button onClick={onSave}>Save</Button>
-      </div>
+      {!readOnly && (
+        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border px-4 py-3">
+          {node && (
+            <Button variant="secondary" onClick={() => onReset(node)}>
+              Reset
+            </Button>
+          )}
+          <Button onClick={onSave}>Save</Button>
+        </div>
+      )}
     </div>
   );
 }

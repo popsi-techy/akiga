@@ -107,14 +107,6 @@ export default function DataTableDocs() {
           <Button size="sm" variant={mode === 'empty' ? 'primary' : 'secondary'} onClick={() => setMode('empty')}>
             Empty
           </Button>
-          {selectedCount > 0 && mode === 'data' && (
-            <span className="ml-auto flex items-center gap-2">
-              <span className="text-body-sm text-text-secondary">{selectedCount} selected</span>
-              <Button size="sm" variant="danger">
-                Deactivate ({selectedCount})
-              </Button>
-            </span>
-          )}
         </div>
 
         <DataTable<EmergencyAccess>
@@ -123,6 +115,18 @@ export default function DataTableDocs() {
           loading={mode === 'loading'}
           selectable
           onSelectionChange={(ids) => setSelectedCount(ids.length)}
+          selectionToolbar={
+            <div className="flex w-full items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <StatusChip intent="neutral" dot={false} label={`${selectedCount} selected`} />
+              </div>
+              <div className="flex items-center border-l border-border pl-4">
+                <Button size="sm" variant="danger">
+                  Deactivate
+                </Button>
+              </div>
+            </div>
+          }
           emptyTitle="No emergency access yet"
           emptyMessage="Create emergency access to grant time-bound, break-glass access to critical systems."
         />
@@ -154,7 +158,7 @@ export default function DataTableDocs() {
             { name: 'emptyTitle / emptyMessage', type: 'string', description: 'Empty-state copy.' },
             { name: 'defaultRowsPerPage', type: 'number', default: '10', description: 'Initial page size.' },
             { name: 'onRowClick', type: '(row) => void', description: 'Row click (e.g. open detail).' },
-            { name: 'onSelectionChange', type: '(ids: string[]) => void', description: 'Fires on selection change (for bulk actions).' },
+            { name: 'selectionToolbar', type: 'ReactNode', description: 'Docks bulk actions to the bottom of the screen while rows are selected. Column headers stay visible; the page toolbar is left alone.' },
           ]}
         />
       </Section>
@@ -177,7 +181,7 @@ export default function DataTableDocs() {
             'Give the identity column the largest share. Under fixed layout a column that does not ask for a width gets the same as the status column beside it.',
             'Use Column.wrap for a two-line cell or anything that paints outside its box — a chip’s border, an avatar’s ring — which the default clipping would shave.',
             'Provide value() for custom-rendered sortable columns.',
-            'Use onSelectionChange to drive bulk actions above the table.',
+            'Pass selectionToolbar for bulk actions. It docks to the bottom of the screen so headers stay readable and the page toolbar (search, Filter, a primary on the right) does not have to move or crowd.',
             'Keep column sets stable across the product.',
             'Always pass meaningful empty-state copy.',
           ]}
@@ -187,6 +191,8 @@ export default function DataTableDocs() {
             'Don’t build one-off tables — extend this via columns.',
             'Don’t render 10k rows unpaginated.',
             'Don’t put primary actions inside every row — use the ⋮ menu.',
+            'Don’t hide column headers to make room for bulk actions. Selection is an action mode — the map of the data has to stay.',
+            'Don’t put bulk actions in the search / Filter row. A primary on the right has nowhere to go.',
             'Don’t hardcode colors in cells — compose DS components.',
           ]}
         />

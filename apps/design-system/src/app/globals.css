@@ -126,8 +126,23 @@ a {
   -ms-overflow-style: none;
 }
 .ds-scroll::-webkit-scrollbar {
-  /* Chrome, Safari, current Edge */
+  /* Chrome, Safari, current Edge.
+     `display: none` hides the thumb; `width/height: 0` also drops the gutter
+     Chromium still reserves for classic scrollbars, which made padded rails
+     look heavier on the right than the left. */
   display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Clip the (hidden) classic scrollbar so it cannot indent the content.
+   Pair with a parent `overflow-hidden`. The extra 1.25rem is the typical
+   Windows scrollbar width — browser chrome, not a layout token. */
+.ds-scroll-gutter {
+  box-sizing: border-box;
+  width: calc(100% + 1.25rem);
+  padding-left: 0.75rem;
+  padding-right: calc(0.75rem + 1.25rem);
 }
 
 /* The completion tick in `ProgressRing`, drawn rather than popped.

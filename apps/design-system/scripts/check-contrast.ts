@@ -104,6 +104,14 @@ checks.push({
     'aria-selected both mark the active tab, so selection never depends on the colour.',
 });
 checks.push({ label: 'text.inverse on sidebar', fg: color.text.inverse, bg: color.background.sidebar, min: AA_TEXT });
+// The selected segment of a SegmentedControl, and anything else that puts label text on
+// the inverse surface (ink 800).
+checks.push({
+  label: 'text.inverse on surface.inverse',
+  fg: color.text.inverse,
+  bg: color.surface.inverse,
+  min: AA_TEXT,
+});
 checks.push({
   label: 'brand.onPrimary on brand.primary',
   fg: color.brand.onPrimary,

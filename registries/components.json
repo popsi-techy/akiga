@@ -146,7 +146,7 @@
         "row-hover"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/data-table/page.tsx",
-      "notes": "fillHeight takes the remaining height and scrolls its own body with a sticky header and pinned pagination — the page itself never scrolls on a list screen. `layout` decides column sizing and PREFER 'fixed' for any new list. Under the default 'auto', a cell's minimum width is its longest word, so ONE long value widens the table past its container and the trailing columns scroll off — and truncation cannot fix it, because `nowrap` under auto layout makes the minimum the whole string and the overflow LARGER (measured on the reports list: 82px overflow before, 302px with nowrap alone). 'fixed' ends both: columns take the `width` they declare and share the remainder equally, cells truncate to one line with the full text as a `title`, and every row is one height (75px → 55px rows, 0 overflow on that same list). Its cost is that it stops guessing — a table that does not say which column carries the name gives it the same share as its status column, so declare widths. 'auto' remains the default only for compatibility: twenty-five existing tables would need widths before it could be flipped, and that sweep has not been done. `Column.wrap` opts a single cell out of truncation, for two-line renders and for anything that paints outside its own box (a chip's border, an avatar's ring) which `overflow: hidden` would otherwise shave — the same trade and the same name as `InfoRow.valueWrap`. `Column.width` binds on BOTH the header and the body cell; it used to be applied to the `<th>` alone, which made the hint weaker than it looked."
+      "notes": "fillHeight takes the remaining height and scrolls its own body with a sticky header and pinned pagination — the page itself never scrolls on a list screen. `layout` decides column sizing and PREFER 'fixed' for any new list. Under the default 'auto', a cell's minimum width is its longest word, so ONE long value widens the table past its container and the trailing columns scroll off — and truncation cannot fix it, because `nowrap` under auto layout makes the minimum the whole string and the overflow LARGER (measured on the reports list: 82px overflow before, 302px with nowrap alone). 'fixed' ends both: columns take the `width` they declare and share the remainder equally, cells truncate to one line with the full text as a `title`, and every row is one height (75px → 55px rows, 0 overflow on that same list). Its cost is that it stops guessing — a table that does not say which column carries the name gives it the same share as its status column, so declare widths. 'auto' remains the default only for compatibility: twenty-five existing tables would need widths before it could be flipped, and that sweep has not been done. `Column.wrap` opts a single cell out of truncation, for two-line renders and for anything that paints outside its own box (a chip's border, an avatar's ring) which `overflow: hidden` would otherwise shave — the same trade and the same name as `InfoRow.valueWrap`. `Column.width` binds on BOTH the header and the body cell; it used to be applied to the `<th>` alone, which made the hint weaker than it looked. `selectionToolbar` docks bulk actions to the bottom of the screen while rows are selected, so column headers stay and the page toolbar does not have to share a row with Filter or a right-side primary."
     },
     {
       "name": "DatePicker",
@@ -538,7 +538,8 @@
       "variants": [
         "sm",
         "md",
-        "fullWidth"
+        "fullWidth",
+        "with-count"
       ],
       "states": [
         "default",
@@ -546,7 +547,7 @@
         "hover"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/segmented-control/page.tsx",
-      "notes": "A connected track where exactly one segment is always on — there is no cleared state. If the control needs one, it is a QuickFilter. Cap at four segments; past that use a Select."
+      "notes": "A connected track where exactly one segment is always on — there is no cleared state. If the control needs one, it is a QuickFilter. Cap at four segments; past that use a Select. An optional per-segment `count` renders as a plain trailing number, not NavList's filled pill: a badge inside a segment competes with the selected-segment fill for the same \"this one\" signal. Zero shows rather than hides."
     },
     {
       "name": "Select",

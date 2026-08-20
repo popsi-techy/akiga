@@ -12,7 +12,20 @@ import CloseOutlined from '@mui/icons-material/CloseOutlined';
  * while the wrapper is still narrower, which is what makes it read as a slide
  * rather than a squeeze.
  */
-export function PeekSlot({ open, width = 400, children }: { open: boolean; width?: number; children: React.ReactNode }) {
+/**
+ * 340px, down from 400 and then 360.
+ *
+ * Measured rather than guessed: the widest content in any peek is an email at 144px,
+ * against a 94px label column — so the owners panel needs 320px and the app accounts
+ * panel 328px once padding, the row icon and the column gap are counted. 340 keeps ~12px
+ * over that floor, which is enough for a slightly longer address than the seed carries
+ * and no more: every pixel here is taken from the table beside it, which is the panel's
+ * whole reason for animating width instead of sliding over the top.
+ *
+ * Going below 328 is not a tuning choice — it starts truncating addresses. Re-measure
+ * before reaching for a smaller number.
+ */
+export function PeekSlot({ open, width = 340, children }: { open: boolean; width?: number; children: React.ReactNode }) {
   return (
     <div
       className={`shrink-0 overflow-hidden transition-[width,margin] duration-200 ease-out ${open ? 'ml-5' : 'ml-0'}`}

@@ -31,8 +31,8 @@ export const appTypeCategories: { id: AppTypeCategory; label: string; descriptio
 
 /** Available before coming-soon inside each category, so the actionable tiles lead. */
 export const appTypes: AppTypeOption[] = [
-  { id: 'at-google-workspace', name: 'Google Workspace', protocols: ['Directory', 'SCIM'], category: 'application', status: 'available' },
   { id: 'at-custom', name: 'Custom Application', protocols: ['REST API'], category: 'application', status: 'available' },
+  { id: 'at-google-workspace', name: 'Google Workspace', protocols: ['Directory', 'SCIM'], category: 'application', status: 'available' },
   { id: 'at-scim', name: 'SCIM Application', protocols: ['SCIM'], category: 'application', status: 'available' },
   { id: 'at-active-directory', name: 'Active Directory', protocols: ['LDAP', 'On-prem'], category: 'application', status: 'available' },
   { id: 'at-salesforce', name: 'Salesforce', protocols: ['REST', 'SCIM'], category: 'application', status: 'coming-soon' },

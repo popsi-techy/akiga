@@ -145,7 +145,9 @@ export function EligibilityCriteriaTab({
 
   return (
     <div className="ds-scroll h-full overflow-y-auto pr-0.5">
-      <div className="space-y-4 pb-6">
+      {/* 12px between the toolbar and what it filters, matching Assignments and Owners —
+          this tab has no dataset switcher above it, so it starts at the toolbar. */}
+      <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-[200px] max-w-sm flex-1">
             <Input

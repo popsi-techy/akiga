@@ -20,6 +20,7 @@ import AddIcon from '@mui/icons-material/Add';
 import PersonAddAltOutlined from '@mui/icons-material/PersonAddAltOutlined';
 import HistoryOutlined from '@mui/icons-material/HistoryOutlined';
 import CalendarTodayOutlined from '@mui/icons-material/CalendarTodayOutlined';
+import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
 import {
   Tabs,
   Card,
@@ -36,10 +37,9 @@ import {
   Drawer,
   Input,
   SelectionPanel,
-  NavList,
+  SegmentedControl,
   OverflowChips,
   PickerSlot,
-  ProgressRing,
   Tooltip,
   useToast,
   type Column,
@@ -55,7 +55,6 @@ import {
   deactivateEmergencyAccess,
   deleteEmergencyAccess,
   eaBlockingSteps,
-  EA_REQUIRED_STEPS,
   getEAGovernanceTeams,
   setEAGovernanceTeams,
   getEAAssignments,
@@ -71,12 +70,24 @@ import {
   type EASessionView,
 } from '@/data/emergency-access';
 import type { SeedEAOwner } from '@/data/seed';
-import { listGovernanceTeamRows, type GovernanceTeamRow } from '@/data/directory';
+import { listGovernanceTeamRows, listUserIdentities, type GovernanceTeamRow } from '@/data/directory';
+import { PeekPanel, PeekSlot } from '@/components/product/directory/PeekPanel';
+import { IdentityDetailsBody } from '@/components/product/directory/IdentityDetailsBody';
+import { infoIcon } from '@/components/product/directory/infoIcons';
+import { RowActions } from '@/components/product/RowActions';
 import { TableSelectDrawer } from '@/components/product/automation/TableSelectDrawer';
 import { EligibilityCriteriaTab } from '@/components/product/emergency/EligibilityCriteriaTab';
 import { AdvancedConfigurationTab } from '@/components/product/emergency/AdvancedConfigurationTab';
 import { EmergencyAssignmentsTab } from '@/components/product/emergency/EmergencyAssignmentsTab';
-import { EmergencySetupCard } from '@/components/product/emergency/EmergencySetupCard';
+import {
+  DetailRail,
+  type DetailRailGroup,
+  type DetailRailRow,
+} from '@/components/product/DetailRail';
+import {
+  emergencySetupSteps,
+  type EmergencySetupStep,
+} from '@/components/product/emergency/setupSteps';
 import { toastEASetupStep } from '@/components/product/emergency/ea-setup-toast';
 import { formatDateTime } from '@/lib/datetime';
 
@@ -92,34 +103,23 @@ import { formatDateTime } from '@/lib/datetime';
  * teams, and Assignments covers entitlements **plus** technical roles — counting
  * only the first pane would show "Owners (0)" on a profile a governance team
  * owns, which is the tab calling its own contents nothing. Owners uses the same
- * sum `EmergencySetupCard` reads to decide whether the owners step is done, so
- * the tab strip and the checklist cannot disagree.
+ * sum the setup rail reads to decide whether the owners step is done, so the
+ * tab strip and the checklist cannot disagree.
  *
  * Zero shows rather than hides. On a draft, "Owners (0)" answers the question the
  * reader is asking — an absent count reads as "not counted yet" and makes them
  * open the tab to find out it was empty. `count` is only omitted for the tabs
  * that hold no collection to count.
  *
- * Sessions is deliberately uncounted here: it already reports its own total in
- * the Overview card's "Recent Sessions (24)" heading, and a draft has none by
- * definition.
+ * Sessions is deliberately uncounted: it already reports its own total in the
+ * Overview card's "Recent Sessions (24)" heading.
  */
-function tabsFor(ea: EADetail, setupLabel: boolean): TabItem[] {
+function tabsFor(ea: EADetail, dropOverview: boolean): TabItem[] {
   const assignments = getEAAssignments(ea.id);
-  return [
+  const tabs: TabItem[] = [
     {
       value: 'overview',
-      /**
-       * "Setup" while the profile is a draft, because that is what the tab holds:
-       * a checklist of what is still missing and the action that switches it on.
-       * "Overview" names a summary of something that exists — which is what this
-       * tab becomes once the profile is live and starts reporting sessions.
-       *
-       * The `value` stays `overview` deliberately. It is what `onGoToTab` and every
-       * checklist row route to, so renaming it would be renaming the destination to
-       * change a word on a label.
-       */
-      label: setupLabel ? 'Setup' : 'Overview',
+      label: 'Overview',
     },
     { value: 'sessions', label: 'Sessions' },
     {
@@ -131,6 +131,21 @@ function tabsFor(ea: EADetail, setupLabel: boolean): TabItem[] {
     { value: 'owners', label: 'Owners', count: ea.ownersCount + getEAGovernanceTeams(ea.id).length },
     { value: 'advanced', label: 'Advanced Configuration' },
   ];
+  /**
+   * A draft has no Sessions tab. A session only exists because someone requested this
+   * access, and nobody can request a profile that has never been switched on — so the
+   * tab could only ever hold an explanation of why it is empty. Naming the state in the
+   * strip and then charging a click to read an apology is worse than not offering it:
+   * the tab appears, with real rows behind it, the moment the profile goes live.
+   *
+   * A V1 draft also has no Overview tab: its only draft content was the setup checklist,
+   * and that is now docked to the left of every tab. Dropping it rather than leaving it
+   * empty is the point — there is no Setup page to return to. It comes back once the
+   * profile is live, where Overview is a real summary and has nothing to do with setup.
+   */
+  return tabs.filter(
+    (t) => !(t.value === 'sessions' && ea.isDraft) && !(t.value === 'overview' && dropOverview),
+  );
 }
 
 function ListRow({ children }: { children: React.ReactNode }) {
@@ -228,42 +243,6 @@ function SessionsTab({ ea }: { ea: EADetail }) {
   );
 }
 
-/**
- * Sessions on a draft: empty for a reason, and the reason is the whole message.
- *
- * The generic "isn't built yet" placeholder was the wrong answer here. A draft has no
- * sessions because nobody can request it yet — that is a fact about the profile, not a
- * gap in the product, and telling the reader the screen is unfinished sends them
- * looking for a feature instead of at the switch that would fill it.
- *
- * No Activate button. The header's already carries the gate and its progress; a second
- * one here would be a copy that has to be kept in step, and on an unfinished draft it
- * would be dead on arrival. Naming where it lives is enough.
- */
-function DraftSessionsEmptyState({ blocking }: { blocking: string[] }) {
-  return (
-    <Card className="h-full">
-      <div className="flex h-full flex-col items-center justify-center gap-4 px-6 py-16 text-center">
-        <span className="grid h-12 w-12 place-items-center rounded-full bg-subtle text-icon">
-          <HistoryOutlined sx={{ fontSize: 24 }} />
-        </span>
-        <div className="space-y-1">
-          <div className="text-h5 text-text-primary">No sessions yet</div>
-          <p className="mx-auto max-w-md text-body-sm text-text-secondary">
-            {blocking.length > 0
-              ? // What is missing, in the same words the checklist and the Activate
-                // button use — so the three cannot tell the reader different stories.
-                `Nobody can request this access until it is switched on. Add ${blocking.join(
-                    ' and ',
-                  )}, then activate it from the header and sessions will appear here.`
-              : 'Nobody can request this access until it is switched on. Activate it from the header and sessions will appear here as people use it.'}
-          </p>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
 function sessionLengthLabel(hrs: number): string {
   if (hrs >= 24 && hrs % 24 === 0) {
     const days = hrs / 24;
@@ -294,77 +273,65 @@ function requestWindowLabel(cfg: EAAdvancedConfig): string {
   return `${formatClock(cfg.windowStart)} - ${formatClock(cfg.windowEnd)}`;
 }
 
-function OverviewTab({
-  ea,
-  onGoToTab,
-  onEditBasics,
-  onActivate,
-  guided = false,
-}: {
-  ea: EADetail;
-  onGoToTab: (tab: string) => void;
-  onEditBasics: () => void;
-  onActivate?: () => void;
-  /** V3: setup lives in the floating bar, so Overview stays a summary. */
-  guided?: boolean;
-}) {
+/**
+ * The summary. It is no longer also a setup surface.
+ *
+ * Every version now guides setup somewhere else — V1 in the docked rail, V2 in its
+ * wizard, V3 in the floating bar — so Overview only ever renders for a profile whose
+ * setup is not the question. That is why nothing here branches on `isDraft` any more:
+ * the branches existed for a draft that can no longer reach this tab.
+ */
+function OverviewTab({ ea }: { ea: EADetail }) {
   const cfg = getAdvancedConfig(ea.id);
-  const showChecklist = ea.isDraft && !guided;
 
   return (
     <div className="ds-scroll h-full overflow-y-auto pr-0.5">
       <div className="grid items-start gap-5 lg:grid-cols-[1fr_340px]">
-        {showChecklist ? (
-          <EmergencySetupCard ea={ea} onGoToTab={onGoToTab} onEditBasics={onEditBasics} onActivate={onActivate} />
-        ) : (
-          <Card title={`Recent Sessions (${ea.sessionsTotal})`} icon={<Person />} padding="none">
-            <div>
-              {ea.sessions.map((s) => (
-                <ListRow key={s.id}>
-                  <Avatar name={s.name} size="sm" kind="person" />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-body-strong text-text-primary">{s.name}</div>
-                    <div className="truncate text-caption text-text-secondary">{s.subtitle}</div>
-                  </div>
-                  {s.ongoing ? (
-                    <StatusChip intent="success" label={s.when} />
-                  ) : (
-                    <span className="text-body-sm text-text-secondary">{s.when}</span>
-                  )}
-                </ListRow>
-              ))}
-            </div>
-          </Card>
-        )}
+        <Card title={`Recent Sessions (${ea.sessionsTotal})`} icon={<Person />} padding="none">
+          <div>
+            {ea.sessions.map((s) => (
+              <ListRow key={s.id}>
+                <Avatar name={s.name} size="sm" kind="person" />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-body-strong text-text-primary">{s.name}</div>
+                  <div className="truncate text-caption text-text-secondary">{s.subtitle}</div>
+                </div>
+                {s.ongoing ? (
+                  <StatusChip intent="success" label={s.when} />
+                ) : (
+                  <span className="text-body-sm text-text-secondary">{s.when}</span>
+                )}
+              </ListRow>
+            ))}
+          </div>
+        </Card>
 
         <div className="space-y-5">
-          {(!ea.isDraft || guided) && (
-            <Card title="Advanced Configuration Info" icon={<Info />} padding="none">
-              <InfoRowGroup>
-                <InfoRow
-                  icon={<DateRangeOutlined sx={{ fontSize: 18 }} />}
-                  label="Allowed Days"
-                  value={allowedDaysLabel(cfg)}
-                  valueWrap
-                />
-                <InfoRow
-                  icon={<ScheduleOutlined sx={{ fontSize: 18 }} />}
-                  label="Request Window"
-                  value={requestWindowLabel(cfg)}
-                />
-                <InfoRow
-                  icon={<HourglassEmptyOutlined sx={{ fontSize: 18 }} />}
-                  label="Max. Duration"
-                  value={sessionLengthLabel(cfg.maxDurationHrs)}
-                />
-                <InfoRow
-                  icon={<GroupsOutlined sx={{ fontSize: 18 }} />}
-                  label="Max. Concurrent Users"
-                  value={String(cfg.maxConcurrent)}
-                />
-              </InfoRowGroup>
-            </Card>
-          )}
+          <Card title="Advanced Configuration Info" icon={<Info />} padding="none">
+            <InfoRowGroup>
+              <InfoRow
+                icon={<DateRangeOutlined sx={{ fontSize: 18 }} />}
+                label="Allowed Days"
+                value={allowedDaysLabel(cfg)}
+                valueWrap
+              />
+              <InfoRow
+                icon={<ScheduleOutlined sx={{ fontSize: 18 }} />}
+                label="Request Window"
+                value={requestWindowLabel(cfg)}
+              />
+              <InfoRow
+                icon={<HourglassEmptyOutlined sx={{ fontSize: 18 }} />}
+                label="Max. Duration"
+                value={sessionLengthLabel(cfg.maxDurationHrs)}
+              />
+              <InfoRow
+                icon={<GroupsOutlined sx={{ fontSize: 18 }} />}
+                label="Max. Concurrent Users"
+                value={String(cfg.maxConcurrent)}
+              />
+            </InfoRowGroup>
+          </Card>
 
           <Card title="Timeline" icon={<WatchLater />} padding="none">
             <InfoRowGroup>
@@ -603,9 +570,22 @@ export function EmergencyOwnersPicker({ ea, onChanged }: { ea: EADetail; onChang
 
 /** Exported so the V2 stepper can ask the same question the tab does. */
 export function EmergencyOwnersTab({ ea, onChanged }: { ea: EADetail; onChanged: () => void }) {
+  const router = useRouter();
   const toast = useToast();
   const [view, setView] = React.useState<'individual' | 'teams'>('individual');
   const [search, setSearch] = React.useState('');
+  /**
+   * The row whose details are open beside the table — a person or a team, never both.
+   *
+   * One piece of state rather than two, because the panel is one slot: two would let a
+   * stale person sit behind a team, and closing one would reveal the other.
+   */
+  const [peek, setPeek] = React.useState<
+    { kind: 'owner'; row: SeedEAOwner } | { kind: 'team'; row: GovernanceTeamRow } | null
+  >(null);
+  // Switching halves changes what the table lists, so a panel about the other half
+  // would be describing a row that is no longer on screen.
+  React.useEffect(() => setPeek(null), [view]);
 
   // Session-memory store, read after mount like the rest of this module. Held in
   // state rather than read from `ea` so adding an owner shows up here and on the
@@ -664,6 +644,13 @@ export function EmergencyOwnersTab({ ea, onChanged }: { ea: EADetail; onChanged:
   const teamRows = allTeams.filter(
     (t) => teamIds.includes(t.id) && t.name.toLowerCase().includes(search.toLowerCase()),
   );
+  /**
+   * Owner ids are identity ids — `emergencyOwners` is built from `userIdentities` — so the
+   * directory holds the full record for every one of them. Looking it up lets the panel
+   * reuse `IdentityDetailsBody` rather than restating a thinner version of the same
+   * person; the fallback covers an owner the directory does not know about.
+   */
+  const identityById = React.useMemo(() => new Map(listUserIdentities().map((u) => [u.id, u])), []);
 
   const teamColumns: Column<GovernanceTeamRow>[] = [
     {
@@ -678,38 +665,47 @@ export function EmergencyOwnersTab({ ea, onChanged }: { ea: EADetail; onChanged:
           <Avatar name={t.name} size="sm" />
           <div className="min-w-0">
             <div className="truncate text-body-sm-strong text-text-primary">{t.name}</div>
-            <div className="truncate text-caption text-text-secondary">{t.description}</div>
+            {/* The description drops out while the panel is open, along with the
+                Reviewers column below: the panel carries both, and the ~416px it leaves
+                is not enough for a two-line name cell, a count and the actions. */}
+            {peek === null && (
+              <div className="truncate text-caption text-text-secondary">{t.description}</div>
+            )}
           </div>
         </div>
       ),
     },
-    {
-      id: 'members',
-      header: 'Reviewers',
-      align: 'right',
-      width: 120,
-      sortable: true,
-      value: (t) => t.reviewerCount,
-      render: (t) => <span className="text-body-sm tabular-nums text-text-primary">{t.reviewerCount}</span>,
-    },
+    ...(peek === null
+      ? [
+          {
+            id: 'members',
+            header: 'Reviewers',
+            align: 'right' as const,
+            width: 120,
+            sortable: true,
+            value: (t: GovernanceTeamRow) => t.reviewerCount,
+            render: (t: GovernanceTeamRow) => (
+              <span className="text-body-sm tabular-nums text-text-primary">{t.reviewerCount}</span>
+            ),
+          },
+        ]
+      : []),
     {
       id: 'actions',
       header: 'Actions',
       align: 'right',
-      width: 80,
+      width: 88,
       render: (t) => (
-        <Menu
-          items={[
-            {
-              label: 'Remove team',
-              icon: <DeleteOutline sx={{ fontSize: 18 }} />,
-              danger: true,
-              onClick: () => {
-                persistTeams(teamIds.filter((x) => x !== t.id));
-                toast.success(`${t.name} removed`);
-              },
-            },
-          ]}
+        <RowActions
+          onInfo={() => setPeek({ kind: 'team', row: t })}
+          infoLabel={`View details for ${t.name}`}
+          onRemove={() => {
+            persistTeams(teamIds.filter((x) => x !== t.id));
+            if (peek?.kind === 'team' && peek.row.id === t.id) setPeek(null);
+            toast.success(`${t.name} removed`);
+          }}
+          removeLabel={`Remove ${t.name}`}
+          removeTooltip="Remove team"
         />
       ),
     },
@@ -744,48 +740,66 @@ export function EmergencyOwnersTab({ ea, onChanged }: { ea: EADetail; onChanged:
         </div>
       ),
     },
-    { id: 'email', header: 'Email', sortable: true, value: (o) => o.email, render: (o) => <span className="text-text-secondary">{o.email}</span> },
+    /* Email stands down while the panel is open — the panel carries it, in the subtitle
+       and again in the record, and four columns plus a checkbox do not fit in the ~416px
+       the panel leaves. Without this the Actions cell scrolled out of reach, taking the
+       button that had just been pressed with it. */
+    ...(peek === null
+      ? [
+          {
+            id: 'email',
+            header: 'Email',
+            sortable: true,
+            value: (o: SeedEAOwner) => o.email,
+            render: (o: SeedEAOwner) => <span className="text-text-secondary">{o.email}</span>,
+          },
+        ]
+      : []),
     {
       id: 'actions',
       header: 'Actions',
       align: 'right',
-      width: 80,
+      width: 88,
       render: (o) => (
-        <Menu
-          items={[
-            { label: 'Message', onClick: () => toast.info(`Message ${o.name}`) },
-            {
-              label: 'Remove owner',
-              danger: true,
-              onClick: () => {
-                persistOwners(owners.filter((x) => x.id !== o.id));
-                toast.success(`${o.name} removed`);
-              },
-            },
-          ]}
+        <RowActions
+          onInfo={() => setPeek({ kind: 'owner', row: o })}
+          infoLabel={`View details for ${o.name}`}
+          onRemove={() => {
+            persistOwners(owners.filter((x) => x.id !== o.id));
+            if (peek?.kind === 'owner' && peek.row.id === o.id) setPeek(null);
+            toast.success(`${o.name} removed`);
+          }}
+          removeLabel={`Remove ${o.name}`}
+          removeTooltip="Remove owner"
         />
       ),
     },
   ];
 
   return (
-    <div className="grid h-full gap-5 lg:grid-cols-[264px_minmax(0,1fr)]">
-      {/* Left: toggles inside a container */}
-      <Card padding="sm" className="h-full">
-        <NavList
+    <div className="flex h-full min-h-0 flex-col">
+      {/* The two halves of ownership are a segmented control at the top, for the same
+          reasons as Assignments: it is a choice between two, it does not need a 264px
+          column and the page's full height to state that, and a `NavList` beside the
+          navigation rail made a pane switcher look like more navigation. */}
+      {/* 20px below the switcher, 12px below the toolbar: the switcher chooses which
+          dataset you are looking at, the toolbar acts within it. The larger gap binds the
+          toolbar and its table into one unit under the switcher, rather than leaving three
+          bands equally spaced and equally related. */}
+      <div className="mb-5 flex shrink-0 flex-wrap items-center gap-3">
+        <SegmentedControl<'individual' | 'teams'>
           ariaLabel="Owner type"
           value={view}
-          onChange={(id) => setView(id as 'individual' | 'teams')}
-          items={[
-            { id: 'individual', icon: <PersonOutline sx={{ fontSize: 18 }} />, label: 'Individual Owners', count: ea.ownersCount },
-            { id: 'teams', icon: <GroupsOutlined sx={{ fontSize: 18 }} />, label: 'Governance Teams', count: teamIds.length },
+          onChange={setView}
+          options={[
+            { value: 'individual', label: 'Individual Owners', count: ea.ownersCount },
+            { value: 'teams', label: 'Governance Teams', count: teamIds.length },
           ]}
         />
-      </Card>
+      </div>
 
-      {/* Right: toolbar + fill-height table */}
-      <div className="flex h-full min-h-0 flex-col">
-        <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
           <div className="w-full max-w-sm">
             <Input placeholder="Search" value={search} onChange={(e) => setSearch(e.target.value)} startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />} />
           </div>
@@ -804,25 +818,97 @@ export function EmergencyOwnersTab({ ea, onChanged }: { ea: EADetail; onChanged:
           </div>
         </div>
 
-        <div className="min-h-0 flex-1">
-          {view === 'individual' ? (
-            <DataTable<SeedEAOwner>
-              columns={columns}
-              rows={rows}
-              selectable
-              fillHeight
-              emptyTitle="No owners"
-              emptyMessage="Add individual owners to govern this emergency access."
-            />
-          ) : (
-            <DataTable<GovernanceTeamRow>
-              columns={teamColumns}
-              rows={teamRows}
-              fillHeight
-              emptyTitle="No governance teams"
-              emptyMessage="A team answers for this access at review, where a named owner answers for it day to day."
-            />
-          )}
+        {/* Same slot the Assignments tab and the directory's peeks use: the panel takes
+            width from the table rather than covering it, so the row stays visible and
+            picking another swaps the contents. */}
+        <div className="flex min-h-0 flex-1">
+          <div className="min-h-0 min-w-0 flex-1">
+            {view === 'individual' ? (
+              <DataTable<SeedEAOwner>
+                columns={columns}
+                rows={rows}
+                selectable
+                fillHeight
+                emptyTitle="No owners"
+                emptyMessage="Add individual owners to govern this emergency access."
+              />
+            ) : (
+              <DataTable<GovernanceTeamRow>
+                columns={teamColumns}
+                rows={teamRows}
+                fillHeight
+                emptyTitle="No governance teams"
+                emptyMessage="A team answers for this access at review, where a named owner answers for it day to day."
+              />
+            )}
+          </div>
+
+          <PeekSlot open={peek !== null}>
+            {peek?.kind === 'owner' && (
+              <PeekPanel
+                avatar={<Avatar name={peek.row.name} size="md" kind="person" />}
+                title={peek.row.name}
+                subtitle={peek.row.email}
+                onClose={() => setPeek(null)}
+                footer={
+                  /* An owner is an identity the directory already holds a record for, so
+                     the panel ends where that record begins rather than dead-ending on a
+                     name and an address. */
+                  <Button
+                    variant="secondary"
+                    fullWidth
+                    startIcon={<OpenInNewOutlined sx={{ fontSize: 18 }} />}
+                    onClick={() => router.push(`/iga/directory/user-identities/${peek.row.id}`)}
+                  >
+                    Open identity page
+                  </Button>
+                }
+              >
+                {/* The directory's own body for a person, `bare` because the panel is
+                    already the box — so an owner reads the same here as it does there,
+                    instead of this tab inventing a shorter version of the same record. */}
+                {identityById.get(peek.row.id) ? (
+                  <IdentityDetailsBody identity={identityById.get(peek.row.id)!} surface="bare" />
+                ) : (
+                  <div className="pt-3">
+                    <InfoRowGroup>
+                      <InfoRow icon={infoIcon.person} label="Name" value={peek.row.name} />
+                      <InfoRow icon={infoIcon.email} label="Email" value={peek.row.email} />
+                    </InfoRowGroup>
+                  </div>
+                )}
+              </PeekPanel>
+            )}
+            {peek?.kind === 'team' && (
+              <PeekPanel
+                avatar={<Avatar name={peek.row.name} size="md" kind="entity" />}
+                title={peek.row.name}
+                subtitle="Answers for this access at review"
+                onClose={() => setPeek(null)}
+                footer={
+                  <Button
+                    variant="secondary"
+                    fullWidth
+                    startIcon={<OpenInNewOutlined sx={{ fontSize: 18 }} />}
+                    onClick={() => router.push(`/iga/directory/governance-teams/${peek.row.id}`)}
+                  >
+                    Open team page
+                  </Button>
+                }
+              >
+                <p className="pt-3 text-body-sm text-text-secondary">{peek.row.description}</p>
+                <div className="pt-3">
+                  <InfoRowGroup>
+                    <InfoRow
+                      icon={infoIcon.reviewer}
+                      label="Reviewers"
+                      value={String(peek.row.reviewerCount)}
+                    />
+                  </InfoRowGroup>
+                </div>
+              </PeekPanel>
+            )}
+          </PeekSlot>
         </div>
       </div>
 
@@ -941,7 +1027,9 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
   const router = useRouter();
   const toast = useToast();
   const [tab, setTab] = React.useState(() => {
-    if (!isV3) return 'overview';
+    // V1 and V3 both open a draft on the work rather than on a summary — V3 because
+    // its bar drives the tabs, V1 because it has no Overview tab while it is a draft.
+    if (!isV3 && !isV1) return 'overview';
     const draft = getEmergencyAccess(id);
     return draft?.isDraft ? firstUnfinishedGuidedTab(draft) : 'overview';
   });
@@ -975,7 +1063,81 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
     );
   }
 
-  const guidedTabIndex = EA_GUIDED_STEPS.findIndex((s) => s.tab === tab);
+  /**
+   * V1 navigates in the rail instead of a tab strip, in both states. `showSetupRail` is
+   * the narrower question of whether that rail is also the setup checklist — which is
+   * what drops Overview from a draft, since the checklist replaced what Overview held.
+   */
+  const showRail = isV1;
+  const showSetupRail = isV1 && ea.isDraft;
+
+  /**
+   * The tab actually shown, which is not always the one in state.
+   *
+   * Which tabs exist depends on the profile's state, so a value in `tab` can stop being
+   * offered underneath the reader: deactivating a live profile removes Sessions, and on
+   * V1 removes Overview as well, while both are legitimately current beforehand. Rather
+   * than name the vanishing tabs — the list has changed twice already — this asks the
+   * strip whether it still lists the current value and falls back when it does not.
+   * Normalising once here means no render site has to guard against a tab the strip does
+   * not show, which would otherwise put a summary under a strip that does not list it.
+   */
+  const visibleTabs = tabsFor(ea, showSetupRail);
+  const shownTab = visibleTabs.some((t) => t.value === tab)
+    ? tab
+    : ea.isDraft
+      ? firstUnfinishedGuidedTab(ea)
+      : 'overview';
+
+  /**
+   * What the rail lists — one derivation, not one per state.
+   *
+   * A live profile shows the same grouped, ticked list a draft does; it just gains the
+   * sections that are not setup steps at the top. That is deliberate: the rail does not
+   * restyle itself when a profile is switched on, it grows two rows. And the ticks keep
+   * earning their place afterwards — "this active break-glass profile still has no
+   * owners" is exactly the gap an admin should be able to see without opening anything.
+   *
+   * Nothing here is a hand-kept list. Steps come from the step definition and non-step
+   * sections from the same `tabsFor` list the strip would have rendered, so the rail
+   * cannot offer a section the page does not have, or miss one it does. Each side brings
+   * its own label, which is why the wording does not shift from "Eligibility criteria" to
+   * "Eligibility Criteria" the moment the profile activates.
+   *
+   * Counts come along in both states. The strip used to carry them, and a draft filling
+   * in assignments wants the running total as much as a live profile does — the tick says
+   * whether a step is done, the count says how much is behind it.
+   */
+  const countFor = (tab: string) => visibleTabs.find((t) => t.value === tab)?.count;
+  const setupSteps = emergencySetupSteps(ea);
+  const stepRow = (step: EmergencySetupStep): DetailRailRow => ({
+    id: step.id,
+    label: step.label,
+    tab: step.tab,
+    count: countFor(step.tab),
+    done: step.done,
+    doneLabel: step.doneLabel,
+  });
+
+  const railGroups: DetailRailGroup[] = [
+    {
+      rows: visibleTabs
+        .filter((t) => !setupSteps.some((s) => s.tab === t.value))
+        .map((t) => ({ id: t.value, label: t.label, tab: t.value, count: t.count })),
+    },
+    {
+      heading: 'Required to activate',
+      headingHint: 'these steps gate activation',
+      rows: setupSteps.filter((s) => s.required).map(stepRow),
+    },
+    {
+      heading: 'Recommended',
+      headingHint: 'optional, and does not block activation',
+      rows: setupSteps.filter((s) => !s.required).map(stepRow),
+    },
+  ].filter((g) => g.rows.length > 0);
+
+  const guidedTabIndex = EA_GUIDED_STEPS.findIndex((s) => s.tab === shownTab);
   const guidedIndex =
     guidedTabIndex >= 0
       ? guidedTabIndex
@@ -994,8 +1156,19 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
 
   return (
     <div className="flex h-full flex-col">
-      {/* Sticky top: header + tabs, with a full-width line below */}
-      <div className="shrink-0 -mx-8 -mt-6 border-b border-border bg-canvas px-8 pt-3">
+      {/*
+        The page header, full-bleed.
+
+        It only draws its own rule when the setup rail is docked below it: that rule is
+        the horizontal half of the frame the rail's right border completes, so the two
+        lines meet and read as one continuous boundary. Without a rail there is nothing
+        to meet, and a line here would be a second one directly above the tab strip's.
+      */}
+      <div
+        className={`shrink-0 -mx-8 -mt-6 bg-canvas px-8 pt-3 ${
+          showRail ? 'border-b border-border' : ''
+        }`}
+      >
         <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Avatar name={ea.name} initials={ea.initial} size="md" />
@@ -1015,9 +1188,16 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
             <Button variant="secondary" startIcon={<EditOutlined />} onClick={() => setBasicsOpen(true)}>
               Basic Details
             </Button>
-            {/* A draft has never been on, so the only thing to offer is turning
-                it on — and only once it would actually work. Same rule as the
-                Overview checklist, from one definition. */}
+            {/* A draft has never been on, so the only thing to offer is turning it on —
+                and only once it would actually work.
+
+                A plain button that is simply disabled until then. It used to carry a
+                progress ring and a "N required steps to activate" label, from when the
+                header was the only place the reader could learn how far along the setup
+                was. The docked rail reports that now, step by step, so a second meter in
+                the button was the same state said twice — and the button's own job, which
+                is the one action, was the half that got crowded out. The tooltip still
+                names what is missing for anyone who reaches for it. */}
             {ea.isDraft && !isV3 ? (
               <Tooltip
                 title={
@@ -1027,20 +1207,8 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
                 }
               >
                 <span>
-                  <Button
-                    startIcon={
-                      <ProgressRing
-                        value={EA_REQUIRED_STEPS - blocking.length}
-                        total={EA_REQUIRED_STEPS}
-                        accent={blocking.length > 0 ? 'var(--ds-color-status-success-fill)' : undefined}
-                      />
-                    }
-                    disabled={blocking.length > 0}
-                    onClick={activate}
-                  >
-                    {blocking.length > 0
-                      ? `${blocking.length} required step${blocking.length === 1 ? '' : 's'} to activate`
-                      : 'Activate'}
+                  <Button disabled={blocking.length > 0} onClick={activate}>
+                    Activate
                   </Button>
                 </span>
               </Tooltip>
@@ -1061,36 +1229,78 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
             />
           </div>
         </div>
-        <Tabs
-          items={tabsFor(ea, isV1 && ea.isDraft)}
-          value={tab}
-          onChange={setTab}
-          noBorder
-          aria-label="Emergency access details"
-        />
       </div>
 
-      {/* Tab content — fills the remaining height */}
-      <div className="min-h-0 flex-1 pt-5">
-        {tab === 'overview' && (
-          <OverviewTab
-            ea={ea}
-            onGoToTab={setTab}
-            onEditBasics={() => setBasicsOpen(true)}
-            onActivate={activate}
-            guided={isV3}
+      {/*
+        Everything below the header: the docked rail, and the tabs-plus-content column
+        beside it.
+
+        Full-bleed on three sides (`-mx-8 -mb-6` cancels the layout's page padding) so
+        the rail reaches the left edge and the bottom of the viewport instead of floating
+        in a padded box — a docked column that stops short of either would read as a card.
+        The padding comes back inside the right-hand column, where it belongs to the
+        content rather than to the frame.
+
+        On the versions that still have a tab strip it lives in that column, not above the
+        pair, so it would start to the right of a rail rather than over it.
+      */}
+      <div className={`-mx-8 flex min-h-0 flex-1 ${showRail ? '-mb-6' : ''}`}>
+        {showRail && (
+          <DetailRail
+            ariaLabel={showSetupRail ? 'Setup checklist' : 'Profile sections'}
+            groups={railGroups}
+            currentTab={shownTab}
+            onGoTo={(row) => {
+              // `basic` is the one row that is not a section — it opens the same drawer
+              // the header's Basic Details button does, so there is one editor.
+              if (row.id === 'basic') {
+                setBasicsOpen(true);
+                return;
+              }
+              setTab(row.tab);
+            }}
           />
         )}
-        {tab === 'owners' && <EmergencyOwnersTab ea={ea} onChanged={bump} />}
-        {tab === 'eligibility' && <EligibilityCriteriaTab eaId={ea.id} onChanged={bump} />}
-        {tab === 'sessions' &&
-          (ea.isDraft ? (
-            <DraftSessionsEmptyState blocking={blocking} />
-          ) : (
-            <SessionsTab ea={ea} />
-          ))}
-        {tab === 'assignments' && <EmergencyAssignmentsTab eaId={id} onChanged={bump} />}
-        {tab === 'advanced' && <AdvancedConfigurationTab eaId={ea.id} onChanged={bump} />}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          {/* No tab strip where the rail is: the two were the same list, and V1 keeps the
+              rail. A vertical list has room the strip does not — per-row completion on a
+              draft, counts that do not compete with the label for width, and a row for
+              Basic details, which was never a tab. V2 and V3 still navigate here. */}
+          {!showRail && (
+            <div className="shrink-0 border-b border-border px-8">
+              <Tabs
+                items={visibleTabs}
+                value={shownTab}
+                onChange={setTab}
+                noBorder
+                aria-label="Emergency access details"
+              />
+            </div>
+          )}
+          {/* A 20px gutter on all four sides where the rail is docked. The content's edges
+              are measured from the rail's border, not the page's, so there is no page
+              title above it to line up with — 32px was the layout's page margin inherited
+              by a region that is not the page.
+
+              `pb-5` only pairs with the `-mb-6` above: it puts back, inside the content,
+              the bottom padding the full-bleed cancelled. Without a rail the layout's own
+              padding is still in force and adding it again would double it — and V3's
+              setup bar sits below this block, which a negative margin would overlap. */}
+          <div
+            className={
+              showRail ? 'min-h-0 min-w-0 flex-1 p-5' : 'min-h-0 min-w-0 flex-1 px-8 pt-5'
+            }
+          >
+        {shownTab ==='overview' && (
+          <OverviewTab ea={ea} />
+        )}
+        {shownTab ==='owners' && <EmergencyOwnersTab ea={ea} onChanged={bump} />}
+        {shownTab ==='eligibility' && <EligibilityCriteriaTab eaId={ea.id} onChanged={bump} />}
+        {shownTab ==='sessions' && <SessionsTab ea={ea} />}
+        {shownTab ==='assignments' && <EmergencyAssignmentsTab eaId={id} onChanged={bump} />}
+        {shownTab ==='advanced' && <AdvancedConfigurationTab eaId={ea.id} onChanged={bump} />}
+          </div>
+        </div>
       </div>
 
       {showSetupBar && (

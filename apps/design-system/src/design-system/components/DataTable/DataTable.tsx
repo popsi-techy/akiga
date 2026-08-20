@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { typography } from '../../tokens/tokens';
+import { typography, zIndex } from '../../tokens/tokens';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -99,6 +99,12 @@ export interface DataTableProps<Row extends { id: string }> {
   /** Controlled selection — when provided, the table reflects these ids and all
    *  changes are reported via `onSelectionChange` (parent owns the state). */
   selectedIds?: string[];
+  /**
+   * Bulk actions while any row is selected. Docks to the bottom of the screen
+   * (content column, not over the nav rail) so column headers stay and the page
+   * toolbar is left alone. Omit when there is nothing to do in bulk.
+   */
+  selectionToolbar?: React.ReactNode;
   /** Fill the parent's height; body scrolls internally with a sticky header and
    *  pinned pagination. The parent must have a definite height. @default false */
   fillHeight?: boolean;
@@ -120,6 +126,7 @@ export function DataTable<Row extends { id: string }>({
   onRowClick,
   onSelectionChange,
   selectedIds,
+  selectionToolbar,
   fillHeight = false,
 }: DataTableProps<Row>) {
   const [order, setOrder] = React.useState<Order>('asc');
@@ -226,18 +233,29 @@ export function DataTable<Row extends { id: string }>({
       ? { whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' }
       : {};
 
+  const showSelectionToolbar =
+    Boolean(selectionToolbar) && !single && selected.size > 0;
   const rangeStart = rows.length === 0 ? 0 : page * rowsPerPage + 1;
   const rangeEnd = Math.min((page + 1) * rowsPerPage, rows.length);
   const canPrev = page > 0;
   const canNext = rangeEnd < rows.length;
 
   return (
+    <div className={fillHeight ? 'flex h-full min-h-0 flex-col' : undefined}>
     <div
       className={`overflow-hidden rounded-lg border border-border bg-surface ${
-        fillHeight ? 'flex h-full flex-col' : ''
+        fillHeight ? 'flex min-h-0 flex-1 flex-col' : ''
       }`}
     >
-      <TableContainer sx={fillHeight ? { flex: 1, minHeight: 0, overflowY: 'auto' } : undefined}>
+      {/* `ds-scroll` because MUI's container scrolls on both axes and paints the bar
+          itself. A table narrower than its columns still has to scroll — what it must
+          not do is draw a grey rail across the bottom of the card (constitution §7.2).
+          Only visible when something upstream squeezes the table, but that is exactly
+          when the reader is least served by chrome. */}
+      <TableContainer
+        className="ds-scroll"
+        sx={fillHeight ? { flex: 1, minHeight: 0, overflowY: 'auto' } : undefined}
+      >
         <Table
           stickyHeader={fillHeight}
           size="small"
@@ -430,6 +448,21 @@ export function DataTable<Row extends { id: string }>({
               </IconButton>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+      {/* Room so pagination sits above the docked bar. fillHeight pages already
+          reach the bottom of the shell; without this the bar would cover the
+          last chrome. */}
+      {showSelectionToolbar && fillHeight && <div className="h-12 shrink-0" aria-hidden />}
+      {showSelectionToolbar && (
+        <div
+          role="toolbar"
+          aria-label="Bulk actions"
+          className="fixed bottom-0 right-0 flex min-w-0 items-center border-t border-border bg-surface px-8 py-3 shadow-md"
+          style={{ left: 'var(--ds-shell-content-inset, 0px)', zIndex: zIndex.sticky }}
+        >
+          {selectionToolbar}
         </div>
       )}
     </div>
