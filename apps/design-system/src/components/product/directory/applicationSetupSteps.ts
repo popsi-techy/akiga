@@ -15,20 +15,12 @@ export interface ApplicationSetupStep {
   done: boolean;
 }
 
-/**
- * Which section each setup step is configured in.
- *
- * `basic` is the exception — it opens a drawer, not a section. Its `tab` still has to
- * carry a value, and that value must be one no section uses: while the emergency-access
- * equivalent said `overview` it collided with the real Overview section, so a rail
- * listing both showed Overview under the name "Basic details" and lit it as current.
- * `basic` matches nothing, which is the whole requirement.
- */
 const STEP_TAB: Record<AppSetupStepId, string> = {
-  basic: 'basic',
-  authorization: 'provisioning',
-  events: 'provisioning',
+  provisioning: 'provisioning',
+  reconciliation: 'reconciliation',
   owners: 'owners',
+  baseline: 'baseline',
+  approval: 'approval',
 };
 
 /**
@@ -36,8 +28,6 @@ const STEP_TAB: Record<AppSetupStepId, string> = {
  *
  * Ordering, labels and required-ness all come from `data/application-setup` — this only
  * adds where a step is edited, which is a fact about the screens rather than the domain.
- * Same split as the emergency-access equivalent, so the two checklists cannot drift into
- * describing their steps differently.
  */
 export function applicationSetupSteps(app: OnboardedApplication): ApplicationSetupStep[] {
   return APP_SETUP_STEPS.map((step) => ({

@@ -112,10 +112,10 @@ export function DetailRail({
           {item.done !== undefined && (
             <span
               className={`${stacked ? 'mt-px ' : ''}grid h-4 w-4 shrink-0 place-items-center ${
-                item.done ? 'text-success' : 'text-icon-subtle'
+                item.done ? 'text-success' : 'text-border-strong'
               }`}
             >
-              <CheckCircle sx={{ fontSize: 16 }} />
+              <CheckCircle sx={{ fontSize: 16, color: 'inherit' }} />
             </span>
           )}
           <span className="min-w-0 flex-1">

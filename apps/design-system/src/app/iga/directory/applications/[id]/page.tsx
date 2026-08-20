@@ -54,7 +54,7 @@ const BASE_TABS: TabItem[] = [
   { value: 'accounts', label: 'App Accounts' },
   { value: 'entitlements', label: 'Entitlements' },
   { value: 'reconciliation', label: 'Reconciliation' },
-  { value: 'provisioning', label: 'Provisioning Setup' },
+  { value: 'provisioning', label: 'Configure' },
   { value: 'baseline', label: 'Baseline Governance' },
   { value: 'approval', label: 'Approval Policy' },
   { value: 'owners', label: 'Owners' },
@@ -63,9 +63,9 @@ const BASE_TABS: TabItem[] = [
 /**
  * The sections this page has, which the rail is derived from.
  *
- * Overview keeps its name in both states now. It was relabelled "Setup" while the
+ * Overview keeps its name in both states now. It was relabelled while the
  * checklist lived inside it; the checklist is the rail, so the tab that held it is a
- * summary again — of what the application *is* during setup, and of what it holds once
+ * summary again — of what the application *is* during draft, and of what it holds once
  * connected.
  */
 function sectionsFor(accounts: number, entitlements: number): TabItem[] {
@@ -84,10 +84,9 @@ export default function ApplicationDetailPage() {
   /**
    * Which rail row was pressed, where a section has more than one.
    *
-   * Authorization and Connection events are both configured on Provisioning Setup, so the
-   * section alone cannot say which row the reader is on. Cleared whenever the section
-   * changes by any other route — `connect()` returns to Overview, where one row matches
-   * and the override would only be a stale claim about a different section.
+   * Cleared whenever the section changes by any other route — `connect()` returns
+   * to Overview, where one row matches and the override would only be a stale
+   * claim about a different section.
    */
   const [activeRow, setActiveRow] = React.useState<string | undefined>(undefined);
   const goToSection = (value: string, rowId?: string) => {
@@ -101,7 +100,7 @@ export default function ApplicationDetailPage() {
    * The onboarding store is `localStorage`-backed, so it is empty during SSR and full on
    * the client. Reading it while rendering made the two disagree and React threw a
    * hydration error on any application that had been onboarded — the server rendered
-   * "not found" or a connected profile, the client a profile in setup.
+   * "not found" or a connected profile, the client a profile in draft.
    *
    * So it is read after mount, like every other session-memory store in this codebase,
    * and nothing renders until then. Unlike the emergency-access stores this one survives
@@ -112,7 +111,7 @@ export default function ApplicationDetailPage() {
 
   const detail = mounted ? getApplicationDetail(id) : null;
   const onboarded = detail?.onboarded;
-  const isSetup = onboarded?.status === 'setup';
+  const isDraft = onboarded?.status === 'setup';
 
   if (!mounted) return null;
   if (!detail) {
@@ -124,17 +123,15 @@ export default function ApplicationDetailPage() {
   const blocking = onboarded ? appBlockingSteps(onboarded) : [];
 
   /**
-   * What the rail lists — one derivation, not one per state.
+   * What the rail lists.
    *
-   * A connected application shows the same grouped, ticked list one in setup does; it
-   * just leads with the sections that are not setup steps. So connecting an application
-   * does not restyle its navigation, and the ticks keep earning their place afterwards —
-   * "this connected application still has no owners" is a governance gap worth seeing
-   * without opening anything.
+   * A draft is the connector being stood up: Required is Configure;
+   * Additional is Reconciliation, Owners, Baseline Governance and Approval
+   * Policy. Overview, accounts and entitlements wait until IGA can reach the
+   * application — they would be empty lists pretending to be work.
    *
-   * Steps come from the step definition and non-step sections from the same list the tab
-   * strip would have rendered, so the rail cannot offer a section this page does not have,
-   * or miss one it does.
+   * A connected application leads with those collections, then the same
+   * grouped steps, so connecting does not restyle the navigation.
    */
   const sections = sectionsFor(accounts.length, entitlements.length);
   const steps = onboarded ? applicationSetupSteps(onboarded) : [];
@@ -146,12 +143,7 @@ export default function ApplicationDetailPage() {
     count: countFor(step.tab),
     done: step.done,
   });
-  const railGroups: DetailRailGroup[] = [
-    {
-      rows: sections
-        .filter((s) => !steps.some((step) => step.tab === s.value))
-        .map((s) => ({ id: s.value, label: s.label, tab: s.value, count: s.count })),
-    },
+  const stepGroups: DetailRailGroup[] = [
     {
       heading: 'Required to connect',
       headingHint: 'these steps gate connection',
@@ -162,7 +154,17 @@ export default function ApplicationDetailPage() {
       headingHint: 'optional, and does not block connection',
       rows: steps.filter((s) => !s.required).map(stepRow),
     },
+  ];
+  const collectionRows = sections
+    .filter((s) => !steps.some((step) => step.tab === s.value))
+    .map((s) => ({ id: s.value, label: s.label, tab: s.value, count: s.count }));
+  const railGroups: DetailRailGroup[] = [
+    ...(!isDraft && collectionRows.length ? [{ rows: collectionRows }] : []),
+    ...stepGroups,
   ].filter((g) => g.rows.length > 0);
+
+  const draftTabs = new Set(steps.map((s) => s.tab));
+  const shownTab = isDraft && !draftTabs.has(tab) ? 'provisioning' : tab;
 
   const connect = () => {
     if (!onboarded || blocking.length > 0) return;
@@ -182,7 +184,7 @@ export default function ApplicationDetailPage() {
         description={app.description}
         chips={
           <>
-            {isSetup ? <StatusChip intent="warning" label="Setup" /> : null}
+            {isDraft ? <StatusChip intent="warning" label="Draft" /> : null}
             {gov ? <RiskScoreChip score={gov.risk} /> : null}
           </>
         }
@@ -200,7 +202,7 @@ export default function ApplicationDetailPage() {
                 the header was the only place to learn how far setup had got — the rail
                 reports that step by step now, so the ring was the same state said twice
                 and the crowded-out half was the button's one action. */}
-            {isSetup && onboarded ? (
+            {isDraft && onboarded ? (
               <Tooltip
                 title={
                   blocking.length > 0
@@ -228,29 +230,22 @@ export default function ApplicationDetailPage() {
           </>
         }
         tabs={sections}
-        tab={tab}
+        tab={shownTab}
         onTab={setTab}
         rail={
           <DetailRail
-            ariaLabel={isSetup ? 'Setup checklist' : 'Application sections'}
+            ariaLabel={isDraft ? 'Draft checklist' : 'Application sections'}
             groups={railGroups}
-            currentTab={tab}
+            currentTab={shownTab}
             currentId={activeRow}
             onGoTo={(row) => {
-              // `basic` is the one row that is not a section — it opens the same drawer
-              // the header's Basic Details button does, so there is one editor. It does
-              // not become current, because nothing about the section behind it changed.
-              if (row.id === 'basic') {
-                setBasicsOpen(true);
-                return;
-              }
               goToSection(row.tab, row.id);
             }}
           />
         }
       >
-        {tab === 'overview' &&
-          (isSetup && onboarded ? (
+        {shownTab === 'overview' &&
+          (isDraft && onboarded ? (
             /* During setup this is what the application *is*, not what it holds — it holds
                nothing until IGA can reach it. The checklist that used to sit beside these
                facts is the rail now, so the card is the whole section rather than its
@@ -282,7 +277,7 @@ export default function ApplicationDetailPage() {
           ) : (
             <ApplicationOverviewTab app={app} accounts={accounts} entitlements={entitlements} />
           ))}
-        {tab === 'accounts' && (
+        {shownTab === 'accounts' && (
           <RelationTable
             columns={accountColumns}
             rows={accounts}
@@ -291,7 +286,7 @@ export default function ApplicationDetailPage() {
             emptyMessage="No accounts exist in this application yet."
           />
         )}
-        {tab === 'entitlements' && (
+        {shownTab === 'entitlements' && (
           <RelationTable
             columns={entitlementColumns}
             rows={entitlements}
@@ -300,13 +295,13 @@ export default function ApplicationDetailPage() {
             emptyMessage="This application exposes no entitlements yet."
           />
         )}
-        {tab === 'reconciliation' && <ReconciliationTab applicationId={app.id} />}
-        {tab === 'provisioning' && (
+        {shownTab === 'reconciliation' && <ReconciliationTab applicationId={app.id} />}
+        {shownTab === 'provisioning' && (
           <ProvisioningSetupTab applicationId={app.id} applicationName={app.name} onChanged={bump} />
         )}
-        {tab === 'baseline' && <BaselineGovernanceTab applicationId={app.id} entitlements={entitlements} />}
-        {tab === 'approval' && <ApplicationApprovalPolicyTab applicationId={app.id} />}
-        {tab === 'owners' && (
+        {shownTab === 'baseline' && <BaselineGovernanceTab applicationId={app.id} entitlements={entitlements} />}
+        {shownTab === 'approval' && <ApplicationApprovalPolicyTab applicationId={app.id} />}
+        {shownTab === 'owners' && (
           <EntityOwnersTab
             entityType="application"
             entityId={app.id}

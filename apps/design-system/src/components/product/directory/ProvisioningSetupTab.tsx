@@ -4,24 +4,23 @@ import * as React from 'react';
 import AddOutlined from '@mui/icons-material/AddOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
-import SettingsEthernetOutlined from '@mui/icons-material/SettingsEthernetOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import LinkOffOutlined from '@mui/icons-material/LinkOffOutlined';
 import {
   Button,
-  Card,
   DataTable,
   Dialog,
   Input,
   Menu,
-  NavList,
+  SegmentedControl,
   StatusChip,
   useToast,
   type Column,
 } from '@ds/components';
 import { AuthorizationDrawer } from './AuthorizationDrawer';
 import { ConnectionConfiguration } from './ConnectionConfiguration';
+import { ProvisioningRules } from './ProvisioningRules';
 import {
   GRANT_TYPES,
   METHOD_LABEL,
@@ -31,15 +30,18 @@ import {
   type AppAuthorization,
 } from '@/data/provisioning-auth';
 
-type Section = 'authorization' | 'connection';
+type Section = 'authorization' | 'connection' | 'rules';
 
 /**
- * Provisioning Setup — everything the connector needs before it can act on this
- * application. Same shell as Owners: a rail of sections beside one working area,
- * because these are separate jobs done at separate times, not tabs of one form.
+ * Provisioning — everything the connector needs before it can act on this
+ * application. Authorization, then connection configuration, then provisioning
+ * rules (attribute mapping): sign-in has to exist before a call can be tested,
+ * and a call has to exist before its fields can be mapped.
  *
- * Authorization comes first in the rail because it comes first in reality —
- * connection settings cannot be tested until IGA can sign in.
+ * The three jobs are a segmented control at the top, not a list in a card down
+ * the left — same as Emergency Access assignments. A NavList beside the detail
+ * rail looked like a second navigator, and spent a 264px column on a choice of
+ * three that a control states in one row.
  */
 export function ProvisioningSetupTab({
   applicationId,
@@ -186,71 +188,75 @@ export function ProvisioningSetupTab({
   ];
 
   return (
-    <div className="grid h-full gap-5 lg:grid-cols-[264px_minmax(0,1fr)]">
-      <Card padding="sm" className="h-full">
-        <NavList
-          ariaLabel="Provisioning setup section"
+    <div className="flex h-full min-h-0 flex-col">
+      {/* 20px below the switcher, 12px below the toolbar: the switcher chooses
+          which job you are on, the toolbar acts within it. */}
+      <div className="mb-5 flex shrink-0 flex-wrap items-center gap-3">
+        <SegmentedControl<Section>
+          ariaLabel="Provisioning section"
           value={section}
-          onChange={(id) => setSection(id as Section)}
-          items={[
-            {
-              id: 'authorization',
-              icon: <ShieldOutlined sx={{ fontSize: 18 }} />,
-              label: 'Authorization',
-              count: rows.length,
-            },
-            {
-              id: 'connection',
-              icon: <SettingsEthernetOutlined sx={{ fontSize: 18 }} />,
-              label: 'Connection Configuration',
-            },
+          onChange={setSection}
+          options={[
+            { value: 'authorization', label: 'Authorization' },
+            { value: 'connection', label: 'Connection configuration' },
+            { value: 'rules', label: 'Provisioning rules' },
           ]}
         />
-      </Card>
+      </div>
 
-      <div className="flex h-full min-h-0 flex-col">
-        {section === 'authorization' ? (
-          <>
-            <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
-              <div className="w-full max-w-sm">
-                <Input
-                  placeholder="Search methods"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
-                />
-              </div>
-              <div className="ml-auto">
-                <Button
-                  startIcon={<AddOutlined />}
-                  onClick={() => {
-                    setEditing(null);
-                    setDrawerOpen(true);
-                  }}
-                >
-                  Add Authorization
-                </Button>
-              </div>
-            </div>
-            <div className="min-h-0 flex-1">
-              <DataTable<AppAuthorization>
-                columns={columns}
-                rows={filtered}
-                fillHeight
-                emptyTitle="No authorization yet"
-                emptyMessage="IGA cannot reach this application until it knows how to sign in. Add an authorization method to start provisioning."
+      {section === 'authorization' && (
+        <>
+          <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
+            <div className="w-full max-w-sm">
+              <Input
+                placeholder="Search methods"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
               />
             </div>
-          </>
-        ) : (
+            <div className="ml-auto">
+              <Button
+                startIcon={<AddOutlined />}
+                onClick={() => {
+                  setEditing(null);
+                  setDrawerOpen(true);
+                }}
+              >
+                Add Authorization
+              </Button>
+            </div>
+          </div>
+          <div className="min-h-0 flex-1">
+            <DataTable<AppAuthorization>
+              columns={columns}
+              rows={filtered}
+              fillHeight
+              emptyTitle="No authorization yet"
+              emptyMessage="IGA cannot reach this application until it knows how to sign in. Add an authorization method to start provisioning."
+            />
+          </div>
+        </>
+      )}
+      {section === 'connection' && (
+        <div className="min-h-0 flex-1">
           <ConnectionConfiguration
             applicationId={applicationId}
             applicationName={applicationName}
             authorizations={rows}
             onChanged={onChanged}
           />
-        )}
-      </div>
+        </div>
+      )}
+      {section === 'rules' && (
+        <div className="min-h-0 flex-1">
+          <ProvisioningRules
+            applicationId={applicationId}
+            applicationName={applicationName}
+            onChanged={onChanged}
+          />
+        </div>
+      )}
 
       <AuthorizationDrawer
         open={drawerOpen}

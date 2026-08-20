@@ -25,7 +25,7 @@ export interface OnboardedApplication {
   appTypeId: string;
   appType: string;
   appTypeCategory: AppTypeCategory;
-  /** Setup until the connector is connected; then active in the catalog. */
+  /** Draft until the connector is connected; then active in the catalog. */
   status: 'setup' | 'active';
   createdAt: string; // ISO
   updatedAt: string; // ISO
