@@ -340,7 +340,7 @@ function Node({
   emphasis,
   title,
 }: {
-  icon: SvgIconComponent;
+  icon: React.ComponentType<{ sx?: object }>;
   size: 'sm' | 'md';
   emphasis?: boolean;
   title: string;
