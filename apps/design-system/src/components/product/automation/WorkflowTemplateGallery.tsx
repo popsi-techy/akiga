@@ -42,10 +42,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 function scratchDraft() {
   const n = listWorkflows().filter((w) => /^New workflow/i.test(w.name)).length + 1;
   const d = new Date();
-  return {
-    name: `New workflow ${n} · ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`,
-    description: 'An empty canvas. Add a lifecycle event, then the steps this process needs.',
-  };
+  return `New workflow ${n} · ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 }
 
 /**
@@ -53,8 +50,9 @@ function scratchDraft() {
  *
  * Same frame as the application-type catalog: a lifecycle rail that jumps, a
  * dashed "from scratch" option in that rail, then a grid of template cards.
- * Clicking a card opens a modal so the flow can be read before it is named
- * and opened in the builder.
+ * Each card offers Use template (secondary) then Preview (tertiary, grey). Primary stays
+ * off the catalog — a grid of oranges would leave no one action. From scratch
+ * has no flow to preview, so it still names a draft directly.
  */
 export function WorkflowTemplateGallery() {
   const router = useRouter();
@@ -118,9 +116,8 @@ export function WorkflowTemplateGallery() {
 
   const openDraft = (source: WorkflowTemplate | 'scratch') => {
     if (source === 'scratch') {
-      const draft = scratchDraft();
-      setDraftName(draft.name);
-      setDraftDescription(draft.description);
+      setDraftName(scratchDraft());
+      setDraftDescription('');
     } else {
       setDraftName(source.name);
       setDraftDescription(source.summary);
@@ -219,7 +216,12 @@ export function WorkflowTemplateGallery() {
                       </div>
                       <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                         {byEvent(event).map((t) => (
-                          <TemplateCard key={t.id} template={t} onSelect={() => setPreview(t)} />
+                          <TemplateCard
+                            key={t.id}
+                            template={t}
+                            onPreview={() => setPreview(t)}
+                            onUse={() => openDraft(t)}
+                          />
                         ))}
                       </div>
                     </section>
@@ -283,6 +285,8 @@ export function WorkflowTemplateGallery() {
           />
           <Input
             label="Description"
+            hint="Shown on the workflow list. Say what this process does, and when it should run."
+            placeholder="What this workflow automates (optional)"
             size="sm"
             multiline
             minRows={3}
@@ -321,28 +325,34 @@ function ScratchCard({ onSelect }: { onSelect: () => void }) {
 
 function TemplateCard({
   template,
-  onSelect,
+  onPreview,
+  onUse,
 }: {
   template: WorkflowTemplate;
-  onSelect: () => void;
+  onPreview: () => void;
+  onUse: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className="flex w-full flex-col rounded-lg border border-border p-1.5 text-left transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-    >
-      <span className="relative block rounded-md bg-subtle px-3 pb-4 pt-6">
-        <span className="absolute right-2 top-2">
+    <article className="flex h-full w-full flex-col rounded-lg border border-border bg-surface p-1.5 transition-all hover:border-border-strong hover:shadow-sm">
+      <div className="relative shrink-0 rounded-md bg-subtle px-3 pb-4 pt-6">
+        <div className="absolute right-2 top-2">
           <StatusChip intent="info" label={template.audience} dot={false} />
-        </span>
+        </div>
         <TemplateIllustration template={template} />
-      </span>
-      <span className="block px-2 py-2.5">
-        <span className="block text-body-sm-medium text-text-primary">{template.name}</span>
-        <span className="mt-0.5 block text-caption text-text-secondary">{template.summary}</span>
-      </span>
-    </button>
+      </div>
+      <div className="px-2 py-2.5">
+        <h3 className="truncate text-body-sm-medium text-text-primary">{template.name}</h3>
+        <p className="mt-0.5 line-clamp-2 min-h-8 text-caption text-text-secondary">{template.summary}</p>
+      </div>
+      <div className="mt-auto flex gap-2 px-2 pb-1.5">
+        <Button variant="secondary" size="xs" fullWidth onClick={onUse}>
+          Use template
+        </Button>
+        <Button variant="tertiary" size="xs" fullWidth onClick={onPreview}>
+          Preview
+        </Button>
+      </div>
+    </article>
   );
 }
 

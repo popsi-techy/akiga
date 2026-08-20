@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import BlockOutlined from '@mui/icons-material/BlockOutlined';
-import Person from '@mui/icons-material/Person';
 import PersonOutline from '@mui/icons-material/PersonOutline';
 import Info from '@mui/icons-material/Info';
 import WatchLater from '@mui/icons-material/WatchLater';
@@ -13,6 +12,9 @@ import HourglassEmptyOutlined from '@mui/icons-material/HourglassEmptyOutlined';
 import GroupsOutlined from '@mui/icons-material/GroupsOutlined';
 import DateRangeOutlined from '@mui/icons-material/DateRangeOutlined';
 import ScheduleOutlined from '@mui/icons-material/ScheduleOutlined';
+import PublicOutlined from '@mui/icons-material/PublicOutlined';
+import TimerOutlined from '@mui/icons-material/TimerOutlined';
+import FormatListNumberedOutlined from '@mui/icons-material/FormatListNumberedOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import FilterListOutlined from '@mui/icons-material/FilterListOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
@@ -67,7 +69,6 @@ import {
   isRequiredSetupStep,
   type EAAdvancedConfig,
   type EADetail,
-  type EASessionView,
 } from '@/data/emergency-access';
 import type { SeedEAOwner } from '@/data/seed';
 import { listGovernanceTeamRows, listUserIdentities, type GovernanceTeamRow } from '@/data/directory';
@@ -110,9 +111,6 @@ import { formatDateTime } from '@/lib/datetime';
  * reader is asking — an absent count reads as "not counted yet" and makes them
  * open the tab to find out it was empty. `count` is only omitted for the tabs
  * that hold no collection to count.
- *
- * Sessions is deliberately uncounted: it already reports its own total in the
- * Overview card's "Recent Sessions (24)" heading.
  */
 function tabsFor(ea: EADetail, dropOverview: boolean): TabItem[] {
   const assignments = getEAAssignments(ea.id);
@@ -121,7 +119,6 @@ function tabsFor(ea: EADetail, dropOverview: boolean): TabItem[] {
       value: 'overview',
       label: 'Overview',
     },
-    { value: 'sessions', label: 'Sessions' },
     {
       value: 'assignments',
       label: 'Assignments',
@@ -132,24 +129,12 @@ function tabsFor(ea: EADetail, dropOverview: boolean): TabItem[] {
     { value: 'advanced', label: 'Advanced Configuration' },
   ];
   /**
-   * A draft has no Sessions tab. A session only exists because someone requested this
-   * access, and nobody can request a profile that has never been switched on — so the
-   * tab could only ever hold an explanation of why it is empty. Naming the state in the
-   * strip and then charging a click to read an apology is worse than not offering it:
-   * the tab appears, with real rows behind it, the moment the profile goes live.
-   *
-   * A V1 draft also has no Overview tab: its only draft content was the setup checklist,
+   * A V1 draft has no Overview tab: its only draft content was the setup checklist,
    * and that is now docked to the left of every tab. Dropping it rather than leaving it
    * empty is the point — there is no Setup page to return to. It comes back once the
    * profile is live, where Overview is a real summary and has nothing to do with setup.
    */
-  return tabs.filter(
-    (t) => !(t.value === 'sessions' && ea.isDraft) && !(t.value === 'overview' && dropOverview),
-  );
-}
-
-function ListRow({ children }: { children: React.ReactNode }) {
-  return <div className="flex items-center gap-3 border-b border-border py-3 last:border-0">{children}</div>;
+  return tabs.filter((t) => !(t.value === 'overview' && dropOverview));
 }
 
 function TabPlaceholder({ label }: { label: string }) {
@@ -166,89 +151,19 @@ function TabPlaceholder({ label }: { label: string }) {
   );
 }
 
-/**
- * Who has actually used this access, and when.
- *
- * The audit question this tab exists for. Break-glass is judged after the fact — the
- * point of a profile is that someone can grant themselves something dangerous, so the
- * record of who did is the control. A placeholder here was the one tab where "not
- * built yet" cost the reader something real.
- *
- * Three columns and no more: who, whether they still hold it, and when. The seed
- * carries `when` as a rendered string rather than an instant, so nothing here computes
- * a duration — inventing one from a display string is how a number nobody can defend
- * ends up in an audit view.
- *
- * Rows open the person, not the session. A session is an event with nothing behind it;
- * the identity is where a reviewer goes next — and the row would otherwise be a dead
- * end, which this page's own rule forbids.
- */
-function SessionsTab({ ea }: { ea: EADetail }) {
-  const router = useRouter();
-
-  const columns: Column<EASessionView>[] = [
-    {
-      id: 'who',
-      header: 'Requester',
-      sortable: true,
-      width: '46%',
-      wrap: true,
-      value: (r) => r.name,
-      render: (r) => (
-        <div className="flex items-center gap-3">
-          <Avatar name={r.name} size="sm" kind="person" />
-          <div className="min-w-0">
-            <div className="truncate text-body-sm-medium text-text-primary">{r.name}</div>
-            <div className="truncate text-caption text-text-secondary">{r.subtitle}</div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: 'state',
-      header: 'Status',
-      sortable: true,
-      width: 140,
-      wrap: true,
-      value: (r) => (r.ongoing ? 'Ongoing' : 'Ended'),
-      // `success` for a live session, not `warning`: someone holding break-glass
-      // access right now is the system working, and tinting it as a problem would
-      // teach a reviewer to read every ongoing session as an incident.
-      render: (r) =>
-        r.ongoing ? (
-          <StatusChip intent="success" label="Ongoing" />
-        ) : (
-          <StatusChip intent="neutral" label="Ended" />
-        ),
-    },
-    {
-      id: 'when',
-      header: 'When',
-      sortable: true,
-      width: '34%',
-      value: (r) => r.when,
-    },
-  ];
-
-  return (
-    <DataTable<EASessionView>
-      columns={columns}
-      rows={ea.sessions}
-      onRowClick={(r) => router.push(`/iga/directory/user-identities/${r.identityId}`)}
-      layout="fixed"
-      fillHeight
-      emptyTitle="No sessions yet"
-      emptyMessage="Nobody has requested this access. Sessions appear here as people use it."
-    />
-  );
-}
-
 function sessionLengthLabel(hrs: number): string {
   if (hrs >= 24 && hrs % 24 === 0) {
     const days = hrs / 24;
     return `${days} Day${days === 1 ? '' : 's'}`;
   }
   return `${hrs} Hr${hrs === 1 ? '' : 's'}`;
+}
+
+function cooldownLabel(cfg: EAAdvancedConfig): string {
+  const parts: string[] = [];
+  if (cfg.cooldownHrs > 0) parts.push(`${cfg.cooldownHrs} Hr${cfg.cooldownHrs === 1 ? '' : 's'}`);
+  if (cfg.cooldownMins > 0) parts.push(`${cfg.cooldownMins} Min${cfg.cooldownMins === 1 ? '' : 's'}`);
+  return parts.join(' ') || 'None';
 }
 
 function allowedDaysLabel(cfg: EAAdvancedConfig): string {
@@ -274,7 +189,7 @@ function requestWindowLabel(cfg: EAAdvancedConfig): string {
 }
 
 /**
- * The summary. It is no longer also a setup surface.
+ * The summary. Limits on the left, when the profile last changed on the right.
  *
  * Every version now guides setup somewhere else — V1 in the docked rail, V2 in its
  * wizard, V3 in the floating bar — so Overview only ever renders for a profile whose
@@ -287,28 +202,37 @@ function OverviewTab({ ea }: { ea: EADetail }) {
   return (
     <div className="ds-scroll h-full overflow-y-auto pr-0.5">
       <div className="grid items-start gap-5 lg:grid-cols-[1fr_340px]">
-        <Card title={`Recent Sessions (${ea.sessionsTotal})`} icon={<Person />} padding="none">
-          <div>
-            {ea.sessions.map((s) => (
-              <ListRow key={s.id}>
-                <Avatar name={s.name} size="sm" kind="person" />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-body-strong text-text-primary">{s.name}</div>
-                  <div className="truncate text-caption text-text-secondary">{s.subtitle}</div>
-                </div>
-                {s.ongoing ? (
-                  <StatusChip intent="success" label={s.when} />
-                ) : (
-                  <span className="text-body-sm text-text-secondary">{s.when}</span>
-                )}
-              </ListRow>
-            ))}
-          </div>
-        </Card>
-
-        <div className="space-y-5">
-          <Card title="Advanced Configuration Info" icon={<Info />} padding="none">
-            <InfoRowGroup>
+        <Card title="Advanced Configuration Info" icon={<Info />} padding="none">
+          <div className="-mx-4 grid items-start sm:grid-cols-2">
+            <InfoRowGroup className="px-4">
+              <InfoRow
+                icon={<HourglassEmptyOutlined sx={{ fontSize: 18 }} />}
+                label="Max. Duration"
+                value={sessionLengthLabel(cfg.maxDurationHrs)}
+              />
+              <InfoRow
+                icon={<GroupsOutlined sx={{ fontSize: 18 }} />}
+                label="Max. Concurrent Users"
+                value={String(cfg.maxConcurrent)}
+              />
+              <InfoRow
+                icon={<TimerOutlined sx={{ fontSize: 18 }} />}
+                label="Cooldown Period"
+                value={cooldownLabel(cfg)}
+              />
+              <InfoRow
+                icon={<FormatListNumberedOutlined sx={{ fontSize: 18 }} />}
+                label="Max. Requests Per Day"
+                value={String(cfg.maxRequestsPerDay)}
+              />
+            </InfoRowGroup>
+            <InfoRowGroup className="border-t border-border px-4 sm:border-t-0">
+              <InfoRow
+                icon={<PublicOutlined sx={{ fontSize: 18 }} />}
+                label="Timezone"
+                value={cfg.timezone.replaceAll('_', ' ')}
+                valueWrap
+              />
               <InfoRow
                 icon={<DateRangeOutlined sx={{ fontSize: 18 }} />}
                 label="Allowed Days"
@@ -320,26 +244,16 @@ function OverviewTab({ ea }: { ea: EADetail }) {
                 label="Request Window"
                 value={requestWindowLabel(cfg)}
               />
-              <InfoRow
-                icon={<HourglassEmptyOutlined sx={{ fontSize: 18 }} />}
-                label="Max. Duration"
-                value={sessionLengthLabel(cfg.maxDurationHrs)}
-              />
-              <InfoRow
-                icon={<GroupsOutlined sx={{ fontSize: 18 }} />}
-                label="Max. Concurrent Users"
-                value={String(cfg.maxConcurrent)}
-              />
             </InfoRowGroup>
-          </Card>
+          </div>
+        </Card>
 
-          <Card title="Timeline" icon={<WatchLater />} padding="none">
-            <InfoRowGroup>
-              <InfoRow icon={<HistoryOutlined sx={{ fontSize: 18 }} />} label="Last Updated On" value={formatDateTime(ea.timeline.updatedOn)} />
-              <InfoRow icon={<CalendarTodayOutlined sx={{ fontSize: 18 }} />} label="Created On" value={formatDateTime(ea.timeline.createdOn)} />
-            </InfoRowGroup>
-          </Card>
-        </div>
+        <Card title="Timeline" icon={<WatchLater />} padding="none">
+          <InfoRowGroup>
+            <InfoRow icon={<HistoryOutlined sx={{ fontSize: 18 }} />} label="Last Updated On" value={formatDateTime(ea.timeline.updatedOn)} />
+            <InfoRow icon={<CalendarTodayOutlined sx={{ fontSize: 18 }} />} label="Created On" value={formatDateTime(ea.timeline.createdOn)} />
+          </InfoRowGroup>
+        </Card>
       </div>
     </div>
   );
@@ -1075,8 +989,8 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
    * The tab actually shown, which is not always the one in state.
    *
    * Which tabs exist depends on the profile's state, so a value in `tab` can stop being
-   * offered underneath the reader: deactivating a live profile removes Sessions, and on
-   * V1 removes Overview as well, while both are legitimately current beforehand. Rather
+   * offered underneath the reader: on V1 a live Overview disappears when the profile
+   * returns to draft, while it is legitimately current beforehand. Rather
    * than name the vanishing tabs — the list has changed twice already — this asks the
    * strip whether it still lists the current value and falls back when it does not.
    * Normalising once here means no render site has to guard against a tab the strip does
@@ -1291,7 +1205,6 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
         )}
         {shownTab ==='owners' && <EmergencyOwnersTab ea={ea} onChanged={bump} />}
         {shownTab ==='eligibility' && <EligibilityCriteriaTab eaId={ea.id} onChanged={bump} />}
-        {shownTab ==='sessions' && <SessionsTab ea={ea} />}
         {shownTab ==='assignments' && <EmergencyAssignmentsTab eaId={id} onChanged={bump} />}
         {shownTab ==='advanced' && <AdvancedConfigurationTab eaId={ea.id} onChanged={bump} />}
           </div>

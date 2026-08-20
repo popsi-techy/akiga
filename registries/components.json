@@ -68,6 +68,7 @@
         "secondary",
         "tertiary",
         "danger",
+        "xs",
         "sm",
         "md",
         "lg"
@@ -81,7 +82,7 @@
         "loading"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/button/page.tsx",
-      "notes": "One primary per screen (visual-language §5.1). Heights are fixed per size — sm 36 / md 40 / lg 48 — so every control of the same size lines up in a toolbar. A disabled primary keeps a tooltip explaining what unblocks it."
+      "notes": "One primary per screen (visual-language §5.1). Heights are fixed per size — xs 32 / sm 36 / md 40 / lg 48 — so every control of the same size lines up in a toolbar. xs belongs only where controls are small, numerous and adjacent. A disabled primary keeps a tooltip explaining what unblocks it."
     },
     {
       "name": "Card",

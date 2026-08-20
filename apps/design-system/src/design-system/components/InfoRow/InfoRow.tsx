@@ -83,7 +83,18 @@ export function InfoRow({ label, value, icon, className = '', valueWrap = false 
         ].join(' ')}
       >
         {icon != null && (
-          <span className={['shrink-0', labelLeads ? 'text-icon' : 'text-icon-subtle'].join(' ')}>{icon}</span>
+          <span
+            className={[
+              // 18×18 matches the required icon size. `block` on the SVG kills the
+              // inline baseline gap that left outlined glyphs sitting a pixel above
+              // the label; `translate-y-px` then matches the optical centre of
+              // body-sm (cap-height, not the full line box).
+              'inline-flex h-[18px] w-[18px] shrink-0 translate-y-px items-center justify-center [&_svg]:block',
+              labelLeads ? 'text-icon' : 'text-icon-subtle',
+            ].join(' ')}
+          >
+            {icon}
+          </span>
         )}
         <span className="whitespace-nowrap">{label}</span>
       </div>

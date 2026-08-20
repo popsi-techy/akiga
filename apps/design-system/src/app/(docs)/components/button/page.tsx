@@ -23,8 +23,9 @@ export default function ButtonDocs() {
         </Example>
       </Section>
 
-      <Section title="Sizes">
-        <Example label="sm · md · lg">
+      <Section title="Sizes" description="Heights come from the shared control scale, so a Button lines up with an Input or Select of the same size. sm is the product default; xs is for dense clusters of controls, not for a lone page action.">
+        <Example label="xs · sm · md · lg">
+          <Button size="xs">Extra small</Button>
           <Button size="sm">Small</Button>
           <Button size="md">Medium</Button>
           <Button size="lg">Large</Button>
@@ -61,7 +62,7 @@ export default function ButtonDocs() {
         <PropsTable
           rows={[
             { name: 'variant', type: "'primary' | 'secondary' | 'tertiary' | 'danger'", default: "'primary'", description: 'Visual role / priority.' },
-            { name: 'size', type: "'sm' | 'md' | 'lg'", default: "'md'", description: 'Control size.' },
+            { name: 'size', type: "'xs' | 'sm' | 'md' | 'lg'", default: "'sm'", description: 'Control height: 32 / 36 / 40 / 48. xs is for dense clusters only.' },
             { name: 'loading', type: 'boolean', default: 'false', description: 'Shows a spinner and disables interaction.' },
             { name: 'disabled', type: 'boolean', default: 'false', description: 'Disables the button.' },
             { name: 'startIcon / endIcon', type: 'ReactNode', description: 'Leading / trailing icon (MUI icon).' },

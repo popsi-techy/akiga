@@ -619,3 +619,25 @@ export function setAdvancedConfig(id: string, config: EAAdvancedConfig): EAAdvan
   advancedConfigById.set(id, next);
   return { ...next, days: [...next.days] };
 }
+
+function sameDays(a: EAWeekday[], b: EAWeekday[]) {
+  return [...a].sort().join() === [...b].sort().join();
+}
+
+/** True while stored limits still match the values the profile was created with. */
+export function isAdvancedConfigDefault(id: string): boolean {
+  const current = getAdvancedConfig(id);
+  const defaults = defaultAdvancedConfig(id);
+  return (
+    current.riskScore === defaults.riskScore &&
+    current.maxConcurrent === defaults.maxConcurrent &&
+    current.maxRequestsPerDay === defaults.maxRequestsPerDay &&
+    current.maxDurationHrs === defaults.maxDurationHrs &&
+    current.cooldownHrs === defaults.cooldownHrs &&
+    current.cooldownMins === defaults.cooldownMins &&
+    current.timezone === defaults.timezone &&
+    current.windowStart === defaults.windowStart &&
+    current.windowEnd === defaults.windowEnd &&
+    sameDays(current.days, defaults.days)
+  );
+}

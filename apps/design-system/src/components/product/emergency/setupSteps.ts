@@ -1,6 +1,7 @@
 import {
   isEASetupStepDone,
   isRequiredSetupStep,
+  isAdvancedConfigDefault,
   EA_SETUP_STEPS,
   type EADetail,
   type EASetupStepId,
@@ -63,8 +64,8 @@ const COPY: Record<
     cta: 'Review limits',
     tab: 'advanced',
     // Satisfied from the moment the profile exists: it is created with working limits.
-    // So it reports the defaults rather than claiming a decision — the reader still
-    // needs to know these are worth a look.
+    // The chip says those are still the factory values — once anyone changes them,
+    // the qualifier comes off and the tick stands on its own.
     doneLabel: 'Default applied',
   },
 };
@@ -81,11 +82,16 @@ const COPY: Record<
  * `isRequiredSetupStep`), never re-declared here.
  */
 export function emergencySetupSteps(ea: EADetail): EmergencySetupStep[] {
-  return EA_SETUP_STEPS.map((step) => ({
-    id: step.id,
-    label: step.label,
-    required: isRequiredSetupStep(step.id),
-    done: isEASetupStepDone(step.id, ea),
-    ...COPY[step.id],
-  }));
+  return EA_SETUP_STEPS.map((step) => {
+    const copy = COPY[step.id];
+    const defaultsUntouched = step.id !== 'advanced' || isAdvancedConfigDefault(ea.id);
+    return {
+      id: step.id,
+      label: step.label,
+      required: isRequiredSetupStep(step.id),
+      done: isEASetupStepDone(step.id, ea),
+      ...copy,
+      doneLabel: defaultsUntouched ? copy.doneLabel : undefined,
+    };
+  });
 }
