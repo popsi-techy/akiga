@@ -13,6 +13,11 @@ import * as React from 'react';
  * except for the one action the caller puts in `primary` (Activate, Connect).
  */
 export interface SetupBarProps {
+  /**
+   * Optional control before the stepper — a setup-guide icon, not another step.
+   * Stays out of `progress` so it does not count against the Stepper’s four-step cap.
+   */
+  leading?: React.ReactNode;
   /** Progress — typically a {@link Stepper}. */
   progress: React.ReactNode;
   /** Back / Next. The path through the steps. */
@@ -25,7 +30,7 @@ export interface SetupBarProps {
   className?: string;
 }
 
-export function SetupBar({ progress, actions, primary, className = '' }: SetupBarProps) {
+export function SetupBar({ leading, progress, actions, primary, className = '' }: SetupBarProps) {
   return (
     <div
       role="region"
@@ -35,7 +40,10 @@ export function SetupBar({ progress, actions, primary, className = '' }: SetupBa
         className,
       ].join(' ')}
     >
-      <div className="min-w-0 flex-1 overflow-x-auto">{progress}</div>
+      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto">
+        {leading}
+        <div className="min-w-0 flex-1">{progress}</div>
+      </div>
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
         {actions}
         {primary}

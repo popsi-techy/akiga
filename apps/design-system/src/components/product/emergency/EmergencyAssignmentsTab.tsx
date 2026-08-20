@@ -334,6 +334,8 @@ export function EmergencyAssignmentsTab({
     },
   ];
 
+  const isBlank = current.length === 0;
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/*
@@ -350,15 +352,15 @@ export function EmergencyAssignmentsTab({
         and no way to tell from the styling that one moved between sections and the other
         only switched a table. A segmented control does not look like navigation.
       */}
-      {/* 20px below the switcher, 12px below the toolbar: the switcher chooses which
-          dataset you are looking at, the toolbar acts within it. The larger gap binds the
-          toolbar and its table into one unit under the switcher, rather than leaving three
-          bands equally spaced and equally related. */}
       <div className="mb-5 flex shrink-0 flex-wrap items-center gap-3">
         <SegmentedControl<Kind>
           ariaLabel="Assignment type"
           value={kind}
-          onChange={setKind}
+          onChange={(next) => {
+            setKind(next);
+            setSearch('');
+            setPeek(null);
+          }}
           options={[
             { value: 'entitlements', label: 'Entitlements', count: assignments.entitlements.length },
             {
@@ -370,89 +372,109 @@ export function EmergencyAssignmentsTab({
         />
       </div>
 
-      <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
-        <div className="w-full max-w-sm">
-          <Input
-            placeholder={`Search ${meta.entity}s`}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
-          />
+      {isBlank ? (
+        /* No search, no header row: a table with nothing under it reads as a failed
+           load rather than as "nothing granted yet". The switcher stays so they can
+           still reach the other kind. */
+        <div className="grid min-h-0 flex-1 place-items-center">
+          <div className="flex max-w-md flex-col items-center px-6 py-10 text-center">
+            <h2 className="text-h5 text-text-primary">{meta.empty}</h2>
+            <p className="mt-1.5 text-body-sm text-text-secondary">
+              Add {meta.entity}s and anyone who activates this access receives them for the length
+              of their session.
+            </p>
+            <div className="mt-5">
+              <Button startIcon={<AddIcon />} onClick={() => setDrawerOpen(true)}>
+                Add {meta.label}
+              </Button>
+            </div>
+          </div>
         </div>
-        <div className="ml-auto">
-          <Button startIcon={<AddIcon />} onClick={() => setDrawerOpen(true)}>
-            Add {meta.label}
-          </Button>
-        </div>
-      </div>
-      {/* The panel takes width from the table rather than covering it, so the row you
-          opened stays visible and the next one is a click away — pick another and the
-          panel swaps. Same slot the directory's peeks use, so the chrome cannot drift. */}
-      <div className="flex min-h-0 flex-1">
-        <div className="min-h-0 min-w-0 flex-1">
-          <DataTable<EntitySelection>
-            columns={columns}
-            rows={filtered}
-            fillHeight
-            emptyTitle={search ? `No ${meta.entity} matches` : meta.empty}
-            emptyMessage={
-              search
-                ? `Nothing granted by this access is called “${search.trim()}”.`
-                : `Add ${meta.entity}s and anyone who activates this access receives them for the length of their session.`
-            }
-          />
-        </div>
+      ) : (
+        <>
+          {/* 20px below the switcher, 12px below the toolbar: the switcher chooses which
+              dataset you are looking at, the toolbar acts within it. The larger gap binds the
+              toolbar and its table into one unit under the switcher, rather than leaving three
+              bands equally spaced and equally related. */}
+          <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
+            <div className="w-full max-w-sm">
+              <Input
+                placeholder={`Search ${meta.entity}s`}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+              />
+            </div>
+            <div className="ml-auto">
+              <Button startIcon={<AddIcon />} onClick={() => setDrawerOpen(true)}>
+                Add {meta.label}
+              </Button>
+            </div>
+          </div>
+          {/* The panel takes width from the table rather than covering it, so the row you
+              opened stays visible and the next one is a click away — pick another and the
+              panel swaps. Same slot the directory's peeks use, so the chrome cannot drift. */}
+          <div className="flex min-h-0 flex-1">
+            <div className="min-h-0 min-w-0 flex-1">
+              <DataTable<EntitySelection>
+                columns={columns}
+                rows={filtered}
+                fillHeight
+                emptyTitle={`No ${meta.entity} matches`}
+                emptyMessage={`Nothing granted by this access is called “${search.trim()}”.`}
+              />
+            </div>
 
-        <PeekSlot open={peek !== null}>
-          {peek && (
-            <PeekPanel
-              avatar={
-                peek.appName ? (
-                  <AppBadge app={peek.appName} size={32} />
-                ) : (
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand-subtle text-brand">
-                    <LaptopOutlined sx={{ fontSize: 18 }} />
-                  </span>
-                )
-              }
-              title={peek.name}
-              subtitle={peek.appName ?? 'Technical role'}
-              onClose={() => setPeek(null)}
-            >
-              {/* The description is prose, so it reads as a paragraph rather than being
-                  squeezed into a label/value row. Everything measurable goes below it. */}
-              {detailFor(peek)?.description && (
-                <p className="pt-3 text-body-sm text-text-secondary">
-                  {detailFor(peek)?.description}
-                </p>
-              )}
-              <div className="pt-3">
-                <InfoRowGroup>
-                  <InfoRow
-                    icon={infoIcon.type}
-                    label="Type"
-                    value={kind === 'technicalRoles' ? 'Technical role' : 'Entitlement'}
-                  />
-                  {peek.appName && (
-                    <InfoRow icon={infoIcon.application} label="Application" value={peek.appName} />
+            <PeekSlot open={peek !== null}>
+              {peek && (
+                <PeekPanel
+                  avatar={
+                    peek.appName ? (
+                      <AppBadge app={peek.appName} size={32} />
+                    ) : (
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand-subtle text-brand">
+                        <LaptopOutlined sx={{ fontSize: 18 }} />
+                      </span>
+                    )
+                  }
+                  title={peek.name}
+                  subtitle={peek.appName ?? 'Technical role'}
+                  onClose={() => setPeek(null)}
+                >
+                  {detailFor(peek)?.description && (
+                    <p className="pt-3 text-body-sm text-text-secondary">
+                      {detailFor(peek)?.description}
+                    </p>
                   )}
-                  <InfoRow
-                    icon={infoIcon.risk}
-                    label="Risk Score"
-                    value={
-                      detailFor(peek)?.risk == null ? (
-                        '—'
-                      ) : (
-                        <RiskScoreChip score={detailFor(peek)!.risk} />
-                      )
-                    }
-                  />
-                </InfoRowGroup>
-              </div>
-            </PeekPanel>
-          )}
-        </PeekSlot>
-      </div>
+                  <div className="pt-3">
+                    <InfoRowGroup>
+                      <InfoRow
+                        icon={infoIcon.type}
+                        label="Type"
+                        value={kind === 'technicalRoles' ? 'Technical role' : 'Entitlement'}
+                      />
+                      {peek.appName && (
+                        <InfoRow icon={infoIcon.application} label="Application" value={peek.appName} />
+                      )}
+                      <InfoRow
+                        icon={infoIcon.risk}
+                        label="Risk Score"
+                        value={
+                          detailFor(peek)?.risk == null ? (
+                            '—'
+                          ) : (
+                            <RiskScoreChip score={detailFor(peek)!.risk} />
+                          )
+                        }
+                      />
+                    </InfoRowGroup>
+                  </div>
+                </PeekPanel>
+              )}
+            </PeekSlot>
+          </div>
+        </>
+      )}
 
       <AssignmentDrawers
         open={drawerOpen ? kind : null}

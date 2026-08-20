@@ -5,11 +5,7 @@ import { useRouter } from 'next/navigation';
 import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
 import { Button, Drawer, Input, useToast } from '@ds/components';
 import { EmergencyAccessListView } from '@/components/product/emergency/EmergencyAccessListView';
-import {
-  createEmergencyAccess,
-  isRequiredSetupStep,
-  EA_SETUP_STEPS,
-} from '@/data/emergency-access';
+import { createEmergencyAccess, isRequiredSetupStep, EA_SETUP_STEPS } from '@/data/emergency-access';
 
 /**
  * Emergency Access V1 — create in a drawer, finish on the draft.

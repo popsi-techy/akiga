@@ -336,12 +336,29 @@ export function AdvancedConfigurationTab({
             />
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-[220px_minmax(280px,1fr)_200px]">
+          <div className="grid gap-4 lg:grid-cols-[220px_200px_minmax(280px,1fr)]">
             <Select
               label="Timezone"
               options={TIMEZONES}
               value={config.timezone}
               onChange={(v) => update('timezone', v)}
+              size="xs"
+              fullWidth
+            />
+
+            <Select
+              label="Allowed days"
+              options={[
+                ...DAY_PRESETS.map(({ value, label }) => ({ value, label })),
+                ...(dayPresetValue(config.days) === 'custom'
+                  ? [{ value: 'custom', label: 'Custom days', disabled: true }]
+                  : []),
+              ]}
+              value={dayPresetValue(config.days)}
+              onChange={(value) => {
+                const preset = DAY_PRESETS.find((item) => item.value === value);
+                if (preset) update('days', [...preset.days]);
+              }}
               size="xs"
               fullWidth
             />
@@ -373,25 +390,6 @@ export function AdvancedConfigurationTab({
                   />
                 </div>
               </div>
-            </div>
-
-            <div>
-              <Select
-                label="Allowed days"
-                options={[
-                  ...DAY_PRESETS.map(({ value, label }) => ({ value, label })),
-                  ...(dayPresetValue(config.days) === 'custom'
-                    ? [{ value: 'custom', label: 'Custom days', disabled: true }]
-                    : []),
-                ]}
-                value={dayPresetValue(config.days)}
-                onChange={(value) => {
-                  const preset = DAY_PRESETS.find((item) => item.value === value);
-                  if (preset) update('days', [...preset.days]);
-                }}
-                size="xs"
-                fullWidth
-              />
             </div>
           </div>
         </div>

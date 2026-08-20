@@ -91,6 +91,10 @@ import {
 } from '@/components/product/emergency/setupSteps';
 import { toastEASetupStep } from '@/components/product/emergency/ea-setup-toast';
 import { formatDateTime } from '@/lib/datetime';
+import {
+  EmergencyAccessGuideButton,
+  EmergencyAccessGuideModal,
+} from '@/components/product/emergency/EmergencyAccessGuideModal';
 
 /**
  * The tab strip, with a count on every tab that holds a collection.
@@ -938,6 +942,7 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
   const isV3 = basePath === '/iga/emergency-v3';
 
   const [basicsOpen, setBasicsOpen] = React.useState(false);
+  const [guideOpen, setGuideOpen] = React.useState(false);
   const router = useRouter();
   const toast = useToast();
   const [tab, setTab] = React.useState(() => {
@@ -1167,6 +1172,11 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
             onGoTo={(row) => {
               setTab(row.tab);
             }}
+            footer={
+              showSetupRail ? (
+                <EmergencyAccessGuideButton labeled onClick={() => setGuideOpen(true)} />
+              ) : undefined
+            }
           />
         )}
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -1214,6 +1224,7 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
       {showSetupBar && (
         <div className="shrink-0 pt-3">
           <SetupBar
+            leading={<EmergencyAccessGuideButton onClick={() => setGuideOpen(true)} />}
             progress={
               <Stepper
                 steps={EA_GUIDED_STEPS.map((s) => ({ label: s.label }))}
@@ -1298,6 +1309,12 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
           ? 'The profile and everything configured on it are removed. Nothing has been granted under it, so nobody loses access.'
           : 'Anyone holding access through this profile keeps it until their session ends, and nobody can request it again. Sessions already granted stay in the audit log.'}
       </Dialog>
+
+      <EmergencyAccessGuideModal
+        variant="next-steps"
+        open={guideOpen}
+        onClose={() => setGuideOpen(false)}
+      />
 
       {/* `bump` on save, the same reducer every other mutation on this page uses —
           the header's name reads from the store on render, so one re-render

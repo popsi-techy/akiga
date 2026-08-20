@@ -706,7 +706,7 @@
         "ready-to-activate"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/setup-bar/page.tsx",
-      "notes": "Floating strip under a draft whose editors already live on the page. progress is usually a Stepper (cap four). actions are Back/Next. primary (Activate/Connect) is omitted until the gate is met — a disabled primary beside Next is clutter. Remove the bar when the object goes live."
+      "notes": "Floating strip under a draft whose editors already live on the page. leading is an optional control before the stepper (a guide icon, not a step). progress is usually a Stepper (cap four). actions are Back/Next. primary (Activate/Connect) is omitted until the gate is met — a disabled primary beside Next is clutter. Remove the bar when the object goes live."
     },
     {
       "name": "Switch",

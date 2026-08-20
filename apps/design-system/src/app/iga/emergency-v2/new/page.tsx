@@ -8,8 +8,11 @@ import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
 import CloseOutlined from '@mui/icons-material/CloseOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import SaveOutlined from '@mui/icons-material/SaveOutlined';
-import InfoOutlined from '@mui/icons-material/InfoOutlined';
-import { Avatar, Button, Card, Input, Menu, StatusChip, StepTracker, Tooltip, useToast } from '@ds/components';
+import VpnKey from '@mui/icons-material/VpnKey';
+import Groups from '@mui/icons-material/Groups';
+import ManageAccounts from '@mui/icons-material/ManageAccounts';
+import WatchLater from '@mui/icons-material/WatchLater';
+import { Avatar, Button, Card, InfoRow, InfoRowGroup, Input, Menu, StatusChip, StepTracker, Tooltip, useToast } from '@ds/components';
 import {
   activateEmergencyAccess,
   createEmergencyAccess,
@@ -30,7 +33,9 @@ import { AdvancedConfigurationTab } from '@/components/product/emergency/Advance
 import { EmergencyAssignmentsPicker } from '@/components/product/emergency/EmergencyAssignmentsTab';
 import { EmergencyOwnersPicker } from '@/components/product/emergency/EmergencyAccessDetail';
 import { toastEASetupStep } from '@/components/product/emergency/ea-setup-toast';
+import { infoIcon } from '@/components/product/directory/infoIcons';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
+import { listGovernanceTeamRows } from '@/data/directory';
 
 type StepDef = {
   /** Short name, for the progress rail. */
@@ -404,8 +409,10 @@ function EmergencyAccessV2WizardInner() {
             {last && ea ? (
               /* The preview is the profile, not another question. Name and
                  description take the heading the other steps use for the prompt,
-                 and the actions sit on the same row so Activate is where you
-                 finish reading the identity rather than under a fifth card. */
+                 and Activate sits on the same row so finishing is where you
+                 finish reading the identity. Per-step Edit lives on each card
+                 below — a header Edit only ever opened step 1, which hid the
+                 rest. */
               <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
                 <div className="flex min-w-0 items-start gap-3">
                   <Avatar name={ea.name} initials={ea.initial} size="md" />
@@ -420,9 +427,6 @@ function EmergencyAccessV2WizardInner() {
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center gap-2">
-                  <Button variant="secondary" startIcon={<EditOutlined />} onClick={() => goTo(0)}>
-                    Edit
-                  </Button>
                   <Tooltip
                     title={
                       blocking.length > 0
@@ -551,41 +555,44 @@ export default function EmergencyAccessV2Wizard() {
   );
 }
 
-/**
- * One section of the preview: a taxonomy label over a single panel.
- *
- * The same shape the SoD resolution preview uses. A `Card` per section gave each
- * one an icon, a tinted shell and a framed inner panel — three pieces of chrome
- * around two rows of text — and five of them stacked made the page read as five
- * objects rather than one thing being checked. `overline` is exactly this job:
- * it names what kind of thing follows and carries no meaning you would lose by
- * deleting it, which is true of "What it hands over" and false of a card title.
- */
-function PreviewSection({
-  label,
-  count,
-  children,
-}: {
-  label: string;
-  count?: number;
-  children: React.ReactNode;
-}) {
+function stepTitle(index: number): React.ReactNode {
+  const step = STEPS[index];
+  const required = stepBlockers(step).length > 0;
   return (
-    <section>
-      <h3 className="mb-3 text-overline uppercase text-text-tertiary">
-        {label}
-        {count != null && <span className="tabular-nums"> ({count})</span>}
-      </h3>
-      <div className="rounded-xl border border-border bg-surface px-4">{children}</div>
-    </section>
+    <>
+      {step.label}
+      {required && (
+        <>
+          <span aria-hidden className="text-danger">
+            {' *'}
+          </span>
+          <span className="sr-only">Required</span>
+        </>
+      )}
+    </>
   );
 }
 
-function SummaryRow({ label, children }: { label: string; children: React.ReactNode }) {
+function stepEdit(
+  index: number,
+  onEdit: (i: number) => void,
+  skipped?: boolean,
+): React.ReactNode {
+  const step = STEPS[index];
   return (
-    <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-border py-3 last:border-0">
-      <span className="w-40 shrink-0 text-body-sm text-text-secondary">{label}</span>
-      <span className="min-w-0 flex-1 text-body-sm text-text-primary">{children}</span>
+    <div className="flex items-center gap-1">
+      {skipped && <StatusChip intent="warning" label="Skipped" dot={false} />}
+      <Tooltip title={`Edit ${step.label}`}>
+        <Button
+          variant="tertiary"
+          size="sm"
+          aria-label={`Edit ${step.label}`}
+          onClick={() => onEdit(index)}
+          sx={{ minWidth: 36, px: 0 }}
+        >
+          <EditOutlined sx={{ fontSize: 18 }} />
+        </Button>
+      </Tooltip>
     </div>
   );
 }
@@ -603,15 +610,17 @@ function Preview({
 }) {
   const assignments = getEAAssignments(ea.id);
   const owners = getEAOwners(ea.id);
-  const teams = getEAGovernanceTeams(ea.id);
+  const teamIds = getEAGovernanceTeams(ea.id);
+  const teams = listGovernanceTeamRows().filter((t) => teamIds.includes(t.id));
   const cfg = getAdvancedConfig(ea.id);
   const days = EA_WEEKDAYS.filter((d) => cfg.days.includes(d.id)).map((d) => d.short);
+  const windowLabel =
+    cfg.windowStart === cfg.windowEnd
+      ? 'All day'
+      : `${cfg.windowStart} – ${cfg.windowEnd}`;
 
   const count = (n: number, noun: string) => `${n} ${noun}${n === 1 ? '' : 's'}`;
-  const grants = [
-    assignments.entitlements.length ? count(assignments.entitlements.length, 'entitlement') : '',
-    assignments.technicalRoles.length ? count(assignments.technicalRoles.length, 'technical role') : '',
-  ].filter(Boolean);
+  const ownersEmpty = owners.length + teams.length === 0;
 
   /**
    * What is missing, in the order the reader walked past it.
@@ -628,22 +637,67 @@ function Preview({
     .map((label) => ({ label, step: stepForBlocker(label) }))
     .sort((a, b) => (a.step < 0 ? 1 : b.step < 0 ? -1 : a.step - b.step));
 
+  const bodies: React.ReactNode[] = [
+    <>
+      <InfoRow icon={infoIcon.item} label="Name" value={ea.name.trim() || none} />
+      <InfoRow
+        icon={infoIcon.type}
+        label="Description"
+        value={ea.description.trim() || none}
+        valueWrap
+      />
+      <InfoRow
+        icon={infoIcon.entitlement}
+        label="Entitlements"
+        value={assignments.entitlements.length ? count(assignments.entitlements.length, 'entitlement') : none}
+      />
+      <InfoRow
+        icon={infoIcon.technicalRole}
+        label="Technical roles"
+        value={
+          assignments.technicalRoles.length ? count(assignments.technicalRoles.length, 'technical role') : none
+        }
+      />
+    </>,
+    <InfoRow
+      icon={infoIcon.group}
+      label="Who may request it"
+      value={
+        ea.eligibilityGroups.length ? ea.eligibilityGroups.map((g) => g.name).join(', ') : none
+      }
+      valueWrap
+    />,
+    <>
+      <InfoRow
+        icon={infoIcon.owner}
+        label="Owners"
+        value={owners.length ? owners.map((o) => o.name).join(', ') : none}
+        valueWrap
+      />
+      <InfoRow
+        icon={infoIcon.people}
+        label="Governance teams"
+        value={teams.length ? teams.map((t) => t.name).join(', ') : none}
+        valueWrap
+      />
+    </>,
+    <>
+      <InfoRow icon={infoIcon.duration} label="Session length" value={`Up to ${cfg.maxDurationHrs} hrs`} />
+      <InfoRow icon={infoIcon.people} label="At the same time" value={`${cfg.maxConcurrent} people`} />
+      <InfoRow icon={infoIcon.location} label="Timezone" value={cfg.timezone.replaceAll('_', ' ')} valueWrap />
+      <InfoRow
+        icon={infoIcon.created}
+        label="Requestable on"
+        value={days.length === 7 ? 'Every day' : days.join(', ') || none}
+        valueWrap
+      />
+      <InfoRow icon={infoIcon.started} label="Request window" value={windowLabel} />
+    </>,
+  ];
+
   return (
-    // Full width of whatever holds it. A reading-width cap here held the content
-    // short of the buttons that act on it, so the surface looked like it had a
-    // right margin its own footer did not — and these rows are icon-and-control,
-    // not prose, so there is no line length to protect.
-    <div className="space-y-6">
+    <div className="space-y-4">
       {blocking.length > 0 && (
-        // Names what is missing and offers one button per missing thing, derived
-        // from the gate itself — a preview that only says "incomplete", or that
-        // hardcodes which steps it thinks are missing, leaves the reader hunting
-        // back through five steps for something the app already knows.
-        //
-        // It says the draft is safe before it says what is wrong. Reaching this
-        // screen having skipped everything is a legitimate way to use the flow,
-        // and the reader who did it needs to know their work is kept, not to be
-        // told off for it.
         <Card padding="lg">
           <div className="flex items-start gap-3">
             <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-subtle text-icon-subtle">
@@ -662,8 +716,6 @@ function Preview({
                     <span aria-hidden className="text-danger">
                       *
                     </span>
-                    {/* `first-letter`, not `capitalize`: these are sentence-case
-                        phrases, and capitalize would Title Case Every Word. */}
                     <span className="first-letter:uppercase">{label}</span>
                   </li>
                 ))}
@@ -685,39 +737,44 @@ function Preview({
         </Card>
       )}
 
-      <PreviewSection label="What it hands over">
-        <SummaryRow label="Grants">{grants.length ? grants.join(' and ') : none}</SummaryRow>
-        <SummaryRow label="Who may request it">
-          {ea.eligibilityGroups.length
-            ? `${ea.eligibilityGroups.length} rule${ea.eligibilityGroups.length === 1 ? '' : 's'}`
-            : none}
-        </SummaryRow>
-      </PreviewSection>
-
-      <PreviewSection label="Who answers for it">
-        <SummaryRow label="Owners">{owners.length ? `${owners.length} named` : none}</SummaryRow>
-        <SummaryRow label="Governance teams">{teams.length ? `${teams.length} chosen` : none}</SummaryRow>
-      </PreviewSection>
-
-      <PreviewSection label="Limits">
-        <SummaryRow label="Session length">Up to {cfg.maxDurationHrs} hrs</SummaryRow>
-        <SummaryRow label="At the same time">{cfg.maxConcurrent} people</SummaryRow>
-        <SummaryRow label="Requestable on">{days.length === 7 ? 'Every day' : days.join(', ') || none}</SummaryRow>
-      </PreviewSection>
-
-      <div
-        role="note"
-        className="flex items-start gap-2.5 rounded-lg border border-[var(--ds-color-status-info-border)] bg-[var(--ds-color-status-info-subtle)] px-3 py-2.5"
+      {/* One Card per wizard step — same names as the rail, Edit returns there.
+          Icons sit on `Card` itself so check:icons can see they are filled. */}
+      <Card
+        icon={<VpnKey />}
+        title={stepTitle(0)}
+        subtitle={STEPS[0].description}
+        action={stepEdit(0, onGoToStep)}
+        padding="none"
       >
-        <InfoOutlined
-          sx={{ fontSize: 18, color: 'var(--ds-color-status-info-fg)' }}
-          className="mt-0.5 shrink-0"
-          aria-hidden
-        />
-        <p className="text-body-sm text-[var(--ds-color-status-info-fg)]">
-          Everything here stays editable on the profile after it is activated.
-        </p>
-      </div>
+        <InfoRowGroup>{bodies[0]}</InfoRowGroup>
+      </Card>
+      <Card
+        icon={<Groups />}
+        title={stepTitle(1)}
+        subtitle={STEPS[1].description}
+        action={stepEdit(1, onGoToStep)}
+        padding="none"
+      >
+        <InfoRowGroup>{bodies[1]}</InfoRowGroup>
+      </Card>
+      <Card
+        icon={<ManageAccounts />}
+        title={stepTitle(2)}
+        subtitle={STEPS[2].description}
+        action={stepEdit(2, onGoToStep, ownersEmpty)}
+        padding="none"
+      >
+        <InfoRowGroup>{bodies[2]}</InfoRowGroup>
+      </Card>
+      <Card
+        icon={<WatchLater />}
+        title={stepTitle(3)}
+        subtitle={STEPS[3].description}
+        action={stepEdit(3, onGoToStep)}
+        padding="none"
+      >
+        <InfoRowGroup>{bodies[3]}</InfoRowGroup>
+      </Card>
     </div>
   );
 }

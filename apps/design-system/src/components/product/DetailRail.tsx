@@ -69,6 +69,7 @@ export function DetailRail({
   currentId,
   ariaLabel,
   onGoTo,
+  footer,
 }: {
   groups: DetailRailGroup[];
   /** Which section is open, so the matching row can show as current. */
@@ -84,6 +85,11 @@ export function DetailRail({
   currentId?: string;
   ariaLabel: string;
   onGoTo: (row: DetailRailRow) => void;
+  /**
+   * Pinned under the list — a setup-guide icon, not another destination. Stays at
+   * the bottom of the column while the list above it scrolls.
+   */
+  footer?: React.ReactNode;
 }) {
   const row = (item: DetailRailRow) => {
     // The row whose section is open reads as current — narrowed by `currentId` when
@@ -152,7 +158,7 @@ export function DetailRail({
 
   return (
     <nav
-      className="ds-scroll flex w-[240px] shrink-0 flex-col overflow-y-auto border-r border-border bg-surface xl:w-[264px]"
+      className="flex w-[240px] shrink-0 flex-col border-r border-border bg-surface xl:w-[264px]"
       aria-label={ariaLabel}
     >
       {/* No title above the list. "Set up this access" restated what the page header,
@@ -160,7 +166,7 @@ export function DetailRail({
           pushed the first step 60px down the column to do it. The group headings name
           what the rows are; `ariaLabel` carries the rail's identity for anyone who cannot
           see the grouping. */}
-      <div className="px-2 py-4">
+      <div className="ds-scroll min-h-0 flex-1 overflow-y-auto px-2 py-4">
         {groups.map((group, i) => (
           <div key={group.heading ?? i} className={i > 0 ? 'mt-4' : undefined}>
             {group.heading && (
@@ -175,6 +181,9 @@ export function DetailRail({
           </div>
         ))}
       </div>
+      {footer && (
+        <div className="flex shrink-0 items-center border-t border-border px-2 py-2">{footer}</div>
+      )}
     </nav>
   );
 }

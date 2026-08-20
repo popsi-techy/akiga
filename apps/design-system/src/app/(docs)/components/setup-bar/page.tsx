@@ -51,6 +51,7 @@ export default function SetupBarDocs() {
       <Section title="Props">
         <PropsTable
           rows={[
+            { name: 'leading', type: 'ReactNode', description: 'Optional control before the stepper (a guide icon). Not a step.' },
             { name: 'progress', type: 'ReactNode', description: 'Usually a Stepper. Reports position.' },
             { name: 'actions', type: 'ReactNode', description: 'Back and Next — the path through the steps.' },
             { name: 'primary', type: 'ReactNode', description: 'Activate / Connect. Omit until it can succeed.' },

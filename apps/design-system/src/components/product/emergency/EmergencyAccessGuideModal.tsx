@@ -2,60 +2,134 @@
 
 import * as React from 'react';
 import MenuBookOutlined from '@mui/icons-material/MenuBookOutlined';
-import { Button, Modal } from '@ds/components';
+import { Button, Modal, Tooltip } from '@ds/components';
 import { EA_SETUP_STEPS, isRequiredSetupStep, type EASetupStepId } from '@/data/emergency-access';
 
-const GUIDE: Record<EASetupStepId, string> = {
-  basic: 'Name the profile and say when it should be used. This is the only step in the create drawer — everything else happens on the draft.',
-  assignments: 'Choose the entitlements and technical roles a session hands over, then takes back when it ends.',
-  eligibility: 'Define who can ask for it. Anyone matching a group’s rules becomes eligible to request a session.',
+const GUIDE_INTRO: Record<EASetupStepId, string> = {
+  basic:
+    'Name the profile and say when it should be used. This is the only step in the create drawer — everything else happens on the draft.',
+  assignments:
+    'Choose the entitlements and technical roles a session hands over, then takes back when it ends.',
+  eligibility:
+    'Define who can ask for it. Anyone matching a group’s rules becomes eligible to request a session.',
   owners: 'Name who answers for this access when it comes up for review. Optional — it does not block activation.',
-  advanced: 'How long a session lasts, how many can run at once, and when it can be requested. Sensible defaults are already in place.',
+  advanced:
+    'How long a session lasts, how many can run at once, and when it can be requested. Sensible defaults are already in place.',
+};
+
+/**
+ * After Continue, basic details are already saved. The remaining steps need more
+ * than a one-line hint: what to put in, and whether Activate waits for it.
+ */
+const GUIDE_NEXT: Record<Exclude<EASetupStepId, 'basic'>, string> = {
+  assignments:
+    'Required before activation. Pick the entitlements and technical roles a session actually grants — and takes back when it ends. At least one assignment is needed; without it the profile has nothing to hand over.',
+  eligibility:
+    'Required before activation. Define who may request a session. Anyone matching a group’s rules becomes eligible; everyone else cannot ask. Add at least one group so the request path has an audience.',
+  owners:
+    'Optional. Name who answers for this access when it comes up for review. You can activate without owners, but naming them now means later reviews have a clear owner from day one.',
+  advanced:
+    'Optional. Session length, how many can run at once, cooldown, request window and timezone. Sensible defaults are already applied — change them only if this access needs tighter or looser limits.',
+};
+
+/**
+ * The book control that opens the setup guide.
+ *
+ * Lives on the draft’s section chrome — V1’s left rail, V3’s bottom setup bar —
+ * so the reader can open it when they want it, not because Continue forced it.
+ */
+export function EmergencyAccessGuideButton({
+  onClick,
+  labeled = false,
+}: {
+  onClick: () => void;
+  /** Rail has room for the words; the setup bar does not. */
+  labeled?: boolean;
+}) {
+  if (labeled) {
+    return (
+      <Button
+        variant="tertiary"
+        size="sm"
+        startIcon={<MenuBookOutlined sx={{ fontSize: 18 }} />}
+        onClick={onClick}
+      >
+        Setup guide
+      </Button>
+    );
+  }
+  return (
+    <Tooltip title="Setup guide">
+      <Button variant="tertiary" size="sm" aria-label="Open setup guide" onClick={onClick} sx={{ minWidth: 36, px: 0 }}>
+        <MenuBookOutlined sx={{ fontSize: 18 }} />
+      </Button>
+    </Tooltip>
+  );
+}
+
+type IntroProps = {
+  open: boolean;
+  onClose: () => void;
+  variant?: 'intro';
+  onCreate: () => void;
+};
+
+type NextStepsProps = {
+  open: boolean;
+  onClose: () => void;
+  variant: 'next-steps';
 };
 
 /**
  * What creating emergency access involves, in the same order as the draft checklist.
  *
- * A first-run empty state cannot send the reader to a profile that does not exist
- * yet, so the steps have to live here — Modal, not Dialog, because this is
- * supporting content rather than a yes/no.
+ * `intro` is the empty-list first-run: the profile does not exist yet, so the
+ * last action is Create. `next-steps` is opened from Setup guide on a draft —
+ * basic details are done, required work is still ahead, and Got it is enough.
  */
-export function EmergencyAccessGuideModal({
-  open,
-  onClose,
-  onCreate,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onCreate: () => void;
-}) {
+export function EmergencyAccessGuideModal(props: IntroProps | NextStepsProps) {
+  const { open, onClose } = props;
+  const nextSteps = props.variant === 'next-steps';
+  const steps = nextSteps ? EA_SETUP_STEPS.filter((step) => step.id !== 'basic') : EA_SETUP_STEPS;
+
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="How emergency access is set up"
-      subtitle="Create a draft, finish the required steps, then activate it from the header."
+      title={nextSteps ? 'Finish setting up this access' : 'How emergency access is set up'}
+      subtitle={
+        nextSteps
+          ? 'Name and description are saved. Complete the required steps, then Activate. Reopen this guide anytime from Setup guide on this page.'
+          : 'Create a draft, finish the required steps, then activate it from the header.'
+      }
       icon={<MenuBookOutlined sx={{ fontSize: 20 }} />}
-      width={520}
+      width={560}
       footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Close
-          </Button>
-          <Button
-            onClick={() => {
-              onClose();
-              onCreate();
-            }}
-          >
-            Create emergency access
-          </Button>
-        </>
+        nextSteps ? (
+          <Button onClick={onClose}>Got it</Button>
+        ) : (
+          <>
+            <Button variant="secondary" onClick={onClose}>
+              Close
+            </Button>
+            <Button
+              onClick={() => {
+                onClose();
+                props.onCreate();
+              }}
+            >
+              Create emergency access
+            </Button>
+          </>
+        )
       }
     >
       <ol className="m-0 list-none space-y-4 p-0">
-        {EA_SETUP_STEPS.map((step, i) => {
+        {steps.map((step, i) => {
           const required = isRequiredSetupStep(step.id);
+          const copy = nextSteps
+            ? GUIDE_NEXT[step.id as Exclude<EASetupStepId, 'basic'>]
+            : GUIDE_INTRO[step.id];
           return (
             <li key={step.id} className="flex gap-3">
               <span
@@ -76,7 +150,7 @@ export function EmergencyAccessGuideModal({
                     </>
                   )}
                 </div>
-                <p className="mt-0.5 text-caption text-text-secondary">{GUIDE[step.id]}</p>
+                <p className="mt-0.5 text-caption text-text-secondary">{copy}</p>
               </div>
             </li>
           );

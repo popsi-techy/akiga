@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
 import { Button, Drawer, Input, useToast } from '@ds/components';
 import { EmergencyAccessListView } from '@/components/product/emergency/EmergencyAccessListView';
-import { createEmergencyAccess, isRequiredSetupStep, EA_SETUP_STEPS } from '@/data/emergency-access';
+import { createEmergencyAccess } from '@/data/emergency-access';
 
 /**
  * Emergency Access V3 — create in a drawer, finish on the real tabs.
@@ -76,33 +76,6 @@ export default function EmergencyAccessV3ListPage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
-          <div className="rounded-lg border border-border bg-subtle px-4 py-3.5">
-            <h3 className="text-body-strong text-text-primary">Upcoming setup steps</h3>
-            <p className="mt-1 text-caption text-text-secondary">
-              A bar under the page will walk you through these:
-            </p>
-            <ul className="mt-3 space-y-2">
-              {EA_SETUP_STEPS.filter((step) => step.id !== 'basic').map((step) => {
-                const required = isRequiredSetupStep(step.id);
-                return (
-                  <li key={step.id} className="flex items-center gap-2">
-                    <span className="h-1 w-1 shrink-0 rounded-full bg-icon-subtle" aria-hidden />
-                    <span className="min-w-0 text-body-sm text-text-primary">
-                      {step.label}
-                      {required && (
-                        <>
-                          <span aria-hidden className="text-danger">
-                            {' *'}
-                          </span>
-                          <span className="sr-only">Required</span>
-                        </>
-                      )}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
         </div>
       </Drawer>
     </>
