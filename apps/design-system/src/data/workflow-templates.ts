@@ -67,7 +67,6 @@ export interface WorkflowTemplate {
   name: string;
   /** One sentence, short enough to finish in three caption lines in the gallery rail. */
   summary: string;
-  summary: string;
   /** The systems it touches, for the card's chips. */
   systems: string[];
   /** What an administrator must confirm before switching it on. Never empty. */
