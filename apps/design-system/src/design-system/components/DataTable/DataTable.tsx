@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { typography, zIndex } from '../../tokens/tokens';
+import { typography } from '../../tokens/tokens';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -100,9 +100,10 @@ export interface DataTableProps<Row extends { id: string }> {
    *  changes are reported via `onSelectionChange` (parent owns the state). */
   selectedIds?: string[];
   /**
-   * Bulk actions while any row is selected. Docks to the bottom of the screen
-   * (content column, not over the nav rail) so column headers stay and the page
-   * toolbar is left alone. Omit when there is nothing to do in bulk.
+   * Selection banner, rendered as the first body row while any row is selected
+   * (select-all matching, clear). Icon-only bulk actions belong on the page
+   * toolbar, to the right of Filter — not here. Omit when selection has no
+   * across-row consequence.
    */
   selectionToolbar?: React.ReactNode;
   /** Fill the parent's height; body scrolls internally with a sticky header and
@@ -339,6 +340,21 @@ export function DataTable<Row extends { id: string }>({
               </TableRow>
             )}
 
+            {showSelectionToolbar && !loading && rows.length > 0 && (
+              <TableRow>
+                <TableCell
+                  colSpan={colSpan}
+                  sx={{
+                    ...bodyCellSx,
+                    backgroundColor: 'var(--ds-color-background-subtle)',
+                    textAlign: 'center',
+                  }}
+                >
+                  <div role="status">{selectionToolbar}</div>
+                </TableCell>
+              </TableRow>
+            )}
+
             {/* Rows */}
             {!loading &&
               pagedRows.map((row) => {
@@ -451,20 +467,6 @@ export function DataTable<Row extends { id: string }>({
         </div>
       )}
     </div>
-      {/* Room so pagination sits above the docked bar. fillHeight pages already
-          reach the bottom of the shell; without this the bar would cover the
-          last chrome. */}
-      {showSelectionToolbar && fillHeight && <div className="h-12 shrink-0" aria-hidden />}
-      {showSelectionToolbar && (
-        <div
-          role="toolbar"
-          aria-label="Bulk actions"
-          className="fixed bottom-0 right-0 flex min-w-0 items-center border-t border-border bg-surface px-8 py-3 shadow-md"
-          style={{ left: 'var(--ds-shell-content-inset, 0px)', zIndex: zIndex.sticky }}
-        >
-          {selectionToolbar}
-        </div>
-      )}
     </div>
   );
 }

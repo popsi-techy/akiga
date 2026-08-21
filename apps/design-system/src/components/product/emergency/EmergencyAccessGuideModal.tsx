@@ -35,16 +35,20 @@ const GUIDE_NEXT: Record<Exclude<EASetupStepId, 'basic'>, string> = {
 /**
  * The book control that opens the setup guide.
  *
- * Lives on the draft’s section chrome — V1’s left rail, V3’s bottom setup bar —
- * so the reader can open it when they want it, not because Continue forced it.
+ * V1: toggles the right-hand checklist, next to More. V3: still the overflow
+ * menu item that opens the modal. The reader asks for it — Continue does not
+ * force a popup.
  */
 export function EmergencyAccessGuideButton({
   onClick,
   labeled = false,
+  expanded,
 }: {
   onClick: () => void;
   /** Rail has room for the words; the setup bar does not. */
   labeled?: boolean;
+  /** When this control shows or hides a panel. */
+  expanded?: boolean;
 }) {
   if (labeled) {
     return (
@@ -59,8 +63,15 @@ export function EmergencyAccessGuideButton({
     );
   }
   return (
-    <Tooltip title="Setup guide">
-      <Button variant="tertiary" size="sm" aria-label="Open setup guide" onClick={onClick} sx={{ minWidth: 36, px: 0 }}>
+    <Tooltip title={expanded ? 'Hide setup checklist' : 'Setup guide'}>
+      <Button
+        variant="tertiary"
+        size="sm"
+        aria-label={expanded ? 'Hide setup checklist' : 'Open setup guide'}
+        aria-expanded={expanded}
+        onClick={onClick}
+        sx={{ minWidth: 36, px: 0 }}
+      >
         <MenuBookOutlined sx={{ fontSize: 18 }} />
       </Button>
     </Tooltip>

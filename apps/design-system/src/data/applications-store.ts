@@ -58,12 +58,22 @@ function writeStore(s: Store) {
 }
 
 function normalizeOnboarded(raw: OnboardedApplication): OnboardedApplication {
-  return { ...raw, status: raw.status ?? 'setup' };
+  return {
+    ...raw,
+    status: raw.status ?? 'setup',
+    name: raw.name ?? '',
+    description: raw.description ?? '',
+    accessUrl: raw.accessUrl ?? '',
+    appType: raw.appType ?? '',
+  };
 }
 
 /** Newest first — the application you just onboarded is the one you are looking for. */
 export function listOnboardedApplications(): OnboardedApplication[] {
-  return Object.values(readStore().applications).map(normalizeOnboarded).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  return Object.values(readStore().applications)
+    .filter((a): a is OnboardedApplication => Boolean(a && typeof a === 'object' && a.id))
+    .map(normalizeOnboarded)
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
 export function getOnboardedApplication(id: string): OnboardedApplication | null {

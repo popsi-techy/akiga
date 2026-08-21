@@ -33,9 +33,9 @@ export type EntityKind =
  * icon repeated it, while the *name* — the one thing that distinguishes two
  * entitlements from each other — went unrepresented. A letter carries the name.
  */
-export function EntityAvatar({ kind, name, size = 'sm' }: { kind: EntityKind; name: string; size?: 'sm' | 'md' }) {
+export function EntityAvatar({ kind, name, size = 'sm' }: { kind: EntityKind; name?: string; size?: 'sm' | 'md' }) {
   const px = size === 'md' ? 40 : 28;
-  if (kind === 'application') return <AppBadge app={name} size={px} />;
+  if (kind === 'application') return <AppBadge app={name ?? ''} size={px} />;
   return <Avatar name={name} size={size} kind={kind === 'user' ? 'person' : 'entity'} />;
 }
 

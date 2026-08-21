@@ -24,7 +24,7 @@ import {
  */
 export interface AppIconProps {
   /** Application display name (e.g. "SAP S/4HANA Finance"). */
-  app: string;
+  app?: string;
   size?: number;
   /** Tile fill: `subtle` on canvas/surface, `surface` inside tinted chips. */
   variant?: 'subtle' | 'surface';
@@ -44,8 +44,8 @@ const CATALOG: { match: RegExp; icon: SimpleIcon }[] = [
   { match: /hashicorp/i, icon: siHashicorp },
 ];
 
-export function resolveAppIcon(app: string): SimpleIcon | null {
-  const name = app.trim();
+export function resolveAppIcon(app?: string | null): SimpleIcon | null {
+  const name = app?.trim();
   if (!name) return null;
   for (const entry of CATALOG) {
     if (entry.match.test(name)) return entry.icon;
@@ -59,11 +59,12 @@ export function AppIcon({ app, size = 24, variant = 'subtle' }: AppIconProps) {
     'inline-flex shrink-0 items-center justify-center rounded-md',
     variant === 'surface' ? 'bg-surface' : 'bg-subtle',
   ].join(' ');
+  const letter = app?.trim().charAt(0).toUpperCase() || '?';
 
   if (!icon) {
     return (
       <span className={`${tile} text-caption-strong text-text-secondary`} style={{ width: size, height: size }} title={app}>
-        {app.trim().charAt(0).toUpperCase() || '?'}
+        {letter}
       </span>
     );
   }

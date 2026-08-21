@@ -16,6 +16,7 @@ import PublicOutlined from '@mui/icons-material/PublicOutlined';
 import TimerOutlined from '@mui/icons-material/TimerOutlined';
 import FormatListNumberedOutlined from '@mui/icons-material/FormatListNumberedOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
+import MenuBookOutlined from '@mui/icons-material/MenuBookOutlined';
 import FilterListOutlined from '@mui/icons-material/FilterListOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import AddIcon from '@mui/icons-material/Add';
@@ -32,7 +33,6 @@ import {
   Avatar,
   Button,
   SetupBar,
-  Stepper,
   Menu,
   DataTable,
   Dialog,
@@ -41,6 +41,7 @@ import {
   SelectionPanel,
   SegmentedControl,
   OverflowChips,
+  NavList,
   PickerSlot,
   Tooltip,
   useToast,
@@ -64,6 +65,7 @@ import {
   getAdvancedConfig,
   EA_WEEKDAYS,
   EA_GUIDED_STEPS,
+  EA_REQUIRED_STEPS,
   firstUnfinishedGuidedTab,
   isEASetupStepDone,
   isRequiredSetupStep,
@@ -81,20 +83,17 @@ import { EligibilityCriteriaTab } from '@/components/product/emergency/Eligibili
 import { AdvancedConfigurationTab } from '@/components/product/emergency/AdvancedConfigurationTab';
 import { EmergencyAssignmentsTab } from '@/components/product/emergency/EmergencyAssignmentsTab';
 import {
-  DetailRail,
-  type DetailRailGroup,
-  type DetailRailRow,
-} from '@/components/product/DetailRail';
-import {
   emergencySetupSteps,
   type EmergencySetupStep,
 } from '@/components/product/emergency/setupSteps';
 import { toastEASetupStep } from '@/components/product/emergency/ea-setup-toast';
 import { formatDateTime } from '@/lib/datetime';
+import { SetupProgress } from '@/components/product/SetupProgress';
 import {
   EmergencyAccessGuideButton,
   EmergencyAccessGuideModal,
 } from '@/components/product/emergency/EmergencyAccessGuideModal';
+import { SetupChecklistDock } from '@/components/product/emergency/SetupChecklistDock';
 
 /**
  * The tab strip, with a count on every tab that holds a collection.
@@ -103,26 +102,27 @@ import {
  * the "(n)" formatting is the DS component's decision and stays identical
  * wherever a counted tab appears.
  *
- * Each count is the total of everything behind the tab, not of the section that
- * happens to open first. Owners covers individual owners **plus** governance
- * teams, and Assignments covers entitlements **plus** technical roles — counting
- * only the first pane would show "Owners (0)" on a profile a governance team
- * owns, which is the tab calling its own contents nothing. Owners uses the same
- * sum the setup rail reads to decide whether the owners step is done, so the
- * tab strip and the checklist cannot disagree.
+ * Count everything BEHIND the tab, not of the section that happens to open first.
+ * Owners covers individual owners **plus** governance teams, and Assignments
+ * covers entitlements **plus** technical roles — counting only the first pane
+ * would show "Owners (0)" on a profile a governance team owns. Owners uses the
+ * same sum the setup checklist reads to decide whether the owners step is done,
+ * so the tab strip and the checklist cannot disagree.
  *
  * Zero shows rather than hides. On a draft, "Owners (0)" answers the question the
  * reader is asking — an absent count reads as "not counted yet" and makes them
  * open the tab to find out it was empty. `count` is only omitted for the tabs
  * that hold no collection to count.
  */
-function tabsFor(ea: EADetail, dropOverview: boolean): TabItem[] {
+function tabsFor(ea: EADetail): TabItem[] {
   const assignments = getEAAssignments(ea.id);
-  const tabs: TabItem[] = [
-    {
-      value: 'overview',
-      label: 'Overview',
-    },
+  const tabs: TabItem[] = [];
+  // A draft has no summary yet — setup lives in the dock / bar / wizard, not here.
+  // Overview returns the moment the profile is live.
+  if (!ea.isDraft) {
+    tabs.push({ value: 'overview', label: 'Overview' });
+  }
+  tabs.push(
     {
       value: 'assignments',
       label: 'Assignments',
@@ -131,14 +131,8 @@ function tabsFor(ea: EADetail, dropOverview: boolean): TabItem[] {
     { value: 'eligibility', label: 'Eligibility Criteria', count: ea.eligibilityGroups.length },
     { value: 'owners', label: 'Owners', count: ea.ownersCount + getEAGovernanceTeams(ea.id).length },
     { value: 'advanced', label: 'Advanced Configuration' },
-  ];
-  /**
-   * A V1 draft has no Overview tab: its only draft content was the setup checklist,
-   * and that is now docked to the left of every tab. Dropping it rather than leaving it
-   * empty is the point — there is no Setup page to return to. It comes back once the
-   * profile is live, where Overview is a real summary and has nothing to do with setup.
-   */
-  return tabs.filter((t) => !(t.value === 'overview' && dropOverview));
+  );
+  return tabs;
 }
 
 function TabPlaceholder({ label }: { label: string }) {
@@ -363,7 +357,7 @@ function BasicDetailsDrawer({
 /**
  * Who answers for this profile, as two picker slots — for the V2 creation stepper.
  *
- * Same reasoning as `EmergencyAssignmentsPicker`: the tab below is a 264px rail
+ * Same reasoning as `EmergencyAssignmentsPicker`: the tab below is a 240px rail
  * beside a table, which needs a page's width and gets a wizard column. The step
  * asks *who answers for this*, and a count with the first name in it answers that.
  *
@@ -487,7 +481,21 @@ export function EmergencyOwnersPicker({ ea, onChanged }: { ea: EADetail; onChang
 }
 
 /** Exported so the V2 stepper can ask the same question the tab does. */
-export function EmergencyOwnersTab({ ea, onChanged }: { ea: EADetail; onChanged: () => void }) {
+export function EmergencyOwnersTab({
+  ea,
+  onChanged,
+  switcher = 'segments',
+}: {
+  ea: EADetail;
+  onChanged: () => void;
+  /**
+   * How the two owner kinds are chosen.
+   *
+   * `segments` — compact, for V2.
+   * `rail` — NavList in a card, for V1 and V3.
+   */
+  switcher?: 'segments' | 'rail';
+}) {
   const router = useRouter();
   const toast = useToast();
   const [view, setView] = React.useState<'individual' | 'teams'>('individual');
@@ -696,14 +704,36 @@ export function EmergencyOwnersTab({ ea, onChanged }: { ea: EADetail; onChanged:
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/* The two halves of ownership are a segmented control at the top, for the same
-          reasons as Assignments: it is a choice between two, it does not need a 264px
-          column and the page's full height to state that, and a `NavList` beside the
-          navigation rail made a pane switcher look like more navigation. */}
-      {/* 20px below the switcher, 12px below the toolbar: the switcher chooses which
-          dataset you are looking at, the toolbar acts within it. The larger gap binds the
-          toolbar and its table into one unit under the switcher, rather than leaving three
-          bands equally spaced and equally related. */}
+      <div
+        className={
+          switcher === 'rail'
+            ? 'grid min-h-0 flex-1 gap-5 lg:grid-cols-[240px_minmax(0,1fr)]'
+            : 'flex min-h-0 flex-1 flex-col'
+        }
+      >
+      {switcher === 'rail' ? (
+        <Card padding="xs" className="h-full min-h-0">
+          <NavList
+            ariaLabel="Owner type"
+            value={view}
+            onChange={(id) => setView(id as 'individual' | 'teams')}
+            items={[
+              {
+                id: 'individual',
+                icon: <PersonOutline sx={{ fontSize: 18 }} />,
+                label: 'Individual Owners',
+                count: ea.ownersCount,
+              },
+              {
+                id: 'teams',
+                icon: <GroupsOutlined sx={{ fontSize: 18 }} />,
+                label: 'Governance Teams',
+                count: teamIds.length,
+              },
+            ]}
+          />
+        </Card>
+      ) : (
       <div className="mb-5 flex shrink-0 flex-wrap items-center gap-3">
         <SegmentedControl<'individual' | 'teams'>
           ariaLabel="Owner type"
@@ -715,6 +745,7 @@ export function EmergencyOwnersTab({ ea, onChanged }: { ea: EADetail; onChanged:
           ]}
         />
       </div>
+      )}
 
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
@@ -829,6 +860,7 @@ export function EmergencyOwnersTab({ ea, onChanged }: { ea: EADetail; onChanged:
           </PeekSlot>
         </div>
       </div>
+      </div>
 
       <TableSelectDrawer
         open={teamDrawerOpen}
@@ -932,7 +964,16 @@ export function EmergencyOwnersTab({ ea, onChanged }: { ea: EADetail; onChanged:
  * `basePath` is the version that opened it: the same profile can be reached from
  * any list, and leaving (delete, not-found) must go back where you came from.
  */
-export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: string }) {
+export function EmergencyAccessDetail({
+  id,
+  basePath,
+  openSetup = false,
+}: {
+  id: string;
+  basePath: string;
+  /** V1: open the right-hand checklist — used the first time a profile is created. */
+  openSetup?: boolean;
+}) {
   /**
    * V1 only, for now — the owner is comparing the modules side by side, so the
    * Setup tab rename lands on one of them first. `basePath` is already how this
@@ -943,11 +984,13 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
 
   const [basicsOpen, setBasicsOpen] = React.useState(false);
   const [guideOpen, setGuideOpen] = React.useState(false);
+  const [checklistOpen, setChecklistOpen] = React.useState(openSetup);
   const router = useRouter();
   const toast = useToast();
   const [tab, setTab] = React.useState(() => {
     // V1 and V3 both open a draft on the work rather than on a summary — V3 because
-    // its bar drives the tabs, V1 because it has no Overview tab while it is a draft.
+    // its bar drives the tabs, V1 because the checklist is beside the first unfinished
+    // tab rather than replacing Overview.
     if (!isV3 && !isV1) return 'overview';
     const draft = getEmergencyAccess(id);
     return draft?.isDraft ? firstUnfinishedGuidedTab(draft) : 'overview';
@@ -982,79 +1025,25 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
     );
   }
 
-  /**
-   * V1 navigates in the rail instead of a tab strip, in both states. `showSetupRail` is
-   * the narrower question of whether that rail is also the setup checklist — which is
-   * what drops Overview from a draft, since the checklist replaced what Overview held.
-   */
-  const showRail = isV1;
-  const showSetupRail = isV1 && ea.isDraft;
+  const showSetupDock = isV1 && ea.isDraft;
 
   /**
    * The tab actually shown, which is not always the one in state.
    *
    * Which tabs exist depends on the profile's state, so a value in `tab` can stop being
-   * offered underneath the reader: on V1 a live Overview disappears when the profile
-   * returns to draft, while it is legitimately current beforehand. Rather
-   * than name the vanishing tabs — the list has changed twice already — this asks the
-   * strip whether it still lists the current value and falls back when it does not.
-   * Normalising once here means no render site has to guard against a tab the strip does
-   * not show, which would otherwise put a summary under a strip that does not list it.
+   * offered underneath the reader. Rather than name the vanishing tabs — the list has
+   * changed twice already — this asks the strip whether it still lists the current
+   * value and falls back when it does not. Normalising once here means no render site
+   * has to guard against a tab the strip does not show.
    */
-  const visibleTabs = tabsFor(ea, showSetupRail);
+  const visibleTabs = tabsFor(ea);
   const shownTab = visibleTabs.some((t) => t.value === tab)
     ? tab
     : ea.isDraft
       ? firstUnfinishedGuidedTab(ea)
       : 'overview';
 
-  /**
-   * What the rail lists — one derivation, not one per state.
-   *
-   * A live profile shows the same grouped, ticked list a draft does; it just gains the
-   * sections that are not setup steps at the top. That is deliberate: the rail does not
-   * restyle itself when a profile is switched on, it grows two rows. And the ticks keep
-   * earning their place afterwards — "this active break-glass profile still has no
-   * owners" is exactly the gap an admin should be able to see without opening anything.
-   *
-   * Nothing here is a hand-kept list. Steps come from the step definition and non-step
-   * sections from the same `tabsFor` list the strip would have rendered, so the rail
-   * cannot offer a section the page does not have, or miss one it does. Each side brings
-   * its own label, which is why the wording does not shift from "Eligibility criteria" to
-   * "Eligibility Criteria" the moment the profile activates.
-   *
-   * Counts come along in both states. The strip used to carry them, and a draft filling
-   * in assignments wants the running total as much as a live profile does — the tick says
-   * whether a step is done, the count says how much is behind it.
-   */
-  const countFor = (tab: string) => visibleTabs.find((t) => t.value === tab)?.count;
   const setupSteps = emergencySetupSteps(ea);
-  const stepRow = (step: EmergencySetupStep): DetailRailRow => ({
-    id: step.id,
-    label: step.label,
-    tab: step.tab,
-    count: countFor(step.tab),
-    done: step.done,
-    doneLabel: step.doneLabel,
-  });
-
-  const railGroups: DetailRailGroup[] = [
-    {
-      rows: visibleTabs
-        .filter((t) => !setupSteps.some((s) => s.tab === t.value))
-        .map((t) => ({ id: t.value, label: t.label, tab: t.value, count: t.count })),
-    },
-    {
-      heading: 'Required to activate',
-      headingHint: 'these steps gate activation',
-      rows: setupSteps.filter((s) => s.required && s.id !== 'basic').map(stepRow),
-    },
-    {
-      heading: 'Additional',
-      headingHint: 'optional, and does not block activation',
-      rows: setupSteps.filter((s) => !s.required).map(stepRow),
-    },
-  ].filter((g) => g.rows.length > 0);
 
   const guidedTabIndex = EA_GUIDED_STEPS.findIndex((s) => s.tab === shownTab);
   const guidedIndex =
@@ -1065,7 +1054,6 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
   const atLastGuided = guidedIndex >= EA_GUIDED_STEPS.length - 1;
   const nextBlocked =
     isRequiredSetupStep(guidedStep.id) && !isEASetupStepDone(guidedStep.id, ea);
-  const canActivate = blocking.length === 0;
   const showSetupBar = isV3 && ea.isDraft;
 
   const goGuided = (index: number) => {
@@ -1073,20 +1061,24 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
     if (next) setTab(next.tab);
   };
 
+  const goToSetupStep = (step: EmergencySetupStep) => {
+    if (step.id === 'basic') setBasicsOpen(true);
+    else setTab(step.tab);
+  };
+
   return (
     <div className="flex h-full flex-col">
+      <div className={`flex min-h-0 flex-1 -mx-8 ${showSetupDock ? '-mt-6 -mb-6' : ''}`}>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       {/*
         The page header, full-bleed.
 
-        It only draws its own rule when the setup rail is docked below it: that rule is
-        the horizontal half of the frame the rail's right border completes, so the two
-        lines meet and read as one continuous boundary. Without a rail there is nothing
-        to meet, and a line here would be a second one directly above the tab strip's.
+        On V1 a draft docks the checklist to the right of this column, so the
+        header, tabs and body share one left pane. Without that dock the header
+        still pulls up under the top bar on its own.
       */}
       <div
-        className={`shrink-0 -mx-8 -mt-6 bg-canvas px-8 pt-3 ${
-          showRail ? 'border-b border-border' : ''
-        }`}
+        className={`shrink-0 bg-canvas px-8 pt-3 ${showSetupDock ? '' : '-mt-6'}`}
       >
         <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -1113,11 +1105,11 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
                 A plain button that is simply disabled until then. It used to carry a
                 progress ring and a "N required steps to activate" label, from when the
                 header was the only place the reader could learn how far along the setup
-                was. The docked rail reports that now, step by step, so a second meter in
+                was. The docked checklist reports that now, step by step, so a second meter in
                 the button was the same state said twice — and the button's own job, which
                 is the one action, was the half that got crowded out. The tooltip still
                 names what is missing for anyone who reaches for it. */}
-            {ea.isDraft && !isV3 ? (
+            {ea.isDraft ? (
               <Tooltip
                 title={
                   blocking.length > 0
@@ -1131,13 +1123,23 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
                   </Button>
                 </span>
               </Tooltip>
-            ) : !ea.isDraft ? (
+            ) : (
               <Button variant="secondary" startIcon={<BlockOutlined />} onClick={() => setDeactivateOpen(true)}>
                 Deactivate
               </Button>
-            ) : null}
+            )}
             <Menu
               items={[
+                ...(showSetupBar
+                  ? [
+                      {
+                        label: 'Setup guide',
+                        icon: <MenuBookOutlined sx={{ fontSize: 18 }} />,
+                        onClick: () => setGuideOpen(true),
+                        divider: true,
+                      },
+                    ]
+                  : []),
                 {
                   label: 'Delete',
                   icon: <DeleteOutline sx={{ fontSize: 18 }} />,
@@ -1146,93 +1148,60 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
                 },
               ]}
             />
+            {showSetupDock && (
+              <EmergencyAccessGuideButton
+                expanded={checklistOpen}
+                onClick={() => setChecklistOpen((open) => !open)}
+              />
+            )}
           </div>
         </div>
       </div>
 
-      {/*
-        Everything below the header: the docked rail, and the tabs-plus-content column
-        beside it.
-
-        Full-bleed on three sides (`-mx-8 -mb-6` cancels the layout's page padding) so
-        the rail reaches the left edge and the bottom of the viewport instead of floating
-        in a padded box — a docked column that stops short of either would read as a card.
-        The padding comes back inside the right-hand column, where it belongs to the
-        content rather than to the frame.
-
-        On the versions that still have a tab strip it lives in that column, not above the
-        pair, so it would start to the right of a rail rather than over it.
-      */}
-      <div className={`-mx-8 flex min-h-0 flex-1 ${showRail ? '-mb-6' : ''}`}>
-        {showRail && (
-          <DetailRail
-            ariaLabel={showSetupRail ? 'Setup checklist' : 'Profile sections'}
-            groups={railGroups}
-            currentTab={shownTab}
-            onGoTo={(row) => {
-              setTab(row.tab);
-            }}
-            footer={
-              showSetupRail ? (
-                <EmergencyAccessGuideButton labeled onClick={() => setGuideOpen(true)} />
-              ) : undefined
-            }
-          />
-        )}
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          {/* No tab strip where the rail is: the two were the same list, and V1 keeps the
-              rail. A vertical list has room the strip does not — per-row completion on a
-              draft, and counts that do not compete with the label for width. V2 and V3
-              still navigate here. Name and description live on the header, not as a
-              rail row. */}
-          {!showRail && (
-            <div className="shrink-0 border-b border-border px-8">
-              <Tabs
-                items={visibleTabs}
-                value={shownTab}
-                onChange={setTab}
-                noBorder
-                aria-label="Emergency access details"
-              />
-            </div>
-          )}
-          {/* A 20px gutter on all four sides where the rail is docked. The content's edges
-              are measured from the rail's border, not the page's, so there is no page
-              title above it to line up with — 32px was the layout's page margin inherited
-              by a region that is not the page.
-
-              `pb-5` only pairs with the `-mb-6` above: it puts back, inside the content,
-              the bottom padding the full-bleed cancelled. Without a rail the layout's own
-              padding is still in force and adding it again would double it — and V3's
-              setup bar sits below this block, which a negative margin would overlap. */}
+          <div className="shrink-0 border-b border-border px-8">
+            <Tabs
+              items={visibleTabs}
+              value={shownTab}
+              onChange={setTab}
+              noBorder
+              aria-label="Emergency access details"
+            />
+          </div>
           <div
             className={
-              showRail ? 'min-h-0 min-w-0 flex-1 p-5' : 'min-h-0 min-w-0 flex-1 px-8 pt-5'
+              showSetupDock
+                ? 'min-h-0 min-w-0 flex-1 px-8 py-5'
+                : 'min-h-0 min-w-0 flex-1 px-8 pt-5'
             }
           >
         {shownTab ==='overview' && (
           <OverviewTab ea={ea} />
         )}
-        {shownTab ==='owners' && <EmergencyOwnersTab ea={ea} onChanged={bump} />}
+        {shownTab ==='owners' && (
+          <EmergencyOwnersTab ea={ea} onChanged={bump} switcher={isV1 || isV3 ? 'rail' : 'segments'} />
+        )}
         {shownTab ==='eligibility' && <EligibilityCriteriaTab eaId={ea.id} onChanged={bump} />}
-        {shownTab ==='assignments' && <EmergencyAssignmentsTab eaId={id} onChanged={bump} />}
+        {shownTab ==='assignments' && (
+          <EmergencyAssignmentsTab eaId={id} onChanged={bump} switcher={isV1 || isV3 ? 'rail' : 'segments'} />
+        )}
         {shownTab ==='advanced' && <AdvancedConfigurationTab eaId={ea.id} onChanged={bump} />}
           </div>
         </div>
+        {showSetupDock && checklistOpen && (
+          <SetupChecklistDock
+            steps={setupSteps}
+            currentTab={shownTab}
+            onClose={() => setChecklistOpen(false)}
+            onGoTo={goToSetupStep}
+          />
+        )}
       </div>
 
       {showSetupBar && (
-        <div className="shrink-0 pt-3">
+        <div className="shrink-0 -mx-8 -mb-6 bg-canvas pt-3">
+          <div className="border-t border-border bg-surface px-8 py-2">
           <SetupBar
-            leading={<EmergencyAccessGuideButton onClick={() => setGuideOpen(true)} />}
-            progress={
-              <Stepper
-                steps={EA_GUIDED_STEPS.map((s) => ({ label: s.label }))}
-                current={Math.max(0, guidedIndex)}
-                onStepClick={goGuided}
-                showBack={false}
-              />
-            }
+            className="rounded-none border-0 bg-transparent p-0 shadow-none"
             actions={
               <>
                 <Button
@@ -1252,7 +1221,6 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
                   >
                     <span>
                       <Button
-                        variant={canActivate ? 'secondary' : 'primary'}
                         disabled={nextBlocked}
                         onClick={() => goGuided(guidedIndex + 1)}
                       >
@@ -1263,12 +1231,17 @@ export function EmergencyAccessDetail({ id, basePath }: { id: string; basePath: 
                 )}
               </>
             }
-            primary={
-              canActivate ? (
-                <Button onClick={activate}>Activate</Button>
-              ) : undefined
+            status={
+              <SetupProgress
+                className="flex"
+                layout="inline"
+                done={EA_REQUIRED_STEPS - blocking.length}
+                total={EA_REQUIRED_STEPS}
+                label="required steps completed"
+              />
             }
           />
+          </div>
         </div>
       )}
 

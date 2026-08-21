@@ -77,6 +77,33 @@ function iconBtnClass(active: boolean, tone: 'success' | 'danger') {
   ].join(' ');
 }
 
+function BulkIcon({
+  label,
+  tone,
+  onClick,
+  children,
+}: {
+  label: string;
+  tone: 'success' | 'danger';
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Tooltip title={label}>
+      <span className="inline-flex">
+        <button
+          type="button"
+          aria-label={label}
+          onClick={onClick}
+          className={iconBtnClass(false, tone)}
+        >
+          {children}
+        </button>
+      </span>
+    </Tooltip>
+  );
+}
+
 export default function AccessCertificationReviewPage() {
   const toast = useToast();
   const [campaign, setCampaign] = React.useState<ReviewCampaign | null>(null);
@@ -381,128 +408,98 @@ export default function AccessCertificationReviewPage() {
     },
   ];
 
+  const noun = step === 0 ? 'account' : 'entitlement';
+  const nounPlural = `${noun}s`;
   const selectionToolbar = (
-    <div className="flex w-full min-w-0 items-center justify-between gap-4">
-      <div className="flex min-w-0 items-center gap-3">
-        <StatusChip
-          intent="neutral"
-          dot={false}
-          label={
-            allMatchingSelected
-              ? `All ${visibleIds.length} selected`
-              : `${actionableIds.length} selected`
-          }
-        />
-        {!allMatchingSelected && visibleIds.length > actionableIds.length && (
+    <p className="text-body-sm text-text-secondary">
+      {allMatchingSelected ? (
+        <>
+          All{' '}
+          <span className="font-emphasis text-text-primary">{visibleIds.length}</span>{' '}
+          {visibleIds.length === 1 ? noun : nounPlural} are selected.{' '}
           <button
             type="button"
             className="text-body-sm-strong text-text-link hover:underline"
-            onClick={() => setSelectedIds(visibleIds)}
+            onClick={() => setSelectedIds([])}
           >
-            Select all {visibleIds.length}
+            Clear selection
           </button>
-        )}
-        <button
-          type="button"
-          className="text-body-sm text-text-secondary hover:text-text-primary hover:underline"
-          onClick={() => setSelectedIds([])}
-        >
-          Clear
-        </button>
-      </div>
-      <div className="flex shrink-0 items-center gap-2 border-l border-border pl-4">
-        {step === 0 ? (
-          <>
-            <Button
-              size="sm"
-              startIcon={<HowToRegOutlined />}
-              onClick={() => applyOwnershipBulk(actionableIds, 'mine')}
+        </>
+      ) : (
+        <>
+          {actionableIds.length} selected.{' '}
+          {visibleIds.length > actionableIds.length && (
+            <button
+              type="button"
+              className="text-body-sm-strong text-text-link hover:underline"
+              onClick={() => setSelectedIds(visibleIds)}
             >
-              Belongs to me
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              startIcon={<PersonOffOutlined />}
-              onClick={() => setBulkPending({ kind: 'not-mine', ids: actionableIds })}
-            >
-              Does not belong to me
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button
-              size="sm"
-              startIcon={<CheckCircleOutline />}
-              onClick={() => applyEntitlementBulk(actionableIds, 'certify')}
-            >
-              Certify
-            </Button>
-            <Button
-              size="sm"
-              variant="danger"
-              startIcon={<CancelOutlined />}
-              onClick={() => setBulkPending({ kind: 'revoke', ids: actionableIds })}
-            >
-              Revoke
-            </Button>
-          </>
-        )}
-      </div>
-    </div>
+              Select all {visibleIds.length} {visibleIds.length === 1 ? noun : nounPlural}
+            </button>
+          )}
+        </>
+      )}
+    </p>
   );
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="mb-5 flex shrink-0 flex-wrap items-start justify-between gap-4">
-        <div className="flex min-w-0 items-start gap-3">
-          <Avatar name={campaign.name} size="md" icon={<Campaign sx={{ fontSize: 20 }} />} />
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-h4 text-text-primary">{campaign.name}</h1>
-              <StatusChip intent="neutral" label={campaign.reviewerRole} />
+    <div className="-mx-8 -my-6 flex h-[calc(100%+3rem)] flex-col bg-canvas">
+      {/* Header — same chrome as emergency-access / SoD resolution: full-bleed,
+          then the stepper docks on the rule below it. */}
+      <div className="shrink-0 border-b border-border bg-canvas px-5 py-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <Avatar name={campaign.name} size="md" icon={<Campaign sx={{ fontSize: 20 }} />} />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="text-h4 text-text-primary">{campaign.name}</h1>
+                <StatusChip intent="neutral" label={campaign.reviewerRole} />
+              </div>
+              <p className="mt-px flex items-center gap-1.5 text-body-sm text-text-secondary">
+                <CalendarTodayOutlined sx={{ fontSize: 14 }} className="shrink-0 text-icon" aria-hidden />
+                {formatReviewDate(campaign.startsOn)} – {formatReviewDate(campaign.dueOn)}
+              </p>
             </div>
-            <p className="mt-1 flex items-center gap-1.5 text-body-sm text-text-secondary">
-              <CalendarTodayOutlined sx={{ fontSize: 14 }} className="shrink-0 text-icon" aria-hidden />
-              {formatReviewDate(campaign.startsOn)} – {formatReviewDate(campaign.dueOn)}
-            </p>
           </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-3">
-          <div className="w-[168px]">
-            <Meter
-              size="sm"
-              tone="success"
-              value={Math.max(campaign.remainingDays, 0)}
-              max={14}
-              label={`${campaign.remainingDays} day${campaign.remainingDays === 1 ? '' : 's'} remaining`}
-            />
+          <div className="flex shrink-0 items-center gap-3">
+            <div className="w-[168px]">
+              <Meter
+                size="sm"
+                tone="success"
+                value={Math.max(campaign.remainingDays, 0)}
+                max={14}
+                label={`${campaign.remainingDays} day${campaign.remainingDays === 1 ? '' : 's'} remaining`}
+              />
+            </div>
+            <Button
+              variant="secondary"
+              startIcon={<EventAvailableOutlined />}
+              onClick={() => setExtendOpen(true)}
+            >
+              Extend Timeline
+            </Button>
           </div>
-          <Button
-            variant="secondary"
-            startIcon={<EventAvailableOutlined />}
-            onClick={() => setExtendOpen(true)}
-          >
-            Extend Timeline
-          </Button>
         </div>
       </div>
 
-      <div className="mb-4 flex shrink-0 flex-wrap items-center justify-between gap-3">
-        <Stepper
-          steps={STEPS}
-          current={step}
-          showBack={step > 0}
-          onStepClick={(i) => {
-            if (i === 1 && !allVerified) {
-              toast.error('Verify every account before reviewing entitlements');
-              return;
-            }
-            setSelectedIds([]);
-            setStep(i);
-          }}
-        />
-        <div className="flex items-center gap-4">
+      {/* Stepper bar — SoD resolution workspace: steps left, progress + advance right. */}
+      <div className="flex shrink-0 items-center gap-4 border-b border-border bg-subtle px-5 py-3">
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <Stepper
+            steps={STEPS}
+            current={step}
+            showBack={step > 0}
+            onStepClick={(i) => {
+              if (i === 1 && !allVerified) {
+                toast.error('Verify every account before reviewing entitlements');
+                return;
+              }
+              setSelectedIds([]);
+              setStep(i);
+            }}
+          />
+        </div>
+        <div className="flex shrink-0 items-center gap-3">
           <div className="w-[200px]">
             <Meter
               size="sm"
@@ -517,94 +514,133 @@ export default function AccessCertificationReviewPage() {
             />
           </div>
           {step === 0 && (
-            <Button
-              variant="tertiary"
-              endIcon={<ChevronRight />}
-              disabled={!allVerified}
-              onClick={goReview}
-              title={allVerified ? undefined : 'Verify every account first'}
-            >
-              Proceed to review
-            </Button>
+            <Tooltip title={!allVerified ? 'Verify every account first' : ''} placement="bottom">
+              <span className="inline-flex">
+                <Button endIcon={<ChevronRight />} disabled={!allVerified} onClick={goReview}>
+                  Proceed to review
+                </Button>
+              </span>
+            </Tooltip>
           )}
         </div>
       </div>
 
-      {step === 0 && (
-        <div
-          role="note"
-          className="mb-4 flex shrink-0 items-start gap-2.5 rounded-lg border border-[var(--ds-color-status-info-border)] bg-[var(--ds-color-status-info-subtle)] px-4 py-3"
-        >
-          <InfoOutlined sx={{ fontSize: 18 }} className="mt-0.5 shrink-0 text-[var(--ds-color-status-info-fg)]" aria-hidden />
-          <p className="text-body-sm text-[var(--ds-color-status-info-fg)]">
-            Confirm each account with <strong className="font-emphasis">Belongs to me</strong> or{' '}
-            <strong className="font-emphasis">Does not belong to me</strong>. You can review entitlements
-            only on the accounts that are yours.
-          </p>
-        </div>
-      )}
-
-      <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
-        <div className="min-w-[220px] max-w-md flex-1">
-          <Input
-            placeholder={
-              step === 0
-                ? 'Search by account name, type, or application'
-                : 'Search by account, entitlement, or application'
-            }
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
-            aria-label="Search accounts"
-          />
-        </div>
-        <Button
-          variant="secondary"
-          startIcon={<FilterListOutlined />}
-          onClick={() => setFilterOpen(true)}
-        >
-          Filter{filterCount > 0 ? ` (${filterCount})` : ''}
-        </Button>
-      </div>
-
-      <div className="min-h-0 flex-1">
-        {step === 0 ? (
-          <DataTable<ReviewAccount>
-            columns={ownershipColumns}
-            rows={ownershipRows}
-            selectable
-            selectedIds={selectedIds}
-            onSelectionChange={setSelectedIds}
-            selectionToolbar={selectionToolbar}
-            fillHeight
-            defaultRowsPerPage={12}
-            rowsPerPageOptions={[12, 24]}
-            emptyTitle={campaign.accounts.length === 0 ? 'No accounts to verify' : 'No matching accounts'}
-            emptyMessage={
-              campaign.accounts.length === 0
-                ? 'Accounts in this certification will appear here.'
-                : 'Try a different search or clear filters.'
-            }
-          />
-        ) : (
-          <DataTable<ReviewAccount>
-            columns={reviewColumns}
-            rows={reviewRows}
-            selectable
-            selectedIds={selectedIds}
-            onSelectionChange={setSelectedIds}
-            selectionToolbar={selectionToolbar}
-            fillHeight
-            defaultRowsPerPage={12}
-            rowsPerPageOptions={[12, 24]}
-            emptyTitle={claimed.length === 0 ? 'Nothing to review' : 'No matching entitlements'}
-            emptyMessage={
-              claimed.length === 0
-                ? 'None of these accounts belong to you, so there is nothing to certify.'
-                : 'Try a different search or clear filters.'
-            }
-          />
+      <div className="flex min-h-0 flex-1 flex-col px-5 pt-4">
+        {step === 0 && (
+          <div
+            role="note"
+            className="mb-4 flex shrink-0 items-start gap-2.5 rounded-lg border border-[var(--ds-color-status-info-border)] bg-[var(--ds-color-status-info-subtle)] px-4 py-3"
+          >
+            <InfoOutlined sx={{ fontSize: 18 }} className="mt-0.5 shrink-0 text-[var(--ds-color-status-info-fg)]" aria-hidden />
+            <p className="text-body-sm text-[var(--ds-color-status-info-fg)]">
+              Confirm each account with <strong className="font-emphasis">Belongs to me</strong> or{' '}
+              <strong className="font-emphasis">Does not belong to me</strong>. You can review entitlements
+              only on the accounts that are yours.
+            </p>
+          </div>
         )}
+
+        <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
+          <div className="min-w-[220px] max-w-md flex-1">
+            <Input
+              placeholder={
+                step === 0
+                  ? 'Search by account name, type, or application'
+                  : 'Search by account, entitlement, or application'
+              }
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+              aria-label="Search accounts"
+            />
+          </div>
+          <Button
+            variant="secondary"
+            startIcon={<FilterListOutlined />}
+            onClick={() => setFilterOpen(true)}
+          >
+            Filter{filterCount > 0 ? ` (${filterCount})` : ''}
+          </Button>
+          {actionableIds.length > 0 && (
+            <div className="flex items-center gap-1 border-l border-border pl-3">
+              {step === 0 ? (
+                <>
+                  <BulkIcon
+                    label="Belongs to me"
+                    tone="success"
+                    onClick={() => applyOwnershipBulk(actionableIds, 'mine')}
+                  >
+                    <HowToRegOutlined sx={{ fontSize: 18 }} />
+                  </BulkIcon>
+                  <BulkIcon
+                    label="Does not belong to me"
+                    tone="danger"
+                    onClick={() => setBulkPending({ kind: 'not-mine', ids: actionableIds })}
+                  >
+                    <PersonOffOutlined sx={{ fontSize: 18 }} />
+                  </BulkIcon>
+                </>
+              ) : (
+                <>
+                  <BulkIcon
+                    label="Certify"
+                    tone="success"
+                    onClick={() => applyEntitlementBulk(actionableIds, 'certify')}
+                  >
+                    <CheckCircleOutline sx={{ fontSize: 18 }} />
+                  </BulkIcon>
+                  <BulkIcon
+                    label="Revoke"
+                    tone="danger"
+                    onClick={() => setBulkPending({ kind: 'revoke', ids: actionableIds })}
+                  >
+                    <CancelOutlined sx={{ fontSize: 18 }} />
+                  </BulkIcon>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="min-h-0 flex-1 pb-4">
+          {step === 0 ? (
+            <DataTable<ReviewAccount>
+              columns={ownershipColumns}
+              rows={ownershipRows}
+              selectable
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
+              selectionToolbar={selectionToolbar}
+              fillHeight
+              defaultRowsPerPage={12}
+              rowsPerPageOptions={[12, 24]}
+              emptyTitle={campaign.accounts.length === 0 ? 'No accounts to verify' : 'No matching accounts'}
+              emptyMessage={
+                campaign.accounts.length === 0
+                  ? 'Accounts in this certification will appear here.'
+                  : 'Try a different search or clear filters.'
+              }
+            />
+          ) : (
+            <DataTable<ReviewAccount>
+              columns={reviewColumns}
+              rows={reviewRows}
+              selectable
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
+              selectionToolbar={selectionToolbar}
+              fillHeight
+              defaultRowsPerPage={12}
+              rowsPerPageOptions={[12, 24]}
+              emptyTitle={claimed.length === 0 ? 'Nothing to review' : 'No matching entitlements'}
+              emptyMessage={
+                claimed.length === 0
+                  ? 'None of these accounts belong to you, so there is nothing to certify.'
+                  : 'Try a different search or clear filters.'
+              }
+            />
+          )}
+        </div>
       </div>
 
       <FilterDrawer

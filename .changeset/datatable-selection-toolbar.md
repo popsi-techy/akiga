@@ -2,4 +2,4 @@
 "@akiga/design-system-app": patch
 ---
 
-DataTable bulk actions dock to the bottom of the screen so column headers stay visible and the page toolbar never has to share a row.
+DataTable selection is a first-row banner (select-all / clear). Bulk actions are icon buttons on the page toolbar, to the right of Filter.

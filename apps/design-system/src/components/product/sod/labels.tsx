@@ -107,7 +107,7 @@ export function AppBadge({
       style={{ width: size, height: size }}
       title={app}
     >
-      {app.charAt(0).toUpperCase()}
+      {app?.charAt(0).toUpperCase() || '?'}
     </span>
   );
 }

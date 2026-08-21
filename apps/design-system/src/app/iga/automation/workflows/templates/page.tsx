@@ -6,9 +6,8 @@ import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 /**
  * Choose a starting point for a workflow.
  *
- * Same catalog frame as application types: a lifecycle rail, a featured empty
- * canvas, then a grid of template cards. Clicking a card opens a modal with the
- * real flow — the same renderer the builder uses — before the workflow is named.
+ * Search and start-from-scratch sit in a banner. The catalog below — lifecycle
+ * rail and template cards — scrolls only in the card list.
  */
 export default function WorkflowTemplatesPage() {
   useSetBreadcrumbs([

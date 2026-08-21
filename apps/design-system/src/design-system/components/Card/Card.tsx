@@ -35,7 +35,7 @@ export interface CardProps {
   /** No shadow at rest; elevates on hover. Good for dashboard cards. @default false */
   hoverElevate?: boolean;
   /** Body padding. @default 'md' */
-  padding?: 'none' | 'sm' | 'md' | 'lg';
+  padding?: 'none' | 'xs' | 'sm' | 'md' | 'lg';
   /** Header treatment for header-cards. 'framed' = grey frame + white panel (default);
       'flat' = the legacy header band on a bordered card. @default 'framed' */
   variant?: 'framed' | 'flat';
@@ -52,6 +52,7 @@ export interface CardProps {
  */
 const bodyPad: Record<NonNullable<CardProps['padding']>, string> = {
   none: 'px-5',
+  xs: 'p-2',
   sm: 'p-4',
   md: 'p-5',
   lg: 'p-6',
@@ -62,6 +63,7 @@ const bodyPad: Record<NonNullable<CardProps['padding']>, string> = {
  */
 const framedPad: Record<NonNullable<CardProps['padding']>, string> = {
   none: 'px-4',
+  xs: 'p-2',
   sm: 'p-3',
   md: 'p-4',
   lg: 'p-5',

@@ -83,7 +83,7 @@ export function initialsOf(name?: string): string {
  * than trusted. Several call sites still pass two (a reference number, say), and the
  * rule is meant to hold everywhere without auditing every consumer.
  */
-const oneLetter = (s: string) => s.trim().charAt(0).toUpperCase() || '?';
+const oneLetter = (s?: string) => s?.trim().charAt(0).toUpperCase() || '?';
 
 export function Avatar({
   name,

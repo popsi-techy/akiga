@@ -119,7 +119,9 @@ export default function ApplicationsListPage() {
       searchPlaceholder="Search applications"
       columns={columns}
       rows={apps}
-      matches={(r, q) => r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q)}
+      matches={(r, q) =>
+        r.name.toLowerCase().includes(q) || (r.description ?? '').toLowerCase().includes(q)
+      }
       onOpen={(id) => router.push(`/iga/directory/applications/${id}`)}
       emptyTitle="No applications found"
       emptyMessage="No applications match your search."

@@ -37,7 +37,7 @@ export default function EmergencyAccessListPage() {
     const id = createEmergencyAccess({ name, description });
     setCreateOpen(false);
     toast.success(`“${name.trim()}” created as a draft.`);
-    router.push(`/iga/emergency/${id}`);
+    router.push(`/iga/emergency/${id}?from=create`);
   };
 
   return (

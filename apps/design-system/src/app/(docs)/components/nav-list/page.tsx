@@ -20,7 +20,7 @@ export default function NavListDocs() {
 
       <Section
         title="Active is outlined, not filled"
-        description="The active item takes a brand outline, brand icon and a filled count pill; inactive items stay quiet with a hover fill. It reports role=tablist, so it is a view switcher to assistive technology, not a menu."
+        description="The active item takes a brand outline and a filled count pill; inactive items stay quiet with a hover fill. Icons keep the default icon colour in both states. It reports role=tablist, so it is a view switcher to assistive technology, not a menu."
       >
         <Example label="In a panel">
           <div className="w-[280px] rounded-lg border border-border bg-surface p-3">

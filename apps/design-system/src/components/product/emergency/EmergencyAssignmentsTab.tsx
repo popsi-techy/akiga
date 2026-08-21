@@ -8,10 +8,12 @@ import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
 import LaptopOutlined from '@mui/icons-material/LaptopOutlined';
 import {
   Button,
+  Card,
   DataTable,
   InfoRow,
   InfoRowGroup,
   Input,
+  NavList,
   OverflowChips,
   PickerSlot,
   SegmentedControl,
@@ -131,7 +133,7 @@ function AssignmentDrawers({
 /**
  * What this profile grants, as two picker slots — for the V2 creation stepper.
  *
- * The tab below is the wrong shape for a wizard column: a 264px rail beside a
+ * The tab below is the wrong shape for a wizard column: a 240px rail beside a
  * three-column table, squeezed into the space left over by the progress rail,
  * scrolls sideways and clips its own empty-state copy. None of that detail is
  * what the step is asking, either — the step asks *what does this hand over*, and
@@ -202,10 +204,18 @@ export function EmergencyAssignmentsPicker({
 export function EmergencyAssignmentsTab({
   eaId,
   onChanged,
+  switcher = 'segments',
 }: {
   eaId: string;
   /** What this grants changed — lets a host surface re-read readiness. */
   onChanged?: () => void;
+  /**
+   * How the two assignment kinds are chosen.
+   *
+   * `segments` — compact, for V2.
+   * `rail` — NavList in a card, for V1 and V3.
+   */
+  switcher?: 'segments' | 'rail';
 }) {
   const toast = useToast();
   const [kind, setKind] = React.useState<Kind>('entitlements');
@@ -338,20 +348,43 @@ export function EmergencyAssignmentsTab({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/*
-        The two kinds of assignment are a segmented control at the top, not a list in a
-        card down the left.
-
-        Both are the same choice — one of two, always two — but the card spent a 264px
-        column and the full height of the page on it, next to a table that wanted the
-        width. A segmented control states the same choice in a single row and gives the
-        table back the page.
-
-        It also fixes a hierarchy problem: `NavList` is styled like navigation, so the
-        page had a navigation rail on the left, a second navigation-looking list beside it,
-        and no way to tell from the styling that one moved between sections and the other
-        only switched a table. A segmented control does not look like navigation.
-      */}
+      <div
+        className={
+          switcher === 'rail'
+            ? 'grid min-h-0 flex-1 gap-5 lg:grid-cols-[240px_minmax(0,1fr)]'
+            : 'flex min-h-0 flex-1 flex-col'
+        }
+      >
+      {switcher === 'rail' ? (
+        // 8px (xs) clears the selected outline from the card edge without
+        // stacking a 16px gutter on a 240px column. The card fills the column
+        // so the rail and the table share one height.
+        <Card padding="xs" className="h-full min-h-0">
+          <NavList
+            ariaLabel="Assignment type"
+            value={kind}
+            onChange={(id) => {
+              setKind(id as Kind);
+              setSearch('');
+              setPeek(null);
+            }}
+            items={[
+              {
+                id: 'entitlements',
+                icon: <VpnKeyOutlined sx={{ fontSize: 18 }} />,
+                label: 'Entitlements',
+                count: assignments.entitlements.length,
+              },
+              {
+                id: 'technicalRoles',
+                icon: <LaptopOutlined sx={{ fontSize: 18 }} />,
+                label: 'Technical Roles',
+                count: assignments.technicalRoles.length,
+              },
+            ]}
+          />
+        </Card>
+      ) : (
       <div className="mb-5 flex shrink-0 flex-wrap items-center gap-3">
         <SegmentedControl<Kind>
           ariaLabel="Assignment type"
@@ -371,6 +404,7 @@ export function EmergencyAssignmentsTab({
           ]}
         />
       </div>
+      )}
 
       {isBlank ? (
         /* No search, no header row: a table with nothing under it reads as a failed
@@ -391,7 +425,7 @@ export function EmergencyAssignmentsTab({
           </div>
         </div>
       ) : (
-        <>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           {/* 20px below the switcher, 12px below the toolbar: the switcher chooses which
               dataset you are looking at, the toolbar acts within it. The larger gap binds the
               toolbar and its table into one unit under the switcher, rather than leaving three
@@ -473,8 +507,9 @@ export function EmergencyAssignmentsTab({
               )}
             </PeekSlot>
           </div>
-        </>
+        </div>
       )}
+      </div>
 
       <AssignmentDrawers
         open={drawerOpen ? kind : null}

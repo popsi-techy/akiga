@@ -5,8 +5,10 @@ import * as React from 'react';
 /**
  * NavList — a vertical single-select list of navigable sections/views, each with
  * an optional leading icon and trailing count. The active item gets a brand
- * outline + tint + brand text (and a filled count pill); inactive items are quiet
- * with a hover fill. Used for in-panel section switchers: owner/group toggles,
+ * outline + tint (and a filled count pill); inactive items are quiet
+ * with a hover fill. Icons stay `icon.default` in both states — selection is
+ * already the outline and the pill, and a second brand colour on the mark
+ * restates it. Used for in-panel section switchers: owner/group toggles,
  * settings sections, entity sub-views.
  */
 export interface NavListItem {
@@ -35,11 +37,11 @@ export function NavList({ items, value, onChange, ariaLabel }: NavListProps) {
             aria-selected={active}
             onClick={() => onChange(item.id)}
             className={[
-              'flex w-full items-center gap-2.5 rounded-md border px-3 py-2.5 text-left text-body-sm-medium transition-colors',
+              'flex w-full items-center gap-2 rounded-md border px-2.5 py-2 text-left text-body-sm-medium transition-colors',
               active ? 'border-brand bg-surface text-text-primary' : 'border-transparent text-text-primary hover:bg-surface-hover',
             ].join(' ')}
           >
-            {item.icon && <span className={active ? 'text-brand-active' : 'text-icon'}>{item.icon}</span>}
+            {item.icon && <span className="text-icon">{item.icon}</span>}
             <span className="min-w-0 flex-1 truncate">{item.label}</span>
             {item.count != null && (
               <span

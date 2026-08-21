@@ -10,9 +10,11 @@ import BadgeOutlined from '@mui/icons-material/BadgeOutlined';
 import MailOutline from '@mui/icons-material/MailOutline';
 import AccountTreeOutlined from '@mui/icons-material/AccountTreeOutlined';
 import MenuBookOutlined from '@mui/icons-material/MenuBookOutlined';
+import SchoolOutlined from '@mui/icons-material/SchoolOutlined';
 import HubOutlined from '@mui/icons-material/HubOutlined';
+import PersonOutline from '@mui/icons-material/PersonOutline';
 import type { SvgIconComponent } from '@mui/icons-material';
-import { Button, Drawer, Input, Modal, NavList, StatusChip, useToast } from '@ds/components';
+import { Button, Drawer, Input, Modal, NavList, StatusChip, useToast, type StatusIntent } from '@ds/components';
 import { createWorkflow, listWorkflows } from '@/data/workflows';
 import {
   WORKFLOW_TEMPLATES,
@@ -29,14 +31,24 @@ const EVENT_LABEL: Record<WorkflowEventType, string> = {
   leaver: 'Leaver',
 };
 
-/** One-line support under the section name — short enough to sit beside it. */
-const EVENT_LINE: Record<WorkflowEventType, string> = {
-  joiner: 'When a new identity joins',
-  mover: 'When role, department, or location changes',
-  leaver: 'When an identity leaves',
+/** Section titles — a little more than the one-word lifecycle name. */
+const EVENT_HEADING: Record<WorkflowEventType, string> = {
+  joiner: 'Joiner templates',
+  mover: 'Mover templates',
+  leaver: 'Leaver templates',
 };
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** Audience is a classification, not a state — icon, not a status dot. */
+const AUDIENCE_CHIP: Record<
+  WorkflowTemplate['audience'],
+  { intent: StatusIntent; icon: React.ReactNode }
+> = {
+  Employee: { intent: 'info', icon: <PersonOutline /> },
+  Student: { intent: 'info', icon: <SchoolOutlined /> },
+  Contractor: { intent: 'caution', icon: <BadgeOutlined /> },
+};
 
 /** A unique draft name so two empties created the same day do not collide in the list. */
 function scratchDraft() {
@@ -48,11 +60,9 @@ function scratchDraft() {
 /**
  * The workflow template catalog.
  *
- * Same frame as the application-type catalog: a lifecycle rail that jumps, a
- * dashed "from scratch" option in that rail, then a grid of template cards.
- * Each card offers Use template (secondary) then Preview (tertiary, grey). Primary stays
- * off the catalog — a grid of oranges would leave no one action. From scratch
- * has no flow to preview, so it still names a draft directly.
+ * A search banner (with start-from-scratch below it) sits still. Under that, a
+ * lifecycle rail and a two-up card grid; only the grid scrolls. From scratch has
+ * no flow to preview, so it names a draft directly.
  */
 export function WorkflowTemplateGallery() {
   const router = useRouter();
@@ -162,45 +172,66 @@ export function WorkflowTemplateGallery() {
 
   return (
     <>
-      <div className="flex h-full min-h-0">
-        <aside className="flex w-[264px] shrink-0 flex-col gap-5 border-r border-border bg-surface px-4 py-5">
-          <h1 className="px-1 text-h4 text-text-primary">Explore templates</h1>
-          <div className="flex flex-col gap-3">
-            <ScratchCard onSelect={() => openDraft('scratch')} />
-            <NavList
-              ariaLabel="Lifecycle"
-              value={active}
-              onChange={(id) => jumpTo(id as WorkflowEventType)}
-              items={EVENT_TYPES.map((event) => ({
-                id: event,
-                label: EVENT_LABEL[event],
-                count: byEvent(event).length,
-              }))}
-            />
-          </div>
-        </aside>
-
-        <div className="flex min-w-0 flex-1 flex-col">
-          <div className="shrink-0 px-6 pt-5">
-            <div className="w-full max-w-md">
+      <div className="flex h-full min-h-0 flex-col">
+        <header className="relative shrink-0 overflow-hidden border-b border-border bg-subtle px-6 py-5">
+          <BannerAtmosphere />
+          <div className="relative mx-auto flex w-full max-w-lg flex-col items-center">
+            <h1 className="text-center text-h4 text-text-primary">
+              Start automations faster with{' '}
+              <span className="text-text-brand">ready-to-use workflows</span>
+            </h1>
+            <div className="mt-3 w-full">
               <Input
-                placeholder="Search by name, audience, or system…"
+                placeholder="Search workflow templates…"
                 aria-label="Search templates"
+                size="md"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+                endAdornment={<SearchOutlined sx={{ fontSize: 20 }} />}
               />
             </div>
+            <div className="mt-3 flex w-full items-center gap-3">
+              <span className="h-px min-w-0 flex-1 bg-border" />
+              <span className="text-caption text-text-tertiary">or</span>
+              <span className="h-px min-w-0 flex-1 bg-border" />
+            </div>
+            <button
+              type="button"
+              className="mt-2 text-body-sm-medium text-text-link hover:underline"
+              onClick={() => openDraft('scratch')}
+            >
+              Start from scratch
+            </button>
           </div>
+        </header>
 
-          <div ref={scroller} onScroll={onScroll} className="ds-scroll min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-5">
-            {matches.length === 0 && q ? (
-              <p className="text-body-sm text-text-secondary">
-                Nothing matches “{query.trim()}”. Start from scratch, or clear the search.
-              </p>
-            ) : (
-              <div className="flex flex-col gap-8">
-                {visibleEvents.map((event) => (
+        <div className="flex min-h-0 min-w-0 flex-1 gap-5 px-6 py-5">
+            <aside className="flex w-56 shrink-0 flex-col rounded-xl border border-border bg-surface px-3 py-4">
+              <h2 className="mb-3 px-1 text-overline uppercase text-text-tertiary">Categories</h2>
+              <NavList
+                ariaLabel="Categories"
+                value={active}
+                onChange={(id) => jumpTo(id as WorkflowEventType)}
+                items={EVENT_TYPES.map((event) => ({
+                  id: event,
+                  label: EVENT_LABEL[event],
+                  count: byEvent(event).length,
+                }))}
+              />
+            </aside>
+
+            <div
+              ref={scroller}
+              onScroll={onScroll}
+              className="ds-scroll min-h-0 min-w-0 flex-1 overflow-y-auto"
+            >
+              {matches.length === 0 && q ? (
+                <p className="text-body-sm text-text-secondary">
+                  Nothing matches “{query.trim()}”. Clear the search, or start from scratch above.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-8">
+                  {visibleEvents.map((event) => (
                     <section
                       key={event}
                       ref={(el) => {
@@ -208,13 +239,8 @@ export function WorkflowTemplateGallery() {
                         else sections.current.delete(event);
                       }}
                     >
-                      <div className="flex min-w-0 items-baseline gap-2">
-                        <h2 className="shrink-0 text-h5 text-text-primary">{EVENT_LABEL[event]}</h2>
-                        <p className="min-w-0 truncate text-caption text-text-tertiary">
-                          {EVENT_LINE[event]}
-                        </p>
-                      </div>
-                      <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                      <h2 className="text-h5 text-text-primary">{EVENT_HEADING[event]}</h2>
+                      <div className="mt-4 grid gap-4 sm:grid-cols-2">
                         {byEvent(event).map((t) => (
                           <TemplateCard
                             key={t.id}
@@ -225,12 +251,12 @@ export function WorkflowTemplateGallery() {
                         ))}
                       </div>
                     </section>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
       <Modal
         open={preview !== null}
@@ -300,26 +326,36 @@ export function WorkflowTemplateGallery() {
 }
 
 /**
- * The empty-canvas option, in the same rail as the lifecycle list.
- *
- * Dashed so it reads as "not a template" — the same treatment it had when this
- * gallery was a picker. Clicking names a draft; there is no flow to preview.
+ * Soft mesh + film grain on the search banner. Colour comes from brand and
+ * info tints — the same tokens as chips and avatars — so the field can glow
+ * without inventing a palette. Grain is turbulence, not a bitmap.
  */
-function ScratchCard({ onSelect }: { onSelect: () => void }) {
+function BannerAtmosphere() {
+  const grain = `tpl-grain-${React.useId().replace(/:/g, '')}`;
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className="flex w-full items-center gap-2.5 rounded-md border border-dashed border-border px-3 py-2.5 text-left transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-    >
-      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-subtle text-icon">
-        <DrawOutlined sx={{ fontSize: 18 }} />
-      </span>
-      <span className="min-w-0">
-        <span className="block text-body-sm-strong text-text-primary">From scratch</span>
-        <span className="block text-caption text-text-secondary">Empty canvas</span>
-      </span>
-    </button>
+    <>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage: [
+            'radial-gradient(ellipse 90% 130% at 6% -20%, var(--ds-color-brand-subtle) 0%, transparent 58%)',
+            'radial-gradient(ellipse 80% 110% at 98% 120%, var(--ds-color-status-info-subtle) 0%, transparent 55%)',
+            'radial-gradient(ellipse 55% 80% at 72% -30%, var(--ds-color-brand-border) 0%, transparent 52%)',
+            'radial-gradient(ellipse 50% 70% at 24% 130%, var(--ds-color-brand-subtleHover) 0%, transparent 50%)',
+          ].join(', '),
+        }}
+      />
+      <svg
+        className="pointer-events-none absolute inset-0 h-full w-full opacity-50 mix-blend-overlay"
+        aria-hidden
+      >
+        <filter id={grain}>
+          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch" />
+        </filter>
+        <rect width="100%" height="100%" filter={`url(#${grain})`} />
+      </svg>
+    </>
   );
 }
 
@@ -333,36 +369,47 @@ function TemplateCard({
   onUse: () => void;
 }) {
   return (
-    <article className="flex h-full w-full flex-col rounded-lg border border-border bg-surface p-1.5 transition-all hover:border-border-strong hover:shadow-sm">
-      <div className="relative shrink-0 rounded-md bg-subtle px-3 pb-4 pt-6">
-        <div className="absolute right-2 top-2">
-          <StatusChip intent="info" label={template.audience} dot={false} />
+    <article className="flex h-full flex-col rounded-xl border border-border bg-surface p-4 transition-all duration-200 hover:border-border-strong hover:shadow-sm">
+      <div className="self-start">
+        <StatusChip
+          intent={AUDIENCE_CHIP[template.audience].intent}
+          label={template.audience}
+          icon={AUDIENCE_CHIP[template.audience].icon}
+        />
+      </div>
+      <h3 className="mt-2 truncate text-body-strong text-text-primary">{template.name}</h3>
+      <p className="mt-0.5 line-clamp-2 text-body-sm text-text-secondary">{template.summary}</p>
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
+        <div className="flex min-w-0 items-center gap-1.5">
+          {template.systems.map((name) => (
+            <SystemMark key={name} name={name} />
+          ))}
         </div>
-        <TemplateIllustration template={template} />
-      </div>
-      <div className="px-2 py-2.5">
-        <h3 className="truncate text-body-sm-medium text-text-primary">{template.name}</h3>
-        <p className="mt-0.5 line-clamp-2 min-h-8 text-caption text-text-secondary">{template.summary}</p>
-      </div>
-      <div className="mt-auto flex gap-2 px-2 pb-1.5">
-        <Button variant="secondary" size="xs" fullWidth onClick={onUse}>
-          Use template
-        </Button>
-        <Button variant="tertiary" size="xs" fullWidth onClick={onPreview}>
-          Preview
-        </Button>
+        <div className="flex shrink-0 items-center gap-3">
+          <button
+            type="button"
+            className="text-caption-medium text-text-secondary hover:text-text-primary hover:underline"
+            onClick={onPreview}
+          >
+            Preview
+          </button>
+          <button
+            type="button"
+            className="rounded-sm bg-surface-inverse px-2.5 py-1 text-caption-medium text-text-inverse hover:bg-sidebar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+            onClick={onUse}
+          >
+            Use template
+          </button>
+        </div>
       </div>
     </article>
   );
 }
 
-/**
- * Connector strip: source system → lifecycle event → destination system.
- * Circles on a dashed line — a gallery of processes, not a list of paragraphs.
- */
 function systemGlyph(name: string): SvgIconComponent {
   const n = name.toLowerCase();
-  if (n.includes('peoplesoft') || n.includes('hrms') || n.includes('sis')) return StorageOutlined;
+  if (n.includes('sis') || n.includes('student')) return SchoolOutlined;
+  if (n.includes('peoplesoft') || n.includes('hrms')) return StorageOutlined;
   if (n.includes('entra') || n.includes('azure')) return BadgeOutlined;
   if (n.includes('office') || n.includes('365')) return MailOutline;
   if (n.includes('active directory')) return AccountTreeOutlined;
@@ -370,46 +417,15 @@ function systemGlyph(name: string): SvgIconComponent {
   return HubOutlined;
 }
 
-function Node({
-  icon: Icon,
-  size,
-  emphasis,
-  title,
-}: {
-  icon: React.ComponentType<{ sx?: object }>;
-  size: 'sm' | 'md';
-  emphasis?: boolean;
-  title: string;
-}) {
+/** Outlined square, quiet icon — same weight as overview-card header marks. */
+function SystemMark({ name }: { name: string }) {
+  const Icon = systemGlyph(name);
   return (
     <span
-      title={title}
-      className={[
-        'grid shrink-0 place-items-center rounded-pill border bg-surface shadow-xs',
-        size === 'md' ? 'h-9 w-9' : 'h-7 w-7',
-        emphasis ? 'border-brand-subtle text-text-primary' : 'border-border text-icon',
-      ].join(' ')}
+      title={name}
+      className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-border text-icon-subtle"
     >
-      <Icon
-        sx={{ fontSize: size === 'md' ? 18 : 14, color: 'inherit' }}
-      />
-    </span>
-  );
-}
-
-function TemplateIllustration({ template }: { template: WorkflowTemplate }) {
-  const EventIcon = EVENT_ICONS[template.event];
-  const source = template.systems[0];
-  const dest = template.systems.find((s) => s !== source) ?? template.systems[1];
-  const showDest = Boolean(dest && dest !== source);
-
-  return (
-    <span className="mx-auto flex h-11 w-max items-center" aria-hidden>
-      {source && <Node icon={systemGlyph(source)} size="sm" title={source} />}
-      {source && <span className="w-5 shrink-0 border-t border-dashed border-border" />}
-      <Node icon={EventIcon} size="md" emphasis title={EVENT_LABEL[template.event]} />
-      {showDest && <span className="w-5 shrink-0 border-t border-dashed border-border" />}
-      {showDest && dest && <Node icon={systemGlyph(dest)} size="sm" title={dest} />}
+      <Icon sx={{ fontSize: 14, color: 'inherit' }} />
     </span>
   );
 }

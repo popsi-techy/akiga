@@ -289,7 +289,7 @@ type CatalogApp = (typeof catalogApps)[number];
  * IAM, and provisioning follows the toggle the admin just set.
  */
 const onboardedDescription = (a: OnboardedApplication) =>
-  a.description.trim() || `Onboarded from ${a.appType}.`;
+  (a.description ?? '').trim() || `Onboarded from ${a.appType}.`;
 
 const onboardedApp = (a: OnboardedApplication): CatalogApp => ({
   id: a.id,

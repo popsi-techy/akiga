@@ -18,7 +18,7 @@ import * as React from 'react';
 export function SetupProgress({
   done,
   total,
-  /** The noun after the count. Keep it to one word — this is a header ornament. */
+  /** Phrase after the count — e.g. `required` or `required steps completed`. */
   label = 'required',
   /**
    * Which edge the count and bars hang off. `'end'` for the header it was built
@@ -26,20 +26,34 @@ export function SetupProgress({
    * where a right-aligned tally would float away from everything above it.
    */
   align = 'end',
+  layout = 'stack',
+  className = '',
 }: {
   done: number;
   total: number;
   label?: string;
   align?: 'start' | 'end';
+  /**
+   * `stack` — count above the bars (header). `inline` — count and bars on one
+   * row, for a short docked footer.
+   */
+  layout?: 'stack' | 'inline';
+  /** Replaces the default `hidden sm:flex` when the count must always show. */
+  className?: string;
 }) {
   return (
     <div
-      className={`hidden flex-col gap-1.5 sm:flex ${align === 'end' ? 'items-end' : 'items-start'}`}
+      className={[
+        className || 'hidden sm:flex',
+        layout === 'inline'
+          ? 'flex-row items-center gap-2.5'
+          : `flex-col gap-1.5 ${align === 'end' ? 'items-end' : 'items-start'}`,
+      ].join(' ')}
       role="group"
-      aria-label={`${done} of ${total} ${label} steps configured`}
+      aria-label={`${done} of ${total} ${label}`}
     >
       <span className="whitespace-nowrap text-overline tabular-nums text-text-tertiary">
-        {done} / {total} {label}
+        {done} of {total} {label}
       </span>
       {/* aria-hidden: the label above already says the number, so the bars are
           decoration for a screen reader, not a second announcement. */}
