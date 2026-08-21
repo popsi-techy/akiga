@@ -1116,26 +1116,22 @@ export function EmergencyAccessDetail({
             {/* A draft has never been on, so the only thing to offer is turning it on —
                 and only once it would actually work.
 
-                A plain button that is simply disabled until then. It used to carry a
-                progress ring and a "N required steps to activate" label, from when the
-                header was the only place the reader could learn how far along the setup
-                was. The docked checklist reports that now, step by step, so a second meter in
-                the button was the same state said twice — and the button's own job, which
-                is the one action, was the half that got crowded out. The tooltip still
-                names what is missing for anyone who reaches for it. */}
+                Unavailable, not inert: `disabled` on Button maps to aria-disabled so
+                keyboard users can still land here and hear (or see) why. Native
+                disabled would drop it from the tab order and leave the reason on
+                hover only. */}
             {ea.isDraft ? (
               <Tooltip
+                describeChild
                 title={
                   blocking.length > 0
                     ? `Add ${blocking.join(' and ')} before this can be activated.`
                     : 'Let eligible people request this access'
                 }
               >
-                <span>
-                  <Button disabled={blocking.length > 0} onClick={activate}>
-                    Activate
-                  </Button>
-                </span>
+                <Button disabled={blocking.length > 0} onClick={activate}>
+                  Activate
+                </Button>
               </Tooltip>
             ) : (
               <Button variant="secondary" startIcon={<BlockOutlined />} onClick={() => setDeactivateOpen(true)}>
@@ -1230,21 +1226,20 @@ export function EmergencyAccessDetail({
                 )}
                 {!atLastGuided && (
                   <Tooltip
+                    describeChild
                     title={
                       nextBlocked
                         ? `Add ${guidedStep.label.toLowerCase()} before continuing.`
                         : 'Go to the next setup step'
                     }
                   >
-                    <span>
-                      <Button
-                        size="xs"
-                        disabled={nextBlocked}
-                        onClick={() => goGuided(guidedIndex + 1)}
-                      >
-                        Next
-                      </Button>
-                    </span>
+                    <Button
+                      size="xs"
+                      disabled={nextBlocked}
+                      onClick={() => goGuided(guidedIndex + 1)}
+                    >
+                      Next
+                    </Button>
                   </Tooltip>
                 )}
               </>

@@ -204,17 +204,16 @@ export default function ApplicationDetailPage() {
                 and the crowded-out half was the button's one action. */}
             {isDraft && onboarded ? (
               <Tooltip
+                describeChild
                 title={
                   blocking.length > 0
                     ? `Add ${blocking.join(' and ')} before this can be connected.`
                     : 'Let IGA reach this application'
                 }
               >
-                <span>
-                  <Button disabled={blocking.length > 0} onClick={connect}>
-                    Connect
-                  </Button>
-                </span>
+                <Button disabled={blocking.length > 0} onClick={connect}>
+                  Connect
+                </Button>
               </Tooltip>
             ) : null}
             <Menu

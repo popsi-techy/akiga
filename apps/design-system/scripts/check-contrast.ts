@@ -128,6 +128,14 @@ checks.push({
 });
 // Disabled/placeholder text is WCAG-exempt (1.4.3) — reported, not enforced.
 checks.push({ label: 'text.disabled on surface', fg: color.text.disabled, bg: color.surface.default, min: AA_TEXT, exempt: true });
+// Gated buttons (`aria-disabled`) are focusable, so the 1.4.3 inactive exemption
+// does not apply. The label must still meet AA on the sunken fill.
+checks.push({
+  label: 'text.tertiary on surface.disabled (unavailable button)',
+  fg: color.text.tertiary,
+  bg: color.surface.disabled,
+  min: AA_TEXT,
+});
 
 // --- Status: fg on subtle, onSolid on solid (AA) ---
 for (const [k, s] of Object.entries(color.status)) {

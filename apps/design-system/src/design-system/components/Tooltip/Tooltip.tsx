@@ -18,6 +18,12 @@ export interface TooltipProps {
   /** Show the little pointer arrow. @default true for `label`, false for `card` */
   arrow?: boolean;
   /**
+   * Put the tooltip on `aria-describedby` instead of `aria-label`. Use this when
+   * the child already has a name (a labelled button) so the tooltip explains
+   * rather than replacing “Activate” with the whole sentence.
+   */
+  describeChild?: boolean;
+  /**
    * - `label` (default) — small dark contextual label for a few words.
    * - `card` — light surface panel for rich content. The tooltip contributes only
    *   the surface, border and elevation; the content supplies its own padding and
@@ -33,6 +39,7 @@ export function Tooltip({
   placement = 'top',
   arrow,
   variant = 'label',
+  describeChild = false,
 }: TooltipProps) {
   const isCard = variant === 'card';
   const showArrow = arrow ?? !isCard;
@@ -42,6 +49,7 @@ export function Tooltip({
       title={title}
       placement={placement}
       arrow={showArrow}
+      describeChild={describeChild}
       componentsProps={{
         tooltip: {
           sx: isCard

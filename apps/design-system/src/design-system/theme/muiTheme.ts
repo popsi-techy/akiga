@@ -32,6 +32,10 @@ export const muiTheme = createTheme({
     text: { primary: color.text.primary, secondary: color.text.secondary, disabled: color.text.disabled },
     background: { default: color.background.canvas, paper: color.surface.default },
     divider: color.border.default,
+    action: {
+      disabled: color.text.disabled,
+      disabledBackground: color.surface.disabled,
+    },
   },
   shape: { borderRadius: 8 },
   typography: {
@@ -93,23 +97,40 @@ export const muiTheme = createTheme({
           fontWeight: fontWeight.medium,
           paddingInline: '16px',
           /**
-           * Disabled: grey, flat, and still legible.
+           * Unavailable (gated) buttons. Not native-disabled — see Button.tsx.
            *
-           * It used to be `opacity: 0.45` with the comment "dim rather than recolor"
-           * — but MUI recolors a disabled contained button anyway, to
-           * rgba(0,0,0,0.26) on rgba(0,0,0,0.12), so the result was a recolor AND a
-           * dim, and the label came out at barely over 1:1. A disabled control still
-           * has to say what it is: a button reading "2 steps to activate" is useless
-           * if the reader cannot make out the words.
-           *
-           * These are the product's own tokens rather than MUI's blacks, and there is
-           * no opacity on top. It still cannot be mistaken for active — flat grey
-           * beside a filled orange is unambiguous — it can simply be read.
+           * Contrast: `text.tertiary` on `surface.disabled` is ≥4.5:1 (1.4.3). No
+           * extra outline — a contained primary already has a filled shape, and a
+           * second ring on a receded control looks like a focus state that never
+           * leaves. Keyboard focus still gets the brand ring (2.4.7).
            */
-          '&.Mui-disabled': {
-            backgroundColor: 'var(--ds-color-background-subtle)',
+          '&.Mui-disabled, &[aria-disabled="true"]': {
+            backgroundColor: 'var(--ds-color-surface-disabled)',
             color: 'var(--ds-color-text-tertiary)',
+            borderColor: 'transparent',
+            boxShadow: 'none',
+            outline: 'none',
+            opacity: 1,
+            pointerEvents: 'auto',
+            cursor: 'not-allowed',
+            '&:hover': {
+              backgroundColor: 'var(--ds-color-surface-disabled)',
+              borderColor: 'transparent',
+              boxShadow: 'none',
+            },
+            '&.Mui-focusVisible': {
+              outline: '2px solid var(--ds-color-border-focus)',
+              outlineOffset: '2px',
+            },
+          },
+          '&.MuiButton-outlined.Mui-disabled, &.MuiButton-outlined[aria-disabled="true"]': {
             borderColor: 'var(--ds-color-border-default)',
+            '&:hover': { borderColor: 'var(--ds-color-border-default)' },
+          },
+          '&.MuiButton-text.Mui-disabled, &.MuiButton-text[aria-disabled="true"]': {
+            backgroundColor: 'transparent',
+            boxShadow: 'none',
+            '&:hover': { backgroundColor: 'transparent', boxShadow: 'none' },
           },
         },
       },

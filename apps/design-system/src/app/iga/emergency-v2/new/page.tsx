@@ -428,17 +428,16 @@ function EmergencyAccessV2WizardInner() {
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center gap-2">
                   <Tooltip
+                    describeChild
                     title={
                       blocking.length > 0
                         ? `Add ${blocking.join(' and ')} before this can be activated.`
                         : 'Let eligible people request this access'
                     }
                   >
-                    <span>
-                      <Button startIcon={<CheckCircleOutlined />} disabled={blocking.length > 0} onClick={activate}>
-                        Activate
-                      </Button>
-                    </span>
+                    <Button startIcon={<CheckCircleOutlined />} disabled={blocking.length > 0} onClick={activate}>
+                      Activate
+                    </Button>
                   </Tooltip>
                   <Menu
                     ariaLabel="More actions"
@@ -510,17 +509,16 @@ function EmergencyAccessV2WizardInner() {
                   looks live and does nothing reads as a broken app, where a
                   disabled one with a reason attached reads as a rule. */}
               <Tooltip
+                describeChild
                 title={unmet ? `Add ${unmet} before moving on.` : 'Save this step and move on'}
               >
-                <span>
-                  <Button
-                    endIcon={<ArrowForwardOutlined />}
-                    disabled={Boolean(unmet)}
-                    onClick={() => goTo(step + 1)}
-                  >
-                    Save and continue
-                  </Button>
-                </span>
+                <Button
+                  endIcon={<ArrowForwardOutlined />}
+                  disabled={Boolean(unmet)}
+                  onClick={() => goTo(step + 1)}
+                >
+                  Save and continue
+                </Button>
               </Tooltip>
             </div>
           </div>

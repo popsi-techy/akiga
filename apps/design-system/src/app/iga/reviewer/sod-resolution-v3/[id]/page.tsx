@@ -189,53 +189,6 @@ function ruleResolutionActionLabel(detail: RuleResolutionDetail): string {
     : `Risk will be accepted for ${detail.days} day${detail.days === 1 ? '' : 's'}`;
 }
 
-function RuleResolutionSummary({ detail }: { detail: RuleResolutionDetail }) {
-  return (
-    <div className="mt-2.5 rounded-md bg-subtle px-2.5 py-2.5">
-      <div className="flex items-start gap-2">
-        <span
-          className={[
-            'mt-0.5 shrink-0',
-            detail.kind === 'removed'
-              ? 'text-[var(--ds-color-status-danger-fg)]'
-              : 'text-[var(--ds-color-status-warning-fg)]',
-          ].join(' ')}
-        >
-          {detail.kind === 'removed' ? (
-            <DeleteOutline sx={{ fontSize: 16 }} />
-          ) : (
-            <ShieldOutlined sx={{ fontSize: 16 }} />
-          )}
-        </span>
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <p className="text-body-sm-strong leading-5 text-text-primary">
-            {ruleResolutionActionLabel(detail)}
-          </p>
-          {detail.justification.trim() ? (
-            <p className="border-t border-border-subtle pt-1.5 text-caption leading-5 text-text-secondary">
-              {detail.justification}
-            </p>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function buildRemovedResolutionDetail(
-  rule: SodRule,
-  removedIds: Set<string>,
-  justification: string,
-): RuleResolutionDetail | null {
-  const names = rule.accessIds
-    .filter((id) => removedIds.has(id))
-    .map((id) => getAccess(id)?.name)
-    .filter(Boolean) as string[];
-  const text = justification.trim();
-  if (names.length === 0 && !text) return null;
-  return { kind: 'removed', names, justification: text };
-}
-
 type StatusCounts = {
   pending: number;
   willResolve: number;
@@ -1120,7 +1073,6 @@ function SodResolutionV3WorkspacePageInner() {
           rules={rules}
           ruleUiStatus={ruleUiStatus}
           removalSelection={removalSelection}
-          removeJustification={removeJustification}
           filter={ruleFilter}
           onFilter={setRuleFilter}
           counts={workspaceStatusCounts}
@@ -1382,15 +1334,12 @@ function RuleCard({
   status,
   stagedAccessIds,
   acceptance,
-  resolutionDetail,
 }: {
   rule: SodRule;
   status: RuleUiStatus;
   stagedAccessIds?: Set<string>;
   /** Final risk-acceptance details (main / history page). */
   acceptance?: AcceptedRisk;
-  /** Staged remove / accept detail (workspace impact panel). */
-  resolutionDetail?: RuleResolutionDetail | null;
 }) {
   /**
    * Prefer the exact expiry the reviewer chose over the coarse duration bucket —
@@ -1429,9 +1378,7 @@ function RuleCard({
         })}
       </div>
 
-      {resolutionDetail ? (
-        <RuleResolutionSummary detail={resolutionDetail} />
-      ) : acceptance ? (
+      {acceptance ? (
         <div className="mt-2.5 rounded-md bg-subtle px-2.5 py-2.5">
           <div className="flex items-start gap-2">
             <span className="mt-0.5 shrink-0 text-[var(--ds-color-status-warning-fg)]">
@@ -1507,7 +1454,6 @@ function PolicyRulesPanel({
   filter,
   onFilter,
   counts,
-  ruleResolutionDetail,
 }: {
   rules: SodRule[];
   ruleUiStatus: (r: SodRule) => RuleUiStatus;
@@ -1515,7 +1461,6 @@ function PolicyRulesPanel({
   filter: RuleFilter;
   onFilter: (f: RuleFilter) => void;
   counts: StatusCounts;
-  ruleResolutionDetail?: (rule: SodRule) => RuleResolutionDetail | null;
 }) {
   const [search, setSearch] = React.useState('');
   const filterOptions = [
@@ -1585,7 +1530,6 @@ function PolicyRulesPanel({
               rule={rule}
               status={ruleUiStatus(rule)}
               stagedAccessIds={stagedAccessIds}
-              resolutionDetail={ruleResolutionDetail?.(rule) ?? null}
             />
           ))}
         </div>
@@ -2159,7 +2103,6 @@ function AcceptRiskColumns({
   rules,
   ruleUiStatus,
   removalSelection,
-  removeJustification,
   filter,
   onFilter,
   counts,
@@ -2174,7 +2117,6 @@ function AcceptRiskColumns({
   rules: SodRule[];
   ruleUiStatus: (r: SodRule) => RuleUiStatus;
   removalSelection: Set<string>;
-  removeJustification: string;
   filter: RuleFilter;
   onFilter: (f: RuleFilter) => void;
   counts: StatusCounts;
@@ -2244,14 +2186,6 @@ function AcceptRiskColumns({
             filter={filter}
             onFilter={onFilter}
             counts={counts}
-            ruleResolutionDetail={(rule) => {
-              const status = ruleUiStatus(rule);
-              if (status === 'will-accept') return null;
-              if (status === 'will-resolve') {
-                return buildRemovedResolutionDetail(rule, removalSelection, removeJustification);
-              }
-              return null;
-            }}
           />
         </div>
       </section>

@@ -132,21 +132,20 @@ export default function SodPolicyDetailPage() {
               // only the draft can be incomplete — so only it can be blocked, and
               // the tooltip says by what rather than leaving a dead control.
               <Tooltip
+                describeChild
                 title={
                   blocking.length > 0
                     ? `${blocking.join(' and ')} before this can be activated.`
                     : 'Start detecting conflicts against this rule'
                 }
               >
-                <span>
-                  <Button
-                    startIcon={isDraft ? <CheckCircleOutlined /> : <PlayArrowOutlined />}
-                    disabled={blocking.length > 0}
-                    onClick={activate}
-                  >
-                    Activate
-                  </Button>
-                </span>
+                <Button
+                  startIcon={isDraft ? <CheckCircleOutlined /> : <PlayArrowOutlined />}
+                  disabled={blocking.length > 0}
+                  onClick={activate}
+                >
+                  Activate
+                </Button>
               </Tooltip>
             )}
             <Menu

@@ -43,14 +43,17 @@ export default function ButtonDocs() {
         </Example>
       </Section>
 
-      <Section title="States">
-        <Example label="default · loading · disabled">
+      <Section
+        title="States"
+        description="Unavailable actions stay in the tab order. Native disabled would drop them from the keyboard and hide a hover-only ‘why’ from anyone not using a mouse. Loading is the exception — a spinner is not something to inspect."
+      >
+        <Example label="default · loading · unavailable">
           <Button variant="primary">Submit</Button>
           <Button variant="primary" loading>
             Submitting
           </Button>
           <Button variant="primary" disabled>
-            Submit
+            Activate
           </Button>
           <Button variant="secondary" disabled>
             Filter
@@ -64,7 +67,7 @@ export default function ButtonDocs() {
             { name: 'variant', type: "'primary' | 'secondary' | 'tertiary' | 'danger'", default: "'primary'", description: 'Visual role / priority.' },
             { name: 'size', type: "'xs' | 'sm' | 'md' | 'lg'", default: "'sm'", description: 'Control height: 32 / 36 / 40 / 48. xs is for dense clusters only.' },
             { name: 'loading', type: 'boolean', default: 'false', description: 'Shows a spinner and disables interaction.' },
-            { name: 'disabled', type: 'boolean', default: 'false', description: 'Disables the button.' },
+            { name: 'disabled', type: 'boolean', default: 'false', description: 'Marks the action unavailable (aria-disabled). Stays focusable so a tooltip can explain why. Loading uses native disabled instead.' },
             { name: 'startIcon / endIcon', type: 'ReactNode', description: 'Leading / trailing icon (MUI icon).' },
             { name: '…MuiButtonProps', type: 'ButtonProps', description: 'onClick, href, fullWidth, etc. pass through.' },
           ]}
@@ -77,13 +80,14 @@ export default function ButtonDocs() {
             'Use one primary button per view/section.',
             'Lead with a verb: “Create Policy”, “Approve”.',
             'Use danger only for destructive, irreversible actions.',
-            'Show loading during async submits.',
+            'Keep gated actions (Activate until setup is done) on `disabled` — they stay keyboard-reachable and a Tooltip can name what is missing.',
           ]}
           donts={[
             'Don’t place two primary buttons side by side.',
             'Don’t use “OK”/“Submit” when a specific verb fits.',
             'Don’t rely on color alone — keep clear labels.',
             'Don’t restyle with hex — the variants are the API.',
+            'Don’t use a native HTML disabled attribute on a gated CTA — `disabled` on this Button already stays focusable.',
           ]}
         />
       </Section>
