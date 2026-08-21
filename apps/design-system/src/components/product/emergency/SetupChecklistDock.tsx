@@ -179,7 +179,7 @@ function StepRow({
           {showNext && (
             <span className="mt-2 block">
               <Button component="span" size="xs" variant={ctaVariant} tabIndex={-1}>
-                {step.cta}
+                Next: {step.cta}
               </Button>
             </span>
           )}
