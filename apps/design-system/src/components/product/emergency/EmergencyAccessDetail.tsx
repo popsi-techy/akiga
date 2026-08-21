@@ -114,8 +114,17 @@ import { SetupChecklistDock } from '@/components/product/emergency/SetupChecklis
  * open the tab to find out it was empty. `count` is only omitted for the tabs
  * that hold no collection to count.
  */
-function tabsFor(ea: EADetail): TabItem[] {
+function tabsFor(ea: EADetail, opts?: { setupHints?: boolean }): TabItem[] {
   const assignments = getEAAssignments(ea.id);
+  const hint = (tab: string): TabItem['status'] => {
+    if (!opts?.setupHints || !ea.isDraft) return undefined;
+    // Advanced is satisfied by factory defaults. A green tick would claim someone
+    // finished it; leave the tab unmarked, same as a live profile's strip.
+    if (tab === 'advanced') return undefined;
+    const step = EA_GUIDED_STEPS.find((s) => s.tab === tab);
+    if (!step) return undefined;
+    return isEASetupStepDone(step.id, ea) ? 'complete' : 'pending';
+  };
   const tabs: TabItem[] = [];
   // A draft has no summary yet — setup lives in the dock / bar / wizard, not here.
   // Overview returns the moment the profile is live.
@@ -127,10 +136,21 @@ function tabsFor(ea: EADetail): TabItem[] {
       value: 'assignments',
       label: 'Assignments',
       count: assignments.entitlements.length + assignments.technicalRoles.length,
+      status: hint('assignments'),
     },
-    { value: 'eligibility', label: 'Eligibility Criteria', count: ea.eligibilityGroups.length },
-    { value: 'owners', label: 'Owners', count: ea.ownersCount + getEAGovernanceTeams(ea.id).length },
-    { value: 'advanced', label: 'Advanced Configuration' },
+    {
+      value: 'eligibility',
+      label: 'Eligibility Criteria',
+      count: ea.eligibilityGroups.length,
+      status: hint('eligibility'),
+    },
+    {
+      value: 'owners',
+      label: 'Owners',
+      count: ea.ownersCount + getEAGovernanceTeams(ea.id).length,
+      status: hint('owners'),
+    },
+    { value: 'advanced', label: 'Advanced Configuration', status: hint('advanced') },
   );
   return tabs;
 }
@@ -1036,7 +1056,7 @@ export function EmergencyAccessDetail({
    * value and falls back when it does not. Normalising once here means no render site
    * has to guard against a tab the strip does not show.
    */
-  const visibleTabs = tabsFor(ea);
+  const visibleTabs = tabsFor(ea, { setupHints: isV3 });
   const shownTab = visibleTabs.some((t) => t.value === tab)
     ? tab
     : ea.isDraft
@@ -1093,12 +1113,6 @@ export function EmergencyAccessDetail({
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {/* Was a `toast.info` stub. It opens the real editor now — the same one
-                the setup checklist's "Edit details" reaches, so there is one place
-                these two fields are changed. */}
-            <Button variant="secondary" startIcon={<EditOutlined />} onClick={() => setBasicsOpen(true)}>
-              Basic Details
-            </Button>
             {/* A draft has never been on, so the only thing to offer is turning it on —
                 and only once it would actually work.
 
@@ -1130,6 +1144,12 @@ export function EmergencyAccessDetail({
             )}
             <Menu
               items={[
+                {
+                  label: 'Edit basic details',
+                  icon: <EditOutlined sx={{ fontSize: 18 }} />,
+                  onClick: () => setBasicsOpen(true),
+                  divider: !showSetupBar,
+                },
                 ...(showSetupBar
                   ? [
                       {
@@ -1168,11 +1188,7 @@ export function EmergencyAccessDetail({
             />
           </div>
           <div
-            className={
-              showSetupDock
-                ? 'min-h-0 min-w-0 flex-1 px-8 py-5'
-                : 'min-h-0 min-w-0 flex-1 px-8 pt-5'
-            }
+            className="min-h-0 min-w-0 flex-1 px-8 py-5"
           >
         {shownTab ==='overview' && (
           <OverviewTab ea={ea} />
@@ -1198,19 +1214,20 @@ export function EmergencyAccessDetail({
       </div>
 
       {showSetupBar && (
-        <div className="shrink-0 -mx-8 -mb-6 bg-canvas pt-3">
-          <div className="border-t border-border bg-surface px-8 py-2">
+        <div className="shrink-0 -mx-8 -mb-6 border-t border-border bg-surface px-8 py-2">
           <SetupBar
-            className="rounded-none border-0 bg-transparent p-0 shadow-none"
+            className="rounded-none border-0 bg-transparent !p-0 shadow-none"
             actions={
               <>
-                <Button
-                  variant="secondary"
-                  disabled={guidedIndex <= 0}
-                  onClick={() => goGuided(guidedIndex - 1)}
-                >
-                  Back
-                </Button>
+                {guidedIndex > 0 && (
+                  <Button
+                    variant="secondary"
+                    size="xs"
+                    onClick={() => goGuided(guidedIndex - 1)}
+                  >
+                    Back
+                  </Button>
+                )}
                 {!atLastGuided && (
                   <Tooltip
                     title={
@@ -1221,6 +1238,7 @@ export function EmergencyAccessDetail({
                   >
                     <span>
                       <Button
+                        size="xs"
                         disabled={nextBlocked}
                         onClick={() => goGuided(guidedIndex + 1)}
                       >
@@ -1237,11 +1255,10 @@ export function EmergencyAccessDetail({
                 layout="inline"
                 done={EA_REQUIRED_STEPS - blocking.length}
                 total={EA_REQUIRED_STEPS}
-                label="required steps completed"
+                pendingDetails={blocking}
               />
             }
           />
-          </div>
         </div>
       )}
 

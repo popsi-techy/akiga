@@ -148,19 +148,19 @@ export function createEmergencyAccess(input: { name: string; description: string
 }
 
 export function getEmergencyAccessList(): EARow[] {
-  return allProfiles().map((ea) => ({
-    id: ea.id,
-    name: ea.name,
-    initial: ea.initial,
-    status: isActive(ea.id, ea.status)
-      ? { intent: 'success', label: 'Active' }
-      : { intent: 'warning', label: 'Draft' },
-    risk:
-      ea.riskLevel && ea.riskScore != null
-        ? { intent: RISK_INTENT[ea.riskLevel], label: `${cap(ea.riskLevel)} (${ea.riskScore})` }
-        : null,
-    activeUsers: ea.activeUsers ?? null,
-  }));
+  return allProfiles().map((ea) => {
+    const active = isActive(ea.id, ea.status);
+    return {
+      id: ea.id,
+      name: ea.name,
+      initial: ea.initial,
+      status: active
+        ? { intent: 'success', label: 'Active' }
+        : { intent: 'warning', label: 'Draft' },
+      risk: liveRiskChip(ea.id, ea, active),
+      activeUsers: ea.activeUsers ?? null,
+    };
+  });
 }
 
 export interface EASessionView {
@@ -195,6 +195,7 @@ export interface EADetail {
 export function getEmergencyAccess(id: string): EADetail | null {
   const ea = allProfiles().find((e) => e.id === id);
   if (!ea) return null;
+  const active = isActive(ea.id, ea.status);
 
   const sessions: EASessionView[] = emergencySessions.map((s, i) => {
     const idn = identities.find((u) => u.id === s.identityId);
@@ -213,20 +214,17 @@ export function getEmergencyAccess(id: string): EADetail | null {
     name: ea.name,
     initial: ea.initial,
     description: ea.description,
-    status: isActive(ea.id, ea.status)
+    status: active
       ? { intent: 'success', label: 'Active' }
       : { intent: 'warning', label: 'Draft' },
-    risk:
-      ea.riskLevel && ea.riskScore != null
-        ? { intent: RISK_INTENT[ea.riskLevel], label: `${cap(ea.riskLevel)} (${ea.riskScore})` }
-        : null,
+    risk: liveRiskChip(ea.id, ea, active),
     config: {
       maxDurationHrs: ea.maxDurationHrs,
       maxConcurrent: ea.maxConcurrent,
       maxRequestsPerDay: ea.maxRequestsPerDay,
       cooldownHrs: ea.cooldownHrs,
     },
-    isDraft: !isActive(ea.id, ea.status),
+    isDraft: !active,
     timeline: { createdOn: ea.createdOn, updatedOn: ea.updatedOn },
     sessions,
     sessionsTotal: emergencySessionsTotal,
@@ -573,6 +571,27 @@ function riskLevelFromScore(score: number): RiskLevel {
   if (score >= 70) return 'high';
   if (score >= 40) return 'medium';
   return 'low';
+}
+
+/**
+ * Risk on a live profile, from the same score Advanced Configuration edits.
+ *
+ * Seeded actives carry a number; a draft that was switched on does not — it
+ * still has the factory default (84) unless the user changed it. The list used
+ * to read only the seed, so Activate produced an Active row with N/A, which is
+ * a contradiction: if it can be requested, it has a risk.
+ *
+ * Drafts stay empty. A score that is not in force is not a score.
+ */
+function liveRiskChip(
+  id: string,
+  ea: SeedEmergencyAccess,
+  active: boolean,
+): EARow['risk'] {
+  if (!active) return null;
+  const score = advancedConfigById.get(id)?.riskScore ?? ea.riskScore ?? 84;
+  const level = riskLevelFromScore(score);
+  return { intent: RISK_INTENT[level], label: `${cap(level)} (${score})` };
 }
 
 export function riskChipFromScore(score: number): {

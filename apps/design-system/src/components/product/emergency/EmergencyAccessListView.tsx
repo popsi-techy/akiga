@@ -87,14 +87,6 @@ export function EmergencyAccessListView({
         ),
     },
     {
-      id: 'activeUsers',
-      header: 'Active Users',
-      sortable: true,
-      value: (r) => r.activeUsers ?? -1,
-      render: (r) =>
-        r.activeUsers == null ? <span className="text-text-disabled">N/A</span> : r.activeUsers,
-    },
-    {
       id: 'actions',
       header: 'Actions',
       align: 'right',

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import CheckCircle from '@mui/icons-material/CheckCircle';
 import MuiTabs from '@mui/material/Tabs';
 import MuiTab from '@mui/material/Tab';
 import { typography } from '../../tokens/tokens';
@@ -25,6 +26,14 @@ export interface TabItem {
   label: string;
   /** Optional count shown after the label (e.g. Owners (4)). */
   count?: number;
+  /**
+   * Setup hint before the label. Same filled CheckCircle the checklist uses —
+   * green when complete, `border.strong` when still open. Colour is its own, so a
+   * selected tab's orange does not recolour it. Omit on pages that are not
+   * walking setup, and on a step that is satisfied without anyone deciding
+   * (Advanced's factory defaults).
+   */
+  status?: 'pending' | 'complete';
   disabled?: boolean;
 }
 
@@ -82,14 +91,37 @@ export function Tabs({ items, value, onChange, 'aria-label': ariaLabel, noBorder
         },
       }}
     >
-      {items.map((t) => (
-        <MuiTab
-          key={t.value}
-          value={t.value}
-          disabled={t.disabled}
-          label={t.count != null ? `${t.label} (${t.count})` : t.label}
-        />
-      ))}
+      {items.map((t) => {
+        const title = t.count != null ? `${t.label} (${t.count})` : t.label;
+        return (
+          <MuiTab
+            key={t.value}
+            value={t.value}
+            disabled={t.disabled}
+            label={
+              t.status ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <span
+                    className="grid h-4 w-4 shrink-0 place-items-center"
+                    style={{
+                      color:
+                        t.status === 'complete'
+                          ? 'var(--ds-color-status-success-fg)'
+                          : 'var(--ds-color-border-strong)',
+                    }}
+                  >
+                    <CheckCircle sx={{ fontSize: 16, color: 'inherit' }} aria-hidden />
+                    <span className="sr-only">{t.status === 'complete' ? 'Completed' : 'Pending'}</span>
+                  </span>
+                  <span>{title}</span>
+                </span>
+              ) : (
+                title
+              )
+            }
+          />
+        );
+      })}
     </MuiTabs>
   );
 }

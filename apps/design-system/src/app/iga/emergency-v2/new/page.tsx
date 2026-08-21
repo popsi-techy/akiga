@@ -480,7 +480,11 @@ function EmergencyAccessV2WizardInner() {
                   the gate is met. */}
               {id && (
                 <div className="mr-1 lg:hidden">
-                  <SetupProgress done={EA_REQUIRED_STEPS - blocking.length} total={EA_REQUIRED_STEPS} />
+                  <SetupProgress
+                    done={EA_REQUIRED_STEPS - blocking.length}
+                    total={EA_REQUIRED_STEPS}
+                    pendingDetails={blocking}
+                  />
                 </div>
               )}
               {step > 0 && (

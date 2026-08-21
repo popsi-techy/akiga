@@ -15,12 +15,14 @@ import type { EmergencySetupStep } from '@/components/product/emergency/setupSte
  * the tab strip still is — it is the remaining work, grouped by what Activate
  * waits for.
  *
- * The CTA is a prompt to *leave*, not a restatement of the tab you are on.
- * A new draft opens on Assignments: the page already has Add entitlements, so
- * a second “Add assignments” in the dock is noise. Finish that step and the
- * CTA appears on Eligibility — you are still looking at Assignments, and the
- * dock is what says where to go next. Follow it and the prompt drops: you are
- * there, and the page owns the work again.
+ * The CTA is a prompt that appears only after someone actually finishes a
+ * step — any step. Switching tabs is not finishing: open Eligibility with
+ * Assignments still empty and the dock stays quiet. Finish Owners first and
+ * it asks for Assignments; finish Assignments and it asks for Eligibility.
+ * Advanced arriving with “Default applied” does not count — nobody did that.
+ *
+ * It also does not restate the tab you are on. Follow the prompt and it
+ * drops: you are there, and the page owns the work again.
  */
 export function SetupChecklistDock({
   steps,
@@ -35,7 +37,12 @@ export function SetupChecklistDock({
 }) {
   const required = steps.filter((s) => s.required && s.id !== 'basic');
   const additional = steps.filter((s) => !s.required);
-  const nextId = [...required, ...additional].find((s) => !s.done)?.id;
+  const listed = [...required, ...additional];
+  // A qualifier chip means the step is satisfied without anyone deciding —
+  // Advanced's factory defaults. That is not a completion, so it must not
+  // unlock the "what's next" prompt on a brand-new draft.
+  const someoneFinished = listed.some((s) => s.done && !s.doneLabel);
+  const nextId = someoneFinished ? listed.find((s) => !s.done)?.id : undefined;
   // Primary while Activate is still blocked — this is then the only filled
   // action in the dock. Secondary once required work is done, so the header
   // Activate stays the one primary.

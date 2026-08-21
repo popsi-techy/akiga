@@ -52,13 +52,20 @@ export default function TabsDocs() {
       <Section title="Props">
         <PropsTable
           rows={[
-            { name: 'items', type: 'TabItem[]', description: '{ value, label, count?, disabled? }.' },
+            { name: 'items', type: 'TabItem[]', description: '{ value, label, count?, status?, disabled? }.' },
             {
               name: 'items[].count',
               type: 'number',
               default: '—',
               description:
                 'Rendered as “label (n)”. Pass it rather than writing the brackets into the label, so the formatting stays one decision. `0` renders “(0)”; omit it for a tab with nothing to count.',
+            },
+            {
+              name: 'items[].status',
+              type: "'pending' | 'complete'",
+              default: '—',
+              description:
+                'Optional setup hint before the label. Same filled CheckCircle as the setup checklist — green when complete, grey when still open. Omit it for a step that is satisfied without anyone deciding (Advanced’s factory defaults).',
             },
             { name: 'value / onChange', type: 'string / (v) => void', description: 'Controlled active tab.' },
             { name: 'aria-label', type: 'string', description: 'Accessible name for the tablist.' },
