@@ -35,9 +35,11 @@ export function SetupChecklistDock({
   onClose: () => void;
   onGoTo: (step: EmergencySetupStep) => void;
 }) {
-  const required = steps.filter((s) => s.required && s.id !== 'basic');
+  const required = steps.filter((s) => s.required);
   const additional = steps.filter((s) => !s.required);
-  const listed = [...required, ...additional];
+  // Basic is done the moment the profile exists. Counting it as “someone
+  // finished” would fire the Next prompt on a brand-new draft.
+  const listed = [...required.filter((s) => s.id !== 'basic'), ...additional];
   // A qualifier chip means the step is satisfied without anyone deciding —
   // Advanced's factory defaults. That is not a completion, so it must not
   // unlock the "what's next" prompt on a brand-new draft.
@@ -47,6 +49,7 @@ export function SetupChecklistDock({
   // action in the dock. Secondary once required work is done, so the header
   // Activate stays the one primary.
   const ctaVariant = required.some((s) => !s.done) ? 'primary' : 'secondary';
+  const allRequiredDone = required.every((s) => s.done);
 
   return (
     <aside
@@ -57,8 +60,9 @@ export function SetupChecklistDock({
         <div className="min-w-0">
           <h2 className="text-h5 text-text-primary">Setup checklist</h2>
           <p className="mt-0.5 text-caption text-text-secondary">
-            Finish the required steps, then activate. You can hide this and open it
-            again from Setup guide.
+            {allRequiredDone
+              ? 'Required steps are complete. You can hide this and open it again from Setup guide.'
+              : 'Finish the required steps, then activate. You can hide this and open it again from Setup guide.'}
           </p>
         </div>
         <button

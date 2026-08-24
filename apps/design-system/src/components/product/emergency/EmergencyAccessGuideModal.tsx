@@ -3,6 +3,7 @@
 import * as React from 'react';
 import MenuBookOutlined from '@mui/icons-material/MenuBookOutlined';
 import { Button, Modal, Tooltip } from '@ds/components';
+import { SegmentedDonut } from '@/components/product/SetupProgress';
 import { EA_SETUP_STEPS, isRequiredSetupStep, type EASetupStepId } from '@/data/emergency-access';
 
 const GUIDE_INTRO: Record<EASetupStepId, string> = {
@@ -43,19 +44,38 @@ export function EmergencyAccessGuideButton({
   onClick,
   labeled = false,
   expanded,
+  progress,
 }: {
   onClick: () => void;
   /** Rail has room for the words; the setup bar does not. */
   labeled?: boolean;
   /** When this control shows or hides a panel. */
   expanded?: boolean;
+  /** Required-step count. When set, a donut wraps the book. */
+  progress?: { done: number; total: number };
 }) {
+  const book = <MenuBookOutlined sx={{ fontSize: progress ? 16 : 18 }} />;
+  const glyph =
+    progress != null ? (
+      <span className="relative grid h-8 w-8 place-items-center">
+        <span className="absolute inset-0">
+          <SegmentedDonut done={progress.done} total={progress.total} size={32} thickness={2.5} />
+        </span>
+        {book}
+      </span>
+    ) : (
+      book
+    );
+  const action = expanded ? 'Hide setup checklist' : 'Setup guide';
+  const progressLabel =
+    progress != null ? `${progress.done} of ${progress.total} required steps complete. ` : '';
+
   if (labeled) {
     return (
       <Button
         variant="tertiary"
         size="sm"
-        startIcon={<MenuBookOutlined sx={{ fontSize: 18 }} />}
+        startIcon={glyph}
         onClick={onClick}
       >
         Setup guide
@@ -63,16 +83,16 @@ export function EmergencyAccessGuideButton({
     );
   }
   return (
-    <Tooltip title={expanded ? 'Hide setup checklist' : 'Setup guide'}>
+    <Tooltip title={`${progressLabel}${action}`}>
       <Button
         variant="tertiary"
         size="sm"
-        aria-label={expanded ? 'Hide setup checklist' : 'Open setup guide'}
+        aria-label={`${progressLabel}${action}`}
         aria-expanded={expanded}
         onClick={onClick}
         sx={{ minWidth: 36, px: 0 }}
       >
-        <MenuBookOutlined sx={{ fontSize: 18 }} />
+        {glyph}
       </Button>
     </Tooltip>
   );

@@ -369,6 +369,26 @@
       "notes": "Launcher card for landing pages that route into a section. The whole card is one target — never nest interactive elements inside. Counts format with a fixed locale so server and client render the same string."
     },
     {
+      "name": "DestinationList",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/DestinationList/DestinationList.tsx",
+      "extends": null,
+      "variants": [
+        "default",
+        "empty"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus-visible",
+        "active",
+        "disabled",
+        "empty"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/destination-list/page.tsx",
+      "notes": "Two-column grid of destination cards: Avatar tile, body-medium title, caption description. Use on a settings hub or module index. NavCard is a landing launcher with count/tags; NavList is an in-panel selected switcher. The whole card is one target — never nest interactive elements inside."
+    },
+    {
       "name": "NavList",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/NavList/NavList.tsx",

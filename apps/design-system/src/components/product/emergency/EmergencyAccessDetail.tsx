@@ -991,7 +991,7 @@ export function EmergencyAccessDetail({
 }: {
   id: string;
   basePath: string;
-  /** V1: open the right-hand checklist — used the first time a profile is created. */
+  /** V1: open the right-hand checklist — after create, or any other caller. Drafts also open it on their own. */
   openSetup?: boolean;
 }) {
   /**
@@ -1004,7 +1004,9 @@ export function EmergencyAccessDetail({
 
   const [basicsOpen, setBasicsOpen] = React.useState(false);
   const [guideOpen, setGuideOpen] = React.useState(false);
-  const [checklistOpen, setChecklistOpen] = React.useState(openSetup);
+  const [checklistOpen, setChecklistOpen] = React.useState(
+    () => openSetup || (isV1 && Boolean(getEmergencyAccess(id)?.isDraft)),
+  );
   const router = useRouter();
   const toast = useToast();
   const [tab, setTab] = React.useState(() => {
@@ -1045,7 +1047,8 @@ export function EmergencyAccessDetail({
     );
   }
 
-  const showSetupDock = isV1 && ea.isDraft;
+  /** V1: the guide icon and dock stay available after activate — a completed checklist, not draft-only chrome. */
+  const showSetupDock = isV1;
 
   /**
    * The tab actually shown, which is not always the one in state.
@@ -1167,6 +1170,10 @@ export function EmergencyAccessDetail({
             {showSetupDock && (
               <EmergencyAccessGuideButton
                 expanded={checklistOpen}
+                progress={{
+                  done: EA_REQUIRED_STEPS - blocking.length,
+                  total: EA_REQUIRED_STEPS,
+                }}
                 onClick={() => setChecklistOpen((open) => !open)}
               />
             )}

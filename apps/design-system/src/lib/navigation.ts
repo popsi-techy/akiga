@@ -76,6 +76,7 @@ export const navigation: NavSection[] = [
       { label: 'Tabs', href: '/components/tabs', status: 'ready' },
       { label: 'Nav List', href: '/components/nav-list', status: 'ready' },
       { label: 'Nav Card', href: '/components/nav-card', status: 'ready' },
+      { label: 'Destination List', href: '/components/destination-list', status: 'ready' },
       { label: 'Menu', href: '/components/menu', status: 'ready' },
       { label: 'Stepper', href: '/components/stepper', status: 'ready' },
       { label: 'Setup Bar', href: '/components/setup-bar', status: 'ready' },

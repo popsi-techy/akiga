@@ -128,7 +128,8 @@ function PendingTip({ pending }: { pending: string[] }) {
  * the first completed step — the same success fill the checklist tick uses —
  * so the header keeps one orange (Activate) and a done step is a done step.
  */
-function SegmentedDonut({ done, total, size = 18, thickness = 3 }: { done: number; total: number; size?: number; thickness?: number }) {
+/** Equal bites around a ring. Exported so a control can wear the same donut. */
+export function SegmentedDonut({ done, total, size = 18, thickness = 3 }: { done: number; total: number; size?: number; thickness?: number }) {
   const safeTotal = Math.max(1, total);
   const complete = Math.max(0, Math.min(done, safeTotal));
   const r = (size - thickness) / 2;

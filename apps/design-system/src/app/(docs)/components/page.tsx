@@ -54,6 +54,7 @@ const groups: { title: string; description: string; items: [string, string, stri
       ['Tabs', '/components/tabs', 'Detail-page section nav with the brand underline.'],
       ['Nav List', '/components/nav-list', 'Vertical in-panel section switcher with counts.'],
       ['Nav Card', '/components/nav-card', 'Launcher card for landing pages that route into a section.'],
+      ['Destination List', '/components/destination-list', 'Two-column destination cards — icon, title, muted description.'],
       ['Menu', '/components/menu', 'Dropdown action menu — the ⋮ row actions.'],
       ['Stepper', '/components/stepper', 'Numbered progress for short linear flows.'],
       ['Setup Bar', '/components/setup-bar', 'Floating strip under a draft — Next, Back, Activate.'],
