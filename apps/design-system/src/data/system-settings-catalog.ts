@@ -73,6 +73,18 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
     implemented: false,
   },
   {
+    id: 'micro-certification',
+    href: '/iga/configurations/micro-certification',
+    title: 'Micro Certification',
+    group: 'access',
+    description: 'Choose when daily system events are collected and launched as a certification.',
+    actionLabel: 'Configure',
+    pageDescription:
+      'System events are collected throughout the day and processed at your scheduled time.',
+    keywords: ['timezone', 'schedule', 'daily', 'launch', 'micro', 'certification', 'events'],
+    implemented: true,
+  },
+  {
     id: 'access-request',
     href: '/iga/configurations/access-request',
     title: 'Access Request',
@@ -104,18 +116,6 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
       'Manage the categories of access your tenant recognises (GROUP, PERMISSION, ROLE). Controls how discovered access is classified, filtered and requested.',
     keywords: ['group', 'permission', 'role', 'classify', 'category'],
     implemented: false,
-  },
-  {
-    id: 'micro-certification',
-    href: '/iga/configurations/micro-certification',
-    title: 'Micro Certification',
-    group: 'access',
-    description: 'Choose when daily system events are collected and launched as a certification.',
-    actionLabel: 'Configure',
-    pageDescription:
-      'System events are collected throughout the day and processed at your scheduled time.',
-    keywords: ['timezone', 'schedule', 'daily', 'launch', 'micro', 'certification', 'events'],
-    implemented: true,
   },
   {
     id: 'provisioning-task',

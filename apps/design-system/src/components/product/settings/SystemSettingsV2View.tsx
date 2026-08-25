@@ -24,6 +24,9 @@ const GROUP_ICON_TONE: Record<string, DestinationListIconTone> = {
  * System Settings v2 hub — search, then destinations grouped by job.
  * Each group is a heading plus a three-column catalog: outlined icon,
  * title, and a two-line description.
+ *
+ * Search stays put. The catalog is the only thing that scrolls, same as
+ * the list pages whose toolbar must remain reachable.
  */
 export function SystemSettingsV2View() {
   const router = useRouter();
@@ -36,10 +39,10 @@ export function SystemSettingsV2View() {
   const groups = filterSystemSettingsGroups(query);
 
   return (
-    <div>
+    <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">System Settings v2</h1>
 
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="mb-6 flex shrink-0 flex-wrap items-center justify-between gap-4">
         <div role="search" className="w-full max-w-sm min-w-0">
           <Input
             size="sm"
@@ -69,6 +72,7 @@ export function SystemSettingsV2View() {
         </p>
       </div>
 
+      <div className="ds-scroll min-h-0 flex-1 overflow-y-auto">
       {groups.length === 0 ? (
         <DestinationList
           appearance="plain"
@@ -109,6 +113,7 @@ export function SystemSettingsV2View() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }
