@@ -204,7 +204,8 @@ a {
  */
 /*
  * Illustration — not a token surface.
- * High-key powder-blue atmosphere (clouds, waves, grain) from the light reference.
+ * Cool paper with a few sky orbs. Soft falloff is in the gradients —
+ * extra blur turns it into a wash.
  */
 .atmospheric-background {
   position: absolute;
@@ -212,26 +213,26 @@ a {
   overflow: hidden;
   pointer-events: none;
   isolation: isolate;
-  background: #ffffff;
+  background: #f7f9fc;
 }
 
 .atmospheric-background__patches {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle 320px at 94% 118%, rgba(154, 210, 242, 0.55) 0%, transparent 68%),
-    radial-gradient(circle 240px at 4% -40%, rgba(186, 226, 248, 0.5) 0%, transparent 68%),
-    radial-gradient(circle 180px at 72% 8%, rgba(168, 218, 246, 0.42) 0%, transparent 70%),
-    radial-gradient(circle 140px at 28% 128%, rgba(210, 236, 250, 0.4) 0%, transparent 70%);
+    radial-gradient(circle 280px at 96% 78%, rgba(148, 184, 216, 0.42) 0%, transparent 62%),
+    radial-gradient(circle 220px at 4% 12%, rgba(176, 204, 228, 0.34) 0%, transparent 60%),
+    radial-gradient(circle 180px at 58% 108%, rgba(196, 218, 236, 0.28) 0%, transparent 62%),
+    radial-gradient(circle 140px at 72% -8%, rgba(255, 255, 255, 0.7) 0%, transparent 58%);
 }
 
 .atmospheric-background__grain {
   position: absolute;
   inset: -5%;
-  opacity: 0.22;
+  opacity: 0.12;
   mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.15' numOctaves='4' seed='21' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.85'/%3E%3C/svg%3E");
-  background-size: 180px 180px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' seed='21' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.9'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
 }
 
 @media print {

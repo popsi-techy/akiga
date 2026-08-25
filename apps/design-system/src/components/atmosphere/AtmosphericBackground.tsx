@@ -2,7 +2,8 @@
 
 /**
  * Illustration — not a token surface.
- * White field with a few light sky-blue circular patches and a light grain.
+ * Cool paper, a few sky orbs, and a light grain. Extra blur is not applied —
+ * it flattens into a wash.
  */
 export function AtmosphericBackground() {
   return (
