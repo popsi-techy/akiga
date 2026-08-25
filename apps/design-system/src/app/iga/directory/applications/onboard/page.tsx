@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import { AppIcon, Input, NavList, resolveAppIcon } from '@ds/components';
 import { AddApplicationDrawer } from '@/components/product/directory';
+import { AtmosphericBackground } from '@/components/atmosphere/AtmosphericBackground';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import {
   appTypeCategories,
@@ -25,9 +26,9 @@ const CATEGORY_LINE: Record<AppTypeCategory, string> = {
 /**
  * Onboard an application — the application-type catalog.
  *
- * Same frame as the workflow template catalog: a category rail that jumps, a
- * dashed custom option in that rail, then a grid of type tiles. Clicking a tile
- * opens the onboard drawer.
+ * Same frame as the workflow template catalog: atmospheric search banner,
+ * category rail that jumps, then a grid of type tiles. Clicking a tile opens
+ * the onboard drawer; custom lives under the search as the blank-canvas exit.
  */
 export default function OnboardApplicationPage() {
   useSetBreadcrumbs([
@@ -88,11 +89,39 @@ export default function OnboardApplicationPage() {
   const q = query.trim();
 
   return (
-    <div className="-mx-8 -my-6 flex h-[calc(100%+3rem)]">
-      <aside className="flex w-[264px] shrink-0 flex-col gap-5 border-r border-border bg-surface px-4 py-5">
-        <h1 className="px-1 text-h4 text-text-primary">Select an application type</h1>
-        <div className="flex flex-col gap-3">
-          <CustomRailCard appType={custom} onSelect={pick} />
+    <div className="-mx-8 -my-6 flex h-[calc(100%+3rem)] flex-col">
+      <header className="relative shrink-0 overflow-hidden border-b border-border px-6 py-7">
+        <AtmosphericBackground />
+        <div className="relative mx-auto flex w-full max-w-2xl flex-col items-center text-center">
+          <h1 className="text-balance text-h3 text-text-primary">
+            Start onboarding faster with ready-to-use application types
+          </h1>
+          <div className="mt-3 w-full max-w-xl">
+            <Input
+              placeholder="Search by name or protocol…"
+              aria-label="Search application types"
+              size="md"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+            />
+          </div>
+          <p className="mt-2.5 text-body-sm text-text-secondary">
+            Need a system we don&apos;t list?{' '}
+            <button
+              type="button"
+              className="text-body-sm-medium text-text-link hover:underline"
+              onClick={() => pick(custom)}
+            >
+              Start with a custom application
+            </button>
+          </p>
+        </div>
+      </header>
+
+      <div className="flex min-h-0 min-w-0 flex-1 gap-5 px-6 py-5">
+        <aside className="flex w-56 shrink-0 flex-col rounded-xl border border-border bg-surface px-3 py-4">
+          <h2 className="mb-3 px-1 text-overline uppercase text-text-tertiary">Categories</h2>
           <NavList
             ariaLabel="Application type"
             value={active}
@@ -103,23 +132,13 @@ export default function OnboardApplicationPage() {
               count: byCategory(cat.id).length,
             }))}
           />
-        </div>
-      </aside>
+        </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="shrink-0 px-6 pt-5">
-          <div className="w-full max-w-md">
-            <Input
-              placeholder="Search by name or protocol…"
-              aria-label="Search application types"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
-            />
-          </div>
-        </div>
-
-        <div ref={scroller} onScroll={onScroll} className="ds-scroll min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-5">
+        <div
+          ref={scroller}
+          onScroll={onScroll}
+          className="ds-scroll min-h-0 min-w-0 flex-1 overflow-y-auto"
+        >
           {catalog.length === 0 && q ? (
             <p className="text-body-sm text-text-secondary">
               “{q}” isn’t in the catalog yet. It will be present shortly — until then, use a custom
@@ -164,36 +183,6 @@ export default function OnboardApplicationPage() {
 }
 
 /**
- * The empty-catalog option, in the same rail as the type list.
- *
- * Dashed so it reads as "not a catalog type" — the same treatment From scratch
- * has on the workflow template gallery. Clicking opens the onboard drawer.
- */
-function CustomRailCard({
-  appType,
-  onSelect,
-}: {
-  appType: AppTypeOption;
-  onSelect: (t: AppTypeOption) => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect(appType)}
-      className="flex w-full items-center gap-2.5 rounded-md border border-dashed border-border px-3 py-2.5 text-left transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-    >
-      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-subtle text-icon">
-        <TypeGlyph name={appType.name} size={18} />
-      </span>
-      <span className="min-w-0">
-        <span className="block text-body-sm-strong text-text-primary">Custom application</span>
-        <span className="block text-caption text-text-secondary">Any system over REST</span>
-      </span>
-    </button>
-  );
-}
-
-/**
  * One catalog tile. Brand types lead with their logo; everything else gets a
  * small identification mark so a letter tile is not the only fallback. A
  * coming-soon type stays in place — knowing it is on the way is the answer to
@@ -213,36 +202,34 @@ function AppTypeTile({
       disabled={soon}
       onClick={() => onSelect(appType)}
       className={[
-        'flex items-start gap-3 rounded-xl border p-4 text-left transition-all',
+        'flex flex-col items-start gap-2.5 rounded-xl border p-4 text-left transition-all',
         soon
           ? 'cursor-default border-border bg-subtle'
           : 'border-border bg-surface hover:border-border-strong hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle',
       ].join(' ')}
     >
-      <TypeMark name={appType.name} size={40} muted={soon} />
-      <span className="min-w-0 flex-1">
-        <span className="flex items-start justify-between gap-2">
-          <span className={`truncate text-body-sm-medium ${soon ? 'text-text-tertiary' : 'text-text-primary'}`}>
-            {appType.name}
+      <span className="flex w-full items-start justify-between gap-2">
+        <TypeMark name={appType.name} size={40} muted={soon} />
+        {soon && (
+          <span className="shrink-0 text-caption-strong uppercase tracking-wider text-text-tertiary">
+            Soon
           </span>
-          {soon && (
-            <span className="shrink-0 text-caption-strong uppercase tracking-wider text-text-tertiary">
-              Soon
-            </span>
-          )}
-        </span>
-        <span className="mt-1.5 flex flex-wrap gap-1">
-          {appType.protocols.map((p) => (
-            <span
-              key={p}
-              className={`rounded-pill px-2 py-0.5 text-caption ${
-                soon ? 'bg-surface text-text-tertiary' : 'bg-subtle text-text-secondary'
-              }`}
-            >
-              {p}
-            </span>
-          ))}
-        </span>
+        )}
+      </span>
+      <span className={`w-full min-w-0 truncate text-body-strong ${soon ? 'text-text-tertiary' : 'text-text-primary'}`}>
+        {appType.name}
+      </span>
+      <span className="flex flex-wrap gap-1">
+        {appType.protocols.map((p) => (
+          <span
+            key={p}
+            className={`rounded-pill px-2 py-0.5 text-caption ${
+              soon ? 'bg-surface text-text-tertiary' : 'bg-subtle text-text-secondary'
+            }`}
+          >
+            {p}
+          </span>
+        ))}
       </span>
     </button>
   );

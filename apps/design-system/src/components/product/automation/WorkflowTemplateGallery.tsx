@@ -24,6 +24,7 @@ import {
 import type { WorkflowEventType } from '@/data/automation-types';
 import { EVENT_ICONS, EVENT_TYPES } from './workflow-visuals';
 import { WorkflowFlowPreview } from './WorkflowFlowPreview';
+import { AtmosphericBackground } from '@/components/atmosphere/AtmosphericBackground';
 
 const EVENT_LABEL: Record<WorkflowEventType, string> = {
   joiner: 'Joiner',
@@ -173,35 +174,32 @@ export function WorkflowTemplateGallery() {
   return (
     <>
       <div className="flex h-full min-h-0 flex-col">
-        <header className="relative shrink-0 overflow-hidden border-b border-border bg-subtle px-6 py-5">
-          <BannerAtmosphere />
-          <div className="relative mx-auto flex w-full max-w-lg flex-col items-center">
-            <h1 className="text-center text-h4 text-text-primary">
-              Start automations faster with{' '}
-              <span className="text-text-brand">ready-to-use workflows</span>
+        <header className="relative shrink-0 overflow-hidden border-b border-border px-6 py-7">
+          <AtmosphericBackground />
+          <div className="relative mx-auto flex w-full max-w-2xl flex-col items-center text-center">
+            <h1 className="text-balance text-h3 text-text-primary">
+              Start automations faster with ready-to-use workflows
             </h1>
-            <div className="mt-3 w-full">
+            <div className="mt-3 w-full max-w-xl">
               <Input
                 placeholder="Search workflow templates…"
                 aria-label="Search templates"
                 size="md"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                endAdornment={<SearchOutlined sx={{ fontSize: 20 }} />}
+                startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
               />
             </div>
-            <div className="mt-3 flex w-full items-center gap-3">
-              <span className="h-px min-w-0 flex-1 bg-border" />
-              <span className="text-caption text-text-tertiary">or</span>
-              <span className="h-px min-w-0 flex-1 bg-border" />
-            </div>
-            <button
-              type="button"
-              className="mt-2 text-body-sm-medium text-text-link hover:underline"
-              onClick={() => openDraft('scratch')}
-            >
-              Start from scratch
-            </button>
+            <p className="mt-2.5 text-body-sm text-text-secondary">
+              Want a blank canvas?{' '}
+              <button
+                type="button"
+                className="text-body-sm-medium text-text-link hover:underline"
+                onClick={() => openDraft('scratch')}
+              >
+                Start from scratch
+              </button>
+            </p>
           </div>
         </header>
 
@@ -321,40 +319,6 @@ export function WorkflowTemplateGallery() {
           />
         </div>
       </Drawer>
-    </>
-  );
-}
-
-/**
- * Soft mesh + film grain on the search banner. Colour comes from brand and
- * info tints — the same tokens as chips and avatars — so the field can glow
- * without inventing a palette. Grain is turbulence, not a bitmap.
- */
-function BannerAtmosphere() {
-  const grain = `tpl-grain-${React.useId().replace(/:/g, '')}`;
-  return (
-    <>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage: [
-            'radial-gradient(ellipse 90% 130% at 6% -20%, var(--ds-color-brand-subtle) 0%, transparent 58%)',
-            'radial-gradient(ellipse 80% 110% at 98% 120%, var(--ds-color-status-info-subtle) 0%, transparent 55%)',
-            'radial-gradient(ellipse 55% 80% at 72% -30%, var(--ds-color-brand-border) 0%, transparent 52%)',
-            'radial-gradient(ellipse 50% 70% at 24% 130%, var(--ds-color-brand-subtleHover) 0%, transparent 50%)',
-          ].join(', '),
-        }}
-      />
-      <svg
-        className="pointer-events-none absolute inset-0 h-full w-full opacity-50 mix-blend-overlay"
-        aria-hidden
-      >
-        <filter id={grain}>
-          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch" />
-        </filter>
-        <rect width="100%" height="100%" filter={`url(#${grain})`} />
-      </svg>
     </>
   );
 }

@@ -3,7 +3,9 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import ArrowForwardOutlined from '@mui/icons-material/ArrowForward';
-import { Button, StatusChip } from '@ds/components';
+import SearchOutlined from '@mui/icons-material/SearchOutlined';
+import { Button, Input, StatusChip } from '@ds/components';
+import { AtmosphericBackground } from '@/components/atmosphere/AtmosphericBackground';
 import { REPORT_TEMPLATES } from '@/data/governance-analytics';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 
@@ -27,92 +29,124 @@ export default function CreateReportPage() {
     { label: 'Create report' },
   ]);
 
-  const [flagship, ...rest] = REPORT_TEMPLATES;
+  const [query, setQuery] = React.useState('');
+  const q = query.trim().toLowerCase();
+  const matches = React.useMemo(
+    () =>
+      REPORT_TEMPLATES.filter(
+        (t) =>
+          !q ||
+          t.name.toLowerCase().includes(q) ||
+          t.description.toLowerCase().includes(q) ||
+          t.covers.some((c) => c.toLowerCase().includes(q)),
+      ),
+    [q],
+  );
+  const [flagship, ...rest] = matches;
 
   const use = (templateId: string) =>
     router.push(`/iga/governance-analytics/report/new?template=${templateId}`);
 
+  const scratch = () => router.push('/iga/governance-analytics/report/new');
+
   return (
-    <div className="ds-scroll h-full overflow-y-auto">
-      <div className="mx-auto max-w-4xl pb-10">
-        <h1 className="text-h2 text-text-primary">Create a report</h1>
-        <p className="mt-1 text-body-sm text-text-secondary">
-          Start with a template, or build one from scratch.
-        </p>
-
-        <div className="mt-6 space-y-4">
-          {/* Recommended: tinted and full width. The one orange on this screen is
-              its Use template button — see visual-language §5.1. */}
-          <div className="rounded-xl border border-border bg-subtle p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-h4 text-text-primary">{flagship.name}</h2>
-                  <StatusChip intent="info" label="Recommended" />
-                </div>
-                <p className="mt-1 max-w-xl text-body-sm text-text-secondary">{flagship.description}</p>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {flagship.covers.map((c) => (
-                    <span
-                      key={c}
-                      className="rounded-pill border border-border bg-surface px-2.5 py-0.5 text-caption-medium text-text-secondary"
-                    >
-                      {c}
-                    </span>
-                  ))}
-                </div>
-                <p className="mt-3 text-caption text-text-tertiary">
-                  {flagship.sections.length} sections and {flagship.plots.length} plots included
-                </p>
-              </div>
-              <Button endIcon={<ArrowForwardOutlined />} onClick={() => use(flagship.id)}>
-                Use template
-              </Button>
-            </div>
+    <div className="-mx-8 -my-6 flex h-[calc(100%+3rem)] flex-col">
+      <header className="relative shrink-0 overflow-hidden border-b border-border px-6 py-7">
+        <AtmosphericBackground />
+        <div className="relative mx-auto flex w-full max-w-2xl flex-col items-center text-center">
+          <h1 className="text-balance text-h3 text-text-primary">
+            Start reporting faster with ready-to-use templates
+          </h1>
+          <div className="mt-3 w-full max-w-xl">
+            <Input
+              placeholder="Search report templates…"
+              aria-label="Search report templates"
+              size="md"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+            />
           </div>
+          <p className="mt-2.5 text-body-sm text-text-secondary">
+            Want a blank canvas?{' '}
+            <button
+              type="button"
+              className="text-body-sm-medium text-text-link hover:underline"
+              onClick={scratch}
+            >
+              Start from scratch
+            </button>
+          </p>
+        </div>
+      </header>
 
-          {rest.length > 0 && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {rest.map((t) => (
-                <div key={t.id} className="flex flex-col rounded-xl border border-border bg-surface p-5">
-                  <h3 className="text-body-strong text-text-primary">{t.name}</h3>
-                  <p className="mt-1 flex-1 text-body-sm text-text-secondary">{t.description}</p>
-                  <p className="mt-3 text-caption text-text-tertiary">
-                    {t.sections.length} sections · {t.plots.length} plots
-                  </p>
-                  <div className="mt-3">
-                    <Button variant="secondary" size="sm" onClick={() => use(t.id)}>
+      <div className="ds-scroll min-h-0 flex-1 overflow-y-auto px-6 py-5">
+        <div className="mx-auto max-w-4xl space-y-4">
+          {matches.length === 0 && q ? (
+            <p className="text-body-sm text-text-secondary">
+              Nothing matches “{query.trim()}”. Clear the search, or start from scratch above.
+            </p>
+          ) : (
+            <>
+              {flagship && (
+                <div className="rounded-xl border border-border bg-subtle p-6">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-h4 text-text-primary">{flagship.name}</h2>
+                        <StatusChip intent="info" label="Recommended" />
+                      </div>
+                      <p className="mt-1 max-w-xl text-body-sm text-text-secondary">{flagship.description}</p>
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {flagship.covers.map((c) => (
+                          <span
+                            key={c}
+                            className="rounded-pill border border-border bg-surface px-2.5 py-0.5 text-caption-medium text-text-secondary"
+                          >
+                            {c}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="mt-3 text-caption text-text-tertiary">
+                        {flagship.sections.length} sections and {flagship.plots.length} plots included
+                      </p>
+                    </div>
+                    <Button endIcon={<ArrowForwardOutlined />} onClick={() => use(flagship.id)}>
                       Use template
                     </Button>
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
+
+              {rest.length > 0 && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {rest.map((t) => (
+                    <div key={t.id} className="flex flex-col rounded-xl border border-border bg-surface p-5">
+                      <h3 className="text-body-strong text-text-primary">{t.name}</h3>
+                      <p className="mt-1 flex-1 text-body-sm text-text-secondary">{t.description}</p>
+                      <p className="mt-3 text-caption text-text-tertiary">
+                        {t.sections.length} sections · {t.plots.length} plots
+                      </p>
+                      <div className="mt-3">
+                        <Button variant="secondary" size="sm" onClick={() => use(t.id)}>
+                          Use template
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
 
-          {/* Dashed, and last: it is the escape hatch, not the recommendation. */}
-          <button
-            type="button"
-            onClick={() => router.push('/iga/governance-analytics/report/new')}
-            className="flex w-full items-center justify-between gap-4 rounded-xl border border-dashed border-border-strong bg-surface px-6 py-5 text-left transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-          >
-            <span className="min-w-0">
-              <span className="block text-body-strong text-text-primary">Start from scratch</span>
-              <span className="mt-0.5 block text-body-sm text-text-secondary">
-                An empty report. Choose the scope, then add the plots and tables you want.
-              </span>
-            </span>
-            <ArrowForwardOutlined sx={{ fontSize: 18 }} className="shrink-0 text-icon" />
-          </button>
+          {REPORT_TEMPLATES.length === 1 && !q && (
+            <p className="text-caption text-text-tertiary">
+              More templates — Application, Policy, Access Risk and Ownership — are next. Each one is the same
+              machinery with different defaults, so anything you can build from scratch today they will preset
+              for you.
+            </p>
+          )}
         </div>
-
-        {REPORT_TEMPLATES.length === 1 && (
-          <p className="mt-6 text-caption text-text-tertiary">
-            More templates — Application, Policy, Access Risk and Ownership — are next. Each one is the same
-            machinery with different defaults, so anything you can build from scratch today they will preset
-            for you.
-          </p>
-        )}
       </div>
     </div>
   );
