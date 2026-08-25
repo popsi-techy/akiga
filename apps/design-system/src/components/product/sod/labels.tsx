@@ -80,6 +80,42 @@ export function AccessConflictPill({
   return <StatusChip intent={n === 0 ? 'success' : 'warning'} label={`${n} pending`} />;
 }
 
+/**
+ * App mark, muted app name, emphasised access name — the SoD access pill.
+ *
+ * `children` is the trailing affordance (the info tip on SoD chips). Preview
+ * and other summaries omit it. `danger` tints the names when that access is
+ * staged for removal, same as the resolution chips.
+ */
+export function AccessChip({
+  appName,
+  name,
+  danger = false,
+  children,
+}: {
+  appName: string;
+  name: string;
+  danger?: boolean;
+  children?: React.ReactNode;
+}) {
+  return (
+    <span
+      className={[
+        'inline-flex items-center gap-1.5 rounded-pill bg-subtle py-1 pl-1.5 pr-2 text-caption',
+        danger ? 'text-[var(--ds-color-status-danger-fg)]' : '',
+      ].join(' ')}
+      title={`${appName} ${name}`}
+    >
+      <AppBadge app={appName} size={18} variant="surface" appearance="logo" />
+      <span className={danger ? 'shrink-0' : 'shrink-0 text-text-tertiary'}>{appName}</span>
+      <span className={['min-w-0 truncate font-emphasis', danger ? '' : 'text-text-primary'].join(' ')}>
+        {name}
+      </span>
+      {children}
+    </span>
+  );
+}
+
 /** Compact app marker.
  *  - `appearance="initial"` (default) — letter tile for dense lists elsewhere.
  *  - `appearance="logo"` — Design System AppIcon with real brand marks when known.

@@ -425,7 +425,7 @@
         "focus-visible"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/overflow-chips/page.tsx",
-      "notes": "A few named things plus a +n that reveals the rest, for rows whose height must not change with their contents (table cells, label/value rows, a summary beside a button). With an overflow the set sits in ONE tinted pill — the named chip and the +n are halves of a single value, and loose chips read as two values; with nothing to collapse a lone chip is left ungrouped. The +n is plain text, never a second outlined chip: it is a remainder, not an item. Promoted from product code once a second surface needed it."
+      "notes": "A few named things plus a +n that reveals the rest, for rows whose height must not change with their contents (table cells, label/value rows, a summary beside a button). With an overflow the set sits in ONE tinted pill — the named chip and the +n are halves of a single value, and loose chips read as two values; with nothing to collapse a lone chip is left ungrouped. The +n is plain text, never a second outlined chip: it is a remainder, not an item. `renderItem` is for chips that already have their own chrome; those stay ungrouped so two pills are not nested. Promoted from product code once a second surface needed it."
     },
     {
       "name": "PickerSlot",

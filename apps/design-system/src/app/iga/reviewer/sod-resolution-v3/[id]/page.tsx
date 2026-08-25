@@ -35,7 +35,7 @@ import { TableSelectDrawer } from '@/components/product/automation/TableSelectDr
 import { V3_STORE_KEY, V3_STEP_KEY, v3ReviewerStatus } from '@/data/sod-resolution-v3-store';
 import { policyById } from '@/data/sod-seed';
 import type { SodReview, SodAccess, SodRule, AcceptedRisk, Severity } from '@/data/sod-types';
-import { SeverityChip, AppBadge, ACCESS_TYPE_LABEL, ReviewerStatusPillV3, formatDateTime, formatUntil } from '@/components/product/sod/labels';
+import { SeverityChip, AppBadge, AccessChip as AccessMark, ACCESS_TYPE_LABEL, ReviewerStatusPillV3, formatDateTime, formatUntil } from '@/components/product/sod/labels';
 import { RiskScoreChip } from '@/components/product/directory';
 import { RuleStatusPill, ruleAccessText, type RuleUiStatus } from '@/components/product/sod/resolution-ui';
 import { UserDetailsDrawer } from '@/components/product/sod/UserDetailsDrawer';
@@ -1208,7 +1208,7 @@ function ViolatedPolicyHeading({
 
 /**
  * Access chip — app tile + app name + access name, as it appears inside an
- * access combination.
+ * access combination, plus the info tip that opens the details card.
  *
  * Pill outer instead of `rounded-md`: the chip and the tile both used the same
  * 8px radius, which on a 24px chip and a 16px tile read as two competing
@@ -1220,19 +1220,9 @@ function ViolatedPolicyHeading({
  */
 function AccessChip({ access, danger = false }: { access: SodAccess; danger?: boolean }) {
   return (
-    <span
-      className={[
-        'inline-flex items-center gap-1.5 rounded-pill bg-subtle py-1 pl-1.5 pr-2 text-caption',
-        danger ? 'text-[var(--ds-color-status-danger-fg)]' : '',
-      ].join(' ')}
-    >
-      <AppBadge app={access.appName} size={18} variant="surface" appearance="logo" />
-      <span className={danger ? '' : 'text-text-tertiary'}>{access.appName}</span>
-      <span className={['font-emphasis', danger ? '' : 'text-text-primary'].join(' ')}>
-        {access.name}
-      </span>
+    <AccessMark appName={access.appName} name={access.name} danger={danger}>
       <AccessDetailsTip access={access} />
-    </span>
+    </AccessMark>
   );
 }
 

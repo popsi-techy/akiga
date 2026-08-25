@@ -66,6 +66,7 @@ export default function OverflowChipsDocs() {
             { name: 'items', type: '{ id: string; name: string }[]', description: 'The full set. Order is respected — the first `max` are named.' },
             { name: 'max', type: 'number', default: '1', description: 'How many to name before collapsing the rest into +n.' },
             { name: 'emptyLabel', type: 'string', default: "'None'", description: 'Shown when there is nothing to name.' },
+            { name: 'renderItem', type: '(item) => ReactNode', default: '—', description: 'Custom chip. Use when the chip already has its own chrome (app mark + name). Those stay ungrouped so two pills are not nested.' },
           ]}
         />
       </Section>

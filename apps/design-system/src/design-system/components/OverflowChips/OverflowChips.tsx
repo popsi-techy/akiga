@@ -10,6 +10,11 @@ const CHIP =
 const CHIP_IN_GROUP =
   'inline-flex max-w-[140px] items-center rounded-pill bg-surface px-2 py-0.5 text-caption-medium text-text-primary shadow-xs';
 
+export interface OverflowChipItem {
+  id: string;
+  name: string;
+}
+
 /**
  * A few named things plus a `+n` that reveals the rest.
  *
@@ -21,39 +26,53 @@ const CHIP_IN_GROUP =
  * Promoted out of the product once a second surface needed it: two implementations
  * of "one chip and a +n" would have drifted in chip shape, and the chip shape is
  * the whole point of the pattern.
+ *
+ * `renderItem` is for chips that already have their own chrome (an access pill
+ * with an app mark, for example). Those stay ungrouped: wrapping them in a
+ * second tinted pill would nest two answers.
  */
-export interface OverflowChipsProps {
-  items: { id: string; name: string }[];
+export interface OverflowChipsProps<T extends OverflowChipItem = OverflowChipItem> {
+  items: T[];
   /** How many to name before collapsing the rest. @default 1 */
   max?: number;
   /** Shown when there is nothing to name. @default 'None' */
   emptyLabel?: string;
+  /** Custom chip. When set, chips are not grouped into one tinted pill. */
+  renderItem?: (item: T) => React.ReactNode;
 }
 
-export function OverflowChips({ items, max = 1, emptyLabel = 'None' }: OverflowChipsProps) {
+export function OverflowChips<T extends OverflowChipItem = OverflowChipItem>({
+  items,
+  max = 1,
+  emptyLabel = 'None',
+  renderItem,
+}: OverflowChipsProps<T>) {
   if (items.length === 0) return <span className="text-text-tertiary">{emptyLabel}</span>;
 
   const shown = items.slice(0, max);
   const rest = items.slice(max);
+  // Named-only chips share one pill with `+n`. Custom chips bring their own
+  // shape, so grouping them would nest two pills.
+  const grouped = rest.length > 0 && renderItem == null;
 
-  // `flex-nowrap`: the named chips plus `+n` are sized to fit, so wrapping can
-  // only ever be a mistake here — and a wrap is what would change the row height.
-  //
-  // With an overflow the whole thing sits in one tinted pill: "Okta" and "+2" are
-  // two halves of a single answer to "which applications?", and as two loose
-  // chips they read as two separate values. Nothing to group when everything
-  // fits, so a lone chip is left as a lone chip rather than nested in a pill.
+  const chip = (e: T, inGroup: boolean) =>
+    renderItem ? (
+      renderItem(e)
+    ) : (
+      <span className={inGroup ? CHIP_IN_GROUP : CHIP} title={e.name}>
+        <span className="truncate">{e.name}</span>
+      </span>
+    );
+
   return (
     <span
       className={[
         'flex flex-nowrap items-center gap-1.5',
-        rest.length > 0 ? 'rounded-pill bg-subtle py-1 pl-1 pr-2.5' : '',
+        grouped ? 'rounded-pill bg-subtle py-1 pl-1 pr-2.5' : '',
       ].join(' ')}
     >
       {shown.map((e) => (
-        <span key={e.id} className={rest.length > 0 ? CHIP_IN_GROUP : CHIP} title={e.name}>
-          <span className="truncate">{e.name}</span>
-        </span>
+        <React.Fragment key={e.id}>{chip(e, grouped)}</React.Fragment>
       ))}
       {rest.length > 0 && (
         <Tooltip
@@ -62,11 +81,13 @@ export function OverflowChips({ items, max = 1, emptyLabel = 'None' }: OverflowC
           // so the hidden ones read as a continuation of the row rather than a
           // different list. Free to wrap here: the card sizes to its contents.
           title={
-            <div className="flex max-w-[260px] flex-wrap items-center gap-1.5 p-3">
+            <div
+              className={`flex flex-wrap items-center gap-1.5 p-3 ${
+                renderItem ? 'max-w-[420px]' : 'max-w-[260px]'
+              }`}
+            >
               {rest.map((e) => (
-                <span key={e.id} className={CHIP} title={e.name}>
-                  <span className="truncate">{e.name}</span>
-                </span>
+                <React.Fragment key={e.id}>{chip(e, false)}</React.Fragment>
               ))}
             </div>
           }

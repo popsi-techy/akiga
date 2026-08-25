@@ -12,7 +12,7 @@ import Shield from '@mui/icons-material/Shield';
 import Groups from '@mui/icons-material/Groups';
 import ManageAccounts from '@mui/icons-material/ManageAccounts';
 import WatchLater from '@mui/icons-material/WatchLater';
-import { Avatar, Button, Card, InfoRow, InfoRowGroup, Input, Menu, StatusChip, StepTracker, Tooltip, useToast } from '@ds/components';
+import { Button, Card, InfoRow, InfoRowGroup, Input, Menu, OverflowChips, StatusChip, StepTracker, Tooltip, useToast } from '@ds/components';
 import {
   activateEmergencyAccess,
   createEmergencyAccess,
@@ -34,6 +34,7 @@ import { EmergencyAssignmentsPicker } from '@/components/product/emergency/Emerg
 import { EmergencyOwnersPicker } from '@/components/product/emergency/EmergencyAccessDetail';
 import { toastEASetupStep } from '@/components/product/emergency/ea-setup-toast';
 import { infoIcon } from '@/components/product/directory/infoIcons';
+import { AccessChip } from '@/components/product/sod/labels';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import { listGovernanceTeamRows } from '@/data/directory';
 
@@ -407,24 +408,15 @@ function EmergencyAccessV2WizardInner() {
         <div className="flex min-h-0 min-w-0 flex-col">
           <div className="shrink-0">
             {last && ea ? (
-              /* The preview is the profile, not another question. Name and
-                 description take the heading the other steps use for the prompt,
-                 and Activate sits on the same row so finishing is where you
-                 finish reading the identity. Per-step Edit lives on each card
-                 below — a header Edit only ever opened step 1, which hid the
-                 rest. */
-              <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-                <div className="flex min-w-0 items-start gap-3">
-                  <Avatar name={ea.name} initials={ea.initial} size="md" />
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-h4 text-text-primary">{ea.name}</h2>
-                      <StatusChip intent={ea.status.intent} label={ea.status.label} />
-                    </div>
-                    {ea.description ? (
-                      <p className="mt-px text-body-sm text-text-secondary">{ea.description}</p>
-                    ) : null}
-                  </div>
+              /* The preview is a review, not another identity header. Name and
+                 description already sit on the first card below; this row names
+                 the step, carries the draft/active pill, and keeps Activate
+                 where finishing is. Per-step Edit lives on each card — a header
+                 Edit only ever opened step 1, which hid the rest. */
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  <h2 className="text-h4 text-text-primary">{STEPS[step].label}</h2>
+                  <StatusChip intent={ea.status.intent} label={ea.status.label} />
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center gap-2">
                   <Tooltip
@@ -621,7 +613,6 @@ function Preview({
       ? 'All day'
       : `${cfg.windowStart} – ${cfg.windowEnd}`;
 
-  const count = (n: number, noun: string) => `${n} ${noun}${n === 1 ? '' : 's'}`;
   const ownersEmpty = owners.length + teams.length === 0;
 
   /**
@@ -651,13 +642,31 @@ function Preview({
       <InfoRow
         icon={infoIcon.entitlement}
         label="Entitlements"
-        value={assignments.entitlements.length ? count(assignments.entitlements.length, 'entitlement') : none}
+        valueWrap
+        value={
+          assignments.entitlements.length ? (
+            <OverflowChips
+              items={assignments.entitlements}
+              max={2}
+              renderItem={(e) =>
+                e.appName ? <AccessChip appName={e.appName} name={e.name} /> : e.name
+              }
+            />
+          ) : (
+            none
+          )
+        }
       />
       <InfoRow
         icon={infoIcon.technicalRole}
         label="Technical roles"
+        valueWrap
         value={
-          assignments.technicalRoles.length ? count(assignments.technicalRoles.length, 'technical role') : none
+          assignments.technicalRoles.length ? (
+            <OverflowChips items={assignments.technicalRoles} max={2} />
+          ) : (
+            none
+          )
         }
       />
     </>,
@@ -744,7 +753,6 @@ function Preview({
       <Card
         icon={<Shield />}
         title={stepTitle(0)}
-        subtitle={STEPS[0].description}
         action={stepEdit(0, onGoToStep)}
         padding="none"
       >
@@ -753,7 +761,6 @@ function Preview({
       <Card
         icon={<Groups />}
         title={stepTitle(1)}
-        subtitle={STEPS[1].description}
         action={stepEdit(1, onGoToStep)}
         padding="none"
       >
@@ -762,7 +769,6 @@ function Preview({
       <Card
         icon={<ManageAccounts />}
         title={stepTitle(2)}
-        subtitle={STEPS[2].description}
         action={stepEdit(2, onGoToStep, ownersEmpty)}
         padding="none"
       >
@@ -771,7 +777,6 @@ function Preview({
       <Card
         icon={<WatchLater />}
         title={stepTitle(3)}
-        subtitle={STEPS[3].description}
         action={stepEdit(3, onGoToStep)}
         padding="none"
       >
