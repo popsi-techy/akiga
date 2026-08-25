@@ -18,6 +18,7 @@ import FormatListNumberedOutlined from '@mui/icons-material/FormatListNumberedOu
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import MenuBookOutlined from '@mui/icons-material/MenuBookOutlined';
 import FilterListOutlined from '@mui/icons-material/FilterListOutlined';
+import TuneOutlined from '@mui/icons-material/TuneOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import PersonAddAltOutlined from '@mui/icons-material/PersonAddAltOutlined';
@@ -800,9 +801,16 @@ export function EmergencyOwnersTab({
           <div className="w-full max-w-sm">
             <Input placeholder="Search" value={search} onChange={(e) => setSearch(e.target.value)} startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />} />
           </div>
-          <Button variant="secondary" startIcon={<FilterListOutlined />} onClick={() => toast.info('Filters coming soon')}>
-            Filter
-          </Button>
+          <Tooltip title="Filter">
+            <button
+              type="button"
+              aria-label="Filter"
+              onClick={() => toast.info('Filters coming soon')}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-icon hover:bg-surface-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+            >
+              <TuneOutlined sx={{ fontSize: 20 }} />
+            </button>
+          </Tooltip>
           <div className="ml-auto">
             {/* The rail decides what "add" means: the button acts on whichever
                 half of ownership you are looking at. */}

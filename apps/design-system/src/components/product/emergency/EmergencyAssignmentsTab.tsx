@@ -256,9 +256,11 @@ export function EmergencyAssignmentsTab({
       id: 'name',
       header: meta.label.replace(/s$/, ''),
       sortable: true,
+      // Avatar + name: overflow:hidden on the cell would clip the mark's ring.
+      wrap: true,
       value: (r) => r.name,
       render: (r) => (
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           {/* An entitlement belongs to an app and shows its mark; a technical
               role is the app-shaped thing itself, so it gets the glyph. */}
           {r.appName ? (
@@ -268,7 +270,7 @@ export function EmergencyAssignmentsTab({
               <LaptopOutlined sx={{ fontSize: 16 }} />
             </span>
           )}
-          <span className="truncate text-body-sm-strong text-text-primary">{r.name}</span>
+          <span className="min-w-0 truncate text-body-sm-strong text-text-primary">{r.name}</span>
         </div>
       ),
     },
@@ -300,9 +302,14 @@ export function EmergencyAssignmentsTab({
             header: 'Description',
             sortable: true,
             value: (r: EntitySelection) => detailFor(r)?.description ?? '',
-            render: (r: EntitySelection) => (
-              <span className="text-text-secondary">{detailFor(r)?.description ?? '—'}</span>
-            ),
+            render: (r: EntitySelection) => {
+              const description = detailFor(r)?.description ?? '—';
+              return (
+                <span className="block truncate text-text-secondary" title={description}>
+                  {description}
+                </span>
+              );
+            },
           },
         ]
       : []),
@@ -311,6 +318,7 @@ export function EmergencyAssignmentsTab({
       header: 'Risk Score',
       sortable: true,
       width: 140,
+      wrap: true,
       value: (r) => detailFor(r)?.risk ?? -1,
       render: (r) => {
         const risk = detailFor(r)?.risk;
@@ -326,6 +334,7 @@ export function EmergencyAssignmentsTab({
       header: 'Actions',
       align: 'right' as const,
       width: 88,
+      wrap: true,
       render: (r: EntitySelection) => (
         <RowActions
           onInfo={() => setPeek(r)}
@@ -451,6 +460,7 @@ export function EmergencyAssignmentsTab({
               <DataTable<EntitySelection>
                 columns={columns}
                 rows={filtered}
+                layout="fixed"
                 fillHeight
                 emptyTitle={`No ${meta.entity} matches`}
                 emptyMessage={`Nothing granted by this access is called “${search.trim()}”.`}
