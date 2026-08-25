@@ -32,7 +32,7 @@ const config: Config = {
         'card-title': ['0.9375rem', { lineHeight: '1.25rem', fontWeight: '400' }],
         'body-lg': ['1rem', { lineHeight: '1.5rem', fontWeight: '400' }],
         body: ['0.875rem', { lineHeight: '1.25rem', fontWeight: '400' }],
-        'body-medium': ['0.875rem', { lineHeight: '1.25rem', fontWeight: '500' }],
+        'body-medium': ['0.875rem', { lineHeight: '1.25rem', letterSpacing: '0.01em', fontWeight: '500' }],
         'body-strong': ['0.875rem', { lineHeight: '1.25rem', fontWeight: '600' }],
         'body-sm': ['0.8125rem', { lineHeight: '1.125rem', fontWeight: '400' }],
         'body-sm-medium': ['0.8125rem', { lineHeight: '1.125rem', fontWeight: '500' }],

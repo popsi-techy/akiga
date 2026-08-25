@@ -121,7 +121,7 @@ is a data console. Compactness is not permission to be flat.
 | `card-title` | 15 / 20 | 400 | Rail card heading — names its contents without competing |
 | `body-lg` | 16 / 24 | 400 | Lead paragraph under a page title |
 | `body` | 14 / 20 | 400 | **Default.** Prose, tab labels |
-| `body-medium` | 14 / 20 | 500 | Soft emphasis |
+| `body-medium` | 14 / 20 | 500, +0.01em | Soft emphasis |
 | `body-strong` | 14 / 20 | 600 | Emphasis at body size — a row's primary line |
 | `body-sm` | 13 / 18 | 400 | Table cells, field labels, dense metadata |
 | `body-sm-medium` | 13 / 18 | 500 | Soft emphasis |

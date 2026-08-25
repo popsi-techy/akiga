@@ -6,23 +6,30 @@ import CloseOutlined from '@mui/icons-material/CloseOutlined';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import { DestinationList, Input } from '@ds/components';
+import type { DestinationListIconTone } from '@ds/components';
 import { filterSystemSettingsGroups } from '@/data/system-settings-catalog';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import { SYSTEM_SETTINGS_ICONS } from './settingsIcons';
 import { SettingsDenied, useAdminSettings } from './SettingsChrome';
 
+/** One token hue per job — blue, orange, yellow, green. */
+const GROUP_ICON_TONE: Record<string, DestinationListIconTone> = {
+  'sign-in': 'info',
+  access: 'brand',
+  identities: 'warning',
+  notifications: 'success',
+};
+
 /**
- * System Settings hub — search, then destinations grouped by job.
- *
- * The breadcrumb already names the page. A heading here would restate it.
- * Search is the chrome; the system-wide note recedes as a fact.
- * The grouped catalog is the protagonist.
+ * System Settings v2 hub — search, then destinations grouped by job.
+ * Each group is a heading plus a three-column catalog: outlined icon,
+ * title, and a two-line description.
  */
-export function SystemSettingsView() {
+export function SystemSettingsV2View() {
   const router = useRouter();
   const allowed = useAdminSettings();
   const [query, setQuery] = React.useState('');
-  useSetBreadcrumbs([{ label: 'System Settings' }]);
+  useSetBreadcrumbs([{ label: 'System Settings v2' }]);
 
   if (!allowed) return <SettingsDenied />;
 
@@ -30,7 +37,7 @@ export function SystemSettingsView() {
 
   return (
     <div>
-      <h1 className="sr-only">System Settings</h1>
+      <h1 className="sr-only">System Settings v2</h1>
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div role="search" className="w-full max-w-sm min-w-0">
@@ -64,7 +71,8 @@ export function SystemSettingsView() {
 
       {groups.length === 0 ? (
         <DestinationList
-          appearance="list"
+          appearance="plain"
+          columns={3}
           aria-label="System settings"
           items={[]}
           empty={
@@ -79,20 +87,22 @@ export function SystemSettingsView() {
       ) : (
         <div className="flex flex-col gap-8">
           {groups.map(({ group, items }) => (
-            <section key={group.id} aria-labelledby={`settings-${group.id}`}>
-              <h2 id={`settings-${group.id}`} className="mb-3 text-h5 text-text-primary">
+            <section key={group.id} aria-labelledby={`settings-v2-${group.id}`}>
+              <h2 id={`settings-v2-${group.id}`} className="mb-3 text-h5 text-text-primary">
                 {group.title}
               </h2>
               <DestinationList
-                appearance="list"
+                appearance="plain"
+                columns={3}
                 aria-label={group.title}
                 items={items.map((s) => ({
                   id: s.id,
                   title: s.title,
                   description: s.description,
-                  actionLabel: s.actionLabel,
                   icon: SYSTEM_SETTINGS_ICONS[s.id],
-                  onClick: () => router.push(s.href),
+                  tone: GROUP_ICON_TONE[group.id],
+                  onClick: () =>
+                    router.push(s.id === 'mfa' ? '/iga/configurations-v2/mfa' : s.href),
                 }))}
               />
             </section>

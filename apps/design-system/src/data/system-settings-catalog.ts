@@ -36,8 +36,10 @@ export interface SystemSettingsSection {
   href: string;
   title: string;
   group: SystemSettingsGroupId;
-  /** One line on the hub card. */
+  /** About fifteen words on the hub. */
   description: string;
+  /** Blue action on the v1 list row — a verb for this setting. */
+  actionLabel: string;
   /** Lead on the destination page. */
   pageDescription: string;
   keywords: string[];
@@ -51,7 +53,8 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
     href: '/iga/configurations/mfa',
     title: 'MFA',
     group: 'sign-in',
-    description: 'Second-factor for end users and reviewers.',
+    description: 'Enforce a second factor at login and set which roles must complete it.',
+    actionLabel: 'Manage',
     pageDescription:
       'Enforce extra security checks during login and customize authentication requirements by user role.',
     keywords: ['otp', 'email', '2fa', 'factor', 'end user', 'reviewer', 'mfa', 'login'],
@@ -62,7 +65,8 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
     href: '/iga/configurations/sso-oauth',
     title: 'SSO OAuth Login',
     group: 'sign-in',
-    description: 'Sign in through an external identity provider.',
+    description: 'Let tenant users sign in through an external identity provider instead of local credentials.',
+    actionLabel: 'Configure',
     pageDescription:
       'Register an external identity provider (name, provider, client ID and secret, redirect URI) so tenant users sign in through your IdP instead of local credentials.',
     keywords: ['idp', 'oauth', 'sso', 'client', 'redirect', 'login', 'provider'],
@@ -73,7 +77,8 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
     href: '/iga/configurations/access-request',
     title: 'Access Request',
     group: 'access',
-    description: 'Defaults for requests, approvals, and emails.',
+    description: 'Set defaults for how access is requested, approved, and notified by email.',
+    actionLabel: 'Manage defaults',
     pageDescription:
       'General, application, entitlement, role, and notification defaults for how access is requested.',
     keywords: [
@@ -93,7 +98,8 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
     href: '/iga/configurations/entitlement-types',
     title: 'Entitlement Types',
     group: 'access',
-    description: 'Categories of access your tenant recognises.',
+    description: 'Define the categories of access this tenant recognises, such as group, permission, and role.',
+    actionLabel: 'Manage types',
     pageDescription:
       'Manage the categories of access your tenant recognises (GROUP, PERMISSION, ROLE). Controls how discovered access is classified, filtered and requested.',
     keywords: ['group', 'permission', 'role', 'classify', 'category'],
@@ -104,7 +110,8 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
     href: '/iga/configurations/micro-certification',
     title: 'Micro Certification',
     group: 'access',
-    description: 'When daily events become a certification.',
+    description: 'Choose when daily system events are collected and launched as a certification.',
+    actionLabel: 'Configure',
     pageDescription:
       'System events are collected throughout the day and processed at your scheduled time.',
     keywords: ['timezone', 'schedule', 'daily', 'launch', 'micro', 'certification', 'events'],
@@ -115,7 +122,8 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
     href: '/iga/configurations/provisioning-task',
     title: 'Provisioning Task',
     group: 'access',
-    description: 'Evidence required on manual provisioning.',
+    description: 'Require evidence upload when an admin completes a manual provisioning grant or removal.',
+    actionLabel: 'Configure evidence',
     pageDescription:
       'Whether evidence upload is mandatory when an admin completes a manual provisioning task. Use it when audit requires proof that access was actually granted or removed.',
     keywords: ['evidence', 'upload', 'manual', 'audit', 'grant', 'remove'],
@@ -126,7 +134,8 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
     href: '/iga/configurations/role-mining',
     title: 'Role Mining',
     group: 'access',
-    description: 'Thresholds for automated role discovery.',
+    description: 'Set coverage and size thresholds that control automated discovery of candidate roles.',
+    actionLabel: 'Configure thresholds',
     pageDescription:
       'Master switch and thresholds for automated role discovery: app-level versus tenant-level periodic mining, minimum coverage, minimum entitlements per role, and minimum accounts per role. Tunes how many candidate roles the algorithm proposes and how strict they are.',
     keywords: ['mining', 'coverage', 'threshold', 'candidate', 'discovery', 'algorithm'],
@@ -137,7 +146,8 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
     href: '/iga/configurations/custom-attributes',
     title: 'Custom Attributes',
     group: 'identities',
-    description: 'Extra fields on identities and accounts.',
+    description: 'Add extra fields on identities and accounts that source systems do not already provide.',
+    actionLabel: 'Manage fields',
     pageDescription:
       'Define extra attribute fields (for example Cost Center or Employee Type) on user identities and accounts, so governance rules and reports can use data your source systems do not provide out of the box.',
     keywords: ['cost center', 'employee type', 'attribute', 'field', 'identity', 'account'],
@@ -148,7 +158,8 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
     href: '/iga/configurations/identity-correlation',
     title: 'User Identity Correlation',
     group: 'identities',
-    description: 'Match discovered accounts to identities.',
+    description: 'Match discovered application accounts to the right identity and flag leftover orphans.',
+    actionLabel: 'Manage rules',
     pageDescription:
       'Rules that match accounts discovered in applications to the right identity (by email, display name, and similar) with a confidence threshold. Determines what becomes owned access versus an orphan account.',
     keywords: ['orphan', 'match', 'email', 'display name', 'confidence', 'correlation', 'account'],
@@ -159,7 +170,8 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
     href: '/iga/configurations/locale-regional',
     title: 'Locale & Regional',
     group: 'identities',
-    description: 'Default country for users without one.',
+    description: 'Set the default usage country for users who do not already have one.',
+    actionLabel: 'Change locale',
     pageDescription:
       'Default usage location (ISO country code) applied to users who do not have one. Required by Microsoft 365 before licenses can be assigned.',
     keywords: ['iso', 'country', 'location', 'm365', 'license', 'locale', 'region'],
@@ -170,7 +182,8 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
     href: '/iga/configurations/email-templates',
     title: 'Email Templates',
     group: 'notifications',
-    description: 'HTML emails for workflow automation.',
+    description: 'Create reusable HTML emails for workflow automation, with placeholders for user details.',
+    actionLabel: 'Manage templates',
     pageDescription:
       'Create and manage the HTML emails sent by workflow automation, with dynamic placeholders such as first name and assigned applications. A central library, reusable across events.',
     keywords: ['html', 'placeholder', 'firstName', 'assignedApplications', 'template', 'workflow'],
@@ -181,7 +194,8 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
     href: '/iga/configurations/notification-routing',
     title: 'Notification Routing',
     group: 'notifications',
-    description: 'Which template each event sends.',
+    description: 'Choose which email template each governance event sends, or keep the built-in default.',
+    actionLabel: 'Configure routing',
     pageDescription:
       'Maps each governance event (request approved or rejected, certification assigned, provisioning task assigned) to a template, or falls back to the built-in default. Decides which email actually goes out.',
     keywords: ['routing', 'approved', 'rejected', 'certification', 'assigned', 'default'],
@@ -191,4 +205,22 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
 
 export function getSystemSettingsSection(id: string): SystemSettingsSection | undefined {
   return SYSTEM_SETTINGS_SECTIONS.find((s) => s.id === id);
+}
+
+function haystack(parts: string[]): string {
+  return parts.join(' ').toLowerCase();
+}
+
+/** Groups with matching sections. A query that hits a group title keeps every item in it. */
+export function filterSystemSettingsGroups(query: string) {
+  const q = query.trim().toLowerCase();
+  return SYSTEM_SETTINGS_GROUPS.map((group) => {
+    const byGroup = SYSTEM_SETTINGS_SECTIONS.filter((s) => s.group === group.id);
+    if (!q) return { group, items: byGroup };
+    const groupHit = haystack([group.title, group.description]).includes(q);
+    const items = groupHit
+      ? byGroup
+      : byGroup.filter((s) => haystack([s.title, s.description, ...s.keywords]).includes(q));
+    return { group, items };
+  }).filter((g) => g.items.length > 0);
 }

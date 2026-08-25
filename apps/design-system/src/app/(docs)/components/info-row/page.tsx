@@ -11,7 +11,7 @@ export default function InfoRowDocs() {
       <PageHeader
         eyebrow="Components"
         title="InfoRow"
-        description="Label/value rows for framed Card flush lists. Laid out like a two-column table: values share one left edge so short and long labels don’t shift the value column. Every row carries a leading icon — the prop is required. Pair with InfoRowGroup and Card padding=&quot;none&quot;."
+        description="Label/value rows for framed Card flush lists. Laid out like a two-column table: values share one left edge so short and long labels don’t shift the value column. A leading icon is the default on a scan list; omit it on every row in a tight peek. Pair with InfoRowGroup and Card padding=&quot;none&quot;."
       />
 
       <Section title="Basic" description="Wrap rows in InfoRowGroup so the value column lines up.">
@@ -89,7 +89,7 @@ export default function InfoRowDocs() {
           rows={[
             { name: 'label', type: 'string', description: 'Label cell. Column width follows the widest label in the group.' },
             { name: 'value', type: 'ReactNode', description: 'Value cell — left-aligned; all values share the same start edge.' },
-            { name: 'icon', type: 'ReactNode', default: 'required', description: 'Leading icon in the label cell, outlined at 18px. Required — one row without an icon breaks the scan column for every row around it. Product code takes these from the shared infoIcon vocabulary so a concept looks the same on every page. Colour follows the group emphasis: icon.subtle by default, icon.default when the label leads.' },
+            { name: 'icon', type: 'ReactNode', description: 'Leading icon in the label cell, outlined at 18px. Default on a scan list. Omit on every row in a group — never on one row only. Product code takes these from the shared infoIcon vocabulary. Colour follows the group emphasis: icon.subtle by default, icon.default when the label leads.' },
             { name: 'className', type: 'string', description: 'Applied to the row (e.g. px-4 outside a DS Card gutter).' },
             { name: 'InfoRowGroup', type: 'wrapper', description: 'table w-full — required so rows share one column layout and one emphasis.' },
             { name: 'InfoRowGroup emphasis', type: "'value' | 'label'", default: "'value'", description: 'value: the label is quiet and the value is emphasised — right on a detail rail, where you know the fields and are scanning for what they say. label: the label is emphasised, the value recedes and the icon darkens to icon.default — for a summary read cold, where the reader is learning which fields exist.' },
@@ -110,6 +110,7 @@ export default function InfoRowDocs() {
             'Don’t let values hug the label — they must share a column edge.',
             'Don’t add horizontal padding on the row when Card already supplies the gutter.',
             'Don’t invent a one-off icon for a concept the vocabulary already names — add it there instead.',
+            'Don’t mix icon and icon-less rows in the same group — the scan column breaks.',
           ]}
         />
         <p className="mt-3 text-body-sm text-text-tertiary">

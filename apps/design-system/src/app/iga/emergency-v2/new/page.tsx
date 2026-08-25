@@ -8,7 +8,7 @@ import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
 import CloseOutlined from '@mui/icons-material/CloseOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import SaveOutlined from '@mui/icons-material/SaveOutlined';
-import VpnKey from '@mui/icons-material/VpnKey';
+import Shield from '@mui/icons-material/Shield';
 import Groups from '@mui/icons-material/Groups';
 import ManageAccounts from '@mui/icons-material/ManageAccounts';
 import WatchLater from '@mui/icons-material/WatchLater';
@@ -742,7 +742,7 @@ function Preview({
       {/* One Card per wizard step — same names as the rail, Edit returns there.
           Icons sit on `Card` itself so check:icons can see they are filled. */}
       <Card
-        icon={<VpnKey />}
+        icon={<Shield />}
         title={stepTitle(0)}
         subtitle={STEPS[0].description}
         action={stepEdit(0, onGoToStep)}

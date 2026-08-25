@@ -4,7 +4,7 @@ import * as React from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import LaptopOutlined from '@mui/icons-material/LaptopOutlined';
-import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
+import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import { Button, Menu } from '@ds/components';
 import {
   addNodes,
@@ -190,7 +190,7 @@ function GroupEditor({
           items={[
             {
               label: 'Entitlement',
-              icon: <VpnKeyOutlined sx={{ fontSize: 18 }} />,
+              icon: <ShieldOutlined sx={{ fontSize: 18 }} />,
               onClick: () => onAddEntitlement(group.id),
             },
             {
@@ -245,7 +245,7 @@ function AccessRow({ node, onRemove }: { node: Extract<SodRuleNode, { kind: 'acc
         {node.accessType === 'technicalRole' ? (
           <LaptopOutlined sx={{ fontSize: 16 }} />
         ) : (
-          <VpnKeyOutlined sx={{ fontSize: 16 }} />
+          <ShieldOutlined sx={{ fontSize: 16 }} />
         )}
       </span>
       <span className="min-w-0 flex-1">

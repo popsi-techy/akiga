@@ -94,10 +94,10 @@ export default function CardDocs() {
             { name: 'headerTone', type: "'subtle' | 'plain'", default: "'subtle'", description: 'Flat variant only — grey header band or plain white.' },
             {
               name: 'padding',
-              type: "'none' | 'xs' | 'sm' | 'md' | 'lg'",
+              type: "'none' | '2xs' | 'xs' | 'sm' | 'md' | 'lg'",
               default: "'md'",
               description:
-                'Body padding. xs (8px) is for compact in-panel chrome — a NavList switcher whose items are already padded. none still keeps a horizontal content gutter so flush-list dividers stay inset from the panel edge.',
+                'Body padding. 2xs (4px) is for a 240px NavList rail — enough to clear the selected outline, not a second gutter. xs (8px) is the next compact step. none still keeps a horizontal content gutter so flush-list dividers stay inset from the panel edge.',
             },
           ]}
         />

@@ -61,8 +61,8 @@ export function SetupChecklistDock({
           <h2 className="text-h5 text-text-primary">Setup checklist</h2>
           <p className="mt-0.5 text-caption text-text-secondary">
             {allRequiredDone
-              ? 'Required steps are complete. You can hide this and open it again from Setup guide.'
-              : 'Finish the required steps, then activate. You can hide this and open it again from Setup guide.'}
+              ? 'Required steps are complete.'
+              : 'Finish the required steps, then activate.'}
           </p>
         </div>
         <button

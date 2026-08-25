@@ -3,7 +3,7 @@
  * Injected once at the root so both Tailwind utilities and raw CSS can reference tokens.
  * Single source: tokens.ts → CSS vars → Tailwind (see tailwind.config.ts).
  */
-import { color, spacing, radius, elevation, motion, layout, fontFamily } from '../tokens/tokens';
+import { color, spacing, radius, elevation, motion, layout, fontFamily, typography } from '../tokens/tokens';
 
 type Dict = Record<string, string>;
 
@@ -29,6 +29,7 @@ export function tokenVars(): Dict {
   flatten('--ds-motion', motion as unknown as Record<string, unknown>, out);
   flatten('--ds-layout', layout as unknown as Record<string, unknown>, out);
   flatten('--ds-font', fontFamily as unknown as Record<string, unknown>, out);
+  out['--ds-type-bodyMedium-letterSpacing'] = typography.bodyMedium.letterSpacing;
   return out;
 }
 

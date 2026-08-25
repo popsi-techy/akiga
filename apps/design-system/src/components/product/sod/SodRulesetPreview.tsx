@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import LaptopOutlined from '@mui/icons-material/LaptopOutlined';
-import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
+import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import type { SodRuleGroup, SodRuleNode } from '@/data/sod-types';
 
 /**
@@ -60,7 +60,7 @@ function AccessView({ node }: { node: Extract<SodRuleNode, { kind: 'access' }> }
         {node.accessType === 'technicalRole' ? (
           <LaptopOutlined sx={{ fontSize: 16 }} />
         ) : (
-          <VpnKeyOutlined sx={{ fontSize: 16 }} />
+          <ShieldOutlined sx={{ fontSize: 16 }} />
         )}
       </span>
       <span className="min-w-0 flex-1">

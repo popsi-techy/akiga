@@ -9,7 +9,6 @@ import PauseCircleOutlined from '@mui/icons-material/PauseCircleOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import BadgeOutlined from '@mui/icons-material/BadgeOutlined';
-import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
 import LaptopOutlined from '@mui/icons-material/LaptopOutlined';
 import BusinessOutlined from '@mui/icons-material/BusinessOutlined';
 import {
@@ -277,7 +276,7 @@ export default function BirthrightPolicyDetailPage() {
                 value={kind}
                 onChange={(id) => setKind(id as Kind)}
                 items={[
-                  { id: 'entitlements', icon: <VpnKeyOutlined sx={{ fontSize: 18 }} />, label: 'Entitlements', count: policy.entitlements.length },
+                  { id: 'entitlements', icon: <ShieldOutlined sx={{ fontSize: 18 }} />, label: 'Entitlements', count: policy.entitlements.length },
                   { id: 'technicalRoles', icon: <LaptopOutlined sx={{ fontSize: 18 }} />, label: 'Technical Roles', count: policy.technicalRoles.length },
                   { id: 'businessRoles', icon: <BusinessOutlined sx={{ fontSize: 18 }} />, label: 'Business Roles', count: policy.businessRoles.length },
                 ]}

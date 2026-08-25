@@ -3,9 +3,8 @@
 import * as React from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
-import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
-import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
 import LaptopOutlined from '@mui/icons-material/LaptopOutlined';
+import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import {
   Button,
   Card,
@@ -23,7 +22,6 @@ import {
 import { AppBadge } from '../sod/labels';
 import { PeekPanel, PeekSlot } from '../directory/PeekPanel';
 import { RowActions } from '../RowActions';
-import { infoIcon } from '../directory/infoIcons';
 import { EntityCatalogDrawer } from '../automation/EntityCatalogDrawer';
 import { TableSelectDrawer } from '../automation/TableSelectDrawer';
 import { listApps, listTechnicalRoles } from '@/data/catalog';
@@ -44,7 +42,7 @@ const META: Record<
     empty: 'No entitlements granted',
     hint: 'Single permissions, handed over for one session then taken back.',
     editHint: 'Edit which permissions this access hands over.',
-    icon: <VpnKeyOutlined />,
+    icon: <ShieldOutlined />,
   },
   technicalRoles: {
     label: 'Technical Roles',
@@ -351,15 +349,15 @@ export function EmergencyAssignmentsTab({
       <div
         className={
           switcher === 'rail'
-            ? 'grid min-h-0 flex-1 gap-5 lg:grid-cols-[240px_minmax(0,1fr)]'
+            ? 'grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)] gap-5'
             : 'flex min-h-0 flex-1 flex-col'
         }
       >
       {switcher === 'rail' ? (
-        // 8px (xs) clears the selected outline from the card edge without
-        // stacking a 16px gutter on a 240px column. The card fills the column
+        // 4px (2xs) clears the selected outline from a 240px rail without
+        // spending 16px of the column on gutter. The card fills the column
         // so the rail and the table share one height.
-        <Card padding="xs" className="h-full min-h-0">
+        <Card padding="2xs" className="h-full min-h-0 w-[240px]">
           <NavList
             ariaLabel="Assignment type"
             value={kind}
@@ -371,7 +369,7 @@ export function EmergencyAssignmentsTab({
             items={[
               {
                 id: 'entitlements',
-                icon: <VpnKeyOutlined sx={{ fontSize: 18 }} />,
+                icon: <ShieldOutlined sx={{ fontSize: 18 }} />,
                 label: 'Entitlements',
                 count: assignments.entitlements.length,
               },
@@ -483,15 +481,13 @@ export function EmergencyAssignmentsTab({
                   <div className="pt-3">
                     <InfoRowGroup>
                       <InfoRow
-                        icon={infoIcon.type}
                         label="Type"
                         value={kind === 'technicalRoles' ? 'Technical role' : 'Entitlement'}
                       />
                       {peek.appName && (
-                        <InfoRow icon={infoIcon.application} label="Application" value={peek.appName} />
+                        <InfoRow label="Application" value={peek.appName} />
                       )}
                       <InfoRow
-                        icon={infoIcon.risk}
                         label="Risk Score"
                         value={
                           detailFor(peek)?.risk == null ? (

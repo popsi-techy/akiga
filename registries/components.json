@@ -93,6 +93,8 @@
         "framed",
         "flat",
         "none",
+        "2xs",
+        "xs",
         "sm",
         "md",
         "lg"
@@ -269,7 +271,7 @@
         "default"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/info-row/page.tsx",
-      "notes": "Table-like label/value rows via InfoRowGroup — values share one left edge. Do not right-align or hug the label. `icon` is REQUIRED (TypeScript-enforced): a group of these is a scan column, and one row without an icon breaks it for every row around it. Product code sources icons from the shared `infoIcon` vocabulary (components/product/directory/infoIcons.tsx), which reuses the sidebar icon for each noun."
+      "notes": "Table-like label/value rows via InfoRowGroup — values share one left edge. Do not right-align or hug the label. `icon` is the default on a scan list; omit it on every row in a group (a tight peek) never on one row only. Product code sources icons from the shared `infoIcon` vocabulary (components/product/directory/infoIcons.tsx), which reuses the sidebar icon for each noun."
     },
     {
       "name": "Input",
@@ -375,6 +377,8 @@
       "extends": null,
       "variants": [
         "default",
+        "plain",
+        "list",
         "empty"
       ],
       "states": [
@@ -386,7 +390,7 @@
         "empty"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/destination-list/page.tsx",
-      "notes": "Two-column grid of destination cards: Avatar tile, body-medium title, caption description. Use on a settings hub or module index. NavCard is a landing launcher with count/tags; NavList is an in-panel selected switcher. The whole card is one target — never nest interactive elements inside."
+      "notes": "Destinations. `card` (default): two-column Avatar tile, title, caption. `plain`: outlined icon well + title + optional two-line caption, two / three / four columns. `list`: one column of icon + title + description, hairline rows, icons in text-icon-subtle. `items[].tone` overrides the glyph colour on plain and list. NavCard is a landing launcher with count/tags; NavList is an in-panel selected switcher. The whole item is one target — never nest interactive elements inside."
     },
     {
       "name": "NavList",

@@ -60,9 +60,12 @@ export function useAdminSettings() {
   return usePersona().persona === 'admin';
 }
 
-export function useSettingsCrumbs(leaf: string) {
-  useSetBreadcrumbs([
-    { label: 'System Settings', href: '/iga/configurations' },
-    { label: leaf },
-  ]);
+export function useSettingsCrumbs(
+  leaf: string,
+  hub: { label: string; href: string } = {
+    label: 'System Settings',
+    href: '/iga/configurations',
+  },
+) {
+  useSetBreadcrumbs([hub, { label: leaf }]);
 }

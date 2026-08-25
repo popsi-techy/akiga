@@ -14,8 +14,12 @@ import {
   useSettingsCrumbs,
 } from './SettingsChrome';
 
-export function MfaSettingsPage() {
-  useSettingsCrumbs('MFA Settings');
+export function MfaSettingsPage({
+  hub,
+}: {
+  hub?: { label: string; href: string };
+} = {}) {
+  useSettingsCrumbs('MFA Settings', hub);
   const allowed = useAdminSettings();
   const toast = useToast();
   const [value, setValue] = React.useState<MfaSettings | null>(null);

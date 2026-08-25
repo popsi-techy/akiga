@@ -95,7 +95,11 @@ export { NavCard } from './NavCard/NavCard';
 export type { NavCardProps } from './NavCard/NavCard';
 
 export { DestinationList } from './DestinationList/DestinationList';
-export type { DestinationListProps, DestinationListItem } from './DestinationList/DestinationList';
+export type {
+  DestinationListProps,
+  DestinationListItem,
+  DestinationListIconTone,
+} from './DestinationList/DestinationList';
 
 
 export { Stepper } from './Stepper/Stepper';

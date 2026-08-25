@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tailwind's fontSize map can drop letter-spacing from a cached text-* class.
+   Keep body-medium tracking on the token (1% = 0.01em) and pin it here. */
+@layer utilities {
+  .text-body-medium {
+    letter-spacing: var(--ds-type-bodyMedium-letterSpacing, 0.01em);
+  }
+}
+
 /* Base resets that Tailwind preflight would normally provide (preflight is off
    so it doesn't fight MUI CssBaseline). Kept minimal and token-driven. */
 :root {

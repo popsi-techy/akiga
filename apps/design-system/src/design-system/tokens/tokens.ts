@@ -172,7 +172,7 @@ export const typography = {
   // you want a label to sit *slightly* above its neighbours without the firmness of
   // 600 — a field value beside its label, say. If the emphasis has to be obvious at
   // small sizes, reach for `-strong`.
-  bodyMedium: { fontSize: '0.875rem', lineHeight: '1.25rem', fontWeight: fontWeight.medium, letterSpacing: '0' }, // 14/20
+  bodyMedium: { fontSize: '0.875rem', lineHeight: '1.25rem', fontWeight: fontWeight.medium, letterSpacing: '0.01em' }, // 14/20 +1% tracking
   bodySmMedium: { fontSize: '0.8125rem', lineHeight: '1.125rem', fontWeight: fontWeight.medium, letterSpacing: '0' }, // 13/18
   captionMedium: { fontSize: '0.75rem', lineHeight: '1rem', fontWeight: fontWeight.medium, letterSpacing: '0' }, // 12/16
 

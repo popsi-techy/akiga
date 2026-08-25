@@ -727,12 +727,12 @@ export function EmergencyOwnersTab({
       <div
         className={
           switcher === 'rail'
-            ? 'grid min-h-0 flex-1 gap-5 lg:grid-cols-[240px_minmax(0,1fr)]'
+            ? 'grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)] gap-5'
             : 'flex min-h-0 flex-1 flex-col'
         }
       >
       {switcher === 'rail' ? (
-        <Card padding="xs" className="h-full min-h-0">
+        <Card padding="2xs" className="h-full min-h-0 w-[240px]">
           <NavList
             ariaLabel="Owner type"
             value={view}
@@ -1170,10 +1170,14 @@ export function EmergencyAccessDetail({
             {showSetupDock && (
               <EmergencyAccessGuideButton
                 expanded={checklistOpen}
-                progress={{
-                  done: EA_REQUIRED_STEPS - blocking.length,
-                  total: EA_REQUIRED_STEPS,
-                }}
+                progress={
+                  ea.isDraft
+                    ? {
+                        done: EA_REQUIRED_STEPS - blocking.length,
+                        total: EA_REQUIRED_STEPS,
+                      }
+                    : undefined
+                }
                 onClick={() => setChecklistOpen((open) => !open)}
               />
             )}

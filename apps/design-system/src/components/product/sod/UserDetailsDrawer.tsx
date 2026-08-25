@@ -3,7 +3,7 @@
 import * as React from 'react';
 import PersonOutline from '@mui/icons-material/PersonOutline';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
-import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
+import LaptopOutlined from '@mui/icons-material/LaptopOutlined';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import BadgeOutlined from '@mui/icons-material/BadgeOutlined';
 import { Drawer, Tabs, Avatar, type TabItem } from '@ds/components';
@@ -144,7 +144,7 @@ export function UserDetailsDrawer({ open, onClose, review }: { open: boolean; on
             (entitlements.length ? (
               <ListCard>
                 {entitlements.map((a) => (
-                  <AccessRow key={a.id} icon={<VpnKeyOutlined sx={{ fontSize: 17 }} />} title={a.name} subtitle={a.description ?? accessDetail(a)} right={a.risk != null ? <RiskScoreChip score={a.risk} /> : undefined} />
+                  <AccessRow key={a.id} icon={<ShieldOutlined sx={{ fontSize: 17 }} />} title={a.name} subtitle={a.description ?? accessDetail(a)} right={a.risk != null ? <RiskScoreChip score={a.risk} /> : undefined} />
                 ))}
               </ListCard>
             ) : (
@@ -155,7 +155,7 @@ export function UserDetailsDrawer({ open, onClose, review }: { open: boolean; on
             (technicalRoles.length ? (
               <ListCard>
                 {technicalRoles.map((a) => (
-                  <AccessRow key={a.id} icon={<ShieldOutlined sx={{ fontSize: 17 }} />} title={a.name} subtitle={a.description ?? accessDetail(a)} right={a.risk != null ? <RiskScoreChip score={a.risk} /> : undefined} />
+                  <AccessRow key={a.id} icon={<LaptopOutlined sx={{ fontSize: 17 }} />} title={a.name} subtitle={a.description ?? accessDetail(a)} right={a.risk != null ? <RiskScoreChip score={a.risk} /> : undefined} />
                 ))}
               </ListCard>
             ) : (

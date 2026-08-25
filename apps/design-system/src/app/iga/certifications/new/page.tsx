@@ -7,7 +7,7 @@ import AppsOutlined from '@mui/icons-material/AppsOutlined';
 import LinkOffOutlined from '@mui/icons-material/LinkOffOutlined';
 import PersonOutline from '@mui/icons-material/PersonOutline';
 import TuneOutlined from '@mui/icons-material/TuneOutlined';
-import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
+import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import { NavCard } from '@ds/components';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import {
@@ -18,7 +18,7 @@ import {
 const ICONS: Record<CertificationTypeId, React.ReactNode> = {
   custom: <TuneOutlined sx={{ fontSize: 20 }} />,
   'user-manager': <PersonOutline sx={{ fontSize: 20 }} />,
-  'entitlement-owner': <VpnKeyOutlined sx={{ fontSize: 20 }} />,
+  'entitlement-owner': <ShieldOutlined sx={{ fontSize: 20 }} />,
   'application-owner': <AppsOutlined sx={{ fontSize: 20 }} />,
   'role-owner': <AccountTreeOutlined sx={{ fontSize: 20 }} />,
   'orphan-account': <LinkOffOutlined sx={{ fontSize: 20 }} />,

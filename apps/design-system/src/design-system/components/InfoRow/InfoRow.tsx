@@ -35,18 +35,17 @@ export interface InfoRowProps {
   label: string;
   value: React.ReactNode;
   /**
-   * Leading icon — **required**, and outlined at 18px (`sx={{ fontSize: 18 }}`).
+   * Leading icon, outlined at 18px (`sx={{ fontSize: 18 }}`).
    * It inherits its colour from the group's emphasis, so pass an uncoloured icon:
    * `icon.subtle` (#808B9E) by default, `icon.default` (#44546F) when the label
    * leads. Both clear the 3:1 WCAG 1.4.11 floor on surface and canvas.
    *
-   * Required rather than optional because a group of these is a scan target: the
-   * icon column is what lets the eye find "Owners" without reading four labels,
-   * and one row missing its icon breaks the column for every row above and below
-   * it. `icon={null}` is not an escape hatch — if a row has no meaningful icon,
-   * the row probably belongs in a different card.
+   * Default on a scan list: the icon column is what lets the eye find a field
+   * without reading every label. Omit it on **every** row in a group — a tight
+   * peek, for example — never on one row and not the others, or the column
+   * breaks for the rows around it.
    */
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   /** Applied to the row (e.g. `px-4` when not inside a DS Card gutter). */
   className?: string;
   /**
