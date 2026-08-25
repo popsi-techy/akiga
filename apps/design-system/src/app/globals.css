@@ -212,134 +212,26 @@ a {
   overflow: hidden;
   pointer-events: none;
   isolation: isolate;
-  background: #f5f8fc;
+  background: #ffffff;
 }
 
-.atmospheric-background__base {
-  position: absolute;
-  inset: -15%;
-  transform: scale(1.08);
-  filter: blur(35px);
-  background:
-    radial-gradient(
-      ellipse 70% 90% at 68% 38%,
-      rgba(142, 180, 214, 0.62) 0%,
-      rgba(176, 206, 230, 0.36) 32%,
-      rgba(214, 228, 240, 0.14) 58%,
-      transparent 78%
-    ),
-    radial-gradient(
-      ellipse 50% 70% at 28% 20%,
-      rgba(255, 255, 255, 0.75),
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse 46% 38% at 49% 55%,
-      rgba(226, 236, 246, 0.4),
-      transparent 75%
-    ),
-    radial-gradient(
-      ellipse 40% 60% at 96% 60%,
-      rgba(168, 198, 224, 0.3),
-      transparent 75%
-    ),
-    radial-gradient(
-      ellipse 55% 40% at 50% 110%,
-      rgba(255, 255, 255, 0.65),
-      transparent 78%
-    );
-}
-
-.atmospheric-background__clouds {
-  position: absolute;
-  inset: -15%;
-  opacity: 0.5;
-  filter: blur(22px);
-}
-
-.atmospheric-background__clouds svg,
-.atmospheric-background__waves svg {
-  width: 100%;
-  height: 100%;
-}
-
-.atmospheric-background__waves {
-  position: absolute;
-  inset: -12%;
-  opacity: 0.28;
-  filter: blur(10px);
-  mix-blend-mode: soft-light;
-}
-
-.atmospheric-background__dark {
-  position: absolute;
-  inset: -10%;
-  filter: blur(28px);
-  background:
-    radial-gradient(ellipse 20% 32% at 12% 24%, rgba(196, 214, 230, 0.22), transparent 72%),
-    radial-gradient(ellipse 25% 35% at 20% 62%, rgba(210, 224, 236, 0.18), transparent 74%),
-    radial-gradient(ellipse 27% 24% at 52% 82%, rgba(226, 234, 242, 0.16), transparent 72%),
-    radial-gradient(ellipse 20% 32% at 88% 46%, rgba(154, 188, 218, 0.2), transparent 74%),
-    radial-gradient(ellipse 35% 25% at 82% 100%, rgba(186, 208, 226, 0.16), transparent 76%);
-}
-
-.atmospheric-background__light {
-  position: absolute;
-  inset: -5%;
-  filter: blur(20px);
-  mix-blend-mode: screen;
-  background:
-    radial-gradient(ellipse 24% 17% at 70% 20%, rgba(255, 255, 255, 0.55), transparent 72%),
-    radial-gradient(ellipse 22% 14% at 58% 32%, rgba(255, 255, 255, 0.28), transparent 72%),
-    radial-gradient(ellipse 26% 18% at 42% 49%, rgba(255, 255, 255, 0.2), transparent 74%),
-    radial-gradient(ellipse 20% 15% at 29% 72%, rgba(255, 255, 255, 0.22), transparent 72%);
-}
-
-.atmospheric-background__flow {
-  position: absolute;
-  inset: -20%;
-  opacity: 0.16;
-  transform: scale(1.2);
-  filter: blur(17px);
-  mix-blend-mode: soft-light;
-  background: repeating-linear-gradient(
-    168deg,
-    transparent 0px,
-    transparent 36px,
-    rgba(255, 255, 255, 0.055) 52px,
-    transparent 72px,
-    transparent 110px
-  );
-}
-
-.atmospheric-background__vignette {
+.atmospheric-background__patches {
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-    ellipse 78% 72% at 50% 44%,
-    transparent 34%,
-    rgba(210, 222, 234, 0.08) 58%,
-    rgba(196, 214, 230, 0.12) 82%,
-    rgba(186, 206, 224, 0.16) 100%
-  );
+  background:
+    radial-gradient(circle 320px at 94% 118%, rgba(154, 210, 242, 0.55) 0%, transparent 68%),
+    radial-gradient(circle 240px at 4% -40%, rgba(186, 226, 248, 0.5) 0%, transparent 68%),
+    radial-gradient(circle 180px at 72% 8%, rgba(168, 218, 246, 0.42) 0%, transparent 70%),
+    radial-gradient(circle 140px at 28% 128%, rgba(210, 236, 250, 0.4) 0%, transparent 70%);
 }
 
 .atmospheric-background__grain {
   position: absolute;
   inset: -5%;
-  opacity: 0.16;
-  mix-blend-mode: multiply;
+  opacity: 0.22;
+  mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.15' numOctaves='4' seed='21' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.85'/%3E%3C/svg%3E");
   background-size: 180px 180px;
-}
-
-.atmospheric-background__micro {
-  position: absolute;
-  inset: 0;
-  opacity: 0.1;
-  mix-blend-mode: soft-light;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='65' height='65'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2.8' numOctaves='2' seed='42' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.8'/%3E%3C/svg%3E");
-  background-size: 65px 65px;
 }
 
 @media print {

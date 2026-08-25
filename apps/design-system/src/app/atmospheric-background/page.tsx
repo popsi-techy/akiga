@@ -1,8 +1,7 @@
 import { AtmosphericBackground } from '@/components/atmosphere/AtmosphericBackground';
 
 /**
- * Isolated comparison for the CSS/SVG grey atmosphere.
- * Open /atmospheric-background next to the reference crop.
+ * Isolated comparison for the white / sky-blue circular atmosphere.
  */
 export default function AtmosphericBackgroundDemo() {
   return (

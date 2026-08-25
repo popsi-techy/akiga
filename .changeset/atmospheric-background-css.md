@@ -2,5 +2,5 @@
 "@akiga/design-system-app": patch
 ---
 
-Share the workflow template banner — atmosphere, search, and blank-canvas
-sentence — on the application-type catalog and the analytics template picker.
+Quiet the catalog banner atmosphere: white field, a few sky-blue circular
+patches, and a light grain — shared by workflows, application types, and analytics.

@@ -216,9 +216,9 @@ function AppTypeTile({
           </span>
         )}
       </span>
-      <span className={`w-full min-w-0 truncate text-body-strong ${soon ? 'text-text-tertiary' : 'text-text-primary'}`}>
+      <h3 className={`w-full min-w-0 truncate text-body-strong ${soon ? 'text-text-tertiary' : 'text-text-primary'}`}>
         {appType.name}
-      </span>
+      </h3>
       <span className="flex flex-wrap gap-1">
         {appType.protocols.map((p) => (
           <span
