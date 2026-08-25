@@ -75,7 +75,7 @@ function ConfigRow({
         .join(' ')}
     >
       <div className="flex min-w-0 items-center gap-1.5">
-        <span className="text-body-sm-strong text-text-primary">
+        <span className="text-body-medium text-text-primary">
           {label}
           {required ? <span className="text-danger">*</span> : null}
         </span>

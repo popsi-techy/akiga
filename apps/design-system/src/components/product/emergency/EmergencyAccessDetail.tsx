@@ -94,6 +94,7 @@ import {
   EmergencyAccessGuideModal,
 } from '@/components/product/emergency/EmergencyAccessGuideModal';
 import { SetupChecklistDock } from '@/components/product/emergency/SetupChecklistDock';
+import { ClickToEditText } from '@/components/product/emergency/ClickToEditText';
 
 /**
  * The tab strip, with a count on every tab that holds a collection.
@@ -598,6 +599,10 @@ export function EmergencyOwnersTab({
    */
   const identityById = React.useMemo(() => new Map(listUserIdentities().map((u) => [u.id, u])), []);
 
+  /* Same rule as Assignments: an empty half is a page, not a table with no
+     rows. Search and a header over nothing read as a failed load. */
+  const isBlank = view === 'individual' ? owners.length === 0 : teamIds.length === 0;
+
   const teamColumns: Column<GovernanceTeamRow>[] = [
     {
       id: 'name',
@@ -768,6 +773,29 @@ export function EmergencyOwnersTab({
       )}
 
       <div className="flex min-h-0 flex-1 flex-col">
+        {isBlank ? (
+          <div className="grid min-h-0 flex-1 place-items-center">
+            <div className="flex max-w-md flex-col items-center px-6 py-10 text-center">
+              <h2 className="text-h5 text-text-primary">
+                {view === 'individual' ? 'No owners' : 'No governance teams'}
+              </h2>
+              <p className="mt-1.5 text-body-sm text-text-secondary">
+                {view === 'individual'
+                  ? 'Add individual owners to govern this emergency access.'
+                  : 'A team answers for this access at review, where a named owner answers for it day to day.'}
+              </p>
+              <div className="mt-5">
+                <Button
+                  startIcon={<AddIcon />}
+                  onClick={view === 'individual' ? openAdd : () => setTeamDrawerOpen(true)}
+                >
+                  {view === 'individual' ? 'Add Owners' : 'Add Governance Teams'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
         <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
           <div className="w-full max-w-sm">
             <Input placeholder="Search" value={search} onChange={(e) => setSearch(e.target.value)} startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />} />
@@ -879,6 +907,8 @@ export function EmergencyOwnersTab({
             )}
           </PeekSlot>
         </div>
+          </>
+        )}
       </div>
       </div>
 
@@ -1103,19 +1133,45 @@ export function EmergencyAccessDetail({
       <div
         className={`shrink-0 bg-canvas px-8 pt-3 ${showSetupDock ? '' : '-mt-6'}`}
       >
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className="relative z-10 mb-3 flex items-center justify-between gap-4">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             <Avatar name={ea.name} initials={ea.initial} size="md" />
-            <div>
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-h4 text-text-primary">{ea.name}</h1>
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-center gap-3">
+                <ClickToEditText
+                  as="h1"
+                  value={ea.name}
+                  required
+                  ariaLabel="Name"
+                  className="min-w-0 text-h4 text-text-primary"
+                  onCommit={(name) => {
+                    const wasDone = ea.name.trim() !== '' && ea.description.trim() !== '';
+                    updateEmergencyAccessBasics(ea.id, { name, description: ea.description });
+                    toastEASetupStep(toast, ea.id, 'basic', wasDone);
+                    bump();
+                  }}
+                />
                 {ea.risk && <StatusChip intent={ea.risk.intent} dot={false} label={ea.risk.label} />}
                 <StatusChip intent={ea.status.intent} label={ea.status.label} />
               </div>
-              <p className="mt-px text-body-sm text-text-secondary">{ea.description}</p>
+              <ClickToEditText
+                as="p"
+                value={ea.description}
+                required
+                multiline
+                ariaLabel="Description"
+                placeholder="Add a description"
+                className="mt-px min-w-0 text-body-sm text-text-secondary"
+                onCommit={(description) => {
+                  const wasDone = ea.name.trim() !== '' && ea.description.trim() !== '';
+                  updateEmergencyAccessBasics(ea.id, { name: ea.name, description });
+                  toastEASetupStep(toast, ea.id, 'basic', wasDone);
+                  bump();
+                }}
+              />
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             {/* A draft has never been on, so the only thing to offer is turning it on —
                 and only once it would actually work.
 
