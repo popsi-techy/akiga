@@ -7,8 +7,6 @@ import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import PersonSearchOutlined from '@mui/icons-material/PersonSearchOutlined';
 import InsightsOutlined from '@mui/icons-material/InsightsOutlined';
 import PlaylistAddCheckOutlined from '@mui/icons-material/PlaylistAddCheckOutlined';
-import EmailOutlined from '@mui/icons-material/EmailOutlined';
-import AltRouteOutlined from '@mui/icons-material/AltRouteOutlined';
 import LoginOutlined from '@mui/icons-material/LoginOutlined';
 import LanguageOutlined from '@mui/icons-material/LanguageOutlined';
 
@@ -22,8 +20,6 @@ export const SYSTEM_SETTINGS_ICONS: Record<string, React.ReactNode> = {
   'identity-correlation': <PersonSearchOutlined />,
   'role-mining': <InsightsOutlined />,
   'provisioning-task': <PlaylistAddCheckOutlined />,
-  'email-templates': <EmailOutlined />,
-  'notification-routing': <AltRouteOutlined />,
   'sso-oauth': <LoginOutlined />,
   'locale-regional': <LanguageOutlined />,
 };

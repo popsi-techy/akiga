@@ -39,27 +39,42 @@ export interface OverflowChipsProps<T extends OverflowChipItem = OverflowChipIte
   emptyLabel?: string;
   /** Custom chip. When set, chips are not grouped into one tinted pill. */
   renderItem?: (item: T) => React.ReactNode;
+  /**
+   * `onSubtle` inverts the grouped chrome for a grey well: a white capsule,
+   * grey named pills, the same +n. Default grouped chrome is a grey capsule
+   * with white chips, which disappears on `bg-subtle`.
+   */
+  tone?: 'default' | 'onSubtle';
 }
+
+const CHIP_ON_SUBTLE =
+  'inline-flex max-w-[140px] items-center rounded-pill bg-subtle px-2 py-0.5 text-caption-medium text-text-primary';
 
 export function OverflowChips<T extends OverflowChipItem = OverflowChipItem>({
   items,
   max = 1,
   emptyLabel = 'None',
   renderItem,
+  tone = 'default',
 }: OverflowChipsProps<T>) {
   if (items.length === 0) return <span className="text-text-tertiary">{emptyLabel}</span>;
 
   const shown = items.slice(0, max);
   const rest = items.slice(max);
+  const onSubtle = tone === 'onSubtle';
   // Named-only chips share one pill with `+n`. Custom chips bring their own
-  // shape, so grouping them would nest two pills.
-  const grouped = rest.length > 0 && renderItem == null;
+  // shape, so grouping them would nest two pills. `onSubtle` always groups:
+  // a lone grey chip on a grey well has no edge.
+  const grouped = renderItem == null && (onSubtle || rest.length > 0);
 
   const chip = (e: T, inGroup: boolean) =>
     renderItem ? (
       renderItem(e)
     ) : (
-      <span className={inGroup ? CHIP_IN_GROUP : CHIP} title={e.name}>
+      <span
+        className={onSubtle ? (inGroup ? CHIP_ON_SUBTLE : CHIP) : inGroup ? CHIP_IN_GROUP : CHIP}
+        title={e.name}
+      >
         <span className="truncate">{e.name}</span>
       </span>
     );
@@ -68,7 +83,11 @@ export function OverflowChips<T extends OverflowChipItem = OverflowChipItem>({
     <span
       className={[
         'flex flex-nowrap items-center gap-1.5',
-        grouped ? 'rounded-pill bg-subtle py-1 pl-1 pr-2.5' : '',
+        grouped
+          ? onSubtle
+            ? 'rounded-pill border border-border bg-surface py-1 pl-1 pr-2.5'
+            : 'rounded-pill bg-subtle py-1 pl-1 pr-2.5'
+          : '',
       ].join(' ')}
     >
       {shown.map((e) => (

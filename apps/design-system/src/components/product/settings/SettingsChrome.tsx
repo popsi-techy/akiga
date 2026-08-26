@@ -22,16 +22,8 @@ export function SettingsDenied() {
   );
 }
 
-export function SettingsLoading({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="flex h-full flex-col">
-      <div className="mb-5 shrink-0">
-        <h1 className="text-h2 text-text-primary">{title}</h1>
-        <p className="mt-1 text-body text-text-secondary">{description}</p>
-      </div>
-      <p className="text-body-sm text-text-secondary">Loading settings…</p>
-    </div>
-  );
+export function SettingsLoading() {
+  return <p className="text-body-sm text-text-secondary">Loading settings…</p>;
 }
 
 /** History + Save, as on the live admin screens. */

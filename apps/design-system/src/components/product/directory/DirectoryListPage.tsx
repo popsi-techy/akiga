@@ -23,11 +23,14 @@ export function DirectoryListPage<Row extends { id: string }>({
   actions,
   summary,
   layout,
+  hideTitle,
   filterGroups,
   filterMatches,
 }: {
   title: string;
   description: string;
+  /** Hide the page h1 — System Settings already names the screen in the breadcrumb. */
+  hideTitle?: boolean;
   searchPlaceholder: string;
   columns: Column<Row>[];
   rows: Row[];
@@ -80,10 +83,14 @@ export function DirectoryListPage<Row extends { id: string }>({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="mb-5 shrink-0">
-        <h1 className="text-h2 text-text-primary">{title}</h1>
-        <p className="mt-1 text-body text-text-secondary">{description}</p>
-      </div>
+      {hideTitle ? (
+        <h1 className="sr-only">{title}</h1>
+      ) : (
+        <div className="mb-5 shrink-0">
+          <h1 className="text-h2 text-text-primary">{title}</h1>
+          <p className="mt-1 text-body text-text-secondary">{description}</p>
+        </div>
+      )}
       {/* Between the title and the toolbar: a summary belongs to the page, not
           above its name, and not between the reader's filters and their results. */}
       {summary && <div className="mb-5 shrink-0">{summary}</div>}

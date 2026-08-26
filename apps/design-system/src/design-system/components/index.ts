@@ -19,6 +19,23 @@ export type { CardProps } from './Card/Card';
 export { InfoRow, InfoRowGroup } from './InfoRow/InfoRow';
 export type { InfoRowProps, InfoRowEmphasis } from './InfoRow/InfoRow';
 
+export {
+  SettingsPage,
+  SettingsSection,
+  SettingsRow,
+  SettingsNested,
+  SettingsNestedRow,
+  SettingsStack,
+  SettingsInfoBanner,
+} from './Settings/Settings';
+export type {
+  SettingsPageProps,
+  SettingsSectionProps,
+  SettingsRowProps,
+  SettingsNestedProps,
+  SettingsNestedRowProps,
+} from './Settings/Settings';
+
 export { Avatar, AvatarGroup, initialsOf } from './Avatar/Avatar';
 export type { AvatarProps, AvatarGroupProps, AvatarSize, AvatarKind } from './Avatar/Avatar';
 

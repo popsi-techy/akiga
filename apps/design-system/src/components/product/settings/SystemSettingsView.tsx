@@ -6,17 +6,26 @@ import CloseOutlined from '@mui/icons-material/CloseOutlined';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import { DestinationList, Input } from '@ds/components';
+import type { DestinationListIconTone } from '@ds/components';
 import { filterSystemSettingsGroups } from '@/data/system-settings-catalog';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import { SYSTEM_SETTINGS_ICONS } from './settingsIcons';
 import { SettingsDenied, useAdminSettings } from './SettingsChrome';
 
+/** One token hue per job — orange, blue, green. */
+const GROUP_ICON_TONE: Record<string, DestinationListIconTone> = {
+  identities: 'brand',
+  access: 'info',
+  'sign-in': 'success',
+};
+
 /**
  * System Settings hub — search, then destinations grouped by job.
+ * Each group is a heading plus a three-column catalog: outlined icon,
+ * title, and a two-line description.
  *
- * The breadcrumb already names the page. A heading here would restate it.
- * Search is the chrome; the system-wide note recedes as a fact.
- * The grouped catalog is the protagonist.
+ * Search stays put. The catalog is the only thing that scrolls, same as
+ * the list pages whose toolbar must remain reachable.
  */
 export function SystemSettingsView() {
   const router = useRouter();
@@ -29,10 +38,10 @@ export function SystemSettingsView() {
   const groups = filterSystemSettingsGroups(query);
 
   return (
-    <div>
+    <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">System Settings</h1>
 
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="mb-6 flex shrink-0 flex-wrap items-center justify-between gap-4">
         <div role="search" className="w-full max-w-sm min-w-0">
           <Input
             size="sm"
@@ -62,43 +71,47 @@ export function SystemSettingsView() {
         </p>
       </div>
 
-      {groups.length === 0 ? (
-        <DestinationList
-          appearance="list"
-          aria-label="System settings"
-          items={[]}
-          empty={
-            <div>
-              <p className="text-body-sm-strong text-text-primary">No settings match</p>
-              <p className="mt-1 text-caption text-text-secondary">
-                Nothing named “{query.trim()}”. Try sign-in, access, or notifications.
-              </p>
-            </div>
-          }
-        />
-      ) : (
-        <div className="flex flex-col gap-8">
-          {groups.map(({ group, items }) => (
-            <section key={group.id} aria-labelledby={`settings-${group.id}`}>
-              <h2 id={`settings-${group.id}`} className="mb-3 text-h5 text-text-primary">
-                {group.title}
-              </h2>
-              <DestinationList
-                appearance="list"
-                aria-label={group.title}
-                items={items.map((s) => ({
-                  id: s.id,
-                  title: s.title,
-                  description: s.description,
-                  actionLabel: s.actionLabel,
-                  icon: SYSTEM_SETTINGS_ICONS[s.id],
-                  onClick: () => router.push(s.href),
-                }))}
-              />
-            </section>
-          ))}
-        </div>
-      )}
+      <div className="ds-scroll min-h-0 flex-1 overflow-y-auto">
+        {groups.length === 0 ? (
+          <DestinationList
+            appearance="plain"
+            columns={3}
+            aria-label="System settings"
+            items={[]}
+            empty={
+              <div>
+                <p className="text-body-sm-strong text-text-primary">No settings match</p>
+                <p className="mt-1 text-caption text-text-secondary">
+                  Nothing named “{query.trim()}”. Try identities, access, or sign-in.
+                </p>
+              </div>
+            }
+          />
+        ) : (
+          <div className="flex flex-col gap-8">
+            {groups.map(({ group, items }) => (
+              <section key={group.id} aria-labelledby={`settings-${group.id}`}>
+                <h2 id={`settings-${group.id}`} className="mb-3 text-h5 text-text-primary">
+                  {group.title}
+                </h2>
+                <DestinationList
+                  appearance="plain"
+                  columns={3}
+                  aria-label={group.title}
+                  items={items.map((s) => ({
+                    id: s.id,
+                    title: s.title,
+                    description: s.description,
+                    icon: SYSTEM_SETTINGS_ICONS[s.id],
+                    tone: GROUP_ICON_TONE[group.id],
+                    onClick: () => router.push(s.href),
+                  }))}
+                />
+              </section>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

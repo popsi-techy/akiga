@@ -48,8 +48,7 @@
       { "id": "peer-groups", "label": "Peer Groups", "route": "/iga/peer-groups", "icon": "hub", "personas": ["auditor", "administrator"] }
     ]},
     { "group": "settings", "divider": true, "items": [
-      { "id": "configurations", "label": "System Settings", "route": "/iga/configurations", "icon": "settings", "personas": ["administrator"] },
-      { "id": "configurations-v2", "label": "System Settings v2", "route": "/iga/configurations-v2", "icon": "settings", "personas": ["administrator"] }
+      { "id": "configurations", "label": "System Settings", "route": "/iga/configurations", "icon": "settings", "personas": ["administrator"] }
     ]}
   ],
   "footer": [],

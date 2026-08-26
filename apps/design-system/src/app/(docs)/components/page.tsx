@@ -17,6 +17,7 @@ const groups: { title: string; description: string; items: [string, string, stri
       ['App Icon', '/components/app-icon', 'Application mark — real logo, or a first-letter tile.'],
       ['Info Row', '/components/info-row', 'Label/value rows that share one column, for detail rails.'],
       ['Overflow Chips', '/components/overflow-chips', 'A few named things plus a +n that reveals the rest.'],
+      ['Settings', '/components/settings', 'Tenant-admin column: page, section save, stacked grey wells.'],
       ['Status Chip', '/components/status-chip', 'Status & risk pills — one intent→color mapping.'],
       ['Meter', '/components/meter', 'Slim proportion bar for completion and coverage.'],
     ],

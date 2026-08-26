@@ -42,6 +42,7 @@ export const navigation: NavSection[] = [
       { label: 'App Icon', href: '/components/app-icon', status: 'ready' },
       { label: 'Info Row', href: '/components/info-row', status: 'ready' },
       { label: 'Overflow Chips', href: '/components/overflow-chips', status: 'ready' },
+      { label: 'Settings', href: '/components/settings', status: 'ready' },
       { label: 'Status Chip', href: '/components/status-chip', status: 'ready' },
       { label: 'Meter', href: '/components/meter', status: 'ready' },
     ],
@@ -112,6 +113,9 @@ export const navigation: NavSection[] = [
   },
   {
     title: 'Patterns',
-    items: [{ label: 'Coming next', href: '/patterns', status: 'planned' }],
+    items: [
+      { label: 'Overview', href: '/patterns', status: 'ready' },
+      { label: 'Settings page', href: '/patterns/settings-page', status: 'ready' },
+    ],
   },
 ];

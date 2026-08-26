@@ -67,7 +67,7 @@ export function RadioCardGroup({
                   : 'items-center gap-2 py-1',
               appearance === 'outlined'
                 ? selected
-                  ? 'border border-brand bg-brand-subtle'
+                  ? 'border border-brand bg-surface'
                   : 'border border-border bg-surface hover:border-border-strong hover:bg-surface-hover'
                 : 'hover:bg-surface-hover',
               'outline-none focus-visible:ring-2 focus-visible:ring-brand/30',
@@ -94,7 +94,7 @@ export function RadioCardGroup({
               </span>
             )}
             <span className={layout === 'inline' ? 'min-w-0' : 'min-w-0 flex-1'}>
-              <span className="block text-body-sm-strong text-text-primary">{opt.label}</span>
+              <span className="block text-body-sm-medium text-text-primary">{opt.label}</span>
               {opt.description && (
                 <span className="mt-0.5 block text-caption leading-4 text-text-secondary">{opt.description}</span>
               )}

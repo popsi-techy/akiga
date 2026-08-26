@@ -21,10 +21,5 @@ export function SettingsPlaceholderPage({ moduleId }: { moduleId: string }) {
   }
   if (!allowed) return <SettingsDenied />;
 
-  return (
-    <div>
-      <h1 className="text-h2 text-text-primary">{section.title}</h1>
-      <p className="mt-1 max-w-2xl text-body text-text-secondary">{section.pageDescription}</p>
-    </div>
-  );
+  return <h1 className="sr-only">{section.title}</h1>;
 }

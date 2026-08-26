@@ -1,0 +1,27 @@
+{
+  "version": "1.0.0",
+  "note": "Normative inventory of UX patterns. A pattern is a reusable solution to a recurring interaction problem, composed from Design System components. Prefer extending an entry over inventing a parallel solution.",
+  "patterns": [
+    {
+      "name": "settings-page",
+      "status": "stable",
+      "problem": "A tenant-admin screen of named settings, each with a control, that must look the same from page to page and save in sections.",
+      "useWhen": "System Settings detail pages (MFA, and any new tenant configuration screen).",
+      "avoidWhen": "A catalog of records (Custom Attributes, User Identity Correlation, Entitlement Types) — those use DirectoryListPage and a Drawer. Detail rails use InfoRow, not SettingsRow.",
+      "components": [
+        "SettingsPage",
+        "SettingsSection",
+        "SettingsRow",
+        "SettingsNested",
+        "SettingsNestedRow",
+        "SettingsStack",
+        "SettingsInfoBanner",
+        "OverflowChips",
+        "Switch",
+        "Button"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/patterns/settings-page/page.tsx",
+      "adr": "docs/architecture/decisions/0012-settings-page-anatomy.md"
+    }
+  ]
+}

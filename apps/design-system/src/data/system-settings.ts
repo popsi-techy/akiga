@@ -1,6 +1,6 @@
 /**
- * Tenant-wide System Settings — MFA, access-request defaults, and micro
- * certifications.
+ * Tenant-wide System Settings — MFA, access-request defaults, micro
+ * certifications, locale, and related admin configuration.
  *
  * Screens call these functions. Persistence is session memory in this module
  * (hydrated from localStorage when a window exists), same contract as the other
@@ -16,7 +16,13 @@ export const SYSTEM_SETTING_TIMEZONES = [
 ] as const;
 
 export type OnBehalfWho = 'anyone' | 'managers' | 'governance-teams';
-export type MfaMethod = 'email-otp';
+export type MfaMethod = 'email-otp' | 'authenticator' | 'sms-otp';
+
+export const MFA_METHOD_LABELS: Record<MfaMethod, string> = {
+  'email-otp': 'Email OTP',
+  authenticator: 'Authenticator',
+  'sms-otp': 'SMS OTP',
+};
 
 export interface MfaSettings {
   /** Tenant-wide switch. Role cards below still apply when this is off. */
@@ -58,12 +64,72 @@ export interface MicroCertificationSettings {
   time: string;
 }
 
-/** Tenant clock and geography — shown on the System Settings hub, not edited there. */
+export type MicroCertDisableAction = 'create-and-disable' | 'delete-pending';
+
+/** Events waiting to become micro certifications — shown when turning the job off. */
+export const MICRO_CERT_PENDING_EVENTS = 2175;
+
+/** ISO 3166-1 alpha-2. Applied at provisioning when the user has no usage location. */
+export const ISO_USAGE_LOCATION = /^[A-Z]{2}$/;
+
+export function normalizeUsageLocation(raw: string): string {
+  return raw.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase();
+}
+
+/** Tenant clock, geography, and the default usage location applied at provisioning. */
 export interface TenantLocale {
   timezoneId: string;
   /** Human label, e.g. "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi". */
   timezoneDisplay: string;
   region: string;
+  /** ISO 3166-1 alpha-2. Applied to users who do not already have a usage location. */
+  usageLocation: string;
+}
+
+export type SsoOauthProvider = 'miniorange' | 'okta' | 'entra' | 'custom';
+
+export const SSO_OAUTH_PROVIDERS: { value: SsoOauthProvider; label: string }[] = [
+  { value: 'miniorange', label: 'miniOrange' },
+  { value: 'okta', label: 'Okta' },
+  { value: 'entra', label: 'Microsoft Entra ID' },
+  { value: 'custom', label: 'Custom' },
+];
+
+export interface SsoOauthSettings {
+  configurationName: string;
+  provider: SsoOauthProvider;
+  clientId: string;
+  clientSecret: string;
+  authorizationUrl: string;
+  tokenUrl: string;
+  userInfoUrl: string;
+  redirectUri: string;
+  grantType: string;
+  idpRsaPublicKey: string;
+}
+
+export type RoleMiningFrequency = 'weekly' | 'monthly' | 'quarterly';
+
+export const ROLE_MINING_FREQUENCIES: { value: RoleMiningFrequency; label: string }[] = [
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'quarterly', label: 'Quarterly' },
+];
+
+export interface RoleMiningSettings {
+  enabled: boolean;
+  appLevelEnabled: boolean;
+  appLevelFrequency: RoleMiningFrequency;
+  tenantLevelEnabled: boolean;
+  tenantLevelFrequency: RoleMiningFrequency;
+  minCoveragePercent: number;
+  minEntitlementsPerRole: number;
+  minAccountsPerRole: number;
+}
+
+export interface ProvisioningTaskSettings {
+  /** When on, an admin cannot complete a manual grant or removal without attaching evidence. */
+  requireEvidence: boolean;
 }
 
 export interface SystemSettings {
@@ -71,6 +137,9 @@ export interface SystemSettings {
   accessRequest: AccessRequestSettings;
   microCertification: MicroCertificationSettings;
   locale: TenantLocale;
+  ssoOauth: SsoOauthSettings;
+  roleMining: RoleMiningSettings;
+  provisioningTask: ProvisioningTaskSettings;
 }
 
 export const EMAIL_TEMPLATE_OPTIONS = [
@@ -92,7 +161,7 @@ const DEFAULTS: SystemSettings = {
     enforceForAllUsers: false,
     endUserEnabled: false,
     reviewerEnabled: false,
-    methods: ['email-otp'],
+    methods: ['email-otp', 'authenticator', 'sms-otp'],
   },
   accessRequest: {
     general: { onBehalfEnabled: true, onBehalfWho: 'anyone' },
@@ -124,6 +193,32 @@ const DEFAULTS: SystemSettings = {
     timezoneId: 'Asia/Kolkata',
     timezoneDisplay: '(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi',
     region: 'India',
+    usageLocation: 'US',
+  },
+  ssoOauth: {
+    configurationName: '',
+    provider: 'miniorange',
+    clientId: '',
+    clientSecret: '',
+    authorizationUrl: 'https://<your-host>/moas/idp/openidso',
+    tokenUrl: 'https://<your-host>/moas/rest/oauth/token',
+    userInfoUrl: 'https://<your-host>/moas/rest/oauth/getuserinfo',
+    redirectUri: 'https://test.miniorange.in/iga/ssoOauth/7fb0059f-a3b9-44f2-8d4d-cb7eafd81286',
+    grantType: 'authorization_code',
+    idpRsaPublicKey: '',
+  },
+  roleMining: {
+    enabled: true,
+    appLevelEnabled: true,
+    appLevelFrequency: 'monthly',
+    tenantLevelEnabled: true,
+    tenantLevelFrequency: 'quarterly',
+    minCoveragePercent: 74,
+    minEntitlementsPerRole: 3,
+    minAccountsPerRole: 4,
+  },
+  provisioningTask: {
+    requireEvidence: false,
   },
 };
 
@@ -146,6 +241,9 @@ function readStore(): SystemSettings {
       },
       microCertification: { ...DEFAULTS.microCertification, ...parsed.microCertification },
       locale: { ...DEFAULTS.locale, ...parsed.locale },
+      ssoOauth: { ...DEFAULTS.ssoOauth, ...parsed.ssoOauth },
+      roleMining: { ...DEFAULTS.roleMining, ...parsed.roleMining },
+      provisioningTask: { ...DEFAULTS.provisioningTask, ...parsed.provisioningTask },
     };
   } catch {
     return structuredClone(DEFAULTS);
@@ -182,6 +280,28 @@ export function saveMicroCertificationSettings(
 ): MicroCertificationSettings {
   const all = readStore();
   return writeStore({ ...all, microCertification: next }).microCertification;
+}
+
+export function saveSsoOauthSettings(next: SsoOauthSettings): SsoOauthSettings {
+  const all = readStore();
+  return writeStore({ ...all, ssoOauth: next }).ssoOauth;
+}
+
+export function saveRoleMiningSettings(next: RoleMiningSettings): RoleMiningSettings {
+  const all = readStore();
+  return writeStore({ ...all, roleMining: next }).roleMining;
+}
+
+export function saveProvisioningTaskSettings(
+  next: ProvisioningTaskSettings,
+): ProvisioningTaskSettings {
+  const all = readStore();
+  return writeStore({ ...all, provisioningTask: next }).provisioningTask;
+}
+
+export function saveLocaleSettings(next: TenantLocale): TenantLocale {
+  const all = readStore();
+  return writeStore({ ...all, locale: next }).locale;
 }
 
 export function timezoneLabel(value: string): string {

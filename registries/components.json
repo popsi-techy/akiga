@@ -417,7 +417,8 @@
       "variants": [
         "grouped",
         "single",
-        "empty"
+        "empty",
+        "onSubtle"
       ],
       "states": [
         "default",
@@ -425,7 +426,7 @@
         "focus-visible"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/overflow-chips/page.tsx",
-      "notes": "A few named things plus a +n that reveals the rest, for rows whose height must not change with their contents (table cells, label/value rows, a summary beside a button). With an overflow the set sits in ONE tinted pill — the named chip and the +n are halves of a single value, and loose chips read as two values; with nothing to collapse a lone chip is left ungrouped. The +n is plain text, never a second outlined chip: it is a remainder, not an item. `renderItem` is for chips that already have their own chrome; those stay ungrouped so two pills are not nested. Promoted from product code once a second surface needed it."
+      "notes": "A few named things plus a +n that reveals the rest, for rows whose height must not change with their contents (table cells, label/value rows, a summary beside a button). With an overflow the set sits in ONE tinted pill — the named chip and the +n are halves of a single value, and loose chips read as two values; with nothing to collapse a lone chip is left ungrouped. The +n is plain text, never a second outlined chip: it is a remainder, not an item. `renderItem` is for chips that already have their own chrome; those stay ungrouped so two pills are not nested. `tone=\"onSubtle\"` inverts the grouped chrome for a grey well: a white capsule, grey named pills. Promoted from product code once a second surface needed it."
     },
     {
       "name": "PickerSlot",
@@ -716,6 +717,30 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/components/stepper/page.tsx",
       "notes": "Steps keep their number throughout, so \"step 2\" means the same thing on every screen. showBack=false on a step that owns its own way back (a final review with an explicit Edit). Cap at four steps."
+    },
+    {
+      "name": "Settings",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/Settings/Settings.tsx",
+      "extends": null,
+      "variants": [
+        "page",
+        "section",
+        "row-plain",
+        "row-subtle",
+        "nested",
+        "nested-row",
+        "stack",
+        "info-banner"
+      ],
+      "states": [
+        "default",
+        "dirty-save",
+        "clean-save-disabled",
+        "empty-row"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/settings/page.tsx",
+      "notes": "Tenant-admin settings chrome. SettingsPage is a 900px column that shrinks with the viewport. The page name is the breadcrumb — SettingsPage.title is visually hidden. SettingsSection is a heading plus optional Reset (icon) and xs Save — each section saves itself. SettingsRow surface=subtle is the grey well; wrap siblings in SettingsStack (4px gap, radius only on the outer corners, a middle row is square). SettingsNested is the white panel inside a grey well — pass it as SettingsRow.nested. SettingsNestedRow is one field inside that panel (one when a parent control is on, several when the well is a heading with no control). surface=plain is a divided row inside an existing Card. SettingsInfoBanner is the always-on note under a section. Do not wrap a subtle well in a Card. OverflowChips tone=onSubtle is the chosen-set capsule on a grey well. See ADR-0012 and the settings-page pattern."
     },
     {
       "name": "SetupBar",

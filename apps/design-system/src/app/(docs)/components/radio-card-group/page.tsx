@@ -41,7 +41,7 @@ export default function RadioCardGroupDocs() {
             { name: 'options', type: 'RadioCardOption[]', description: '{ value, label, description?, icon?, disabled? }.' },
             { name: 'value / onChange', type: 'string / (v) => void', description: 'Controlled selection.' },
             { name: 'columns', type: '1 | 2 | 3', default: '1', description: 'Grid columns.' },
-            { name: 'appearance', type: "'plain' | 'outlined'", default: 'plain', description: 'Adds contained option surfaces when choices need stronger separation.' },
+            { name: 'appearance', type: "'plain' | 'outlined'", default: 'plain', description: 'Adds contained option surfaces when choices need stronger separation. Selected is a brand outline on surface — no fill.' },
             { name: 'ariaLabel', type: 'string', description: 'Labels the radiogroup for assistive tech.' },
           ]}
         />

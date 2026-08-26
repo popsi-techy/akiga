@@ -1,10 +1,6 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { SystemSettingsV2View } from '@/components/product/settings/SystemSettingsV2View';
-
-/**
- * System Settings v2 hub. Same catalog as v1; icon + label, three per row.
- */
-export default function SystemSettingsV2Page() {
-  return <SystemSettingsV2View />;
+/** Former v2 hub URL — the grid now lives at System Settings. */
+export default function Page() {
+  redirect('/iga/configurations');
 }

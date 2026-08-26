@@ -1,18 +1,42 @@
 'use client';
 
 import * as React from 'react';
-import GppGood from '@mui/icons-material/GppGood';
-import { Button, Card, StatusChip, Switch, useToast } from '@ds/components';
-import { getSystemSettings, saveMfaSettings, type MfaSettings } from '@/data/system-settings';
-import { SettingsInfoBanner, SettingsRow } from './SettingsRow';
+import EditOutlined from '@mui/icons-material/EditOutlined';
 import {
-  SettingsActions,
+  OverflowChips,
+  SettingsInfoBanner,
+  SettingsPage,
+  SettingsRow,
+  SettingsSection,
+  SettingsStack,
+  Switch,
+  Tooltip,
+  useToast,
+} from '@ds/components';
+import {
+  getSystemSettings,
+  saveMfaSettings,
+  MFA_METHOD_LABELS,
+  type MfaSettings,
+} from '@/data/system-settings';
+import {
   SettingsDenied,
-  SettingsLoading,
   same,
   useAdminSettings,
   useSettingsCrumbs,
 } from './SettingsChrome';
+
+function configSlice(m: MfaSettings) {
+  return { enforceForAllUsers: m.enforceForAllUsers, methods: m.methods };
+}
+
+function rolesSlice(m: MfaSettings) {
+  return { endUserEnabled: m.endUserEnabled, reviewerEnabled: m.reviewerEnabled };
+}
+
+const PAGE_TITLE = 'Multi-Factor Authentication (MFA)';
+const PAGE_DESCRIPTION =
+  'Enforce extra security checks during login and customize authentication requirements by user role.';
 
 export function MfaSettingsPage({
   hub,
@@ -34,88 +58,120 @@ export function MfaSettingsPage({
   if (!allowed) return <SettingsDenied />;
   if (!value || !saved) {
     return (
-      <SettingsLoading
-        title="Multi-Factor Authentication (MFA)"
-        description="Enforce extra security checks during login and customize authentication requirements by user role."
-      />
+      <SettingsPage title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+        <p className="text-body-sm text-text-secondary">Loading settings…</p>
+      </SettingsPage>
     );
   }
 
+  const configDirty = !same(configSlice(value), configSlice(saved));
+  const rolesDirty = !same(rolesSlice(value), rolesSlice(saved));
+
+  const saveConfig = () => {
+    setSaved(
+      saveMfaSettings({
+        ...saved,
+        enforceForAllUsers: value.enforceForAllUsers,
+        methods: value.methods,
+      }),
+    );
+    toast.success('MFA configuration saved');
+  };
+
+  const resetConfig = () => {
+    setValue({
+      ...value,
+      enforceForAllUsers: saved.enforceForAllUsers,
+      methods: saved.methods,
+    });
+  };
+
+  const saveRoles = () => {
+    setSaved(
+      saveMfaSettings({
+        ...saved,
+        endUserEnabled: value.endUserEnabled,
+        reviewerEnabled: value.reviewerEnabled,
+      }),
+    );
+    toast.success('MFA role settings saved');
+  };
+
   return (
-    <div>
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-h2 text-text-primary">Multi-Factor Authentication (MFA)</h1>
-          <p className="mt-1 text-body text-text-secondary">
-            Enforce extra security checks during login and customize authentication
-            requirements by user role.
-          </p>
-        </div>
-        <SettingsActions
-          dirty={!same(value, saved)}
-          onSave={() => {
-            setSaved(saveMfaSettings(value));
-            toast.success('MFA settings saved');
-          }}
-        />
-      </div>
-
-      <div className="space-y-4">
-        <Card icon={<GppGood />} title="MFA Configuration" padding="md">
-          <div className="divide-y divide-border">
-            <SettingsRow
-              title="Enforce MFA for all users"
-              description="Require all users to complete MFA when logging in. Default method is email."
-            >
-              <Switch
-                checked={value.enforceForAllUsers}
-                onChange={(_, checked) => setValue({ ...value, enforceForAllUsers: checked })}
-                inputProps={{ 'aria-label': 'Enforce MFA for all users' }}
-              />
-            </SettingsRow>
-            <SettingsRow
-              title="Allowed MFA methods"
-              description="Select which authentication methods are available for users."
-            >
-              <StatusChip intent="info" label="Email OTP" dot={false} />
-              <Button
-                variant="tertiary"
-                size="xs"
-                onClick={() => toast.info('Additional MFA methods are not available in this prototype')}
+    <SettingsPage title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+      <SettingsSection
+        id="mfa-config-heading"
+        title="MFA Configuration"
+        onReset={resetConfig}
+        resetDisabled={!configDirty}
+        onSave={saveConfig}
+        saveDisabled={!configDirty}
+      >
+        <SettingsStack>
+          <SettingsRow
+            surface="subtle"
+            title="Enforce MFA for all users"
+            description="Require all users to complete MFA when logging in. Default method is email."
+          >
+            <Switch
+              checked={value.enforceForAllUsers}
+              onChange={(_, checked) => setValue({ ...value, enforceForAllUsers: checked })}
+              inputProps={{ 'aria-label': 'Enforce MFA for all users' }}
+            />
+          </SettingsRow>
+          <SettingsRow
+            surface="subtle"
+            title="Allowed MFA Methods"
+            description="Select which authentication methods are available for users."
+          >
+            <OverflowChips
+              items={value.methods.map((id) => ({ id, name: MFA_METHOD_LABELS[id] }))}
+              max={1}
+              tone="onSubtle"
+            />
+            <Tooltip title="Edit">
+              <button
+                type="button"
+                aria-label="Edit allowed MFA methods"
+                onClick={() =>
+                  toast.info('Additional MFA methods are not available in this prototype')
+                }
+                className="grid h-8 w-8 place-items-center rounded-md text-icon hover:bg-surface-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
               >
-                Edit
-              </Button>
-            </SettingsRow>
-          </div>
-        </Card>
+                <EditOutlined sx={{ fontSize: 18 }} />
+              </button>
+            </Tooltip>
+          </SettingsRow>
+        </SettingsStack>
+      </SettingsSection>
 
-        <Card
-          icon={<GppGood />}
-          title="MFA Configuration for roles"
-          subtitle="Bulk enable or disable MFA for specific user roles."
-          padding="md"
-          footer={
-            <SettingsInfoBanner>
-              MFA is mandatory for Tenant Administrator and Additional Administrator
-              and is always on.
-            </SettingsInfoBanner>
-          }
-        >
-          <div className="grid gap-3 md:grid-cols-2">
-            <RoleCard
-              title="End User"
-              enabled={value.endUserEnabled}
-              onChange={(endUserEnabled) => setValue({ ...value, endUserEnabled })}
-            />
-            <RoleCard
-              title="Reviewer"
-              enabled={value.reviewerEnabled}
-              onChange={(reviewerEnabled) => setValue({ ...value, reviewerEnabled })}
-            />
-          </div>
-        </Card>
-      </div>
-    </div>
+      <SettingsSection
+        id="mfa-roles-heading"
+        title="MFA Configuration for roles"
+        divided
+        onSave={saveRoles}
+        saveDisabled={!rolesDirty}
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          <RoleCard
+            title="End User"
+            enabled={value.endUserEnabled}
+            onChange={(endUserEnabled) => setValue({ ...value, endUserEnabled })}
+          />
+          <RoleCard
+            title="Reviewer"
+            enabled={value.reviewerEnabled}
+            onChange={(reviewerEnabled) => setValue({ ...value, reviewerEnabled })}
+          />
+        </div>
+        <div className="mt-4">
+          <SettingsInfoBanner>
+            MFA is mandatory for <span className="text-body-sm-strong">Tenant Administrator</span>,{' '}
+            <span className="text-body-sm-strong">Additional Administrator</span> and is always on.
+          </SettingsInfoBanner>
+        </div>
+      </SettingsSection>
+    </SettingsPage>
   );
 }
 
@@ -129,15 +185,12 @@ function RoleCard({
   onChange: (next: boolean) => void;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-surface p-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-body-sm-strong text-text-primary">{title}</p>
-        <Switch
-          checked={enabled}
-          onChange={(_, checked) => onChange(checked)}
-          inputProps={{ 'aria-label': `Enable MFA for ${title}` }}
-        />
-      </div>
-    </div>
+    <SettingsRow surface="subtle" title={title}>
+      <Switch
+        checked={enabled}
+        onChange={(_, checked) => onChange(checked)}
+        inputProps={{ 'aria-label': `Enable MFA for ${title}` }}
+      />
+    </SettingsRow>
   );
 }
