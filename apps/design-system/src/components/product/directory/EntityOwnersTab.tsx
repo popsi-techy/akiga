@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import PersonOutline from '@mui/icons-material/PersonOutline';
 import GroupsOutlined from '@mui/icons-material/GroupsOutlined';
-import FilterListOutlined from '@mui/icons-material/FilterListOutlined';
+import TuneOutlined from '@mui/icons-material/TuneOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import PersonAddAltOutlined from '@mui/icons-material/PersonAddAltOutlined';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
@@ -19,8 +19,9 @@ import {
   Drawer,
   NavList,
   SelectionPanel,
-  Menu,
   Tooltip,
+  InfoRow,
+  InfoRowGroup,
   useToast,
   type Column,
 } from '@ds/components';
@@ -35,12 +36,17 @@ import {
 import { getOwners, setOwners, type OwnedEntityType } from '@/data/entity-owners';
 import { PeekPanel, PeekSlot } from './PeekPanel';
 import { IdentityDetailsBody } from './IdentityDetailsBody';
+import { infoIcon } from './infoIcons';
+import { RowActions } from '@/components/product/RowActions';
 
 /**
  * The "Assigned Owners" / "Reviewers" tab, shared by every governable Directory
  * entity. Owners come from the workforce; assignments persist in the entity-owners
- * store (seeded from the entity's initial ownerIds). Modeled on the Emergency
- * Access owners pattern (search + Add drawer with a Selection panel).
+ * store (seeded from the entity's initial ownerIds).
+ *
+ * The two owner kinds and the table chrome match Emergency Access V1: a 240px
+ * NavList rail, a centred empty page (not an empty table), a filter icon, and
+ * RowActions that peek without charging a kebab click.
  */
 export function EntityOwnersTab({
   entityType,
@@ -60,8 +66,15 @@ export function EntityOwnersTab({
   const router = useRouter();
   const toast = useToast();
   const lower = label.toLowerCase();
-  // Peek at an owner in place — the table stays visible and the panel swaps.
-  const [peek, setPeek] = React.useState<UserIdentityRow | null>(null);
+  /**
+   * The row whose details are open beside the table — a person or a team, never both.
+   *
+   * One piece of state rather than two, because the panel is one slot: two would let a
+   * stale person sit behind a team, and closing one would reveal the other.
+   */
+  const [peek, setPeek] = React.useState<
+    { kind: 'owner'; row: UserIdentityRow } | { kind: 'team'; row: GovernanceTeamRow } | null
+  >(null);
   /**
    * Ownership has two shapes, and the rail is how you switch between them: named
    * individuals, and the Governance Teams whose charter covers this entity. One
@@ -69,6 +82,7 @@ export function EntityOwnersTab({
    * answers for this, versus which body does.
    */
   const [view, setView] = React.useState<'individual' | 'teams'>('individual');
+  React.useEffect(() => setPeek(null), [view]);
   /**
    * Some entities have no team half of ownership at all — a governance team
    * cannot be owned by one, and an SoD policy answers to named people. Those
@@ -92,6 +106,7 @@ export function EntityOwnersTab({
   const owners = resolvePeople(ownerIds).filter(
     (o) => o.name.toLowerCase().includes(search.toLowerCase()) || o.email.toLowerCase().includes(search.toLowerCase()),
   );
+  const teamRows = teams.filter((t) => t.name.toLowerCase().includes(search.toLowerCase()));
 
   const [addOpen, setAddOpen] = React.useState(false);
   const [addSearch, setAddSearch] = React.useState('');
@@ -116,6 +131,10 @@ export function EntityOwnersTab({
     toast.success(`${n} ${lower}${n > 1 ? 's' : ''} added`);
   };
 
+  /* Same rule as Emergency Access: an empty half is a page, not a table with no
+     rows. Search and a header over nothing read as a failed load. */
+  const isBlank = view === 'individual' ? ownerIds.length === 0 : teams.length === 0;
+
   const personCell = (o: UserIdentityRow) => (
     <div className="flex items-center gap-3">
       <Avatar name={o.name} size="sm" kind="person" />
@@ -128,44 +147,36 @@ export function EntityOwnersTab({
 
   const columns: Column<UserIdentityRow>[] = [
     { id: 'name', header: label, sortable: true, value: (o) => o.name, render: personCell },
-    { id: 'email', header: 'Email', sortable: true, value: (o) => o.email, render: (o) => <span className="text-text-secondary">{o.email}</span> },
+    /* Email stands down while the panel is open — the panel carries it, and the
+       ~416px it leaves is not enough for name, email and actions. */
+    ...(peek === null
+      ? [
+          {
+            id: 'email',
+            header: 'Email',
+            sortable: true,
+            value: (o: UserIdentityRow) => o.email,
+            render: (o: UserIdentityRow) => <span className="text-text-secondary">{o.email}</span>,
+          },
+        ]
+      : []),
     {
       id: 'actions',
       header: 'Actions',
       align: 'right',
-      width: 104,
+      width: 88,
       render: (o) => (
-        // Two actions, in the order you reach for them: read who this is, then
-        // act on them. The peek is its own button rather than a menu item so it
-        // costs one click, which is the point of a peek.
-        <div className="flex items-center justify-end gap-1">
-          <Tooltip title="View details">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setPeek(o);
-              }}
-              aria-label={`View details for ${o.name}`}
-              className="rounded-md p-1 text-icon-subtle transition-colors hover:bg-surface-hover hover:text-text-brand"
-            >
-              <InfoOutlined sx={{ fontSize: 18 }} />
-            </button>
-          </Tooltip>
-          <Menu
-            items={[
-              { label: 'Message', onClick: () => toast.info(`Message ${o.name}`) },
-              {
-                label: `Remove ${lower}`,
-                danger: true,
-                onClick: () => {
-                  persist(ownerIds.filter((x) => x !== o.id));
-                  toast.success(`${o.name} removed`);
-                },
-              },
-            ]}
-          />
-        </div>
+        <RowActions
+          onInfo={() => setPeek({ kind: 'owner', row: o })}
+          infoLabel={`View details for ${o.name}`}
+          onRemove={() => {
+            persist(ownerIds.filter((x) => x !== o.id));
+            if (peek?.kind === 'owner' && peek.row.id === o.id) setPeek(null);
+            toast.success(`${o.name} removed`);
+          }}
+          removeLabel={`Remove ${o.name}`}
+          removeTooltip={`Remove ${lower}`}
+        />
       ),
     },
   ];
@@ -198,102 +209,217 @@ export function EntityOwnersTab({
           <Avatar name={t.name} size="sm" />
           <div className="min-w-0">
             <div className="truncate text-body-sm-strong text-text-primary">{t.name}</div>
-            <div className="truncate text-caption text-text-secondary">{t.description}</div>
+            {peek === null && (
+              <div className="truncate text-caption text-text-secondary">{t.description}</div>
+            )}
           </div>
         </div>
       ),
     },
-    { id: 'members', header: 'Members', align: 'right', width: 120, sortable: true, value: (t) => t.reviewerCount, render: (t) => <span className="text-body-sm tabular-nums text-text-primary">{t.reviewerCount}</span> },
+    ...(peek === null
+      ? [
+          {
+            id: 'members',
+            header: 'Reviewers',
+            align: 'right' as const,
+            width: 120,
+            sortable: true,
+            value: (t: GovernanceTeamRow) => t.reviewerCount,
+            render: (t: GovernanceTeamRow) => (
+              <span className="text-body-sm tabular-nums text-text-primary">{t.reviewerCount}</span>
+            ),
+          },
+        ]
+      : []),
+    {
+      id: 'actions',
+      header: 'Actions',
+      align: 'right',
+      width: 88,
+      render: (t) => (
+        <div className="flex items-center justify-end">
+          <Tooltip title="View details">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPeek({ kind: 'team', row: t });
+              }}
+              aria-label={`View details for ${t.name}`}
+              className="rounded-md p-1 text-icon-subtle transition-colors hover:bg-surface-hover hover:text-text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-subtle"
+            >
+              <InfoOutlined sx={{ fontSize: 18 }} />
+            </button>
+          </Tooltip>
+        </div>
+      ),
+    },
   ];
 
+  const rail = canHaveTeams ? (
+    // 4px (2xs) clears the selected outline from a 240px rail without
+    // spending 16px of the column on gutter. The card fills the column
+    // so the rail and the table share one height.
+    <Card padding="2xs" className="h-full min-h-0 w-[240px]">
+      <NavList
+        ariaLabel="Owner type"
+        value={view}
+        onChange={(id) => setView(id as 'individual' | 'teams')}
+        items={[
+          { id: 'individual', icon: <PersonOutline sx={{ fontSize: 18 }} />, label: `Individual ${label}s`, count: ownerIds.length },
+          { id: 'teams', icon: <GroupsOutlined sx={{ fontSize: 18 }} />, label: 'Governance Teams', count: teams.length },
+        ]}
+      />
+    </Card>
+  ) : null;
+
+  const emptyCopy =
+    view === 'individual'
+      ? {
+          title: `No ${lower}s`,
+          message: emptyHint ?? `Add ${lower}s to govern this entity.`,
+          action: `Add ${label}s`,
+        }
+      : {
+          title: 'No governance teams',
+          message: 'No Governance Team lists this entity in its charter. Team ownership is assigned on the team.',
+          action: null,
+        };
+
   return (
-    <div className={`grid h-full gap-5 ${canHaveTeams ? 'lg:grid-cols-[264px_minmax(0,1fr)]' : ''}`}>
-      {/* padding="sm" (16px), not "none": `none` keeps a 20px gutter meant for flush
-          rows with dividers, and stacking it with a wrapper and the item's own px-3
-          pushed the label 42px off the card edge. NavList items are self-padded, so
-          the container just needs to clear them — the app sidebar uses the same
-          12–16px rhythm.
+    <div className="flex h-full min-h-0 flex-col">
+      <div
+        className={
+          canHaveTeams
+            ? 'grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)] gap-5'
+            : 'flex min-h-0 flex-1 flex-col'
+        }
+      >
+        {rail}
 
-          Dropped entirely when there is only one kind to show: a rail with a
-          single item that is always selected is a control that does nothing, and
-          it costs the table 264px to say so. */}
-      {canHaveTeams && (
-        <Card padding="sm" className="h-full">
-          <NavList
-            ariaLabel="Owner type"
-            value={view}
-            onChange={(id) => setView(id as 'individual' | 'teams')}
-            items={[
-              { id: 'individual', icon: <PersonOutline sx={{ fontSize: 18 }} />, label: `Individual ${label}s`, count: ownerIds.length },
-              { id: 'teams', icon: <GroupsOutlined sx={{ fontSize: 18 }} />, label: 'Governance Teams', count: teams.length },
-            ]}
-          />
-        </Card>
-      )}
-
-      <div className="flex h-full min-h-0 flex-col">
-      <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
-        <div className="w-full max-w-sm">
-          <Input placeholder="Search" value={search} onChange={(e) => setSearch(e.target.value)} startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />} />
-        </div>
-        <Button variant="secondary" startIcon={<FilterListOutlined />} onClick={() => toast.info('Filters coming soon')}>
-          Filter
-        </Button>
-        {view === 'individual' && (
-          <div className="ml-auto">
-            <Button startIcon={<AddIcon />} onClick={openAdd}>
-              Add {label}s
-            </Button>
-          </div>
-        )}
-      </div>
-
-      <div className="flex min-h-0 flex-1">
-        {view === 'individual' ? (
-          <>
-            <div className="min-w-0 flex-1">
-              <DataTable<UserIdentityRow>
-                columns={columns}
-                rows={owners}
-                fillHeight
-                onRowClick={(o) => setPeek(o)}
-                emptyTitle={`No ${lower}s`}
-                emptyMessage={emptyHint ?? `Add ${lower}s to govern this entity.`}
-              />
-            </div>
-            <PeekSlot open={peek !== null}>
-              {peek && (
-                <PeekPanel
-                  avatar={<Avatar name={peek.name} size="md" kind="person" />}
-                  title={peek.name}
-                  subtitle={`This ${lower}’s identity and access`}
-                  onClose={() => setPeek(null)}
-                  footer={
-                    <Button
-                      variant="secondary"
-                      fullWidth
-                      startIcon={<OpenInNewOutlined sx={{ fontSize: 18 }} />}
-                      onClick={() => router.push(`/iga/directory/user-identities/${peek.id}`)}
-                    >
-                      Open identity page
+        <div className="flex min-h-0 flex-1 flex-col">
+          {isBlank ? (
+            <div className="grid min-h-0 flex-1 place-items-center">
+              <div className="flex max-w-md flex-col items-center px-6 py-10 text-center">
+                <h2 className="text-h5 text-text-primary">{emptyCopy.title}</h2>
+                <p className="mt-1.5 text-body-sm text-text-secondary">{emptyCopy.message}</p>
+                {emptyCopy.action ? (
+                  <div className="mt-5">
+                    <Button startIcon={<AddIcon />} onClick={openAdd}>
+                      {emptyCopy.action}
                     </Button>
-                  }
-                >
-                  <IdentityDetailsBody identity={peek} surface="bare" />
-                </PeekPanel>
-              )}
-            </PeekSlot>
-          </>
-        ) : (
-          <DataTable<GovernanceTeamRow>
-            columns={teamColumns}
-            rows={teams.filter((t) => t.name.toLowerCase().includes(search.toLowerCase()))}
-            fillHeight
-            emptyTitle="No governance teams"
-            emptyMessage="No Governance Team lists this entity in its charter. Team ownership is assigned on the team."
-          />
-        )}
-      </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
+                <div className="w-full max-w-sm">
+                  <Input
+                    placeholder="Search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+                  />
+                </div>
+                <Tooltip title="Filter">
+                  <button
+                    type="button"
+                    aria-label="Filter"
+                    onClick={() => toast.info('Filters coming soon')}
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-icon hover:bg-surface-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+                  >
+                    <TuneOutlined sx={{ fontSize: 20 }} />
+                  </button>
+                </Tooltip>
+                {view === 'individual' && (
+                  <div className="ml-auto">
+                    <Button startIcon={<AddIcon />} onClick={openAdd}>
+                      Add {label}s
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex min-h-0 flex-1">
+                <div className="min-h-0 min-w-0 flex-1">
+                  {view === 'individual' ? (
+                    <DataTable<UserIdentityRow>
+                      columns={columns}
+                      rows={owners}
+                      fillHeight
+                      onRowClick={(o) => setPeek({ kind: 'owner', row: o })}
+                      emptyTitle={`No ${lower}s`}
+                      emptyMessage={emptyHint ?? `Add ${lower}s to govern this entity.`}
+                    />
+                  ) : (
+                    <DataTable<GovernanceTeamRow>
+                      columns={teamColumns}
+                      rows={teamRows}
+                      fillHeight
+                      onRowClick={(t) => setPeek({ kind: 'team', row: t })}
+                      emptyTitle="No governance teams"
+                      emptyMessage="No Governance Team lists this entity in its charter. Team ownership is assigned on the team."
+                    />
+                  )}
+                </div>
+
+                <PeekSlot open={peek !== null}>
+                  {peek?.kind === 'owner' && (
+                    <PeekPanel
+                      avatar={<Avatar name={peek.row.name} size="md" kind="person" />}
+                      title={peek.row.name}
+                      subtitle={`This ${lower}’s identity and access`}
+                      onClose={() => setPeek(null)}
+                      footer={
+                        <Button
+                          variant="secondary"
+                          fullWidth
+                          startIcon={<OpenInNewOutlined sx={{ fontSize: 18 }} />}
+                          onClick={() => router.push(`/iga/directory/user-identities/${peek.row.id}`)}
+                        >
+                          Open identity page
+                        </Button>
+                      }
+                    >
+                      <IdentityDetailsBody identity={peek.row} surface="bare" />
+                    </PeekPanel>
+                  )}
+                  {peek?.kind === 'team' && (
+                    <PeekPanel
+                      avatar={<Avatar name={peek.row.name} size="md" kind="entity" />}
+                      title={peek.row.name}
+                      subtitle="Answers for this entity at review"
+                      onClose={() => setPeek(null)}
+                      footer={
+                        <Button
+                          variant="secondary"
+                          fullWidth
+                          startIcon={<OpenInNewOutlined sx={{ fontSize: 18 }} />}
+                          onClick={() => router.push(`/iga/directory/governance-teams/${peek.row.id}`)}
+                        >
+                          Open team page
+                        </Button>
+                      }
+                    >
+                      <p className="pt-3 text-body-sm text-text-secondary">{peek.row.description}</p>
+                      <div className="pt-3">
+                        <InfoRowGroup>
+                          <InfoRow
+                            icon={infoIcon.reviewer}
+                            label="Reviewers"
+                            value={String(peek.row.reviewerCount)}
+                          />
+                        </InfoRowGroup>
+                      </div>
+                    </PeekPanel>
+                  )}
+                </PeekSlot>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       <Drawer

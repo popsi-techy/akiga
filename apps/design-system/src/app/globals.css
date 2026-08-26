@@ -204,8 +204,10 @@ a {
  */
 /*
  * Illustration — not a token surface.
- * Cool paper with a few sky orbs. Soft falloff is in the gradients —
- * extra blur turns it into a wash.
+ *
+ * Cool paper + sky orbs at fixed anchors. Each orb is a core plus a larger
+ * halo; a modest blur on this layer only turns the circles into an aura.
+ * Do not blur the whole field — that is the wash we already rejected.
  */
 .atmospheric-background {
   position: absolute;
@@ -213,17 +215,22 @@ a {
   overflow: hidden;
   pointer-events: none;
   isolation: isolate;
-  background: #f7f9fc;
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 40%, #e8f1fa 0%, #f5f8fc 72%);
 }
 
 .atmospheric-background__patches {
   position: absolute;
-  inset: 0;
+  inset: -12%;
+  filter: blur(22px);
   background:
-    radial-gradient(circle 280px at 96% 78%, rgba(148, 184, 216, 0.42) 0%, transparent 62%),
-    radial-gradient(circle 220px at 4% 12%, rgba(176, 204, 228, 0.34) 0%, transparent 60%),
-    radial-gradient(circle 180px at 58% 108%, rgba(196, 218, 236, 0.28) 0%, transparent 62%),
-    radial-gradient(circle 140px at 72% -8%, rgba(255, 255, 255, 0.7) 0%, transparent 58%);
+    radial-gradient(circle 200px at 96% 78%, rgba(96, 156, 214, 0.62) 0%, transparent 58%),
+    radial-gradient(circle 360px at 96% 78%, rgba(132, 178, 220, 0.34) 0%, transparent 72%),
+    radial-gradient(circle 160px at 4% 12%, rgba(110, 170, 226, 0.56) 0%, transparent 56%),
+    radial-gradient(circle 300px at 4% 12%, rgba(160, 198, 230, 0.3) 0%, transparent 70%),
+    radial-gradient(circle 140px at 58% 108%, rgba(140, 188, 228, 0.4) 0%, transparent 58%),
+    radial-gradient(circle 260px at 58% 108%, rgba(186, 214, 236, 0.22) 0%, transparent 70%),
+    radial-gradient(circle 140px at 72% -8%, rgba(255, 255, 255, 0.72) 0%, transparent 58%);
 }
 
 .atmospheric-background__grain {

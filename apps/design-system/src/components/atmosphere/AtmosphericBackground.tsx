@@ -2,8 +2,8 @@
 
 /**
  * Illustration — not a token surface.
- * Cool paper, a few sky orbs, and a light grain. Extra blur is not applied —
- * it flattens into a wash.
+ * Cool paper, sky orbs at fixed anchors, a modest aura blur on the patches
+ * only, and a light grain. Do not blur the whole field.
  */
 export function AtmosphericBackground() {
   return (
