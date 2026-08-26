@@ -161,10 +161,10 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
   {
     id: 'locale-regional',
     href: '/iga/configurations/locale-regional',
-    title: 'Locale & Regional',
+    title: 'Usage Location',
     group: 'identities',
     description: 'Set the default usage country for users who do not already have one.',
-    actionLabel: 'Change locale',
+    actionLabel: 'Change location',
     pageDescription:
       'Default country and locale settings applied during user provisioning.',
     keywords: ['iso', 'country', 'location', 'm365', 'license', 'locale', 'region'],

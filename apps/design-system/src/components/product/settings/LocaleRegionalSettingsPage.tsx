@@ -62,7 +62,7 @@ export function LocaleRegionalSettingsPage() {
     <SettingsPage title={SECTION.title} description={SECTION.pageDescription}>
       <SettingsSection
         id="locale-regional"
-        title="Locale & Regional Settings"
+        title="Usage Location"
         onReset={() => setValue(saved)}
         resetDisabled={!dirty}
         onSave={save}
