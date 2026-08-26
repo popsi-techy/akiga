@@ -135,6 +135,7 @@ export function CustomAttributesListPage() {
           title={SECTION.title}
           description={SECTION.pageDescription}
           hideTitle
+          hideFilter
           searchPlaceholder="Search by display or attribute name"
           columns={columns}
           rows={rows}

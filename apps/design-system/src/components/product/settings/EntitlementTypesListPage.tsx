@@ -72,6 +72,7 @@ export function EntitlementTypesListPage() {
           title="Entitlement Type Settings"
           description={SECTION.pageDescription}
           hideTitle
+          hideFilter
           searchPlaceholder="Search"
           columns={columns}
           rows={rows}

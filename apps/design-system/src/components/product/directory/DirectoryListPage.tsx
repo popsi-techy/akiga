@@ -24,6 +24,7 @@ export function DirectoryListPage<Row extends { id: string }>({
   summary,
   layout,
   hideTitle,
+  hideFilter,
   filterGroups,
   filterMatches,
 }: {
@@ -31,6 +32,8 @@ export function DirectoryListPage<Row extends { id: string }>({
   description: string;
   /** Hide the page h1 — System Settings already names the screen in the breadcrumb. */
   hideTitle?: boolean;
+  /** Hide the Filter button. Search still narrows the list. */
+  hideFilter?: boolean;
   searchPlaceholder: string;
   columns: Column<Row>[];
   rows: Row[];
@@ -98,13 +101,15 @@ export function DirectoryListPage<Row extends { id: string }>({
         <div className="w-full max-w-sm">
           <Input placeholder={searchPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)} startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />} />
         </div>
-        <Button
-          variant="secondary"
-          startIcon={<FilterListOutlined />}
-          onClick={() => (filterGroups ? setFilterOpen(true) : toast.info('Filters coming soon'))}
-        >
-          Filter{activeFilters > 0 ? ` (${activeFilters})` : ''}
-        </Button>
+        {hideFilter ? null : (
+          <Button
+            variant="secondary"
+            startIcon={<FilterListOutlined />}
+            onClick={() => (filterGroups ? setFilterOpen(true) : toast.info('Filters coming soon'))}
+          >
+            Filter{activeFilters > 0 ? ` (${activeFilters})` : ''}
+          </Button>
+        )}
         {/* One right-aligned group, so Download and the module's own action can
             coexist without either fighting for `ml-auto`. */}
         {(downloadable || actions) && (
@@ -131,7 +136,7 @@ export function DirectoryListPage<Row extends { id: string }>({
         <DataTable<Row> columns={columns} rows={filtered} onRowClick={(r) => onOpen(r.id)} layout={layout} fillHeight emptyTitle={emptyTitle} emptyMessage={emptyMessage} />
       </div>
 
-      {filterGroups && (
+      {!hideFilter && filterGroups && (
         <FilterDrawer
           open={filterOpen}
           onClose={() => setFilterOpen(false)}

@@ -18,7 +18,7 @@ export const SYSTEM_SETTINGS_GROUPS = [
   },
   {
     id: 'sign-in',
-    title: 'Authentication and identity providers',
+    title: 'Authentication',
     description: 'Sign-in, MFA, SSO, and how users authenticate to this tenant.',
   },
 ] as const;

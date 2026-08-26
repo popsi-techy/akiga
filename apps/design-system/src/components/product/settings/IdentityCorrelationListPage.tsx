@@ -176,6 +176,7 @@ export function IdentityCorrelationListPage() {
           title={SECTION.title}
           description={SECTION.description}
           hideTitle
+          hideFilter
           searchPlaceholder="Search by application or matcher"
           columns={columns}
           rows={rows}
