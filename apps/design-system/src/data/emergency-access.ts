@@ -13,7 +13,6 @@ import {
   identities,
   catalogApps,
   type RiskLevel,
-  type Tone,
   type SeedEAOwner,
   type EAStatus,
   type SeedEmergencyAccess,
@@ -34,10 +33,15 @@ export {
   eligibilityConditionText,
 } from './eligibility-criteria';
 
-const RISK_INTENT: Record<RiskLevel, Extract<Tone, 'success' | 'warning' | 'info' | 'danger'>> = {
-  low: 'success',
+/**
+ * Same ramp as `RiskScoreChip`: Low blue, Medium yellow, High orange, Critical red.
+ * A parallel mapping here made High read as info (blue) — the colour of Low —
+ * which is why 84 looked like a calm measurement instead of a high one.
+ */
+const RISK_INTENT: Record<RiskLevel, 'info' | 'warning' | 'caution' | 'danger'> = {
+  low: 'info',
   medium: 'warning',
-  high: 'info',
+  high: 'caution',
   critical: 'danger',
 };
 
@@ -48,7 +52,7 @@ export interface EARow {
   name: string;
   initial: string;
   status: { intent: 'warning' | 'success'; label: string };
-  risk: { intent: 'success' | 'warning' | 'info' | 'danger'; label: string } | null;
+  risk: { intent: 'info' | 'warning' | 'caution' | 'danger'; label: string } | null;
   activeUsers: number | null;
 }
 
@@ -181,7 +185,7 @@ export interface EADetail {
   status: { intent: 'warning' | 'success'; label: string };
   /** A draft has never been activated, so it has no sessions and cannot be requested. */
   isDraft: boolean;
-  risk: { intent: 'success' | 'warning' | 'info' | 'danger'; label: string } | null;
+  risk: { intent: 'info' | 'warning' | 'caution' | 'danger'; label: string } | null;
   config: { maxDurationHrs: number; maxConcurrent: number; maxRequestsPerDay: number; cooldownHrs: number };
   timeline: { createdOn: string; updatedOn: string };
   sessions: EASessionView[];
@@ -595,7 +599,7 @@ function liveRiskChip(
 }
 
 export function riskChipFromScore(score: number): {
-  intent: 'success' | 'warning' | 'info' | 'danger';
+  intent: 'info' | 'warning' | 'caution' | 'danger';
   label: string;
 } {
   const level = riskLevelFromScore(score);

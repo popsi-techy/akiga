@@ -93,10 +93,7 @@ export default function EmergencyAccessListPage() {
               drawer cannot keep. `Basic details` is dropped — it is the form they are
               filling in, and listing it as "next" would be odd. */}
           <div className="rounded-lg border border-border bg-subtle px-4 py-3.5">
-            <h3 className="text-body-strong text-text-primary">Upcoming setup steps</h3>
-            <p className="mt-1 text-caption text-text-secondary">
-              You will configure these in the next steps:
-            </p>
+            <h3 className="text-body-strong text-text-primary">Upcoming setup</h3>
             <ul className="mt-3 space-y-2">
               {EA_SETUP_STEPS.filter((step) => step.id !== 'basic').map((step) => {
                 const required = isRequiredSetupStep(step.id);
