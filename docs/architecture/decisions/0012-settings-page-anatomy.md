@@ -5,6 +5,8 @@
 - **Deciders:** Product / Design System
 - **Tags:** design-system, settings, patterns
 
+**Handoff (type, color, spacing, recipes):** [system-settings-frontend-handoff.md](../system-settings-frontend-handoff.md)
+
 ## Context
 
 MFA Configuration established a tenant-admin layout: a 900px column, grey wells stacked

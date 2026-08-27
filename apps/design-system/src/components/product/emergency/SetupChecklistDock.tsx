@@ -4,7 +4,22 @@ import * as React from 'react';
 import CheckCircle from '@mui/icons-material/CheckCircle';
 import CloseOutlined from '@mui/icons-material/CloseOutlined';
 import { Button, StatusChip } from '@ds/components';
-import type { EmergencySetupStep } from '@/components/product/emergency/setupSteps';
+
+/** One checklist row — presentation only. Order and required-ness come from the caller. */
+export interface SetupChecklistStep {
+  id: string;
+  label: string;
+  /** Why it exists, in the reader's terms — never a restatement of the label. */
+  hint: string;
+  /** The imperative on the control that goes there. */
+  cta: string;
+  /** Which tab it opens. A value no section uses (e.g. `basic`) opens a drawer instead. */
+  tab: string;
+  required: boolean;
+  done: boolean;
+  /** Qualifier for a step that is done without anyone deciding anything. */
+  doneLabel?: string;
+}
 
 /**
  * V1 draft setup, docked to the right of the profile.
@@ -12,8 +27,8 @@ import type { EmergencySetupStep } from '@/components/product/emergency/setupSte
  * Grey frame, white step cards. The page header stays visible; this column starts
  * under the app top bar and runs to the bottom of the viewport. Close it from
  * here or from the setup-guide icon next to More. It is not a second navigator —
- * the tab strip still is — it is the remaining work, grouped by what Activate
- * waits for.
+ * the tab strip still is — it is the remaining work, grouped by what the header
+ * action waits for.
  *
  * The CTA is a prompt that appears only after someone actually finishes a
  * step — any step. Switching tabs is not finishing: open Eligibility with
@@ -29,11 +44,14 @@ export function SetupChecklistDock({
   currentTab,
   onClose,
   onGoTo,
+  gateVerb = 'activate',
 }: {
-  steps: EmergencySetupStep[];
+  steps: SetupChecklistStep[];
   currentTab: string;
   onClose: () => void;
-  onGoTo: (step: EmergencySetupStep) => void;
+  onGoTo: (step: SetupChecklistStep) => void;
+  /** Header action this checklist unblocks — Activate or Connect. */
+  gateVerb?: 'activate' | 'connect';
 }) {
   const required = steps.filter((s) => s.required);
   const additional = steps.filter((s) => !s.required);
@@ -62,7 +80,7 @@ export function SetupChecklistDock({
           <p className="mt-0.5 text-caption text-text-secondary">
             {allRequiredDone
               ? 'Required steps are complete.'
-              : 'Finish the required steps, then activate.'}
+              : `Finish the required steps, then ${gateVerb}.`}
           </p>
         </div>
         <button
@@ -76,7 +94,12 @@ export function SetupChecklistDock({
       </header>
 
       <div className="ds-scroll min-h-0 flex-1 space-y-3 overflow-y-auto px-3 pb-4">
-        <StepGroup heading="Required to activate" hint="these steps gate activation">
+        <StepGroup
+          heading={gateVerb === 'connect' ? 'Required to connect' : 'Required to activate'}
+          hint={
+            gateVerb === 'connect' ? 'these steps gate connection' : 'these steps gate activation'
+          }
+        >
           {required.map((step) => (
             <StepRow
               key={step.id}
@@ -89,7 +112,14 @@ export function SetupChecklistDock({
           ))}
         </StepGroup>
         {additional.length > 0 && (
-          <StepGroup heading="Additional" hint="optional, and does not block activation">
+          <StepGroup
+            heading="Additional"
+            hint={
+              gateVerb === 'connect'
+                ? 'optional, and does not block connection'
+                : 'optional, and does not block activation'
+            }
+          >
             {additional.map((step) => (
               <StepRow
                 key={step.id}
@@ -134,11 +164,11 @@ function StepRow({
   ctaVariant,
   onGoTo,
 }: {
-  step: EmergencySetupStep;
+  step: SetupChecklistStep;
   current: boolean;
   recommended: boolean;
   ctaVariant: 'primary' | 'secondary';
-  onGoTo: (step: EmergencySetupStep) => void;
+  onGoTo: (step: SetupChecklistStep) => void;
 }) {
   // Prompt only when the next unfinished step is somewhere else. The row you
   // are already on does not need a CTA — the page is the place to do the work.

@@ -79,6 +79,13 @@ export function ProvisioningSetupTab({
     toast.success(`Connected to this application with ${METHOD_LABEL[r.method]}.`);
   };
 
+  const noneYet = rows.length === 0;
+
+  const openAdd = () => {
+    setEditing(null);
+    setDrawerOpen(true);
+  };
+
   const confirmRemove = () => {
     if (!removing) return;
     deleteAuthorization(removing.id);
@@ -204,40 +211,53 @@ export function ProvisioningSetupTab({
         />
       </div>
 
-      {section === 'authorization' && (
-        <>
-          <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
-            <div className="w-full max-w-sm">
-              <Input
-                placeholder="Search methods"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+      {section === 'authorization' &&
+        (noneYet ? (
+          /* No search, no header row: a table with nothing under it reads as a failed
+             load rather than as "nothing granted yet". Same as Emergency Access
+             Assignments when no entitlements are granted. The switcher stays. */
+          <div className="grid min-h-0 flex-1 place-items-center">
+            <div className="flex max-w-md flex-col items-center px-6 py-10 text-center">
+              <h2 className="text-h5 text-text-primary">No authorization yet</h2>
+              <p className="mt-1.5 text-body-sm text-text-secondary">
+                IGA cannot reach this application until it knows how to sign in. Add an authorization
+                method to start provisioning.
+              </p>
+              <div className="mt-5">
+                <Button startIcon={<AddOutlined />} onClick={openAdd}>
+                  Add Authorization
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
+              <div className="w-full max-w-sm">
+                <Input
+                  placeholder="Search methods"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+                />
+              </div>
+              <div className="ml-auto">
+                <Button startIcon={<AddOutlined />} onClick={openAdd}>
+                  Add Authorization
+                </Button>
+              </div>
+            </div>
+            <div className="min-h-0 flex-1">
+              <DataTable<AppAuthorization>
+                columns={columns}
+                rows={filtered}
+                fillHeight
+                emptyTitle="No methods match"
+                emptyMessage="Try a different search, or add an authorization method."
               />
             </div>
-            <div className="ml-auto">
-              <Button
-                startIcon={<AddOutlined />}
-                onClick={() => {
-                  setEditing(null);
-                  setDrawerOpen(true);
-                }}
-              >
-                Add Authorization
-              </Button>
-            </div>
-          </div>
-          <div className="min-h-0 flex-1">
-            <DataTable<AppAuthorization>
-              columns={columns}
-              rows={filtered}
-              fillHeight
-              emptyTitle="No authorization yet"
-              emptyMessage="IGA cannot reach this application until it knows how to sign in. Add an authorization method to start provisioning."
-            />
-          </div>
-        </>
-      )}
+          </>
+        ))}
       {section === 'connection' && (
         <div className="min-h-0 flex-1">
           <ConnectionConfiguration

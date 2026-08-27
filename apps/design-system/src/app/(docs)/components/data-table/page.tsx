@@ -132,7 +132,7 @@ export default function DataTableDocs() {
         <div className="grid gap-3 sm:grid-cols-3 text-body-sm">
           {[
             ['Loading', 'Skeleton rows matching the column layout.'],
-            ['Empty', 'A designed empty state with title + guidance.'],
+            ['Empty', 'A designed empty state with title, guidance, and an optional centered action.'],
             ['Populated', 'Sort, select, paginate, custom cells.'],
           ].map(([t, d]) => (
             <Card key={t} className="p-4">
@@ -152,6 +152,7 @@ export default function DataTableDocs() {
             { name: 'selectable', type: 'boolean', default: 'false', description: 'Row checkboxes + select-all.' },
             { name: 'loading', type: 'boolean', default: 'false', description: 'Renders skeleton rows.' },
             { name: 'emptyTitle / emptyMessage', type: 'string', description: 'Empty-state copy.' },
+            { name: 'emptyAction', type: 'ReactNode', description: 'Centered under the empty copy — the one action that fills the table. Hide the matching toolbar button while the table is empty so it is not in two places.' },
             { name: 'defaultRowsPerPage', type: 'number', default: '10', description: 'Initial page size.' },
             { name: 'onRowClick', type: '(row) => void', description: 'Row click (e.g. open detail).' },
             { name: 'selectionToolbar', type: 'ReactNode', description: 'First-row selection banner while rows are selected (select-all matching, clear). Icon-only bulk actions sit on the page toolbar, to the right of Filter.' },

@@ -3,12 +3,14 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import AddOutlined from '@mui/icons-material/AddOutlined';
-import { Button, StatusChip, type Column, type FilterGroup } from '@ds/components';
+import { Button, type Column, type FilterGroup } from '@ds/components';
 import {
   listCataloguedApplications,
   listOnboardedApplicationRows,
   type ApplicationRow,
 } from '@/data/directory';
+import { reconciliationSummary } from '@/data/reconciliation';
+import { formatDateTime } from '@/components/product/sod/labels';
 import { DirectoryListPage, EntityAvatar } from '@/components/product/directory';
 
 export default function ApplicationsListPage() {
@@ -18,7 +20,18 @@ export default function ApplicationsListPage() {
   // render would give the server one list and the client another.
   const [onboarded, setOnboarded] = React.useState<ApplicationRow[]>([]);
   React.useEffect(() => setOnboarded(listOnboardedApplicationRows()), []);
-  const apps = [...onboarded, ...listCataloguedApplications()];
+  const apps = React.useMemo(
+    () => [...onboarded, ...listCataloguedApplications()],
+    [onboarded],
+  );
+
+  const lastSyncAt = React.useMemo(() => {
+    const map = new Map<string, string | null>();
+    for (const a of apps) {
+      map.set(a.id, reconciliationSummary(a.id).lastSync?.at ?? null);
+    }
+    return map;
+  }, [apps]);
 
   /**
    * One category today. The modal is built for several, so the shape is here
@@ -33,20 +46,13 @@ export default function ApplicationsListPage() {
       options: apps.map((a) => ({
         id: a.id,
         label: a.name,
-        icon: <EntityAvatar kind="application" name={a.name} />,
+        icon: <EntityAvatar kind="application" name={a.name} appType={a.appType} />,
       })),
     },
   ];
 
-  /**
-   * Six columns, one chip.
-   *
-   * Authorization is the only one that can be *wrong* — a pending app is one we
-   * are not yet cleared to manage — so it gets the status chip and everything
-   * else stays text. Chipping all four state columns would put 40 coloured pills
-   * on screen and leave the one that needs attention indistinguishable from the
-   * three that don't.
-   */
+  const open = (id: string) => router.push(`/iga/directory/applications/${id}`);
+
   const columns: Column<ApplicationRow>[] = [
     {
       id: 'name',
@@ -55,37 +61,35 @@ export default function ApplicationsListPage() {
       value: (r) => r.name,
       render: (r) => (
         <div className="flex items-center gap-3">
-          <EntityAvatar kind="application" name={r.name} />
+          <EntityAvatar kind="application" name={r.name} appType={r.appType} />
           <span className="truncate text-body-sm-strong text-text-primary">{r.name}</span>
         </div>
       ),
     },
     {
-      id: 'appType',
-      header: 'App Type',
+      id: 'lastSync',
+      header: 'Last Sync',
       sortable: true,
-      value: (r) => r.appType,
-      render: (r) => <span className="text-text-secondary">{r.appType}</span>,
+      width: 200,
+      value: (r) => lastSyncAt.get(r.id) ?? '',
+      render: (r) => {
+        const at = lastSyncAt.get(r.id);
+        return (
+          <span className="whitespace-nowrap text-text-secondary">
+            {at ? formatDateTime(at) : '—'}
+          </span>
+        );
+      },
     },
     {
-      id: 'discoverySource',
-      header: 'Discovery Source',
+      id: 'owners',
+      header: 'Owners',
       sortable: true,
-      width: 150,
-      value: (r) => r.discoverySource,
-      render: (r) => <span className="text-text-secondary">{r.discoverySource}</span>,
-    },
-    {
-      id: 'authorizationStatus',
-      header: 'Authorization',
-      sortable: true,
-      width: 140,
-      value: (r) => r.authorizationStatus,
+      align: 'right',
+      width: 100,
+      value: (r) => r.ownerCount,
       render: (r) => (
-        <StatusChip
-          intent={r.authorizationStatus === 'authorized' ? 'success' : 'warning'}
-          label={r.authorizationStatus === 'authorized' ? 'Authorized' : 'Pending'}
-        />
+        <span className="tabular-nums text-text-secondary">{r.ownerCount}</span>
       ),
     },
     {
@@ -111,6 +115,24 @@ export default function ApplicationsListPage() {
         <span className="capitalize text-text-secondary">{r.provisioningType}</span>
       ),
     },
+    {
+      id: 'actions',
+      header: 'Actions',
+      width: 120,
+      render: (r) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            open(r.id);
+          }}
+          aria-label={`View details for ${r.name}`}
+          className="text-body-sm-strong text-text-link hover:underline"
+        >
+          View details
+        </button>
+      ),
+    },
   ];
   return (
     <DirectoryListPage<ApplicationRow>
@@ -122,7 +144,7 @@ export default function ApplicationsListPage() {
       matches={(r, q) =>
         r.name.toLowerCase().includes(q) || (r.description ?? '').toLowerCase().includes(q)
       }
-      onOpen={(id) => router.push(`/iga/directory/applications/${id}`)}
+      onOpen={open}
       emptyTitle="No applications found"
       emptyMessage="No applications match your search."
       actions={

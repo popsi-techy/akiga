@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
-import { AppIcon, Input, NavList, resolveAppIcon } from '@ds/components';
+import { AppIcon, Input, NavList, StatusChip, resolveAppIcon } from '@ds/components';
 import { AddApplicationDrawer } from '@/components/product/directory';
 import { AtmosphericBackground } from '@/components/atmosphere/AtmosphericBackground';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
@@ -220,16 +220,15 @@ function AppTypeTile({
         {appType.name}
       </h3>
       <span className="flex flex-wrap gap-1">
-        {appType.protocols.map((p) => (
-          <span
-            key={p}
-            className={`rounded-pill px-2 py-0.5 text-caption ${
-              soon ? 'bg-surface text-text-tertiary' : 'bg-subtle text-text-secondary'
-            }`}
-          >
-            {p}
-          </span>
-        ))}
+        {appType.protocols.map((p) =>
+          soon ? (
+            <span key={p} className="rounded-pill bg-surface px-2 py-0.5 text-caption text-text-tertiary">
+              {p}
+            </span>
+          ) : (
+            <StatusChip key={p} intent="info" label={p} dot={false} />
+          ),
+        )}
       </span>
     </button>
   );
@@ -238,7 +237,11 @@ function AppTypeTile({
 /** Brand logo when we have one; identification mark when we don't. Same footprint. */
 function TypeMark({ name, size, muted }: { name: string; size: number; muted?: boolean }) {
   if (resolveAppIcon(name)) {
-    return <AppIcon app={name} size={size} />;
+    return (
+      <span className={muted ? 'opacity-50' : undefined}>
+        <AppIcon app={name} size={size} />
+      </span>
+    );
   }
   return (
     <span

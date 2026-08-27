@@ -83,10 +83,7 @@ import { TableSelectDrawer } from '@/components/product/automation/TableSelectDr
 import { EligibilityCriteriaTab } from '@/components/product/emergency/EligibilityCriteriaTab';
 import { AdvancedConfigurationTab } from '@/components/product/emergency/AdvancedConfigurationTab';
 import { EmergencyAssignmentsTab } from '@/components/product/emergency/EmergencyAssignmentsTab';
-import {
-  emergencySetupSteps,
-  type EmergencySetupStep,
-} from '@/components/product/emergency/setupSteps';
+import { emergencySetupSteps } from '@/components/product/emergency/setupSteps';
 import { toastEASetupStep } from '@/components/product/emergency/ea-setup-toast';
 import { formatDateTime } from '@/lib/datetime';
 import { SetupProgress } from '@/components/product/SetupProgress';
@@ -1122,7 +1119,7 @@ export function EmergencyAccessDetail({
     if (next) setTab(next.tab);
   };
 
-  const goToSetupStep = (step: EmergencySetupStep) => {
+  const goToSetupStep = (step: { id: string; tab: string }) => {
     if (step.id === 'basic') setBasicsOpen(true);
     else setTab(step.tab);
   };

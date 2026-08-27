@@ -92,6 +92,8 @@ export interface DataTableProps<Row extends { id: string }> {
   loading?: boolean;
   emptyTitle?: string;
   emptyMessage?: string;
+  /** Centered under the empty copy — the one action that fills the table. */
+  emptyAction?: React.ReactNode;
   defaultRowsPerPage?: number;
   rowsPerPageOptions?: number[];
   onRowClick?: (row: Row) => void;
@@ -122,6 +124,7 @@ export function DataTable<Row extends { id: string }>({
   loading = false,
   emptyTitle = 'Nothing here yet',
   emptyMessage = 'When there is data to show, it will appear in this table.',
+  emptyAction,
   defaultRowsPerPage = 10,
   rowsPerPageOptions = [10, 25, 50],
   onRowClick,
@@ -260,7 +263,11 @@ export function DataTable<Row extends { id: string }>({
         <Table
           stickyHeader={fillHeight}
           size="small"
-          sx={{ tableLayout: layout, '& td, & th': { paddingY: '10px' } }}
+          sx={{
+            tableLayout: layout,
+            '& td, & th': { paddingY: '10px' },
+            ...(fillHeight && !loading && rows.length === 0 ? { height: '100%' } : {}),
+          }}
         >
           <TableHead>
             <TableRow>
@@ -330,11 +337,19 @@ export function DataTable<Row extends { id: string }>({
 
             {/* Empty */}
             {!loading && rows.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={colSpan} sx={{ ...bodyCellSx, borderBottom: 'none' }}>
+              <TableRow sx={fillHeight ? { height: '100%' } : undefined}>
+                <TableCell
+                  colSpan={colSpan}
+                  sx={{
+                    ...bodyCellSx,
+                    borderBottom: 'none',
+                    ...(fillHeight ? { height: '100%', verticalAlign: 'middle' } : {}),
+                  }}
+                >
                   <div className="flex flex-col items-center justify-center gap-1 py-12 text-center">
                     <div className="text-body-strong text-text-primary">{emptyTitle}</div>
                     <div className="max-w-sm text-body-sm text-text-secondary">{emptyMessage}</div>
+                    {emptyAction ? <div className="mt-4">{emptyAction}</div> : null}
                   </div>
                 </TableCell>
               </TableRow>

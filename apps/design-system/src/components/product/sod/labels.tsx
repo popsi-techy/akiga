@@ -122,17 +122,20 @@ export function AccessChip({
  *  `variant` picks the tile fill: `subtle` on canvas/surface, or `surface` inside tinted chips. */
 export function AppBadge({
   app,
+  logoFrom,
   size = 22,
   variant = 'subtle',
   appearance = 'initial',
 }: {
   app: string;
+  /** Catalog key when `app` is a custom instance name — typically the app type. */
+  logoFrom?: string;
   size?: number;
   variant?: 'subtle' | 'surface';
   appearance?: 'initial' | 'logo';
 }) {
   if (appearance === 'logo') {
-    return <AppIcon app={app} size={size} variant={variant} />;
+    return <AppIcon app={app} logoFrom={logoFrom} size={size} variant={variant} />;
   }
   return (
     <span

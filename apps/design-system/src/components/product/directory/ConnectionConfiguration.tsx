@@ -27,8 +27,9 @@ import type { AppAuthorization } from '@/data/provisioning-auth';
  *
  * The banner is not decoration: these settings rewrite records that already
  * exist, which is the one thing a user would not assume from a form called
- * "configuration". It stays above the table rather than inside the drawer
- * because it is true of every row, not of one edit.
+ * "configuration". It stays above the list rather than inside the drawer
+ * because it is true of every row, not of one edit. When there are no events
+ * yet, the table is omitted — same first-run as Authorization.
  */
 export function ConnectionConfiguration({
   applicationId,
@@ -58,6 +59,12 @@ export function ConnectionConfiguration({
   const filtered = q
     ? rows.filter((r) => r.name.toLowerCase().includes(q) || kindLabel(r).toLowerCase().includes(q))
     : rows;
+
+  const noneYet = rows.length === 0;
+  const openAdd = () => {
+    setEditing(null);
+    setDrawerOpen(true);
+  };
 
   const confirmRemove = () => {
     if (!removing) return;
@@ -191,41 +198,55 @@ export function ConnectionConfiguration({
         </p>
       </div>
 
-      <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
-        <div className="w-full max-w-sm">
-          <Input
-            placeholder="Search events"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
-          />
+      {noneYet ? (
+        /* No search, no header row: a table with nothing under it reads as a failed
+           load rather than as "nothing to call yet". Same first-run as Authorization. */
+        <div className="grid min-h-0 flex-1 place-items-center">
+          <div className="flex max-w-md flex-col items-center px-6 py-10 text-center">
+            <h2 className="text-h5 text-text-primary">No events yet</h2>
+            <p className="mt-1.5 text-body-sm text-text-secondary">
+              An event is one API call — importing users, deactivating a leaver. Add the first one
+              to tell IGA what to call and when.
+            </p>
+            <div className="mt-5">
+              <Button startIcon={<AddOutlined />} onClick={openAdd}>
+                Add Event
+              </Button>
+            </div>
+          </div>
         </div>
-        <div className="ml-auto">
-          <Button
-            startIcon={<AddOutlined />}
-            onClick={() => {
-              setEditing(null);
-              setDrawerOpen(true);
-            }}
-          >
-            Add Event
-          </Button>
-        </div>
-      </div>
-
-      <div className="min-h-0 flex-1">
-        <DataTable<ConnectionEvent>
-          columns={columns}
-          rows={filtered}
-          fillHeight
-          onRowClick={(r) => {
-            setEditing(r);
-            setDrawerOpen(true);
-          }}
-          emptyTitle="No events yet"
-          emptyMessage="An event is one API call — importing users, deactivating a leaver. Add the first one to tell IGA what to call and when."
-        />
-      </div>
+      ) : (
+        <>
+          <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
+            <div className="w-full max-w-sm">
+              <Input
+                placeholder="Search events"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+              />
+            </div>
+            <div className="ml-auto">
+              <Button startIcon={<AddOutlined />} onClick={openAdd}>
+                Add Event
+              </Button>
+            </div>
+          </div>
+          <div className="min-h-0 flex-1">
+            <DataTable<ConnectionEvent>
+              columns={columns}
+              rows={filtered}
+              fillHeight
+              onRowClick={(r) => {
+                setEditing(r);
+                setDrawerOpen(true);
+              }}
+              emptyTitle="No events match"
+              emptyMessage="Try a different search, or add an event."
+            />
+          </div>
+        </>
+      )}
 
       <AttributeMappingDrawer
         open={mapping !== null}

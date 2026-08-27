@@ -33,8 +33,8 @@ import { SettingsDenied, SettingsLoading, useAdminSettings, useSettingsCrumbs } 
 
 const SECTION = getSystemSettingsSection('identity-correlation')!;
 
-function applicationName(id: string, apps: { id: string; name: string }[]) {
-  return apps.find((a) => a.id === id)?.name ?? 'Unknown application';
+function applicationOf(id: string, apps: { id: string; name: string; appType?: string }[]) {
+  return apps.find((a) => a.id === id);
 }
 
 export function IdentityCorrelationListPage() {
@@ -60,7 +60,8 @@ export function IdentityCorrelationListPage() {
 
   const correlated = accounts.filter((a) => !a.orphan).length;
   const orphans = accounts.filter((a) => a.orphan).length;
-  const nameOf = (id: string) => applicationName(id, apps);
+  const nameOf = (id: string) => applicationOf(id, apps)?.name ?? 'Unknown application';
+  const typeOf = (id: string) => applicationOf(id, apps)?.appType;
 
   const filterGroups: FilterGroup[] = [
     {
@@ -72,7 +73,7 @@ export function IdentityCorrelationListPage() {
         ([id, label]) => ({
           id,
           label,
-          icon: <EntityAvatar kind="application" name={label} />,
+          icon: <EntityAvatar kind="application" name={label} appType={typeOf(id)} />,
         }),
       ),
     },
@@ -95,7 +96,7 @@ export function IdentityCorrelationListPage() {
       value: (r) => nameOf(r.applicationId),
       render: (r) => (
         <div className="flex items-center gap-3">
-          <EntityAvatar kind="application" name={nameOf(r.applicationId)} />
+          <EntityAvatar kind="application" name={nameOf(r.applicationId)} appType={typeOf(r.applicationId)} />
           <span className="truncate text-body-sm-strong text-text-primary">{nameOf(r.applicationId)}</span>
         </div>
       ),

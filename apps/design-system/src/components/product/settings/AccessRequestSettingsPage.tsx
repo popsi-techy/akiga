@@ -15,6 +15,7 @@ import {
   Card,
   Input,
   NavList,
+  OverflowChips,
   Select,
   SettingsInfoBanner,
   SettingsNested,
@@ -22,7 +23,6 @@ import {
   SettingsRow,
   SettingsSection,
   SettingsStack,
-  StatusChip,
   Switch,
   Tabs,
   Tooltip,
@@ -282,13 +282,17 @@ function EntityPanel({
           title="Approval Workflow Policy"
           description={`Configure workflow approval policies for ${plural}.`}
         >
-          <StatusChip intent="info" label={value.approvalPolicyName} dot={false} />
-          <Tooltip title="Open approval policies">
+          <OverflowChips
+            items={[{ id: 'approval-policy', name: value.approvalPolicyName }]}
+            max={1}
+            tone="onSubtle"
+          />
+          <Tooltip title="Edit">
             <button
               type="button"
               aria-label="Edit approval workflow policy"
               onClick={() => router.push('/iga/automation/approval-policies')}
-              className="grid h-8 w-8 place-items-center rounded-md text-icon hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+              className="grid h-8 w-8 place-items-center rounded-md text-icon hover:bg-surface-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
             >
               <EditOutlined sx={{ fontSize: 18 }} />
             </button>

@@ -4,8 +4,25 @@ import * as React from 'react';
 import { PageHeader, Section, Example, PropsTable, DoDont, Code } from '@/components/docs/primitives';
 import { AppIcon, resolveAppIcon } from '@ds/components';
 
-const KNOWN = ['SAP S/4HANA Finance', 'Salesforce', 'AWS', 'Google Workspace', 'GitHub Enterprise', 'Slack', 'Okta', 'Jira', 'Snowflake', 'HashiCorp Vault'];
-const UNKNOWN = ['Workday', 'ServiceNow', 'NetSuite', 'Active Directory', 'CyberArk'];
+const KNOWN = [
+  'Google Workspace',
+  'Adobe',
+  'Salesforce',
+  'AWS',
+  'Microsoft Entra ID',
+  'Active Directory',
+  'Okta',
+  'GitHub Enterprise',
+  'Slack',
+  'ServiceNow',
+  'CyberArk',
+  'HashiCorp Vault',
+  'SAP S/4HANA Finance',
+  'Workday',
+  'Jira',
+  'Snowflake',
+];
+const UNKNOWN = ['Custom Application', 'SCIM Application'];
 
 export default function AppIconDocs() {
   return (
@@ -13,12 +30,12 @@ export default function AppIconDocs() {
       <PageHeader
         eyebrow="Components"
         title="App Icon"
-        description="A compact application mark. Renders a real brand logo when the app name matches the catalog, and falls back to a first-letter tile when it does not — so a list of applications is scannable without every app needing an asset."
+        description="A compact application mark. Renders the vendor’s current logo when the app name matches a known domain, and falls back to a first-letter tile when it does not — so a list of applications is scannable without every app needing a bundled asset."
       />
 
       <Section
-        title="Catalogued apps get their logo"
-        description="Logos come from Simple Icons (CC0). Matching is by name pattern, so “SAP S/4HANA Finance” and “SAP” both resolve to the same mark."
+        title="Catalogued apps get their live logo"
+        description="Logos are fetched from the web at render time (the vendor’s current site icon). Matching is by name pattern, so “SAP S/4HANA Finance” and “SAP” both resolve to the same mark."
       >
         <Example label="Matched">
           {KNOWN.map((app) => (
@@ -35,6 +52,13 @@ export default function AppIconDocs() {
               <span className="text-body-sm text-text-secondary">{app}</span>
             </span>
           ))}
+        </Example>
+        <Example label="Custom instance name, catalogued type">
+          <span className="inline-flex items-center gap-2">
+            <AppIcon app="Northwind ERP" logoFrom="SAP" size={32} />
+            <span className="text-body-sm text-text-secondary">Northwind ERP</span>
+            <span className="text-caption text-text-tertiary">logoFrom=SAP</span>
+          </span>
         </Example>
       </Section>
 
@@ -64,14 +88,14 @@ export default function AppIconDocs() {
       >
         <PropsTable
           rows={[
-            { name: 'app', type: 'string', description: 'Application display name. Matched against the catalog by pattern.' },
-            { name: 'size', type: 'number', default: '24', description: 'Tile edge in px. The mark is drawn at 58% of it.' },
+            { name: 'app', type: 'string', description: 'Application display name. Matched against the catalog by pattern. Used for the tooltip and the letter fallback.' },
+            { name: 'logoFrom', type: 'string', description: 'Optional extra catalog key, tried before `app`. Pass the app type when the instance name is custom.' },
+            { name: 'size', type: 'number', default: '24', description: 'Tile edge in px. The mark is drawn at 72% of it.' },
             { name: 'variant', type: "'subtle' | 'surface'", default: "'subtle'", description: 'Tile fill — subtle on canvas, surface inside tinted chips.' },
           ]}
         />
         <p className="mt-3 text-body-sm text-text-secondary">
-          Currently catalogued: {KNOWN.filter((a) => resolveAppIcon(a)).length} patterns — SAP, Salesforce, AWS, Google, GitHub, Slack, Okta, Jira, Snowflake, HashiCorp.
-          Everything else is letter-only until a mark is added.
+          Currently catalogued: {KNOWN.filter((a) => resolveAppIcon(a)).length} patterns. Generic types (Custom, SCIM) stay letter-only.
         </p>
       </Section>
 
@@ -79,12 +103,13 @@ export default function AppIconDocs() {
         <DoDont
           dos={[
             'Pass the application’s real display name; the component does the matching.',
+            'When the instance name is custom, pass logoFrom with the app type so the vendor mark still resolves.',
             'Use variant="surface" when the icon sits on a tinted chip or row.',
             'Keep one size per list so rows align.',
-            'Treat the letter fallback as a first-class state — most apps will use it.',
+            'Treat the letter fallback as a first-class state — unknown apps will use it.',
           ]}
           donts={[
-            'Don’t add a brand logo that is not CC0-licensed to the catalog.',
+            'Don’t bundle a logo file for a catalogued vendor — the live fetch is the source.',
             'Don’t use it as a person’s avatar — that is Avatar.',
             'Don’t scale it past 40px; it is a mark, not a hero image.',
             'Don’t hand-build a letter tile beside it; the fallback already is one.',

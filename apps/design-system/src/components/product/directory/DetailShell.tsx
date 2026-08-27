@@ -24,7 +24,8 @@ export function DetailShell({
   tabs,
   tab,
   onTab,
-  rail,
+  docked = false,
+  dock,
   children,
 }: {
   avatar: React.ReactNode;
@@ -41,63 +42,63 @@ export function DetailShell({
   tab: string;
   onTab: (v: string) => void;
   /**
-   * A docked navigation rail, which **replaces** the tab strip when passed.
-   *
-   * Opt-in per page rather than a shell-wide switch: a page earns a rail when its
-   * sections outgrow a strip, or when it has setup state to report per section that a
-   * strip has no room for. Pages that pass nothing keep the tabs unchanged.
-   *
-   * `tabs` is still required with a rail — it stays the definition of which sections
-   * exist, so the rail can be derived from it instead of hand-kept beside it.
+   * Emergency Access V1 frame: full-bleed, tabs on their own rule, room for a
+   * right-hand checklist. Stays on while the dock is closed so hiding it does
+   * not restyle the page.
    */
-  rail?: React.ReactNode;
+  docked?: boolean;
+  /** The checklist column. Omit it when the reader has closed it. */
+  dock?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const withDock = docked || Boolean(dock);
+
   return (
-    <div className="flex h-full flex-col">
-      {/* Sticky identity band: 12px above the title block and 12px before the tabs —
-          enough air that the block doesn't kiss the topbar or the tab strip, tight
-          enough that the band reads as chrome rather than a second page header.
-
-          With a rail below, the band's rule is the horizontal half of the frame the
-          rail's right border completes, so the two meet as one continuous line. */}
-      <div className="shrink-0 -mx-8 -mt-6 border-b border-border bg-canvas px-8 pt-3">
-        {/* items-center, not items-start: the identity block is two lines (~45px) and the
-            action row is one 36px control, so top-aligning left the buttons sitting ~9px
-            above the optical centre of the header. */}
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            {avatar}
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-h4 text-text-primary">{title}</h1>
-                {chips}
+    <div className={withDock ? 'flex h-full -mx-8 -mt-6 -mb-6' : 'flex h-full flex-col'}>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        {/* Sticky identity band: 12px above the title block and 12px before the tabs —
+            enough air that the block doesn't kiss the topbar or the tab strip, tight
+            enough that the band reads as chrome rather than a second page header. */}
+        <div
+          className={
+            withDock
+              ? 'shrink-0 bg-canvas px-8 pt-3'
+              : 'shrink-0 -mx-8 -mt-6 border-b border-border bg-canvas px-8 pt-3'
+          }
+        >
+          {/* items-center, not items-start: the identity block is two lines (~45px) and the
+              action row is one 36px control, so top-aligning left the buttons sitting ~9px
+              above the optical centre of the header. */}
+          <div className={`mb-3 flex flex-wrap items-center justify-between gap-4`}>
+            <div className="flex items-center gap-3">
+              {avatar}
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h1 className="text-h4 text-text-primary">{title}</h1>
+                  {chips}
+                </div>
+                {description && <p className="mt-px max-w-2xl text-body-sm text-text-secondary">{description}</p>}
               </div>
-              {description && <p className="mt-px max-w-2xl text-body-sm text-text-secondary">{description}</p>}
             </div>
+            {actions != null && (
+              <div className={`flex shrink-0 items-center ${withDock ? 'gap-3' : 'gap-2'}`}>{actions}</div>
+            )}
           </div>
-          {actions != null && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+          {!withDock && (
+            <Tabs items={tabs} value={tab} onChange={onTab} noBorder aria-label={`${title} details`} />
+          )}
         </div>
-        {/* No strip where the rail is: the two would be the same list of sections, and
-            the reader would have to work out whether they differ. */}
-        {!rail && (
-          <Tabs items={tabs} value={tab} onChange={onTab} noBorder aria-label={`${title} details`} />
+        {withDock && (
+          <div className="shrink-0 border-b border-border px-8">
+            <Tabs items={tabs} value={tab} onChange={onTab} noBorder aria-label={`${title} details`} />
+          </div>
         )}
-      </div>
 
-      {rail ? (
-        /* Full-bleed so the rail reaches the left edge and the bottom of the viewport
-           rather than floating in a padded box — a docked column that stops short of
-           either reads as a card. The page padding comes back inside the content, where
-           it belongs to the content and not to the frame: 20px, measured from the rail's
-           border rather than the page's, so there is no page title to line up with. */
-        <div className="-mx-8 -mb-6 flex min-h-0 flex-1">
-          {rail}
-          <div className="min-h-0 min-w-0 flex-1 p-5">{children}</div>
+        <div className={withDock ? 'min-h-0 min-w-0 flex-1 px-8 py-5' : 'min-h-0 flex-1 pt-5'}>
+          {children}
         </div>
-      ) : (
-        <div className="min-h-0 flex-1 pt-5">{children}</div>
-      )}
+      </div>
+      {dock}
     </div>
   );
 }

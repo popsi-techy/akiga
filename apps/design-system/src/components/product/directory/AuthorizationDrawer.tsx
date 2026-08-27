@@ -1,16 +1,24 @@
 'use client';
 
 import * as React from 'react';
-import Shield from '@mui/icons-material/Shield';
+import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
+import PersonOutline from '@mui/icons-material/PersonOutline';
+import LoginOutlined from '@mui/icons-material/LoginOutlined';
+import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
+import LinkOutlined from '@mui/icons-material/LinkOutlined';
+import TuneOutlined from '@mui/icons-material/TuneOutlined';
+import LockOpenOutlined from '@mui/icons-material/LockOpenOutlined';
+import RefreshOutlined from '@mui/icons-material/RefreshOutlined';
+import LabelOutlined from '@mui/icons-material/LabelOutlined';
 import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined';
 import VisibilityOffOutlined from '@mui/icons-material/VisibilityOffOutlined';
 import ContentCopyOutlined from '@mui/icons-material/ContentCopyOutlined';
-import { Button, Drawer, Input, Radio, Select, Tabs, useToast } from '@ds/components';
+import { Button, Drawer, FormSection, Input, ModeBar, Select, Tabs, Tooltip, useToast } from '@ds/components';
 import {
   GRANT_TYPES,
   METHOD_LABEL,
   emptyOAuth,
-  redirectUrlFor,
+  grantUsesUserAgent,
   saveAuthorization,
   type AppAuthorization,
   type AuthMethod,
@@ -26,6 +34,13 @@ const METHODS: { value: AuthMethod; enabled: boolean }[] = [
   { value: 'custom', enabled: false },
 ];
 
+const METHOD_ICON: Record<AuthMethod, React.ReactNode> = {
+  basic: <PersonOutline sx={{ fontSize: 18 }} />,
+  bearer: <VpnKeyOutlined sx={{ fontSize: 18 }} />,
+  oauth2: <LoginOutlined sx={{ fontSize: 18 }} />,
+  custom: <TuneOutlined sx={{ fontSize: 18 }} />,
+};
+
 /**
  * How IGA signs in to an application.
  *
@@ -33,6 +48,13 @@ const METHODS: { value: AuthMethod; enabled: boolean }[] = [
  * method switcher is replaced rather than extended — and OAuth's own split is
  * request (what we send the provider) versus response (what we read back),
  * which is the order you fill them in and the order they fail in.
+ *
+ * The request is four jobs, not a field list: how the handshake starts, who
+ * IGA is, which URLs it calls, and how the token request is shaped. FormSection
+ * is the group — heading and a hairline, not a card (ADR-0013). The method
+ * itself is a ModeBar in the drawer subheader, because it chooses which form
+ * you are filling and must stay visible while that form scrolls (ADR-0014).
+ * OAuth's Request / Response tabs pin in the toolbar for the same reason.
  *
  * Secrets are write-only. An existing password is never loaded back into the
  * field; leaving it untouched keeps the stored one.
@@ -68,7 +90,7 @@ export function AuthorizationDrawer({
     setUsername(existing?.basic?.username ?? '');
     setPassword('');
     setShowPassword(false);
-    setOAuth(existing?.oauth ?? emptyOAuth(applicationId));
+    setOAuth(existing?.oauth ? { ...emptyOAuth(applicationId), ...existing.oauth } : emptyOAuth(applicationId));
     setClientSecret('');
     setShowSecret(false);
     setSection('request');
@@ -80,6 +102,7 @@ export function AuthorizationDrawer({
 
   const keptPassword = Boolean(existing?.basic?.hasPassword);
   const keptSecret = Boolean(existing?.oauth?.hasClientSecret);
+  const usesUserAgent = grantUsesUserAgent(oauth.grantType);
 
   const required = (value: string, kept = false) => (touched && !value.trim() && !kept ? 'Required.' : undefined);
 
@@ -88,9 +111,9 @@ export function AuthorizationDrawer({
       ? username.trim() !== '' && (password.trim() !== '' || keptPassword)
       : oauth.clientId.trim() !== '' &&
         (clientSecret.trim() !== '' || keptSecret) &&
-        oauth.authorizationEndpoint.trim() !== '' &&
         oauth.tokenEndpoint.trim() !== '' &&
-        oauth.scope.trim() !== '';
+        oauth.scope.trim() !== '' &&
+        (!usesUserAgent || oauth.authorizationEndpoint.trim() !== '');
 
   const save = () => {
     setTouched(true);
@@ -113,19 +136,50 @@ export function AuthorizationDrawer({
     onSaved();
   };
 
-  const copyRedirect = () => {
-    void navigator.clipboard?.writeText(redirectUrlFor(applicationId));
-    toast.info('Redirect URL copied.');
+  const copy = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.info(`Could not copy ${label}`);
+    }
   };
 
   return (
     <Drawer
       open={open}
       onClose={onClose}
-      icon={<Shield sx={{ fontSize: 22 }} />}
+      icon={<ShieldOutlined sx={{ fontSize: 22 }} />}
       title={existing ? 'Edit authorization' : 'Add authorization'}
       subtitle="How IGA signs in when it calls this application."
       width={560}
+      subheader={
+        <ModeBar
+          ariaLabel="Authentication method"
+          value={method}
+          onChange={(v) => setMethod(v as AuthMethod)}
+          options={METHODS.map((m) => ({
+            value: m.value,
+            label: METHOD_LABEL[m.value],
+            icon: METHOD_ICON[m.value],
+            disabled: !m.enabled,
+            hint: m.enabled ? undefined : 'Coming soon',
+          }))}
+        />
+      }
+      toolbar={
+        method === 'oauth2' ? (
+          <Tabs
+            aria-label="OAuth configuration"
+            items={[
+              { value: 'request', label: 'Request' },
+              { value: 'response', label: 'Response' },
+            ]}
+            value={section}
+            onChange={setSection}
+          />
+        ) : undefined
+      }
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -135,96 +189,79 @@ export function AuthorizationDrawer({
         </>
       }
     >
-      <div className="space-y-5">
-        <fieldset>
-          <legend className="mb-2 text-body-sm-strong text-text-primary">Authentication method</legend>
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
-            {METHODS.map((m) => (
-              <Radio
-                key={m.value}
-                checked={method === m.value}
-                disabled={!m.enabled}
-                onChange={() => setMethod(m.value)}
-                label={m.enabled ? METHOD_LABEL[m.value] : `${METHOD_LABEL[m.value]} (coming soon)`}
-              />
-            ))}
-          </div>
-        </fieldset>
+      {method === 'basic' && (
+        <div className="space-y-4">
+          <Input
+            label="Username"
+            required
+            placeholder="service-account@company.com"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            error={required(username)}
+          />
+          <Input
+            label="Password"
+            required={!keptPassword}
+            hint="Stored encrypted and never shown again. To change it, type a new one."
+            type={showPassword ? 'text' : 'password'}
+            placeholder={keptPassword ? 'Unchanged — type to replace' : 'Enter password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={required(password, keptPassword)}
+            endAdornment={
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="rounded-md p-0.5 text-icon hover:bg-surface-hover"
+              >
+                {showPassword ? (
+                  <VisibilityOffOutlined sx={{ fontSize: 18 }} />
+                ) : (
+                  <VisibilityOutlined sx={{ fontSize: 18 }} />
+                )}
+              </button>
+            }
+          />
+        </div>
+      )}
 
-        {method === 'basic' && (
-          <div className="space-y-5">
-            <Input
-              label="Username"
-              required
-              hint="The service account IGA signs in as. Use a dedicated account, not a person's — a leaver should never break provisioning."
-              placeholder="service-account@company.com"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              error={required(username)}
-            />
-            <Input
-              label="Password"
-              required={!keptPassword}
-              hint="Stored encrypted and never shown again. To change it, type a new one."
-              type={showPassword ? 'text' : 'password'}
-              placeholder={keptPassword ? 'Unchanged — type to replace' : 'Enter password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              error={required(password, keptPassword)}
-              endAdornment={
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="rounded-md p-0.5 text-icon hover:bg-surface-hover"
-                >
-                  {showPassword ? (
-                    <VisibilityOffOutlined sx={{ fontSize: 18 }} />
-                  ) : (
-                    <VisibilityOutlined sx={{ fontSize: 18 }} />
-                  )}
-                </button>
-              }
-            />
-          </div>
-        )}
-
-        {method === 'oauth2' && (
-          <div className="space-y-5">
-            <Tabs
-              items={[
-                { value: 'request', label: 'Request' },
-                { value: 'response', label: 'Response' },
-              ]}
-              value={section}
-              onChange={setSection}
-            />
-
-            {section === 'request' && (
-              <div className="space-y-5">
+      {method === 'oauth2' && section === 'request' && (
+        <>
+              <FormSection title="Authorization flow" icon={<LoginOutlined sx={{ fontSize: 18 }} />}>
                 <Select
                   label="Grant type"
                   options={GRANT_TYPES.map((g) => ({ value: g.value, label: g.label }))}
                   value={oauth.grantType}
                   onChange={(v) => set('grantType', v as GrantType)}
                 />
-                <Input
-                  label="Redirect URL"
-                  hint="IGA's callback. Register this exact URL with the provider — a mismatch is rejected before any error you can read."
-                  value={oauth.redirectUrl}
-                  // IGA owns this URL — it is here to be copied, not edited.
-                  InputProps={{ readOnly: true }}
-                  endAdornment={
-                    <button
-                      type="button"
-                      onClick={copyRedirect}
-                      aria-label="Copy redirect URL"
-                      className="rounded-md p-0.5 text-icon hover:bg-surface-hover"
-                    >
-                      <ContentCopyOutlined sx={{ fontSize: 18 }} />
-                    </button>
-                  }
-                />
+                {usesUserAgent ? (
+                  <div className="group relative w-full">
+                    <Input
+                      label="Redirect URL"
+                      hint="IGA's callback. Register this exact URL with the provider — a mismatch is rejected before any error you can read."
+                      value={oauth.redirectUrl}
+                      // IGA owns this URL — it is here to be copied, not edited.
+                      InputProps={{ readOnly: true }}
+                    />
+                    <div className="pointer-events-none absolute bottom-0 right-1.5 flex h-9 items-center opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+                      <Tooltip title="Copy">
+                        <button
+                          type="button"
+                          aria-label="Copy Redirect URL"
+                          disabled={!oauth.redirectUrl}
+                          onClick={() => void copy(oauth.redirectUrl, 'Redirect URL')}
+                          className="grid h-6 w-6 place-items-center rounded-md bg-surface text-icon hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle disabled:opacity-40"
+                        >
+                          <ContentCopyOutlined sx={{ fontSize: 14 }} />
+                        </button>
+                      </Tooltip>
+                    </div>
+                  </div>
+                ) : null}
+              </FormSection>
+
+              <FormSection title="Client credentials" icon={<VpnKeyOutlined sx={{ fontSize: 18 }} />} divided>
                 <Input
                   label="Client ID"
                   required
@@ -257,15 +294,20 @@ export function AuthorizationDrawer({
                     </button>
                   }
                 />
-                <Input
-                  label="Authorization endpoint"
-                  required
-                  hint="Where the user is sent to approve access."
-                  placeholder="https://provider.com/oauth/authorize"
-                  value={oauth.authorizationEndpoint}
-                  onChange={(e) => set('authorizationEndpoint', e.target.value)}
-                  error={required(oauth.authorizationEndpoint)}
-                />
+              </FormSection>
+
+              <FormSection title="Endpoints" icon={<LinkOutlined sx={{ fontSize: 18 }} />} divided>
+                {usesUserAgent ? (
+                  <Input
+                    label="Authorization endpoint"
+                    required
+                    hint="Where the user is sent to approve access."
+                    placeholder="https://provider.com/oauth/authorize"
+                    value={oauth.authorizationEndpoint}
+                    onChange={(e) => set('authorizationEndpoint', e.target.value)}
+                    error={required(oauth.authorizationEndpoint)}
+                  />
+                ) : null}
                 <Input
                   label="Token endpoint"
                   required
@@ -276,14 +318,19 @@ export function AuthorizationDrawer({
                   error={required(oauth.tokenEndpoint)}
                 />
                 <Input
-                  label="Scope"
-                  required
-                  hint="Space-separated. Ask for the least the connector needs — every extra scope is access IGA holds but does not use."
-                  placeholder="users:read groups:write"
-                  value={oauth.scope}
-                  onChange={(e) => set('scope', e.target.value)}
-                  error={required(oauth.scope)}
+                  label="User information endpoint"
+                  hint="OIDC userinfo. Leave blank if the provider does not publish one."
+                  placeholder="https://provider.com/oauth/userinfo"
+                  value={oauth.userInfoEndpoint}
+                  onChange={(e) => set('userInfoEndpoint', e.target.value)}
                 />
+              </FormSection>
+
+              <FormSection
+                title="Authentication configuration"
+                icon={<TuneOutlined sx={{ fontSize: 18 }} />}
+                divided
+              >
                 <Select
                   label="Send client credentials in"
                   helperText="Header uses HTTP Basic auth; body posts them as form fields. Match what the provider documents."
@@ -295,19 +342,21 @@ export function AuthorizationDrawer({
                   onChange={(v) => set('credentialsIn', v as CredentialsIn)}
                 />
                 <Input
-                  label="Token type"
-                  value={oauth.tokenType}
-                  onChange={(e) => set('tokenType', e.target.value)}
+                  label="Scope"
+                  required
+                  hint="Space-separated. Ask for the least the connector needs — every extra scope is access IGA holds but does not use."
+                  placeholder="users:read groups:write"
+                  value={oauth.scope}
+                  onChange={(e) => set('scope', e.target.value)}
+                  error={required(oauth.scope)}
                 />
-              </div>
-            )}
+              </FormSection>
+        </>
+      )}
 
-            {section === 'response' && (
-              <div className="space-y-5">
-                <p className="text-body-sm text-text-secondary">
-                  The keys IGA reads out of the provider&apos;s token response. The defaults follow the OAuth 2.0
-                  spec — change them only when the provider answers with something else.
-                </p>
+      {method === 'oauth2' && section === 'response' && (
+        <>
+              <FormSection title="Access token" icon={<LockOpenOutlined sx={{ fontSize: 18 }} />}>
                 <Input
                   label="Access token key"
                   value={oauth.accessTokenKey}
@@ -318,6 +367,8 @@ export function AuthorizationDrawer({
                   value={oauth.expiresInKey}
                   onChange={(e) => set('expiresInKey', e.target.value)}
                 />
+              </FormSection>
+              <FormSection title="Refresh token" icon={<RefreshOutlined sx={{ fontSize: 18 }} />} divided>
                 <Input
                   label="Refresh token key"
                   value={oauth.refreshTokenKey}
@@ -328,11 +379,17 @@ export function AuthorizationDrawer({
                   value={oauth.refreshExpiresInKey}
                   onChange={(e) => set('refreshExpiresInKey', e.target.value)}
                 />
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+              </FormSection>
+              <FormSection title="Token type" icon={<LabelOutlined sx={{ fontSize: 18 }} />} divided>
+                <Input
+                  label="Token type"
+                  hint="Almost always Bearer. Change only when the provider’s token_type is something else."
+                  value={oauth.tokenType}
+                  onChange={(e) => set('tokenType', e.target.value)}
+                />
+              </FormSection>
+        </>
+      )}
     </Drawer>
   );
 }

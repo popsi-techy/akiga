@@ -16,7 +16,7 @@
         "letter-fallback"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/app-icon/page.tsx",
-      "notes": "Brand logos via Simple Icons (CC0) when the app name matches the catalog (SAP, Salesforce, AWS, Google, GitHub, Slack, Okta, Jira, Snowflake, HashiCorp); otherwise first-letter tile. Product AppBadge appearance=\"logo\" consumes this. Used on SoD Resolution V3 and the application-type catalog."
+      "notes": "Live vendor logos fetched from the web (Google favicon service, 128px) when the app name or `logoFrom` (typically the app type) matches a known domain — Google Workspace, Adobe, Salesforce, AWS, Entra, Active Directory, Okta, GitHub, Slack, ServiceNow, CyberArk, HashiCorp, SAP, Workday, Jira, Snowflake, NetSuite, Freshdesk. Unknown names fall back to a first-letter tile. Product AppBadge appearance=\"logo\" and Directory EntityAvatar consume this."
     },
     {
       "name": "Avatar",
@@ -216,10 +216,12 @@
         "closed",
         "open",
         "with-footer",
+        "with-subheader",
+        "with-toolbar",
         "scrolled"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/drawer/page.tsx",
-      "notes": "Right-anchored panel for long forms and browsing surfaces where the page behind still matters. Use Modal for a short centered form, Dialog for a confirm. elevation.lg."
+      "notes": "Right-anchored panel for long forms and browsing surfaces where the page behind still matters. Header, optional pinned `subheader` (a ModeBar when the body is a different form per choice), optional pinned `toolbar` (Tabs for facets of that form), scrolling body, footer. Use Modal for a short centered form, Dialog for a confirm. elevation.lg."
     },
     {
       "name": "FilterDrawer",
@@ -236,6 +238,22 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/components/filter-drawer/page.tsx",
       "notes": "The product's one filtering surface: categories in a left rail, the selected category's options as a searchable, paginated checkbox table on the right. A drawer, matching every other pick-from-a-catalog surface (Add Owners, Add Technical Roles, Assign Reviewer). Staged — nothing changes until Apply, so Cancel has something to discard and the list never reorders under the cursor mid-decision. One option kind today (checkbox list); FilterGroup is shaped to take ranges and dates as further kinds without disturbing it."
+    },
+    {
+      "name": "FormSection",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/FormSection/FormSection.tsx",
+      "extends": null,
+      "variants": [
+        "default",
+        "divided"
+      ],
+      "states": [
+        "default",
+        "with-icon"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/form-section/page.tsx",
+      "notes": "Named group of fields inside a Drawer or Modal. Heading is h5 with an outlined 18px icon; no caption under the title; fields stack at 16px; divided adds a hairline above. Do not wrap in a Card or a grey well. SettingsSection is the page equivalent and saves itself — do not use it in an overlay. See ADR-0013 and the grouped-form pattern."
     },
     {
       "name": "FlowCanvas",
@@ -351,6 +369,23 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/components/modal/page.tsx",
       "notes": "Centered counterpart to Drawer, for short forms and rich decisions. Body scrolls; the panel caps at 85vh — unless `height` is set, in which case the body fills the leftover and does not scroll (for a canvas that pans itself). showClose=false when dismissing without deciding would leave things inconsistent — the footer must then offer a way back. elevation.xl."
+    },
+    {
+      "name": "ModeBar",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/ModeBar/ModeBar.tsx",
+      "extends": null,
+      "variants": [
+        "default"
+      ],
+      "states": [
+        "selected",
+        "unselected",
+        "disabled",
+        "focus-visible"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/mode-bar/page.tsx",
+      "notes": "Equal icon+label tiles that pick which body lives below them. Pin in Drawer.subheader so the switcher cannot scroll away. Selection is a brand outline on a white surface fill — no radio dots; the tile is the control. Disabled options stay in the row (muted + tooltip, no Soon caption) so the set does not reflow when one ships. Not FormSection (that groups fields), not Tabs (facets of one form), not SegmentedControl (density/duration), not RadioCardGroup (in-form cards with dots). See ADR-0014."
     },
     {
       "name": "NavCard",

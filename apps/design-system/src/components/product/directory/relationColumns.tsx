@@ -35,7 +35,7 @@ export const applicationColumns: Column<ApplicationRow>[] = [
     value: (r) => r.name,
     render: (r) => (
       <div className="flex items-center gap-3">
-        <EntityAvatar kind="application" name={r.name} />
+        <EntityAvatar kind="application" name={r.name} appType={r.appType} />
         <span className="text-body-sm-strong text-text-primary">{r.name}</span>
       </div>
     ),

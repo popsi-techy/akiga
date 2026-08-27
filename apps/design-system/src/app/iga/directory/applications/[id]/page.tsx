@@ -4,12 +4,8 @@ import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
-import Info from '@mui/icons-material/Info';
 import {
   Button,
-  Card,
-  InfoRow,
-  InfoRowGroup,
   Menu,
   StatusChip,
   Tooltip,
@@ -17,17 +13,11 @@ import {
   type TabItem,
 } from '@ds/components';
 import { getApplicationDetail } from '@/data/directory';
-import { appBlockingSteps } from '@/data/application-setup';
-import {
-  DetailRail,
-  type DetailRailGroup,
-  type DetailRailRow,
-} from '@/components/product/DetailRail';
+import { APP_REQUIRED_STEPS, appBlockingSteps } from '@/data/application-setup';
 import {
   applicationSetupSteps,
-  type ApplicationSetupStep,
+  firstUnfinishedAppTab,
 } from '@/components/product/directory/applicationSetupSteps';
-import { infoIcon } from '@/components/product/directory/infoIcons';
 import { connectApplication } from '@/data/applications-store';
 import {
   DetailShell,
@@ -46,6 +36,8 @@ import {
   entitlementColumns,
 } from '@/components/product/directory';
 import { getGovEntity } from '@/data/governance';
+import { EmergencyAccessGuideButton } from '@/components/product/emergency/EmergencyAccessGuideModal';
+import { SetupChecklistDock } from '@/components/product/emergency/SetupChecklistDock';
 
 const LIST_HREF = '/iga/directory/applications';
 
@@ -53,21 +45,16 @@ const BASE_TABS: TabItem[] = [
   { value: 'overview', label: 'Overview' },
   { value: 'accounts', label: 'App Accounts' },
   { value: 'entitlements', label: 'Entitlements' },
-  { value: 'reconciliation', label: 'Reconciliation' },
   { value: 'provisioning', label: 'Configure' },
+  { value: 'reconciliation', label: 'Reconciliation' },
+  { value: 'owners', label: 'Owners' },
   { value: 'baseline', label: 'Baseline Governance' },
   { value: 'approval', label: 'Approval Policy' },
-  { value: 'owners', label: 'Owners' },
 ];
 
-/**
- * The sections this page has, which the rail is derived from.
- *
- * Overview keeps its name in both states now. It was relabelled while the
- * checklist lived inside it; the checklist is the rail, so the tab that held it is a
- * summary again — of what the application *is* during draft, and of what it holds once
- * connected.
- */
+/** Collections that only exist once IGA can reach the application. */
+const CONNECTED_ONLY = new Set(['overview', 'accounts', 'entitlements']);
+
 function sectionsFor(accounts: number, entitlements: number): TabItem[] {
   return BASE_TABS.map((t) => {
     if (t.value === 'accounts') return { ...t, count: accounts };
@@ -81,19 +68,8 @@ export default function ApplicationDetailPage() {
   const router = useRouter();
   const toast = useToast();
   const [tab, setTab] = React.useState('overview');
-  /**
-   * Which rail row was pressed, where a section has more than one.
-   *
-   * Cleared whenever the section changes by any other route — `connect()` returns
-   * to Overview, where one row matches and the override would only be a stale
-   * claim about a different section.
-   */
-  const [activeRow, setActiveRow] = React.useState<string | undefined>(undefined);
-  const goToSection = (value: string, rowId?: string) => {
-    setTab(value);
-    setActiveRow(rowId);
-  };
   const [basicsOpen, setBasicsOpen] = React.useState(false);
+  const [checklistOpen, setChecklistOpen] = React.useState(false);
   const [, bump] = React.useReducer((n: number) => n + 1, 0);
 
   /**
@@ -113,6 +89,10 @@ export default function ApplicationDetailPage() {
   const onboarded = detail?.onboarded;
   const isDraft = onboarded?.status === 'setup';
 
+  React.useEffect(() => {
+    if (mounted && onboarded?.status === 'setup') setChecklistOpen(true);
+  }, [mounted, onboarded?.id, onboarded?.status]);
+
   if (!mounted) return null;
   if (!detail) {
     return <DetailNotFound title="Application not found" backHref={LIST_HREF} backLabel="Back to Applications" />;
@@ -121,65 +101,31 @@ export default function ApplicationDetailPage() {
   const { app, accounts, entitlements } = detail;
   const gov = getGovEntity(app.id);
   const blocking = onboarded ? appBlockingSteps(onboarded) : [];
-
-  /**
-   * What the rail lists.
-   *
-   * A draft is the connector being stood up: Required is Configure;
-   * Additional is Reconciliation, Owners, Baseline Governance and Approval
-   * Policy. Overview, accounts and entitlements wait until IGA can reach the
-   * application — they would be empty lists pretending to be work.
-   *
-   * A connected application leads with those collections, then the same
-   * grouped steps, so connecting does not restyle the navigation.
-   */
-  const sections = sectionsFor(accounts.length, entitlements.length);
   const steps = onboarded ? applicationSetupSteps(onboarded) : [];
-  const countFor = (value: string) => sections.find((s) => s.value === value)?.count;
-  const stepRow = (step: ApplicationSetupStep): DetailRailRow => ({
-    id: step.id,
-    label: step.label,
-    tab: step.tab,
-    count: countFor(step.tab),
-    done: step.done,
-  });
-  const stepGroups: DetailRailGroup[] = [
-    {
-      heading: 'Required to connect',
-      headingHint: 'these steps gate connection',
-      rows: steps.filter((s) => s.required).map(stepRow),
-    },
-    {
-      heading: 'Additional',
-      headingHint: 'optional, and does not block connection',
-      rows: steps.filter((s) => !s.required).map(stepRow),
-    },
-  ];
-  const collectionRows = sections
-    .filter((s) => !steps.some((step) => step.tab === s.value))
-    .map((s) => ({ id: s.value, label: s.label, tab: s.value, count: s.count }));
-  const railGroups: DetailRailGroup[] = [
-    ...(!isDraft && collectionRows.length ? [{ rows: collectionRows }] : []),
-    ...stepGroups,
-  ].filter((g) => g.rows.length > 0);
 
-  const draftTabs = new Set(steps.map((s) => s.tab));
-  const shownTab = isDraft && !draftTabs.has(tab) ? 'provisioning' : tab;
+  const allSections = sectionsFor(accounts.length, entitlements.length);
+  const visibleTabs = isDraft
+    ? allSections.filter((s) => !CONNECTED_ONLY.has(s.value))
+    : allSections;
+
+  const shownTab = visibleTabs.some((t) => t.value === tab)
+    ? tab
+    : isDraft && onboarded
+      ? firstUnfinishedAppTab(onboarded)
+      : 'overview';
 
   const connect = () => {
     if (!onboarded || blocking.length > 0) return;
     connectApplication(onboarded.id);
     toast.success(`“${onboarded.name}” is connected. IGA can now reach this application.`);
     bump();
-    // Through `goToSection` so the row override is cleared with the section: leaving it
-    // set would have a Provisioning step still claiming to be current on Overview.
-    goToSection('overview');
+    setTab('overview');
   };
 
   return (
     <>
       <DetailShell
-        avatar={<EntityAvatar kind="application" name={app.name} size="md" />}
+        avatar={<EntityAvatar kind="application" name={app.name} appType={onboarded?.appType} size="md" />}
         title={app.name}
         description={app.description}
         chips={
@@ -197,11 +143,6 @@ export default function ApplicationDetailPage() {
             >
               Basic Details
             </Button>
-            {/* A plain button that is simply disabled until nothing blocks. It used to
-                carry a progress ring and a "N required steps to connect" label, from when
-                the header was the only place to learn how far setup had got — the rail
-                reports that step by step now, so the ring was the same state said twice
-                and the crowded-out half was the button's one action. */}
             {isDraft && onboarded ? (
               <Tooltip
                 describeChild
@@ -226,56 +167,41 @@ export default function ApplicationDetailPage() {
                 },
               ]}
             />
+            {onboarded ? (
+              <EmergencyAccessGuideButton
+                expanded={checklistOpen}
+                progress={
+                  isDraft
+                    ? {
+                        done: APP_REQUIRED_STEPS - blocking.length,
+                        total: APP_REQUIRED_STEPS,
+                      }
+                    : undefined
+                }
+                onClick={() => setChecklistOpen((open) => !open)}
+              />
+            ) : null}
           </>
         }
-        tabs={sections}
+        tabs={visibleTabs}
         tab={shownTab}
         onTab={setTab}
-        rail={
-          <DetailRail
-            ariaLabel={isDraft ? 'Draft checklist' : 'Application sections'}
-            groups={railGroups}
-            currentTab={shownTab}
-            currentId={activeRow}
-            onGoTo={(row) => {
-              goToSection(row.tab, row.id);
-            }}
-          />
+        docked={Boolean(onboarded)}
+        dock={
+          onboarded && checklistOpen ? (
+            <SetupChecklistDock
+              steps={steps}
+              currentTab={shownTab}
+              gateVerb="connect"
+              onClose={() => setChecklistOpen(false)}
+              onGoTo={(step) => setTab(step.tab)}
+            />
+          ) : undefined
         }
       >
-        {shownTab === 'overview' &&
-          (isDraft && onboarded ? (
-            /* During setup this is what the application *is*, not what it holds — it holds
-               nothing until IGA can reach it. The checklist that used to sit beside these
-               facts is the rail now, so the card is the whole section rather than its
-               sidebar. Kept to a reading width for the same reason a paragraph is. */
-            <div className="ds-scroll h-full overflow-y-auto pr-0.5">
-              <div className="max-w-xl">
-                <Card title="Application type" icon={<Info />} padding="none">
-                  <InfoRowGroup>
-                    <InfoRow icon={infoIcon.type} label="Type" value={onboarded.appType} />
-                    <InfoRow
-                      icon={infoIcon.sync}
-                      label="Provisioning"
-                      value={onboarded.enableProvisioning ? 'Enabled' : 'Off'}
-                    />
-                    <InfoRow
-                      icon={infoIcon.people}
-                      label="Identity source"
-                      value={onboarded.identitySource ? 'Yes' : 'No'}
-                    />
-                    <InfoRow
-                      icon={infoIcon.baseline}
-                      label="Requestable"
-                      value={onboarded.requestable ? 'Yes' : 'No'}
-                    />
-                  </InfoRowGroup>
-                </Card>
-              </div>
-            </div>
-          ) : (
-            <ApplicationOverviewTab app={app} accounts={accounts} entitlements={entitlements} />
-          ))}
+        {shownTab === 'overview' && (
+          <ApplicationOverviewTab app={app} accounts={accounts} entitlements={entitlements} />
+        )}
         {shownTab === 'accounts' && (
           <RelationTable
             columns={accountColumns}

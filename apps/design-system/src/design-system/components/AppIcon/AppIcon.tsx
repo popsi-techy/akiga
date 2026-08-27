@@ -1,67 +1,87 @@
 'use client';
 
 import * as React from 'react';
-import {
-  siAmazonwebservices,
-  siGithub,
-  siGoogle,
-  siHashicorp,
-  siJira,
-  siOkta,
-  siSalesforce,
-  siSap,
-  siSlack,
-  siSnowflake,
-  type SimpleIcon,
-} from 'simple-icons/icons';
 
 /**
- * AppIcon — compact application mark. Renders a real brand logo when the app
- * name matches a known catalog entry; otherwise falls back to the first letter
- * (same visual language as the product AppBadge initial tile).
+ * AppIcon — compact application mark.
  *
- * Logos are Simple Icons (CC0). Unknown / uncatalogued apps stay letter-only.
+ * Brand logos are the vendor’s current site icon, fetched live (Google’s public
+ * favicon service crawls the domain). Unknown names fall back to a first-letter
+ * tile so a list stays scannable without every app needing an asset.
  */
+
+export interface AppLogo {
+  title: string;
+  domain: string;
+}
+
 export interface AppIconProps {
   /** Application display name (e.g. "SAP S/4HANA Finance"). */
   app?: string;
+  /**
+   * Extra catalog key when `app` is a custom instance name — typically the
+   * app type ("SAP", "Adobe"). Tried before `app`.
+   */
+  logoFrom?: string;
   size?: number;
   /** Tile fill: `subtle` on canvas/surface, `surface` inside tinted chips. */
   variant?: 'subtle' | 'surface';
 }
 
-/** Matched in order, so a longer product name wins over a looser pattern. */
-const CATALOG: { match: RegExp; icon: SimpleIcon }[] = [
-  { match: /sap/i, icon: siSap },
-  { match: /salesforce/i, icon: siSalesforce },
-  { match: /\baws\b|amazon\s*web\s*services/i, icon: siAmazonwebservices },
-  { match: /google/i, icon: siGoogle },
-  { match: /github/i, icon: siGithub },
-  { match: /slack/i, icon: siSlack },
-  { match: /okta/i, icon: siOkta },
-  { match: /jira/i, icon: siJira },
-  { match: /snowflake/i, icon: siSnowflake },
-  { match: /hashicorp/i, icon: siHashicorp },
+/**
+ * Matched in order, so a longer product name wins over a looser pattern.
+ * `domain` is the vendor site whose live icon we load.
+ */
+const CATALOG: { match: RegExp; logo: AppLogo }[] = [
+  { match: /google\s*workspace/i, logo: { title: 'Google Workspace', domain: 'workspace.google.com' } },
+  { match: /microsoft\s*entra|\bentra\b/i, logo: { title: 'Microsoft Entra', domain: 'entra.microsoft.com' } },
+  { match: /active\s*directory/i, logo: { title: 'Active Directory', domain: 'microsoft.com' } },
+  { match: /hashicorp/i, logo: { title: 'HashiCorp', domain: 'hashicorp.com' } },
+  { match: /cyberark/i, logo: { title: 'CyberArk', domain: 'cyberark.com' } },
+  { match: /servicenow/i, logo: { title: 'ServiceNow', domain: 'servicenow.com' } },
+  { match: /adobe/i, logo: { title: 'Adobe', domain: 'adobe.com' } },
+  { match: /salesforce/i, logo: { title: 'Salesforce', domain: 'salesforce.com' } },
+  { match: /\baws\b|amazon\s*web\s*services/i, logo: { title: 'AWS', domain: 'aws.amazon.com' } },
+  { match: /github/i, logo: { title: 'GitHub', domain: 'github.com' } },
+  { match: /slack/i, logo: { title: 'Slack', domain: 'slack.com' } },
+  { match: /okta/i, logo: { title: 'Okta', domain: 'okta.com' } },
+  { match: /jira|atlassian/i, logo: { title: 'Jira', domain: 'atlassian.com' } },
+  { match: /snowflake/i, logo: { title: 'Snowflake', domain: 'snowflake.com' } },
+  { match: /workday/i, logo: { title: 'Workday', domain: 'workday.com' } },
+  { match: /netsuite/i, logo: { title: 'NetSuite', domain: 'netsuite.com' } },
+  { match: /freshdesk/i, logo: { title: 'Freshdesk', domain: 'freshdesk.com' } },
+  { match: /sap/i, logo: { title: 'SAP', domain: 'sap.com' } },
+  { match: /google/i, logo: { title: 'Google', domain: 'google.com' } },
 ];
 
-export function resolveAppIcon(app?: string | null): SimpleIcon | null {
-  const name = app?.trim();
-  if (!name) return null;
-  for (const entry of CATALOG) {
-    if (entry.match.test(name)) return entry.icon;
+/** Live vendor icon — 128px so a 40px tile stays sharp. */
+export function liveAppLogoUrl(domain: string): string {
+  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`;
+}
+
+export function resolveAppIcon(...candidates: Array<string | null | undefined>): AppLogo | null {
+  for (const app of candidates) {
+    const name = app?.trim();
+    if (!name) continue;
+    for (const entry of CATALOG) {
+      if (entry.match.test(name)) return entry.logo;
+    }
   }
   return null;
 }
 
-export function AppIcon({ app, size = 24, variant = 'subtle' }: AppIconProps) {
-  const icon = resolveAppIcon(app);
+export function AppIcon({ app, logoFrom, size = 24, variant = 'subtle' }: AppIconProps) {
+  const logo = resolveAppIcon(logoFrom, app);
+  const [failed, setFailed] = React.useState(false);
+  React.useEffect(() => setFailed(false), [logo?.domain]);
+
   const tile = [
     'inline-flex shrink-0 items-center justify-center rounded-md',
     variant === 'surface' ? 'bg-surface' : 'bg-subtle',
   ].join(' ');
   const letter = app?.trim().charAt(0).toUpperCase() || '?';
 
-  if (!icon) {
+  if (!logo || failed) {
     return (
       <span className={`${tile} text-caption-strong text-text-secondary`} style={{ width: size, height: size }} title={app}>
         {letter}
@@ -69,19 +89,20 @@ export function AppIcon({ app, size = 24, variant = 'subtle' }: AppIconProps) {
     );
   }
 
-  const mark = Math.round(size * 0.58);
+  const mark = Math.round(size * 0.72);
   return (
     <span className={tile} style={{ width: size, height: size }} title={app}>
-      <svg
-        role="img"
-        viewBox="0 0 24 24"
+      {/* eslint-disable-next-line @next/next/no-img-element -- live vendor icon; not a layout image */}
+      <img
+        src={liveAppLogoUrl(logo.domain)}
+        alt=""
         width={mark}
         height={mark}
-        aria-label={icon.title}
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path d={icon.path} fill={`#${icon.hex}`} />
-      </svg>
+        draggable={false}
+        referrerPolicy="no-referrer"
+        className="object-contain"
+        onError={() => setFailed(true)}
+      />
     </span>
   );
 }

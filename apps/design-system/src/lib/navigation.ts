@@ -50,6 +50,7 @@ export const navigation: NavSection[] = [
   {
     title: 'Forms & Input',
     items: [
+      { label: 'Form Section', href: '/components/form-section', status: 'ready' },
       { label: 'Input', href: '/components/input', status: 'ready' },
       { label: 'Select', href: '/components/select', status: 'ready' },
       { label: 'Checkbox', href: '/components/checkbox', status: 'ready' },
@@ -64,6 +65,7 @@ export const navigation: NavSection[] = [
     title: 'Selection',
     items: [
       { label: 'Radio Card Group', href: '/components/radio-card-group', status: 'ready' },
+      { label: 'Mode Bar', href: '/components/mode-bar', status: 'ready' },
       { label: 'Selectable List', href: '/components/selectable-list', status: 'ready' },
       { label: 'Selection Panel', href: '/components/selection-panel', status: 'ready' },
       { label: 'Picker Slot', href: '/components/picker-slot', status: 'ready' },
@@ -116,6 +118,7 @@ export const navigation: NavSection[] = [
     items: [
       { label: 'Overview', href: '/patterns', status: 'ready' },
       { label: 'Settings page', href: '/patterns/settings-page', status: 'ready' },
+      { label: 'Grouped form', href: '/patterns/grouped-form', status: 'ready' },
     ],
   },
 ];

@@ -39,8 +39,8 @@ export type {
 export { Avatar, AvatarGroup, initialsOf } from './Avatar/Avatar';
 export type { AvatarProps, AvatarGroupProps, AvatarSize, AvatarKind } from './Avatar/Avatar';
 
-export { AppIcon, resolveAppIcon } from './AppIcon/AppIcon';
-export type { AppIconProps } from './AppIcon/AppIcon';
+export { AppIcon, resolveAppIcon, liveAppLogoUrl } from './AppIcon/AppIcon';
+export type { AppIconProps, AppLogo } from './AppIcon/AppIcon';
 
 export { Input } from './Input/Input';
 export type { InputProps } from './Input/Input';
@@ -56,6 +56,8 @@ export type { TabsProps, TabItem } from './Tabs/Tabs';
 
 export { Drawer } from './Drawer/Drawer';
 export type { DrawerProps } from './Drawer/Drawer';
+export { ModeBar } from './ModeBar/ModeBar';
+export type { ModeBarProps, ModeBarOption } from './ModeBar/ModeBar';
 
 export { Dialog } from './Dialog/Dialog';
 export type { DialogProps } from './Dialog/Dialog';
@@ -136,6 +138,8 @@ export type { RichTextEditorProps } from './RichTextEditor/RichTextEditor';
 
 export { FilterDrawer } from './FilterDrawer/FilterDrawer';
 export type { FilterDrawerProps, FilterGroup, FilterOption, FilterSelection } from './FilterDrawer/FilterDrawer';
+export { FormSection } from './FormSection/FormSection';
+export type { FormSectionProps } from './FormSection/FormSection';
 export { RelationshipCanvas } from './RelationshipCanvas/RelationshipCanvas';
 export type { RelationshipCanvasProps, CanvasNode, CanvasEdge } from './RelationshipCanvas/RelationshipCanvas';
 

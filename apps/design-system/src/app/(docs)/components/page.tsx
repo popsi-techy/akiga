@@ -26,6 +26,7 @@ const groups: { title: string; description: string; items: [string, string, stri
     title: 'Forms & Input',
     description: 'Every control shares one height scale, so a toolbar row lines up without adjustment.',
     items: [
+      ['Form Section', '/components/form-section', 'Named field group in a Drawer — heading and a hairline, not a card.'],
       ['Input', '/components/input', 'Text field — labels, states, adornments.'],
       ['Select', '/components/select', 'Single-choice dropdown, matched to Input.'],
       ['Checkbox', '/components/checkbox', 'The 18px box — checked, mixed, brand or danger tone.'],
@@ -41,6 +42,7 @@ const groups: { title: string; description: string; items: [string, string, stri
     description: 'Choosing one thing, choosing many, and showing what was chosen.',
     items: [
       ['Radio Card Group', '/components/radio-card-group', 'Single-choice selector as icon + label cards.'],
+      ['Mode Bar', '/components/mode-bar', 'Equal tiles that pick which body lives below them — pin in a Drawer subheader.'],
       ['Selectable List', '/components/selectable-list', 'Multi-select rows with descriptions and trailing content.'],
       ['Selection Panel', '/components/selection-panel', 'The “what you selected” side panel for multi-select drawers.'],
       ['Picker Slot', '/components/picker-slot', 'One row standing in for a collection chosen in a drawer.'],

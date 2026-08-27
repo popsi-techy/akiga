@@ -25,6 +25,19 @@ export default function PatternsPage() {
               </p>
             </Card>
           </Link>
+          <Link href="/patterns/grouped-form" className="group">
+            <Card className="h-full p-5 transition-shadow group-hover:shadow-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-h5 text-text-primary">Grouped form</span>
+                <span className="shrink-0 text-text-brand transition-transform group-hover:translate-x-0.5">
+                  →
+                </span>
+              </div>
+              <p className="mt-1.5 text-body-sm leading-5 text-text-secondary">
+                Long Drawer or Modal form split into jobs — heading and a hairline, one footer Save.
+              </p>
+            </Card>
+          </Link>
         </div>
       </Section>
     </>

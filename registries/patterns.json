@@ -22,6 +22,24 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/patterns/settings-page/page.tsx",
       "adr": "docs/architecture/decisions/0012-settings-page-anatomy.md"
+    },
+    {
+      "name": "grouped-form",
+      "status": "stable",
+      "problem": "A long create/edit form in a Drawer or Modal has more than one job, and a flat field stack reads as a list instead of those jobs.",
+      "useWhen": "Create/edit overlays whose fields fall into more than one job (authorization flow, credentials, endpoints, request shape).",
+      "avoidWhen": "System Settings detail pages — those use Settings page. A single-field drawer does not need groups.",
+      "components": [
+        "ModeBar",
+        "FormSection",
+        "Drawer",
+        "Modal",
+        "Input",
+        "Select",
+        "Tabs"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/patterns/grouped-form/page.tsx",
+      "adr": "docs/architecture/decisions/0013-form-section-in-overlays.md"
     }
   ]
 }

@@ -22,6 +22,9 @@ export const GRANT_TYPES = [
 ] as const;
 export type GrantType = (typeof GRANT_TYPES)[number]['value'];
 
+/** Authorization Code is the only grant that sends the user through a browser. */
+export const grantUsesUserAgent = (grantType: GrantType) => grantType === 'authorization_code';
+
 /** Where the client id and secret ride on the token request. */
 export type CredentialsIn = 'body' | 'header';
 
@@ -37,6 +40,8 @@ export interface OAuthConfig {
   hasClientSecret: boolean;
   authorizationEndpoint: string;
   tokenEndpoint: string;
+  /** OIDC userinfo. Empty when the provider does not publish one. */
+  userInfoEndpoint: string;
   scope: string;
   credentialsIn: CredentialsIn;
   tokenType: string;
@@ -76,6 +81,7 @@ export const emptyOAuth = (applicationId: string): OAuthConfig => ({
   hasClientSecret: false,
   authorizationEndpoint: '',
   tokenEndpoint: '',
+  userInfoEndpoint: '',
   scope: '',
   credentialsIn: 'body',
   tokenType: 'Bearer',
