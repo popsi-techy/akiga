@@ -41,9 +41,7 @@ import {
   Input,
   SelectionPanel,
   SegmentedControl,
-  OverflowChips,
   NavList,
-  PickerSlot,
   Tooltip,
   useToast,
   type Column,
@@ -374,25 +372,25 @@ function BasicDetailsDrawer({
 }
 
 /**
- * Who answers for this profile, as two picker slots — for the V2 creation stepper.
+ * Who answers for this profile — Owners and Governance Teams as tabs, for the
+ * V2 creation stepper.
  *
- * Same reasoning as `EmergencyAssignmentsPicker`: the tab below is a 240px rail
- * beside a table, which needs a page's width and gets a wizard column. The step
- * asks *who answers for this*, and a count with the first name in it answers that.
+ * The detail tab is a 240px rail beside a table, which needs a page's width.
+ * The wizard column cannot spare that, but two PickerSlots stacked the halves
+ * as competing empty cards. Tabs keep both kinds in one surface: add from the
+ * tab you are on, search the list, remove a row without opening a drawer.
  *
- * Both halves use `TableSelectDrawer`, which preselects and replaces — so the step
- * can take an owner back out as well as put one in. The tab's own "Add Owners"
- * drawer only appends, and relies on its table's row menu for removal; with no
- * table here, appending alone would let a reader add the wrong person and be stuck
- * with them until they reached the detail page.
+ * `TableSelectDrawer` preselects and replaces, so adding more never duplicates
+ * and a wrong pick can still be taken out before the profile exists as a page.
  */
 export function EmergencyOwnersPicker({ ea, onChanged }: { ea: EADetail; onChanged: () => void }) {
   const toast = useToast();
+  const [view, setView] = React.useState<'owners' | 'teams'>('owners');
+  const [search, setSearch] = React.useState('');
   const [owners, setOwners] = React.useState<SeedEAOwner[]>([]);
   const [teamIds, setTeamIds] = React.useState<string[]>([]);
   const [open, setOpen] = React.useState<'people' | 'teams' | null>(null);
 
-  // Session memory, so read both after mount like every other EA surface.
   React.useEffect(() => {
     setOwners(getEAOwners(ea.id));
     setTeamIds(getEAGovernanceTeams(ea.id));
@@ -400,6 +398,15 @@ export function EmergencyOwnersPicker({ ea, onChanged }: { ea: EADetail; onChang
 
   const candidates = listOwnerCandidates();
   const allTeams = listGovernanceTeamRows();
+  const q = search.trim().toLowerCase();
+  const ownerRows = q
+    ? owners.filter(
+        (o) => o.name.toLowerCase().includes(q) || o.email.toLowerCase().includes(q),
+      )
+    : owners;
+  const selectedTeams = allTeams.filter((t) => teamIds.includes(t.id));
+  const teamRows = q ? selectedTeams.filter((t) => t.name.toLowerCase().includes(q)) : selectedTeams;
+  const isBlank = view === 'owners' ? owners.length === 0 : teamIds.length === 0;
 
   const commitOwners = (ids: string[]) => {
     const wasDone = owners.length > 0;
@@ -412,63 +419,159 @@ export function EmergencyOwnersPicker({ ea, onChanged }: { ea: EADetail; onChang
     onChanged();
   };
 
-  const slots = [
+  const removeRow = (label: string, onRemove: () => void) => (
+    <Tooltip title="Remove">
+      <button
+        type="button"
+        aria-label={label}
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        className="rounded-md p-1 text-icon-subtle transition-colors hover:bg-surface-hover hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-subtle"
+      >
+        <DeleteOutline sx={{ fontSize: 18 }} />
+      </button>
+    </Tooltip>
+  );
+
+  const ownerColumns: Column<SeedEAOwner>[] = [
     {
-      key: 'people' as const,
-      icon: <PersonOutline />,
-      empty: 'No owners named',
-      emptyHint: 'A named owner answers for this access day to day.',
-      editHint: 'Edit who answers for this access day to day.',
-      addLabel: 'Add Owners',
-      items: owners.map((o) => ({ id: o.id, name: o.name })),
-      entity: 'owner',
+      id: 'name',
+      header: 'Owner name',
+      sortable: true,
+      value: (o) => o.name,
+      render: (o) => (
+        <div className="flex items-center gap-3">
+          <Avatar name={o.name} size="sm" kind="person" />
+          <span className="truncate text-body-sm-strong text-text-primary">{o.name}</span>
+        </div>
+      ),
     },
     {
-      key: 'teams' as const,
-      icon: <GroupsOutlined />,
-      empty: 'No governance teams',
-      emptyHint: 'A team answers for this access at review, where an owner answers day to day.',
-      editHint: 'Edit which teams answer for this at review.',
-      addLabel: 'Add Governance Teams',
-      items: allTeams.filter((t) => teamIds.includes(t.id)).map((t) => ({ id: t.id, name: t.name })),
-      entity: 'governance team',
+      id: 'actions',
+      header: 'Actions',
+      align: 'right',
+      width: 72,
+      render: (o) =>
+        removeRow(`Remove ${o.name}`, () => {
+          commitOwners(owners.filter((x) => x.id !== o.id).map((x) => x.id));
+          toast.success(`${o.name} removed`);
+        }),
     },
   ];
 
-  return (
-    // Full width of whatever holds it. A reading-width cap here held the content
-    // short of the buttons that act on it, so the surface looked like it had a
-    // right margin its own footer did not — and these rows are icon-and-control,
-    // not prose, so there is no line length to protect.
-    <div className="space-y-4">
-      {slots.map((s) => (
-        <PickerSlot
-          key={s.key}
-          icon={s.icon}
-          title={
-            s.items.length === 0
-              ? s.empty
-              : `${s.items.length} ${s.entity}${s.items.length === 1 ? '' : 's'} selected`
-          }
-          hint={s.items.length === 0 ? s.emptyHint : s.editHint}
-          summary={s.items.length > 0 ? <OverflowChips items={s.items} /> : undefined}
-          {...(s.items.length === 0
-            ? {
-                action: (
-                  <Button variant="secondary" startIcon={<AddIcon />} onClick={() => setOpen(s.key)}>
-                    {s.addLabel}
-                  </Button>
-                ),
-              }
-            : { onEdit: () => setOpen(s.key), editLabel: `Edit ${s.entity}s` })}
-        />
-      ))}
+  const teamColumns: Column<GovernanceTeamRow>[] = [
+    {
+      id: 'name',
+      header: 'Owner name',
+      sortable: true,
+      value: (t) => t.name,
+      render: (t) => (
+        <div className="flex items-center gap-3">
+          <Avatar name={t.name} size="sm" />
+          <span className="truncate text-body-sm-strong text-text-primary">{t.name}</span>
+        </div>
+      ),
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      align: 'right',
+      width: 72,
+      render: (t) =>
+        removeRow(`Remove ${t.name}`, () => {
+          commitTeams(teamIds.filter((id) => id !== t.id));
+          toast.success(`${t.name} removed`);
+        }),
+    },
+  ];
 
-      {/* Neither is required to switch the access on — `EA_REQUIRED_CHECKS` leaves
-          ownership out on purpose, because blocking break-glass access on a missing
-          owner would stop someone turning it on during an incident. That used to be
-          spelled out here in a footnote; the rail carries it instead, by simply not
-          marking this step required while the others wear an asterisk. */}
+  const addLabel =
+    view === 'owners'
+      ? isBlank
+        ? 'Add Owners'
+        : 'Add more'
+      : isBlank
+        ? 'Add Governance Teams'
+        : 'Add more';
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="shrink-0">
+        <Tabs
+          aria-label="Who answers at review"
+          value={view}
+          onChange={(id) => {
+            setView(id as 'owners' | 'teams');
+            setSearch('');
+          }}
+          items={[
+            { value: 'owners', label: 'Owners', count: owners.length },
+            { value: 'teams', label: 'Governance Teams', count: teamIds.length },
+          ]}
+        />
+      </div>
+
+      {isBlank ? (
+        <div className="grid min-h-0 flex-1 place-items-center">
+          <div className="flex max-w-md flex-col items-center px-6 py-10 text-center">
+            <h3 className="text-h5 text-text-primary">
+              {view === 'owners' ? 'No owners named' : 'No governance teams'}
+            </h3>
+            <p className="mt-1.5 text-body-sm text-text-secondary">
+              {view === 'owners'
+                ? 'A named owner answers for this access day to day.'
+                : 'A team answers for this access at review, where an owner answers day to day.'}
+            </p>
+            <div className="mt-5">
+              <Button startIcon={<AddIcon />} onClick={() => setOpen(view === 'owners' ? 'people' : 'teams')}>
+                {addLabel}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="mb-3 mt-4 flex shrink-0 flex-wrap items-center gap-3">
+            <div className="w-full max-w-sm">
+              <Input
+                placeholder={view === 'owners' ? 'Search owners' : 'Search governance teams'}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+              />
+            </div>
+            <div className="ml-auto">
+              <Button
+                variant="secondary"
+                startIcon={<AddIcon />}
+                onClick={() => setOpen(view === 'owners' ? 'people' : 'teams')}
+              >
+                {addLabel}
+              </Button>
+            </div>
+          </div>
+          {view === 'owners' ? (
+            <DataTable<SeedEAOwner>
+              columns={ownerColumns}
+              rows={ownerRows}
+              selectable
+              emptyTitle="No owners match"
+              emptyMessage="No owners match your search."
+            />
+          ) : (
+            <DataTable<GovernanceTeamRow>
+              columns={teamColumns}
+              rows={teamRows}
+              selectable
+              emptyTitle="No teams match"
+              emptyMessage="No governance teams match your search."
+            />
+          )}
+        </>
+      )}
+
       <TableSelectDrawer
         open={open === 'people'}
         onClose={() => setOpen(null)}

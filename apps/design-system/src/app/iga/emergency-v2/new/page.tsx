@@ -453,7 +453,7 @@ function EmergencyAccessV2WizardInner() {
           {/* The only scrolling region on the page. The rail-and-table editors
               size themselves to it, so they get the full remaining height rather
               than an arbitrary minimum. */}
-          <div className="ds-scroll min-h-0 flex-1 overflow-y-auto pr-0.5">{stepBody()}</div>
+          <div className="ds-scroll flex min-h-0 flex-1 flex-col overflow-y-auto pr-0.5">{stepBody()}</div>
 
           {!last && (
           <div className="mt-6 flex shrink-0 flex-wrap items-center gap-3 pt-5">
