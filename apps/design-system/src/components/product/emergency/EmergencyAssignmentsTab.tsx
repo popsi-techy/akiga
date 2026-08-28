@@ -211,7 +211,7 @@ export function EmergencyAssignmentsTab({
    * How the two assignment kinds are chosen.
    *
    * `segments` — compact, for V2.
-   * `rail` — NavList in a card, for V1 and V3.
+   * `rail` — NavList in a card, for V1.
    */
   switcher?: 'segments' | 'rail';
 }) {

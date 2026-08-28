@@ -19,6 +19,12 @@ const nextConfig = {
       transform: '@mui/icons-material/{{member}}',
     },
   },
+  async redirects() {
+    return [
+      { source: '/iga/emergency-v3', destination: '/iga/emergency', permanent: true },
+      { source: '/iga/emergency-v3/:id', destination: '/iga/emergency/:id', permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

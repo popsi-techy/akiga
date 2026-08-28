@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { navForPersona, flattenLeaves } from '@/lib/iga-navigation';
 import { Card, Button } from '@ds/components';
 
 // Placeholder for IGA modules not yet built. Dashboard has its own explicit route.
 export default function ModulePlaceholder({ params }: { params: { module: string } }) {
+  if (params.module === 'emergency-v3') redirect('/iga/emergency');
   const item = flattenLeaves(navForPersona.admin).find(
     (i) => i.id === params.module || i.href === `/iga/${params.module}`,
   );

@@ -25,7 +25,7 @@ import { EmergencyAccessEmptyState } from './EmergencyAccessEmptyState';
  * The Emergency Access list, shared by every version of the module.
  *
  * Identical in every column; the versions differ in what the primary button does
- * and where a draft row goes. V1 and V3 open a drawer then the tabbed draft; V2
+ * and where a draft row goes. V1 opens a drawer then the tabbed draft; V2
  * starts or resumes a stepper. Those behaviours are the caller's.
  */
 export function EmergencyAccessListView({

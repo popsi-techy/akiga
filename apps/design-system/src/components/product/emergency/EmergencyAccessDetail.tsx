@@ -16,7 +16,6 @@ import PublicOutlined from '@mui/icons-material/PublicOutlined';
 import TimerOutlined from '@mui/icons-material/TimerOutlined';
 import FormatListNumberedOutlined from '@mui/icons-material/FormatListNumberedOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
-import MenuBookOutlined from '@mui/icons-material/MenuBookOutlined';
 import FilterListOutlined from '@mui/icons-material/FilterListOutlined';
 import TuneOutlined from '@mui/icons-material/TuneOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
@@ -33,7 +32,6 @@ import {
   StatusChip,
   Avatar,
   Button,
-  SetupBar,
   Menu,
   DataTable,
   Dialog,
@@ -63,11 +61,8 @@ import {
   listOwnerCandidates,
   getAdvancedConfig,
   EA_WEEKDAYS,
-  EA_GUIDED_STEPS,
   EA_REQUIRED_STEPS,
   firstUnfinishedGuidedTab,
-  isEASetupStepDone,
-  isRequiredSetupStep,
   type EAAdvancedConfig,
   type EADetail,
 } from '@/data/emergency-access';
@@ -84,11 +79,7 @@ import { EmergencyAssignmentsTab } from '@/components/product/emergency/Emergenc
 import { emergencySetupSteps } from '@/components/product/emergency/setupSteps';
 import { toastEASetupStep } from '@/components/product/emergency/ea-setup-toast';
 import { formatDateTime } from '@/lib/datetime';
-import { SetupProgress } from '@/components/product/SetupProgress';
-import {
-  EmergencyAccessGuideButton,
-  EmergencyAccessGuideModal,
-} from '@/components/product/emergency/EmergencyAccessGuideModal';
+import { EmergencyAccessGuideButton } from '@/components/product/emergency/EmergencyAccessGuideModal';
 import { SetupChecklistDock } from '@/components/product/emergency/SetupChecklistDock';
 import { ClickToEditText } from '@/components/product/emergency/ClickToEditText';
 
@@ -111,19 +102,10 @@ import { ClickToEditText } from '@/components/product/emergency/ClickToEditText'
  * open the tab to find out it was empty. `count` is only omitted for the tabs
  * that hold no collection to count.
  */
-function tabsFor(ea: EADetail, opts?: { setupHints?: boolean }): TabItem[] {
+function tabsFor(ea: EADetail): TabItem[] {
   const assignments = getEAAssignments(ea.id);
-  const hint = (tab: string): TabItem['status'] => {
-    if (!opts?.setupHints || !ea.isDraft) return undefined;
-    // Advanced is satisfied by factory defaults. A green tick would claim someone
-    // finished it; leave the tab unmarked, same as a live profile's strip.
-    if (tab === 'advanced') return undefined;
-    const step = EA_GUIDED_STEPS.find((s) => s.tab === tab);
-    if (!step) return undefined;
-    return isEASetupStepDone(step.id, ea) ? 'complete' : 'pending';
-  };
   const tabs: TabItem[] = [];
-  // A draft has no summary yet — setup lives in the dock / bar / wizard, not here.
+  // A draft has no summary yet — setup lives in the V1 dock or V2 wizard, not here.
   // Overview returns the moment the profile is live.
   if (!ea.isDraft) {
     tabs.push({ value: 'overview', label: 'Overview' });
@@ -133,21 +115,18 @@ function tabsFor(ea: EADetail, opts?: { setupHints?: boolean }): TabItem[] {
       value: 'assignments',
       label: 'Assignments',
       count: assignments.entitlements.length + assignments.technicalRoles.length,
-      status: hint('assignments'),
     },
     {
       value: 'eligibility',
       label: 'Eligibility Criteria',
       count: ea.eligibilityGroups.length,
-      status: hint('eligibility'),
     },
     {
       value: 'owners',
       label: 'Owners',
       count: ea.ownersCount + getEAGovernanceTeams(ea.id).length,
-      status: hint('owners'),
     },
-    { value: 'advanced', label: 'Advanced Configuration', status: hint('advanced') },
+    { value: 'advanced', label: 'Advanced Configuration' },
   );
   return tabs;
 }
@@ -207,9 +186,9 @@ function requestWindowLabel(cfg: EAAdvancedConfig): string {
  * The summary. Limits on the left, when the profile last changed on the right.
  *
  * Every version now guides setup somewhere else — V1 in the docked rail, V2 in its
- * wizard, V3 in the floating bar — so Overview only ever renders for a profile whose
- * setup is not the question. That is why nothing here branches on `isDraft` any more:
- * the branches existed for a draft that can no longer reach this tab.
+ * wizard — so Overview only ever renders for a profile whose setup is not the
+ * question. That is why nothing here branches on `isDraft` any more: the branches
+ * existed for a draft that can no longer reach this tab.
  */
 function OverviewTab({ ea }: { ea: EADetail }) {
   const cfg = getAdvancedConfig(ea.id);
@@ -614,7 +593,7 @@ export function EmergencyOwnersTab({
    * How the two owner kinds are chosen.
    *
    * `segments` — compact, for V2.
-   * `rail` — NavList in a card, for V1 and V3.
+   * `rail` — NavList in a card, for V1.
    */
   switcher?: 'segments' | 'rail';
 }) {
@@ -1113,11 +1092,11 @@ export function EmergencyOwnersTab({
 }
 
 /**
- * The Emergency Access detail screen, shared by every version of the module.
+ * The Emergency Access detail screen, shared by V1 and V2.
  *
- * The versions differ in how a draft is *finished* — V1 a checklist tab, V2 a
- * create stepper, V3 a floating bar under the real tabs. Once the profile is
- * live, this is one screen, so it lives here rather than being copied.
+ * The versions differ in how a draft is *finished* — V1 a checklist dock, V2 a
+ * create stepper. Once the profile is live, this is one screen, so it lives here
+ * rather than being copied.
  *
  * `basePath` is the version that opened it: the same profile can be reached from
  * any list, and leaving (delete, not-found) must go back where you came from.
@@ -1133,25 +1112,22 @@ export function EmergencyAccessDetail({
   openSetup?: boolean;
 }) {
   /**
-   * V1 only, for now — the owner is comparing the modules side by side, so the
-   * Setup tab rename lands on one of them first. `basePath` is already how this
+   * V1 only — the owner is comparing the modules side by side, so the Setup
+   * checklist lands on one of them first. `basePath` is already how this
    * component knows which version opened it.
    */
   const isV1 = basePath === '/iga/emergency';
-  const isV3 = basePath === '/iga/emergency-v3';
 
   const [basicsOpen, setBasicsOpen] = React.useState(false);
-  const [guideOpen, setGuideOpen] = React.useState(false);
   const [checklistOpen, setChecklistOpen] = React.useState(
     () => openSetup || (isV1 && Boolean(getEmergencyAccess(id)?.isDraft)),
   );
   const router = useRouter();
   const toast = useToast();
   const [tab, setTab] = React.useState(() => {
-    // V1 and V3 both open a draft on the work rather than on a summary — V3 because
-    // its bar drives the tabs, V1 because the checklist is beside the first unfinished
-    // tab rather than replacing Overview.
-    if (!isV3 && !isV1) return 'overview';
+    // V1 opens a draft on the work rather than on a summary, because the
+    // checklist is beside the first unfinished tab rather than replacing Overview.
+    if (!isV1) return 'overview';
     const draft = getEmergencyAccess(id);
     return draft?.isDraft ? firstUnfinishedGuidedTab(draft) : 'overview';
   });
@@ -1197,7 +1173,7 @@ export function EmergencyAccessDetail({
    * value and falls back when it does not. Normalising once here means no render site
    * has to guard against a tab the strip does not show.
    */
-  const visibleTabs = tabsFor(ea, { setupHints: isV3 });
+  const visibleTabs = tabsFor(ea);
   const shownTab = visibleTabs.some((t) => t.value === tab)
     ? tab
     : ea.isDraft
@@ -1205,22 +1181,6 @@ export function EmergencyAccessDetail({
       : 'overview';
 
   const setupSteps = emergencySetupSteps(ea);
-
-  const guidedTabIndex = EA_GUIDED_STEPS.findIndex((s) => s.tab === shownTab);
-  const guidedIndex =
-    guidedTabIndex >= 0
-      ? guidedTabIndex
-      : EA_GUIDED_STEPS.findIndex((s) => s.tab === firstUnfinishedGuidedTab(ea));
-  const guidedStep = EA_GUIDED_STEPS[Math.max(0, guidedIndex)];
-  const atLastGuided = guidedIndex >= EA_GUIDED_STEPS.length - 1;
-  const nextBlocked =
-    isRequiredSetupStep(guidedStep.id) && !isEASetupStepDone(guidedStep.id, ea);
-  const showSetupBar = isV3 && ea.isDraft;
-
-  const goGuided = (index: number) => {
-    const next = EA_GUIDED_STEPS[index];
-    if (next) setTab(next.tab);
-  };
 
   const goToSetupStep = (step: { id: string; tab: string }) => {
     if (step.id === 'basic') setBasicsOpen(true);
@@ -1311,18 +1271,8 @@ export function EmergencyAccessDetail({
                   label: 'Edit basic details',
                   icon: <EditOutlined sx={{ fontSize: 18 }} />,
                   onClick: () => setBasicsOpen(true),
-                  divider: !showSetupBar,
+                  divider: true,
                 },
-                ...(showSetupBar
-                  ? [
-                      {
-                        label: 'Setup guide',
-                        icon: <MenuBookOutlined sx={{ fontSize: 18 }} />,
-                        onClick: () => setGuideOpen(true),
-                        divider: true,
-                      },
-                    ]
-                  : []),
                 {
                   label: 'Delete',
                   icon: <DeleteOutline sx={{ fontSize: 18 }} />,
@@ -1365,11 +1315,11 @@ export function EmergencyAccessDetail({
           <OverviewTab ea={ea} />
         )}
         {shownTab ==='owners' && (
-          <EmergencyOwnersTab ea={ea} onChanged={bump} switcher={isV1 || isV3 ? 'rail' : 'segments'} />
+          <EmergencyOwnersTab ea={ea} onChanged={bump} switcher={isV1 ? 'rail' : 'segments'} />
         )}
         {shownTab ==='eligibility' && <EligibilityCriteriaTab eaId={ea.id} onChanged={bump} />}
         {shownTab ==='assignments' && (
-          <EmergencyAssignmentsTab eaId={id} onChanged={bump} switcher={isV1 || isV3 ? 'rail' : 'segments'} />
+          <EmergencyAssignmentsTab eaId={id} onChanged={bump} switcher={isV1 ? 'rail' : 'segments'} />
         )}
         {shownTab ==='advanced' && <AdvancedConfigurationTab eaId={ea.id} onChanged={bump} />}
           </div>
@@ -1384,54 +1334,6 @@ export function EmergencyAccessDetail({
         )}
       </div>
 
-      {showSetupBar && (
-        <div className="shrink-0 -mx-8 -mb-6 border-t border-border bg-surface px-8 py-2">
-          <SetupBar
-            className="rounded-none border-0 bg-transparent !p-0 shadow-none"
-            actions={
-              <>
-                {guidedIndex > 0 && (
-                  <Button
-                    variant="secondary"
-                    size="xs"
-                    onClick={() => goGuided(guidedIndex - 1)}
-                  >
-                    Back
-                  </Button>
-                )}
-                {!atLastGuided && (
-                  <Tooltip
-                    describeChild
-                    title={
-                      nextBlocked
-                        ? `Add ${guidedStep.label.toLowerCase()} before continuing.`
-                        : 'Go to the next setup step'
-                    }
-                  >
-                    <Button
-                      size="xs"
-                      disabled={nextBlocked}
-                      onClick={() => goGuided(guidedIndex + 1)}
-                    >
-                      Next
-                    </Button>
-                  </Tooltip>
-                )}
-              </>
-            }
-            status={
-              <SetupProgress
-                className="flex"
-                layout="inline"
-                done={EA_REQUIRED_STEPS - blocking.length}
-                total={EA_REQUIRED_STEPS}
-                pendingDetails={blocking}
-              />
-            }
-          />
-        </div>
-      )}
-
       <Dialog
         open={deactivateOpen}
         onClose={() => setDeactivateOpen(false)}
@@ -1443,8 +1345,7 @@ export function EmergencyAccessDetail({
           deactivateEmergencyAccess(ea.id);
           toast.success(`“${ea.name}” deactivated. It is a draft again.`);
           bump();
-          const again = getEmergencyAccess(ea.id);
-          setTab(isV3 && again ? firstUnfinishedGuidedTab(again) : 'overview');
+          setTab('overview');
         }}
       >
         Active users will lose emergency access immediately. This action is logged and the access can
@@ -1469,12 +1370,6 @@ export function EmergencyAccessDetail({
           ? 'The profile and everything configured on it are removed. Nothing has been granted under it, so nobody loses access.'
           : 'Anyone holding access through this profile keeps it until their session ends, and nobody can request it again. Sessions already granted stay in the audit log.'}
       </Dialog>
-
-      <EmergencyAccessGuideModal
-        variant="next-steps"
-        open={guideOpen}
-        onClose={() => setGuideOpen(false)}
-      />
 
       {/* `bump` on save, the same reducer every other mutation on this page uses —
           the header's name reads from the store on render, so one re-render

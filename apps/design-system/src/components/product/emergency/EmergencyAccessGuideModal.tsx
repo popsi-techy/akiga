@@ -36,9 +36,8 @@ const GUIDE_NEXT: Record<Exclude<EASetupStepId, 'basic'>, string> = {
 /**
  * The book control that opens the setup guide.
  *
- * V1: toggles the right-hand checklist, next to More. V3: still the overflow
- * menu item that opens the modal. The reader asks for it — Continue does not
- * force a popup.
+ * V1: toggles the right-hand checklist, next to More. The reader asks for it —
+ * Continue does not force a popup.
  */
 export function EmergencyAccessGuideButton({
   onClick,
@@ -47,7 +46,7 @@ export function EmergencyAccessGuideButton({
   progress,
 }: {
   onClick: () => void;
-  /** Rail has room for the words; the setup bar does not. */
+  /** When the host has room for the words next to the book. */
   labeled?: boolean;
   /** When this control shows or hides a panel. */
   expanded?: boolean;

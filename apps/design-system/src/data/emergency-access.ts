@@ -357,11 +357,10 @@ export const EA_SETUP_STEPS: { id: EASetupStepId; label: string }[] = [
 ];
 
 /**
- * The steps a floating setup bar walks — the real tabs, not a checklist.
+ * The tabs a draft lands on, in setup order — the real tabs, not a checklist.
  *
- * Basic details is dropped: V3 creates the profile in a drawer, so that step is
- * already done when the bar appears. Four steps keeps the DS Stepper's cap.
- * Labels stay short so they fit beside Back / Next / Activate.
+ * Basic details is dropped: the create drawer already collected name and
+ * description. V1 opens a draft on the first unfinished tab beside the dock.
  */
 export const EA_GUIDED_STEPS: { id: Exclude<EASetupStepId, 'basic'>; label: string; tab: string }[] = [
   { id: 'assignments', label: 'Assignments', tab: 'assignments' },
