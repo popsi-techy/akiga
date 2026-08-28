@@ -15,7 +15,6 @@ function V1Detail() {
   );
 }
 
-/** V1 detail — the screen itself is shared with V2; only the way back differs. */
 export default function EmergencyAccessDetailPage() {
   return (
     <React.Suspense fallback={null}>

@@ -42,7 +42,7 @@ export function DetailShell({
   tab: string;
   onTab: (v: string) => void;
   /**
-   * Emergency Access V1 frame: full-bleed, tabs on their own rule, room for a
+   * Emergency Access frame: full-bleed, tabs on their own rule, room for a
    * right-hand checklist. Stays on while the dock is closed so hiding it does
    * not restyle the page.
    */

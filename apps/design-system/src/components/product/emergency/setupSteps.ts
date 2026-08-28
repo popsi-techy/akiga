@@ -21,6 +21,8 @@ export interface EmergencySetupStep {
   done: boolean;
   /** Qualifier for a step that is done without anyone deciding anything. */
   doneLabel?: string;
+  /** Done because the object exists — excluded from the dock's Next prompt. */
+  seedDone?: boolean;
 }
 
 /**
@@ -73,10 +75,8 @@ const COPY: Record<
 /**
  * Every setup step for a profile, resolved.
  *
- * One derivation, shared by the V1/V2 checklist card and the V4 dock. Both need the
- * same five things per step — order, label, required, done, and where clicking it
- * goes — and computing that twice is how two surfaces end up disagreeing about
- * whether a profile is finished.
+ * One derivation for the setup dock. Computing it twice is how two surfaces
+ * end up disagreeing about whether a profile is finished.
  *
  * Order and required-ness are read off the domain (`EA_SETUP_STEPS`,
  * `isRequiredSetupStep`), never re-declared here.
@@ -90,6 +90,7 @@ export function emergencySetupSteps(ea: EADetail): EmergencySetupStep[] {
       label: step.label,
       required: isRequiredSetupStep(step.id),
       done: isEASetupStepDone(step.id, ea),
+      seedDone: step.id === 'basic',
       ...copy,
       doneLabel: defaultsUntouched ? copy.doneLabel : undefined,
     };

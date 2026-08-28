@@ -44,7 +44,7 @@ import { RowActions } from '@/components/product/RowActions';
  * entity. Owners come from the workforce; assignments persist in the entity-owners
  * store (seeded from the entity's initial ownerIds).
  *
- * The two owner kinds and the table chrome match Emergency Access V1: a 240px
+ * The two owner kinds and the table chrome match Emergency Access: a 240px
  * NavList rail, a centred empty page (not an empty table), a filter icon, and
  * RowActions that peek without charging a kebab click.
  */

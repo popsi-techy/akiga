@@ -179,18 +179,10 @@ function DurationField({
 export function AdvancedConfigurationTab({
   eaId,
   onChanged,
-  hideChrome = false,
 }: {
   eaId: string;
   /** Limits were saved — lets a host surface re-read what it reports. */
   onChanged?: () => void;
-  /**
-   * Drop the page title and Save. The V2 stepper already names this step and
-   * saves from its own footer, so a second heading and a second Save would be
-   * the same action twice. Edits write through as they are made, matching the
-   * other wizard steps.
-   */
-  hideChrome?: boolean;
 }) {
   const toast = useToast();
   const [config, setConfig] = React.useState<EAAdvancedConfig>(() => getAdvancedConfig(eaId));
@@ -202,15 +194,8 @@ export function AdvancedConfigurationTab({
   }, [eaId]);
 
   const update = <K extends keyof EAAdvancedConfig>(key: K, value: EAAdvancedConfig[K]) => {
-    setConfig((prev) => {
-      const next = { ...prev, [key]: value };
-      if (hideChrome) {
-        setAdvancedConfig(eaId, next);
-        onChanged?.();
-      }
-      return next;
-    });
-    if (!hideChrome) setDirty(true);
+    setConfig((prev) => ({ ...prev, [key]: value }));
+    setDirty(true);
   };
 
   const risk = riskChipFromScore(config.riskScore);
@@ -224,14 +209,12 @@ export function AdvancedConfigurationTab({
 
   return (
     <div className="ds-scroll h-full overflow-y-auto pr-0.5">
-      {!hideChrome && (
-        <div className="mb-5 flex items-center justify-between gap-4">
-          <h2 className="text-h5 text-text-primary">Advanced Configuration</h2>
-          <Button onClick={save} disabled={!dirty}>
-            Save
-          </Button>
-        </div>
-      )}
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <h2 className="text-h5 text-text-primary">Advanced Configuration</h2>
+        <Button onClick={save} disabled={!dirty}>
+          Save
+        </Button>
+      </div>
 
       <section className="mb-8">
         <h3 className="mb-3 text-body-strong text-text-primary">General</h3>

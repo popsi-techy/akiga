@@ -38,6 +38,58 @@ export default function PatternsPage() {
               </p>
             </Card>
           </Link>
+          <Link href="/patterns/catalog-list" className="group">
+            <Card className="h-full p-5 transition-shadow group-hover:shadow-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-h5 text-text-primary">Catalog list</span>
+                <span className="shrink-0 text-text-brand transition-transform group-hover:translate-x-0.5">
+                  →
+                </span>
+              </div>
+              <p className="mt-1.5 text-body-sm leading-5 text-text-secondary">
+                Searchable table of records — DirectoryListPage, optional hideTitle for Settings.
+              </p>
+            </Card>
+          </Link>
+          <Link href="/patterns/two-pane-collection" className="group">
+            <Card className="h-full p-5 transition-shadow group-hover:shadow-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-h5 text-text-primary">Two-pane collection</span>
+                <span className="shrink-0 text-text-brand transition-transform group-hover:translate-x-0.5">
+                  →
+                </span>
+              </div>
+              <p className="mt-1.5 text-body-sm leading-5 text-text-secondary">
+                240px rail, table, peek — Owners and Assignments.
+              </p>
+            </Card>
+          </Link>
+          <Link href="/patterns/table-select-drawer" className="group">
+            <Card className="h-full p-5 transition-shadow group-hover:shadow-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-h5 text-text-primary">Table select drawer</span>
+                <span className="shrink-0 text-text-brand transition-transform group-hover:translate-x-0.5">
+                  →
+                </span>
+              </div>
+              <p className="mt-1.5 text-body-sm leading-5 text-text-secondary">
+                Catalog pick: table on the left, running selection on the right.
+              </p>
+            </Card>
+          </Link>
+          <Link href="/patterns/object-detail-setup" className="group">
+            <Card className="h-full p-5 transition-shadow group-hover:shadow-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-h5 text-text-primary">Object-detail setup</span>
+                <span className="shrink-0 text-text-brand transition-transform group-hover:translate-x-0.5">
+                  →
+                </span>
+              </div>
+              <p className="mt-1.5 text-body-sm leading-5 text-text-secondary">
+                Draft edited on its tabs; a right-hand dock names what still gates Activate.
+              </p>
+            </Card>
+          </Link>
         </div>
       </Section>
     </>

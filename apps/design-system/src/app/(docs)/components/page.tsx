@@ -35,6 +35,7 @@ const groups: { title: string; description: string; items: [string, string, stri
       ['Date Picker', '/components/date-picker', 'Themed month grid — replaces the native date input.'],
       ['Time Picker', '/components/time-picker', '12-hour field over a 24-hour value, three columns.'],
       ['Rich Text Editor', '/components/rich-text-editor', 'Lightweight formatted text for justifications and notes.'],
+      ['Click to Edit', '/components/click-to-edit', 'In-place title or description — the field overlays the line.'],
     ],
   },
   {
@@ -60,7 +61,9 @@ const groups: { title: string; description: string; items: [string, string, stri
       ['Destination List', '/components/destination-list', 'Two-column destination cards — icon, title, muted description.'],
       ['Menu', '/components/menu', 'Dropdown action menu — the ⋮ row actions.'],
       ['Stepper', '/components/stepper', 'Numbered progress for short linear flows.'],
-      ['Setup Bar', '/components/setup-bar', 'Floating strip under a draft — Next, Back, Activate.'],
+      ['Setup Bar', '/components/setup-bar', 'Parked floating strip. Live pattern is Setup Checklist Dock.'],
+      ['Setup Checklist Dock', '/components/setup-checklist-dock', 'Right-hand remaining work on a draft object.'],
+      ['Setup Progress', '/components/setup-progress', 'Segmented donut counting the steps that gate Activate.'],
       ['Step Tracker', '/components/step-tracker', 'Vertical progress rail beside a multi-step form.'],
     ],
   },
@@ -69,6 +72,8 @@ const groups: { title: string; description: string; items: [string, string, stri
     description: 'Reading a lot of records, and summarising them.',
     items: [
       ['Data Table', '/components/data-table', 'Sortable, selectable, paginated list with states.'],
+      ['Directory List Page', '/components/directory-list-page', 'Catalog frame — search, optional filter, fill-height table.'],
+      ['Row Actions', '/components/row-actions', 'Peek and remove on a table row — not a kebab.'],
       ['Stat Tile', '/components/stat-tile', 'KPI tile — label, value, tinted icon.'],
       ['Donut Chart', '/components/donut-chart', 'SVG part-to-whole breakdown.'],
       ['Bar Chart', '/components/bar-chart', 'Horizontal ranked comparison — which of these is biggest.'],
@@ -88,6 +93,8 @@ const groups: { title: string; description: string; items: [string, string, stri
     items: [
       ['Drawer', '/components/drawer', 'Right-side panel for long forms and browsing.'],
       ['Filter Drawer', '/components/filter-drawer', 'Two-pane filtering — categories left, options right, staged until Apply.'],
+      ['Table Select Drawer', '/components/table-select-drawer', 'Two-pane catalog pick — table left, selection right.'],
+      ['Peek Panel', '/components/peek-panel', 'Side-read that takes width from the table beside it.'],
       ['Modal', '/components/modal', 'Centered panel for a short form or a rich decision.'],
       ['Dialog', '/components/dialog', 'Focused prompt for confirmations and consequences.'],
       ['Toast', '/components/toast', 'Transient feedback with a depleting progress bar.'],

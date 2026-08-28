@@ -59,6 +59,7 @@ export const navigation: NavSection[] = [
       { label: 'Date Picker', href: '/components/date-picker', status: 'ready' },
       { label: 'Time Picker', href: '/components/time-picker', status: 'ready' },
       { label: 'Rich Text Editor', href: '/components/rich-text-editor', status: 'ready' },
+      { label: 'Click to Edit', href: '/components/click-to-edit', status: 'ready' },
     ],
   },
   {
@@ -83,6 +84,8 @@ export const navigation: NavSection[] = [
       { label: 'Menu', href: '/components/menu', status: 'ready' },
       { label: 'Stepper', href: '/components/stepper', status: 'ready' },
       { label: 'Setup Bar', href: '/components/setup-bar', status: 'ready' },
+      { label: 'Setup Checklist Dock', href: '/components/setup-checklist-dock', status: 'ready' },
+      { label: 'Setup Progress', href: '/components/setup-progress', status: 'ready' },
       { label: 'Step Tracker', href: '/components/step-tracker', status: 'ready' },
     ],
   },
@@ -90,6 +93,8 @@ export const navigation: NavSection[] = [
     title: 'Data Display',
     items: [
       { label: 'Data Table', href: '/components/data-table', status: 'ready' },
+      { label: 'Directory List Page', href: '/components/directory-list-page', status: 'ready' },
+      { label: 'Row Actions', href: '/components/row-actions', status: 'ready' },
       { label: 'Stat Tile', href: '/components/stat-tile', status: 'ready' },
       { label: 'Donut Chart', href: '/components/donut-chart', status: 'ready' },
       { label: 'Bar Chart', href: '/components/bar-chart', status: 'ready' },
@@ -107,6 +112,8 @@ export const navigation: NavSection[] = [
     items: [
       { label: 'Drawer', href: '/components/drawer', status: 'ready' },
       { label: 'Filter Drawer', href: '/components/filter-drawer', status: 'ready' },
+      { label: 'Table Select Drawer', href: '/components/table-select-drawer', status: 'ready' },
+      { label: 'Peek Panel', href: '/components/peek-panel', status: 'ready' },
       { label: 'Modal', href: '/components/modal', status: 'ready' },
       { label: 'Dialog', href: '/components/dialog', status: 'ready' },
       { label: 'Toast', href: '/components/toast', status: 'ready' },
@@ -119,6 +126,10 @@ export const navigation: NavSection[] = [
       { label: 'Overview', href: '/patterns', status: 'ready' },
       { label: 'Settings page', href: '/patterns/settings-page', status: 'ready' },
       { label: 'Grouped form', href: '/patterns/grouped-form', status: 'ready' },
+      { label: 'Catalog list', href: '/patterns/catalog-list', status: 'ready' },
+      { label: 'Two-pane collection', href: '/patterns/two-pane-collection', status: 'ready' },
+      { label: 'Table select drawer', href: '/patterns/table-select-drawer', status: 'ready' },
+      { label: 'Object-detail setup', href: '/patterns/object-detail-setup', status: 'ready' },
     ],
   },
 ];

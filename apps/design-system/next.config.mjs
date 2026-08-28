@@ -21,6 +21,9 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      { source: '/iga/emergency-v2', destination: '/iga/emergency', permanent: true },
+      { source: '/iga/emergency-v2/new', destination: '/iga/emergency', permanent: true },
+      { source: '/iga/emergency-v2/:id', destination: '/iga/emergency/:id', permanent: true },
       { source: '/iga/emergency-v3', destination: '/iga/emergency', permanent: true },
       { source: '/iga/emergency-v3/:id', destination: '/iga/emergency/:id', permanent: true },
     ];

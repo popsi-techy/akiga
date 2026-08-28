@@ -2,15 +2,7 @@
 "@akiga/design-system-app": minor
 ---
 
-Promote `PickerSlot` into the Design System and use it for the Emergency Access V2 stepper's
-Assignments step.
-
-The step used to embed the detail page's Assignments tab — a 264px rail beside a three-column table —
-into the column left over by the progress rail. It scrolled sideways and clipped its own empty-state
-copy, and none of that detail is what the step is asking: the step asks *what does this hand over*,
-and a count with the first name in it answers that. It is now two picker slots, entitlements and
-technical roles, opening the same `EntityCatalogDrawer` and `TableSelectDrawer` the tab opens and
-writing the same store, so a wizard and its tab cannot drift apart.
+Promote `PickerSlot` into the Design System.
 
 The component was private to the access-certification wizard. Rather than copy it, it moves to the DS
 with a docs page and a registry entry, and the certification wizard now consumes it from there. Its

@@ -13,9 +13,6 @@ import {
   InfoRowGroup,
   Input,
   NavList,
-  OverflowChips,
-  PickerSlot,
-  SegmentedControl,
   useToast,
   type Column,
 } from '@ds/components';
@@ -32,34 +29,21 @@ import { RiskScoreChip } from '@/components/product/directory';
 
 type Kind = keyof EAAssignments;
 
-const META: Record<
-  Kind,
-  { label: string; entity: string; empty: string; hint: string; editHint: string; icon: React.ReactNode }
-> = {
+const META: Record<Kind, { label: string; entity: string; empty: string }> = {
   entitlements: {
     label: 'Entitlements',
     entity: 'entitlement',
     empty: 'No entitlements granted',
-    hint: 'Single permissions, handed over for one session then taken back.',
-    editHint: 'Edit which permissions this access hands over.',
-    icon: <ShieldOutlined />,
   },
   technicalRoles: {
     label: 'Technical Roles',
     entity: 'technical role',
     empty: 'No technical roles granted',
-    hint: 'Bundles of entitlements — quicker to grant, wider to hold.',
-    editHint: 'Edit which bundles this access hands over.',
-    icon: <LaptopOutlined />,
   },
 };
 
-/** `n entitlements` / `1 entitlement`, from the singular in `META`. */
-const countLabel = (n: number, entity: string) => `${n} ${entity}${n === 1 ? '' : 's'} selected`;
-
 /**
- * Everything both surfaces need from the store, so the tab and the wizard's slots
- * read and write assignments exactly the same way.
+ * Everything the tab needs from the store.
  */
 function useAssignments(eaId: string, onChanged?: () => void) {
   const toast = useToast();
@@ -80,7 +64,7 @@ function useAssignments(eaId: string, onChanged?: () => void) {
 }
 
 /**
- * The two catalog pickers, shared by both surfaces below.
+ * The two catalog pickers for this tab.
  *
  * `open` is the kind whose drawer is showing, or null — one piece of state rather
  * than a boolean per drawer, because only one can be open and two booleans can
@@ -129,67 +113,6 @@ function AssignmentDrawers({
 }
 
 /**
- * What this profile grants, as two picker slots — for the V2 creation stepper.
- *
- * The tab below is the wrong shape for a wizard column: a 240px rail beside a
- * three-column table, squeezed into the space left over by the progress rail,
- * scrolls sideways and clips its own empty-state copy. None of that detail is
- * what the step is asking, either — the step asks *what does this hand over*, and
- * a count with the first name in it answers that.
- *
- * Same component the access-certification wizard picks applications with, and the
- * same drawers the tab uses, so what is configured here and what is maintained
- * later cannot drift apart.
- */
-export function EmergencyAssignmentsPicker({
-  eaId,
-  onChanged,
-}: {
-  eaId: string;
-  onChanged?: () => void;
-}) {
-  const { assignments, patch } = useAssignments(eaId, onChanged);
-  const [open, setOpen] = React.useState<Kind | null>(null);
-
-  return (
-    // Full width of whatever holds it. A reading-width cap here held the content
-    // short of the buttons that act on it, so the surface looked like it had a
-    // right margin its own footer did not — and these rows are icon-and-control,
-    // not prose, so there is no line length to protect.
-    <div className="space-y-4">
-      {(['entitlements', 'technicalRoles'] as Kind[]).map((kind) => {
-        const items = assignments[kind];
-        const meta = META[kind];
-        return (
-          <PickerSlot
-            key={kind}
-            icon={meta.icon}
-            title={items.length === 0 ? meta.empty : countLabel(items.length, meta.entity)}
-            hint={items.length === 0 ? meta.hint : meta.editHint}
-            summary={items.length > 0 ? <OverflowChips items={items} /> : undefined}
-            {...(items.length === 0
-              ? {
-                  action: (
-                    <Button variant="secondary" startIcon={<AddIcon />} onClick={() => setOpen(kind)}>
-                      Add {meta.label}
-                    </Button>
-                  ),
-                }
-              : { onEdit: () => setOpen(kind), editLabel: `Edit ${meta.label.toLowerCase()}` })}
-          />
-        );
-      })}
-
-      {/* Neither slot is required on its own — `eaBlockingSteps` asks for at least
-          one of the two. That used to be spelled out here in a footnote; the rule
-          still lives in `data/emergency-access`, and the preview step names whatever
-          is actually still missing, so nothing depends on this being restated. */}
-      <AssignmentDrawers open={open} onClose={() => setOpen(null)} assignments={assignments} patch={patch} />
-    </div>
-  );
-}
-
-/**
  * What this break-glass profile grants.
  *
  * Same two-pane shape as Owners: a rail of kinds beside the table of what is
@@ -202,18 +125,10 @@ export function EmergencyAssignmentsPicker({
 export function EmergencyAssignmentsTab({
   eaId,
   onChanged,
-  switcher = 'segments',
 }: {
   eaId: string;
   /** What this grants changed — lets a host surface re-read readiness. */
   onChanged?: () => void;
-  /**
-   * How the two assignment kinds are chosen.
-   *
-   * `segments` — compact, for V2.
-   * `rail` — NavList in a card, for V1.
-   */
-  switcher?: 'segments' | 'rail';
 }) {
   const toast = useToast();
   const [kind, setKind] = React.useState<Kind>('entitlements');
@@ -355,17 +270,10 @@ export function EmergencyAssignmentsTab({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div
-        className={
-          switcher === 'rail'
-            ? 'grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)] gap-5'
-            : 'flex min-h-0 flex-1 flex-col'
-        }
-      >
-      {switcher === 'rail' ? (
-        // 4px (2xs) clears the selected outline from a 240px rail without
-        // spending 16px of the column on gutter. The card fills the column
-        // so the rail and the table share one height.
+      <div className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)] gap-5">
+        {/* 4px (2xs) clears the selected outline from a 240px rail without
+            spending 16px of the column on gutter. The card fills the column
+            so the rail and the table share one height. */}
         <Card padding="2xs" className="h-full min-h-0 w-[240px]">
           <NavList
             ariaLabel="Assignment type"
@@ -391,27 +299,6 @@ export function EmergencyAssignmentsTab({
             ]}
           />
         </Card>
-      ) : (
-      <div className="mb-5 flex shrink-0 flex-wrap items-center gap-3">
-        <SegmentedControl<Kind>
-          ariaLabel="Assignment type"
-          value={kind}
-          onChange={(next) => {
-            setKind(next);
-            setSearch('');
-            setPeek(null);
-          }}
-          options={[
-            { value: 'entitlements', label: 'Entitlements', count: assignments.entitlements.length },
-            {
-              value: 'technicalRoles',
-              label: 'Technical Roles',
-              count: assignments.technicalRoles.length,
-            },
-          ]}
-        />
-      </div>
-      )}
 
       {isBlank ? (
         /* No search, no header row: a table with nothing under it reads as a failed

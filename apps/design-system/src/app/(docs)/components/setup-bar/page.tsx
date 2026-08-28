@@ -16,7 +16,7 @@ export default function SetupBarDocs() {
       <PageHeader
         eyebrow="Components"
         title="Setup Bar"
-        description="A floating strip under a draft: which step is current, Back and Next through the real editors, and one Activate (or Connect) the moment required work is done. Gone once the object is live."
+        description="Parked. No product caller after Emergency Access V2 and V3 were removed. The live pattern is Setup Checklist Dock — a right-hand column of remaining work, not a floating strip. Do not restyle this into that dock."
       />
 
       <Section
@@ -73,6 +73,7 @@ export default function SetupBarDocs() {
             'Don’t keep a disabled Activate next to Next — hide it until it works.',
             'Don’t use it for more than four steps — Stepper’s cap still applies.',
             'Don’t leave it on after go-live; that is a header action now.',
+            'Don’t reach for this on a new draft. Use Setup Checklist Dock.',
           ]}
         />
         <p className="mt-3 text-body-sm text-text-tertiary">

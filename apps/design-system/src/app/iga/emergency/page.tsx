@@ -8,11 +8,10 @@ import { EmergencyAccessListView } from '@/components/product/emergency/Emergenc
 import { createEmergencyAccess, isRequiredSetupStep, EA_SETUP_STEPS } from '@/data/emergency-access';
 
 /**
- * Emergency Access V1 — create in a drawer, finish on the draft.
+ * Emergency Access — create in a drawer, finish on the draft.
  *
- * The list and the detail screen are shared with V2; the drawer below is the
- * whole of the difference. It asks for the two things a profile cannot exist
- * without and leaves the rest to the draft's checklist.
+ * The drawer asks for the two things a profile cannot exist without and
+ * leaves the rest to the draft's checklist.
  */
 export default function EmergencyAccessListPage() {
   const router = useRouter();

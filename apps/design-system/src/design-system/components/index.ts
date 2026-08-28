@@ -11,6 +11,10 @@ export type { StatusChipProps, StatusIntent } from './StatusChip/StatusChip';
 
 export { DataTable } from './DataTable/DataTable';
 export type { DataTableProps, Column } from './DataTable/DataTable';
+export { DirectoryListPage } from './DirectoryListPage/DirectoryListPage';
+export type { DirectoryListPageProps } from './DirectoryListPage/DirectoryListPage';
+export { RowActions } from './RowActions/RowActions';
+export type { RowActionsProps } from './RowActions/RowActions';
 
 export { Card } from './Card/Card';
 export type { CardProps } from './Card/Card';
@@ -42,6 +46,9 @@ export type { AvatarProps, AvatarGroupProps, AvatarSize, AvatarKind } from './Av
 export { AppIcon, resolveAppIcon, liveAppLogoUrl } from './AppIcon/AppIcon';
 export type { AppIconProps, AppLogo } from './AppIcon/AppIcon';
 
+export { ClickToEditText } from './ClickToEditText/ClickToEditText';
+export type { ClickToEditTextProps } from './ClickToEditText/ClickToEditText';
+
 export { Input } from './Input/Input';
 export type { InputProps } from './Input/Input';
 
@@ -56,6 +63,10 @@ export type { TabsProps, TabItem } from './Tabs/Tabs';
 
 export { Drawer } from './Drawer/Drawer';
 export type { DrawerProps } from './Drawer/Drawer';
+export { PeekPanel, PeekSlot } from './PeekPanel/PeekPanel';
+export type { PeekPanelProps, PeekSlotProps } from './PeekPanel/PeekPanel';
+export { TableSelectDrawer } from './TableSelectDrawer/TableSelectDrawer';
+export type { TableSelectDrawerProps, TableSelectRow } from './TableSelectDrawer/TableSelectDrawer';
 export { ModeBar } from './ModeBar/ModeBar';
 export type { ModeBarProps, ModeBarOption } from './ModeBar/ModeBar';
 
@@ -126,6 +137,10 @@ export type { StepperProps, StepperStep } from './Stepper/Stepper';
 
 export { SetupBar } from './SetupBar/SetupBar';
 export type { SetupBarProps } from './SetupBar/SetupBar';
+export { SetupChecklistDock } from './SetupChecklistDock/SetupChecklistDock';
+export type { SetupChecklistDockProps, SetupChecklistStep } from './SetupChecklistDock/SetupChecklistDock';
+export { SetupProgress, SegmentedDonut } from './SetupProgress/SetupProgress';
+export type { SetupProgressProps, SegmentedDonutProps } from './SetupProgress/SetupProgress';
 
 export { StepTracker } from './StepTracker/StepTracker';
 export type { StepTrackerProps, StepTrackerStep, StepTrackerStatus } from './StepTracker/StepTracker';

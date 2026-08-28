@@ -128,6 +128,24 @@
       "notes": "The unchecked outline uses border.control, the token added for exactly this: WCAG 1.4.11 asks 3:1 on a control boundary and the hairline borders cannot reach it. Prefer the `label` prop over wrapping in a <label>, which would leave the text dead."
     },
     {
+      "name": "ClickToEditText",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/ClickToEditText/ClickToEditText.tsx",
+      "extends": null,
+      "variants": [
+        "title",
+        "description"
+      ],
+      "states": [
+        "resting",
+        "hover",
+        "editing",
+        "empty"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/click-to-edit/page.tsx",
+      "notes": "In-place title or description. The visible line stays in flow; the field overlays that box so a StatusChip beside the name does not move. as=h1 hugs the text; as=p is a block. multiline grows a textarea over the content below. required snaps an empty commit back. Promoted from Emergency Access. See the object-detail-setup pattern and ADR-0015."
+    },
+    {
       "name": "DataTable",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/DataTable/DataTable.tsx",
@@ -185,6 +203,25 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/components/dialog/page.tsx",
       "notes": "A question and its consequence, nothing more. tone=\"danger\" for destructive confirmations. If it needs form fields, it is a Modal."
+    },
+    {
+      "name": "DirectoryListPage",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/DirectoryListPage/DirectoryListPage.tsx",
+      "extends": null,
+      "variants": [
+        "titled",
+        "hideTitle",
+        "hideFilter"
+      ],
+      "states": [
+        "default",
+        "empty",
+        "filtered",
+        "downloading"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/directory-list-page/page.tsx",
+      "notes": "Catalog-list frame: title, search, optional FilterDrawer, fill-height DataTable, row-click. hideTitle is for System Settings (breadcrumb already names the screen). hideFilter keeps search when there is nothing to filter. Promoted from product Directory. See the catalog-list pattern and ADR-0015."
     },
     {
       "name": "DonutChart",
@@ -464,6 +501,21 @@
       "notes": "A few named things plus a +n that reveals the rest, for rows whose height must not change with their contents (table cells, label/value rows, a summary beside a button). With an overflow the set sits in ONE tinted pill — the named chip and the +n are halves of a single value, and loose chips read as two values; with nothing to collapse a lone chip is left ungrouped. The +n is plain text, never a second outlined chip: it is a remainder, not an item. `renderItem` is for chips that already have their own chrome; those stay ungrouped so two pills are not nested. `tone=\"onSubtle\"` inverts the grouped chrome for a grey well: a white capsule, grey named pills. Promoted from product code once a second surface needed it."
     },
     {
+      "name": "PeekPanel",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/PeekPanel/PeekPanel.tsx",
+      "extends": null,
+      "variants": [
+        "default"
+      ],
+      "states": [
+        "open",
+        "closed"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/peek-panel/page.tsx",
+      "notes": "PeekSlot animates width (default 320px) so the table beside it reflows and stays usable. PeekPanel is the chrome: header, scrolling body (ds-scroll), optional footer. Not a Drawer (covers the page) and not a Dialog (a decision). Pair with RowActions. Promoted from Directory. See the two-pane-collection pattern and ADR-0015."
+    },
+    {
       "name": "PickerSlot",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/PickerSlot/PickerSlot.tsx",
@@ -480,7 +532,7 @@
         "focus-visible"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/picker-slot/page.tsx",
-      "notes": "One row standing in for a collection chosen elsewhere: the row states what is chosen and offers the single control that changes it, while the choosing happens in a Drawer where there is room for search, paging and a SelectionPanel. THE INVARIANT: one row in both states — the count plus `summary` chips replace the \"nothing chosen\" copy IN PLACE, so the surface does not change shape under the reader the moment they pick something (no card growing into a table, no control moving). Anything that breaks that breaks the component. `action` is the empty-state control (normally a `secondary` Button naming what gets added); `onEdit` is the filled-state control and renders the standard BARE pencil — pass one or the other, never both, since two controls make the reader work out which applies. The pencil is unboxed on purpose: a second outlined control beside the chips reads as a button competing with the step's own primary action. `summary` is normally `OverflowChips` and is hidden below `sm`, where keeping the row to one line beats naming the items. Use this instead of embedding the real table when the surface is narrow — a rail-and-table editor squeezed into a wizard column scrolls sideways and clips its own copy, and that detail is not what the step is asking. Use the table itself on a detail page, where the collection is the subject rather than one answer among six. Promoted out of the access-certification wizard when the emergency-access V2 stepper needed the same row; both read and write the same store as their detail-page tab, so a wizard and its tab cannot drift apart. The leading mark is `Avatar` with an `icon` (40px on radius.avatar, glyph at half the box), not the 44px rounded-xl tile this built inline — a slot was otherwise a slightly different object from every other icon-and-text row. Callers pass a bare glyph; no `sx` fontSize. Title truncates and the hint clamps to two lines, so one long hint cannot leave a column of slots ragged — keep hints to one line where the column is narrow."
+      "notes": "One row standing in for a collection chosen elsewhere: the row states what is chosen and offers the single control that changes it, while the choosing happens in a Drawer where there is room for search, paging and a SelectionPanel. THE INVARIANT: one row in both states — the count plus `summary` chips replace the \"nothing chosen\" copy IN PLACE, so the surface does not change shape under the reader the moment they pick something (no card growing into a table, no control moving). Anything that breaks that breaks the component. `action` is the empty-state control (normally a `secondary` Button naming what gets added); `onEdit` is the filled-state control and renders the standard BARE pencil — pass one or the other, never both, since two controls make the reader work out which applies. The pencil is unboxed on purpose: a second outlined control beside the chips reads as a button competing with the step's own primary action. `summary` is normally `OverflowChips` and is hidden below `sm`, where keeping the row to one line beats naming the items. Use this instead of embedding the real table when the surface is narrow — a rail-and-table editor squeezed into a wizard column scrolls sideways and clips its own copy, and that detail is not what the step is asking. Use the table itself on a detail page, where the collection is the subject rather than one answer among six. Promoted out of the access-certification wizard; that wizard and its detail-page tab read and write the same store so they cannot drift apart. The leading mark is `Avatar` with an `icon` (40px on radius.avatar, glyph at half the box), not the 44px rounded-xl tile this built inline — a slot was otherwise a slightly different object from every other icon-and-text row. Callers pass a bare glyph; no `sx` fontSize. Title truncates and the hint clamps to two lines, so one long hint cannot leave a column of slots ragged — keep hints to one line where the column is narrow."
     },
     {
       "name": "ProgressRing",
@@ -590,6 +642,22 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/components/rich-text-editor/page.tsx",
       "notes": "Uncontrolled contentEditable — writing value back each keystroke would reset the caret. Emits HTML via onChange; use the exported plainText() for emptiness and length validation, since an \"empty\" editor still contains markup."
+    },
+    {
+      "name": "RowActions",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/RowActions/RowActions.tsx",
+      "extends": null,
+      "variants": [
+        "default"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus-visible"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/row-actions/page.tsx",
+      "notes": "Peek and remove on a table row. Both icons sit on the surface — a kebab for one or two actions is a defect. Details first, remove last; neither is coloured at rest; remove goes danger on hover. Each control needs an aria-label that names the row. Pair onInfo with PeekPanel. Promoted from product. See the two-pane-collection pattern and ADR-0015."
     },
     {
       "name": "SegmentedControl",
@@ -790,7 +858,40 @@
         "ready-to-activate"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/setup-bar/page.tsx",
-      "notes": "Floating strip under a draft whose editors already live on the page. leading is an optional control (a guide icon). progress is usually a Stepper (cap four) and may be omitted when the page already shows the steps. actions are Back/Next. status is a right-aligned count (required steps), not a control. primary (Activate/Connect) is omitted until the gate is met. Remove the bar when the object goes live. Dock it flush to the page bottom when it is the page footer."
+      "notes": "PARKED. No product caller after Emergency Access V2/V3 were removed. The live pattern is SetupChecklistDock (object-detail-setup). Do not restyle this into the dock. Kept so existing docs and any future linear-strip use still have a primitive. leading is an optional control. progress is usually a Stepper (cap four). actions are Back/Next. primary is omitted until the gate is met."
+    },
+    {
+      "name": "SetupChecklistDock",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/SetupChecklistDock/SetupChecklistDock.tsx",
+      "extends": null,
+      "variants": [
+        "activate",
+        "connect"
+      ],
+      "states": [
+        "blocked",
+        "ready",
+        "next-prompt"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/setup-checklist-dock/page.tsx",
+      "notes": "Right-hand remaining-work column on a draft. Not a navigator — the tabs still are. Next appears only after someone finishes a step; seedDone (object exists) and doneLabel (factory defaults) do not count. gateVerb is activate or connect. Promoted from Emergency Access; Applications onboarding consumes it. See object-detail-setup and ADR-0015."
+    },
+    {
+      "name": "SetupProgress",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/SetupProgress/SetupProgress.tsx",
+      "extends": null,
+      "variants": [
+        "count",
+        "donut-only"
+      ],
+      "states": [
+        "pending",
+        "complete"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/setup-progress/page.tsx",
+      "notes": "Segmented donut plus remaining-step copy. Counts only the steps that gate Activate/Connect. SegmentedDonut is exported for the setup-guide control. Not Meter (proportion) and not DonutChart (legend). Promoted from product. See object-detail-setup and ADR-0015."
     },
     {
       "name": "Switch",
@@ -827,7 +928,24 @@
         "with-count"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/tabs/page.tsx",
-      "notes": "32px tall — the component owns the height (MUI's block padding is zeroed); never pad the band locally. Selection is marked by colour and a 1px indicator, never by weight, so labels never shift width as the selection moves. Every tab needs its own empty state. Counts go through `TabItem.count`, which renders \"label (n)\" — NEVER write the brackets into `label`, or two tab strips end up disagreeing about the punctuation. `count: 0` renders \"(0)\" and should: a missing count reads as \"not counted yet\" and makes the reader open the tab to learn it was empty; omit `count` only for a tab holding no collection, where a number would have no referent. Count everything BEHIND the tab, not the pane that opens first — an Owners tab holding individual owners and governance teams counts both, or a profile owned solely by a team reads \"Owners (0)\". Derive it from whatever the page already uses to decide that section is empty (e.g. the same sum a setup checklist reads), so the tab and that surface cannot disagree."
+      "notes": "32px tall — the component owns the height (MUI's block padding is zeroed); never pad the band locally. Selection is marked by colour and a 1px indicator, never by weight, so labels never shift width as the selection moves. Every tab needs its own empty state. Counts go through `TabItem.count`, which renders \"label (n)\" — NEVER write the brackets into `label`, or two tab strips end up disagreeing about the punctuation. `count: 0` renders \"(0)\" and should: a missing count reads as \"not counted yet\" and makes the reader open the tab to learn it was empty; omit `count` only for a tab holding no collection, where a number would have no referent. Count everything BEHIND the tab, not the pane that opens first — an Owners tab holding individual owners and governance teams counts both, or a profile owned solely by a team reads \"Owners (0)\". Derive it from whatever the page already uses to decide that section is empty (e.g. the same sum a setup checklist reads), so the tab and that surface cannot disagree. TabItem.status (pending/complete) is unused after Emergency Access V3 was removed — do not revive ticks on tabs."
+    },
+    {
+      "name": "TableSelectDrawer",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/TableSelectDrawer/TableSelectDrawer.tsx",
+      "extends": null,
+      "variants": [
+        "multiple",
+        "single"
+      ],
+      "states": [
+        "empty-selection",
+        "selected",
+        "no-matches"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/table-select-drawer/page.tsx",
+      "notes": "820px two-pane catalog pick: searchable DataTable left, SelectionPanel right. selectionMode=single uses radios. Risk is optional; renderRisk keeps the DS free of product RiskScoreChip — the product wrapper injects that chip. See the table-select-drawer pattern and ADR-0015."
     },
     {
       "name": "TimePicker",

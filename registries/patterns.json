@@ -40,6 +40,71 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/patterns/grouped-form/page.tsx",
       "adr": "docs/architecture/decisions/0013-form-section-in-overlays.md"
+    },
+    {
+      "name": "catalog-list",
+      "status": "stable",
+      "problem": "A catalog of records needs the same search, filter, and fill-height table chrome on every list, or the lists drift.",
+      "useWhen": "Directory, Emergency Access, certifications, SoD policies, and System Settings catalogs.",
+      "avoidWhen": "A tenant-admin screen of named settings — that is Settings page. An object detail is not a catalog.",
+      "components": [
+        "DirectoryListPage",
+        "DataTable",
+        "FilterDrawer",
+        "Input",
+        "Button",
+        "RowActions"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/patterns/catalog-list/page.tsx",
+      "adr": "docs/architecture/decisions/0015-promote-object-setup-compositions.md"
+    },
+    {
+      "name": "two-pane-collection",
+      "status": "stable",
+      "problem": "An object holds more than one kind of member, and a single table hides the distinction that matters at review.",
+      "useWhen": "Owners, assignments, or any collection split by kind on an object detail.",
+      "avoidWhen": "A wizard column — that is PickerSlot plus a drawer. A catalog of top-level records — that is catalog-list.",
+      "components": [
+        "NavList",
+        "DataTable",
+        "RowActions",
+        "PeekPanel",
+        "TableSelectDrawer"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/patterns/two-pane-collection/page.tsx",
+      "adr": "docs/architecture/decisions/0015-promote-object-setup-compositions.md"
+    },
+    {
+      "name": "table-select-drawer",
+      "status": "stable",
+      "problem": "The reader must pick named records from a catalog onto an object, with room to search and see what is already chosen.",
+      "useWhen": "Adding roles, people, connections, or a single reviewer from a catalog.",
+      "avoidWhen": "Filtering a list that already exists — that is FilterDrawer. A handful of options — that is Select or SelectableList.",
+      "components": [
+        "TableSelectDrawer",
+        "Drawer",
+        "DataTable",
+        "SelectionPanel",
+        "PickerSlot"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/patterns/table-select-drawer/page.tsx",
+      "adr": "docs/architecture/decisions/0015-promote-object-setup-compositions.md"
+    },
+    {
+      "name": "object-detail-setup",
+      "status": "stable",
+      "problem": "A draft still has required work, and that work lives on the object’s real tabs — not in a second wizard or a floating bar.",
+      "useWhen": "Emergency Access drafts and Application onboarding. Any new draft object whose editors already live on the page.",
+      "avoidWhen": "A live object — hide the dock. A linear create that is not the object yet — finish create, then open the draft.",
+      "components": [
+        "ClickToEditText",
+        "SetupChecklistDock",
+        "SetupProgress",
+        "Tabs",
+        "NavList"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/patterns/object-detail-setup/page.tsx",
+      "adr": "docs/architecture/decisions/0015-promote-object-setup-compositions.md"
     }
   ]
 }

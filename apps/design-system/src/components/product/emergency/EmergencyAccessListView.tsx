@@ -22,25 +22,15 @@ import { deleteEmergencyAccess, getEmergencyAccessList, type EARow } from '@/dat
 import { EmergencyAccessEmptyState } from './EmergencyAccessEmptyState';
 
 /**
- * The Emergency Access list, shared by every version of the module.
- *
- * Identical in every column; the versions differ in what the primary button does
- * and where a draft row goes. V1 opens a drawer then the tabbed draft; V2
- * starts or resumes a stepper. Those behaviours are the caller's.
+ * The Emergency Access list. Create and row-open stay with the caller so the
+ * list stays a table, not a router.
  */
 export function EmergencyAccessListView({
   basePath,
   onCreate,
-  onOpen,
 }: {
   basePath: string;
   onCreate: () => void;
-  /**
-   * Where a row goes. V1 always opens the tabbed profile; V2 sends a draft back
-   * into the stepper at the first unfinished step, and an active profile to the
-   * same tabbed screen.
-   */
-  onOpen?: (row: EARow) => void;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -52,8 +42,7 @@ export function EmergencyAccessListView({
   const firstRun = all.length === 0;
 
   const open = (row: EARow) => {
-    if (onOpen) onOpen(row);
-    else router.push(`${basePath}/${row.id}`);
+    router.push(`${basePath}/${row.id}`);
   };
 
   const columns: Column<EARow>[] = [
@@ -94,7 +83,7 @@ export function EmergencyAccessListView({
       render: (r) => (
           <Menu
             items={[
-              { label: r.status.intent === 'warning' && onOpen ? 'Continue setup' : 'View details', icon: <VisibilityOutlined sx={{ fontSize: 18 }} />, onClick: () => open(r) },
+              { label: 'View details', icon: <VisibilityOutlined sx={{ fontSize: 18 }} />, onClick: () => open(r) },
               {
                 label: 'Delete',
                 icon: <DeleteOutline sx={{ fontSize: 18 }} />,

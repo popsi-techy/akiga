@@ -38,7 +38,6 @@ import {
   Drawer,
   Input,
   SelectionPanel,
-  SegmentedControl,
   NavList,
   Tooltip,
   useToast,
@@ -58,7 +57,6 @@ import {
   getEAGovernanceTeams,
   setEAGovernanceTeams,
   getEAAssignments,
-  listOwnerCandidates,
   getAdvancedConfig,
   EA_WEEKDAYS,
   EA_REQUIRED_STEPS,
@@ -105,7 +103,7 @@ import { ClickToEditText } from '@/components/product/emergency/ClickToEditText'
 function tabsFor(ea: EADetail): TabItem[] {
   const assignments = getEAAssignments(ea.id);
   const tabs: TabItem[] = [];
-  // A draft has no summary yet — setup lives in the V1 dock or V2 wizard, not here.
+  // A draft has no summary yet — setup lives in the dock, not here.
   // Overview returns the moment the profile is live.
   if (!ea.isDraft) {
     tabs.push({ value: 'overview', label: 'Overview' });
@@ -185,10 +183,10 @@ function requestWindowLabel(cfg: EAAdvancedConfig): string {
 /**
  * The summary. Limits on the left, when the profile last changed on the right.
  *
- * Every version now guides setup somewhere else — V1 in the docked rail, V2 in its
- * wizard — so Overview only ever renders for a profile whose setup is not the
- * question. That is why nothing here branches on `isDraft` any more: the branches
- * existed for a draft that can no longer reach this tab.
+ * Setup lives in the docked checklist, so Overview only ever renders for a
+ * profile whose setup is not the question. That is why nothing here branches
+ * on `isDraft` any more: the branches existed for a draft that can no longer
+ * reach this tab.
  */
 function OverviewTab({ ea }: { ea: EADetail }) {
   const cfg = getAdvancedConfig(ea.id);
@@ -350,252 +348,12 @@ function BasicDetailsDrawer({
   );
 }
 
-/**
- * Who answers for this profile — Owners and Governance Teams as tabs, for the
- * V2 creation stepper.
- *
- * The detail tab is a 240px rail beside a table, which needs a page's width.
- * The wizard column cannot spare that, but two PickerSlots stacked the halves
- * as competing empty cards. Tabs keep both kinds in one surface: add from the
- * tab you are on, search the list, remove a row without opening a drawer.
- *
- * `TableSelectDrawer` preselects and replaces, so adding more never duplicates
- * and a wrong pick can still be taken out before the profile exists as a page.
- */
-export function EmergencyOwnersPicker({ ea, onChanged }: { ea: EADetail; onChanged: () => void }) {
-  const toast = useToast();
-  const [view, setView] = React.useState<'owners' | 'teams'>('owners');
-  const [search, setSearch] = React.useState('');
-  const [owners, setOwners] = React.useState<SeedEAOwner[]>([]);
-  const [teamIds, setTeamIds] = React.useState<string[]>([]);
-  const [open, setOpen] = React.useState<'people' | 'teams' | null>(null);
-
-  React.useEffect(() => {
-    setOwners(getEAOwners(ea.id));
-    setTeamIds(getEAGovernanceTeams(ea.id));
-  }, [ea.id]);
-
-  const candidates = listOwnerCandidates();
-  const allTeams = listGovernanceTeamRows();
-  const q = search.trim().toLowerCase();
-  const ownerRows = q
-    ? owners.filter(
-        (o) => o.name.toLowerCase().includes(q) || o.email.toLowerCase().includes(q),
-      )
-    : owners;
-  const selectedTeams = allTeams.filter((t) => teamIds.includes(t.id));
-  const teamRows = q ? selectedTeams.filter((t) => t.name.toLowerCase().includes(q)) : selectedTeams;
-  const isBlank = view === 'owners' ? owners.length === 0 : teamIds.length === 0;
-
-  const commitOwners = (ids: string[]) => {
-    const wasDone = owners.length > 0;
-    setOwners(setEAOwners(ea.id, candidates.filter((o) => ids.includes(o.id))));
-    onChanged();
-    toastEASetupStep(toast, ea.id, 'owners', wasDone);
-  };
-  const commitTeams = (ids: string[]) => {
-    setTeamIds(setEAGovernanceTeams(ea.id, ids));
-    onChanged();
-  };
-
-  const removeRow = (label: string, onRemove: () => void) => (
-    <Tooltip title="Remove">
-      <button
-        type="button"
-        aria-label={label}
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove();
-        }}
-        className="rounded-md p-1 text-icon-subtle transition-colors hover:bg-surface-hover hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-subtle"
-      >
-        <DeleteOutline sx={{ fontSize: 18 }} />
-      </button>
-    </Tooltip>
-  );
-
-  const ownerColumns: Column<SeedEAOwner>[] = [
-    {
-      id: 'name',
-      header: 'Owner name',
-      sortable: true,
-      value: (o) => o.name,
-      render: (o) => (
-        <div className="flex items-center gap-3">
-          <Avatar name={o.name} size="sm" kind="person" />
-          <span className="truncate text-body-sm-strong text-text-primary">{o.name}</span>
-        </div>
-      ),
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      align: 'right',
-      width: 72,
-      render: (o) =>
-        removeRow(`Remove ${o.name}`, () => {
-          commitOwners(owners.filter((x) => x.id !== o.id).map((x) => x.id));
-          toast.success(`${o.name} removed`);
-        }),
-    },
-  ];
-
-  const teamColumns: Column<GovernanceTeamRow>[] = [
-    {
-      id: 'name',
-      header: 'Owner name',
-      sortable: true,
-      value: (t) => t.name,
-      render: (t) => (
-        <div className="flex items-center gap-3">
-          <Avatar name={t.name} size="sm" />
-          <span className="truncate text-body-sm-strong text-text-primary">{t.name}</span>
-        </div>
-      ),
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      align: 'right',
-      width: 72,
-      render: (t) =>
-        removeRow(`Remove ${t.name}`, () => {
-          commitTeams(teamIds.filter((id) => id !== t.id));
-          toast.success(`${t.name} removed`);
-        }),
-    },
-  ];
-
-  const addLabel =
-    view === 'owners'
-      ? isBlank
-        ? 'Add Owners'
-        : 'Add more'
-      : isBlank
-        ? 'Add Governance Teams'
-        : 'Add more';
-
-  return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="shrink-0">
-        <Tabs
-          aria-label="Who answers at review"
-          value={view}
-          onChange={(id) => {
-            setView(id as 'owners' | 'teams');
-            setSearch('');
-          }}
-          items={[
-            { value: 'owners', label: 'Owners', count: owners.length },
-            { value: 'teams', label: 'Governance Teams', count: teamIds.length },
-          ]}
-        />
-      </div>
-
-      {isBlank ? (
-        <div className="grid min-h-0 flex-1 place-items-center">
-          <div className="flex max-w-md flex-col items-center px-6 py-10 text-center">
-            <h3 className="text-h5 text-text-primary">
-              {view === 'owners' ? 'No owners named' : 'No governance teams'}
-            </h3>
-            <p className="mt-1.5 text-body-sm text-text-secondary">
-              {view === 'owners'
-                ? 'A named owner answers for this access day to day.'
-                : 'A team answers for this access at review, where an owner answers day to day.'}
-            </p>
-            <div className="mt-5">
-              <Button startIcon={<AddIcon />} onClick={() => setOpen(view === 'owners' ? 'people' : 'teams')}>
-                {addLabel}
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <>
-          <div className="mb-3 mt-4 flex shrink-0 flex-wrap items-center gap-3">
-            <div className="w-full max-w-sm">
-              <Input
-                placeholder={view === 'owners' ? 'Search owners' : 'Search governance teams'}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
-              />
-            </div>
-            <div className="ml-auto">
-              <Button
-                variant="secondary"
-                startIcon={<AddIcon />}
-                onClick={() => setOpen(view === 'owners' ? 'people' : 'teams')}
-              >
-                {addLabel}
-              </Button>
-            </div>
-          </div>
-          {view === 'owners' ? (
-            <DataTable<SeedEAOwner>
-              columns={ownerColumns}
-              rows={ownerRows}
-              selectable
-              emptyTitle="No owners match"
-              emptyMessage="No owners match your search."
-            />
-          ) : (
-            <DataTable<GovernanceTeamRow>
-              columns={teamColumns}
-              rows={teamRows}
-              selectable
-              emptyTitle="No teams match"
-              emptyMessage="No governance teams match your search."
-            />
-          )}
-        </>
-      )}
-
-      <TableSelectDrawer
-        open={open === 'people'}
-        onClose={() => setOpen(null)}
-        title="Add Owners"
-        subtitle="Select people to add as owners of this emergency access."
-        icon={<PersonAddAltOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
-        nameHeader="Owner"
-        descriptionHeader="Email"
-        entity="owner"
-        showRisk={false}
-        rows={candidates.map((o) => ({ id: o.id, name: o.name, description: o.email }))}
-        selectedIds={owners.map((o) => o.id)}
-        onApply={commitOwners}
-      />
-      <TableSelectDrawer
-        open={open === 'teams'}
-        onClose={() => setOpen(null)}
-        title="Add Governance Teams"
-        subtitle="Teams that answer for this access at review."
-        icon={<GroupsOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
-        nameHeader="Governance Team"
-        entity="governance team"
-        rows={allTeams}
-        selectedIds={teamIds}
-        onApply={commitTeams}
-      />
-    </div>
-  );
-}
-
-/** Exported so the V2 stepper can ask the same question the tab does. */
 export function EmergencyOwnersTab({
   ea,
   onChanged,
-  switcher = 'segments',
 }: {
   ea: EADetail;
   onChanged: () => void;
-  /**
-   * How the two owner kinds are chosen.
-   *
-   * `segments` — compact, for V2.
-   * `rail` — NavList in a card, for V1.
-   */
-  switcher?: 'segments' | 'rail';
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -809,14 +567,7 @@ export function EmergencyOwnersTab({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div
-        className={
-          switcher === 'rail'
-            ? 'grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)] gap-5'
-            : 'flex min-h-0 flex-1 flex-col'
-        }
-      >
-      {switcher === 'rail' ? (
+      <div className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)] gap-5">
         <Card padding="2xs" className="h-full min-h-0 w-[240px]">
           <NavList
             ariaLabel="Owner type"
@@ -838,19 +589,6 @@ export function EmergencyOwnersTab({
             ]}
           />
         </Card>
-      ) : (
-      <div className="mb-5 flex shrink-0 flex-wrap items-center gap-3">
-        <SegmentedControl<'individual' | 'teams'>
-          ariaLabel="Owner type"
-          value={view}
-          onChange={setView}
-          options={[
-            { value: 'individual', label: 'Individual Owners', count: ea.ownersCount },
-            { value: 'teams', label: 'Governance Teams', count: teamIds.length },
-          ]}
-        />
-      </div>
-      )}
 
       <div className="flex min-h-0 flex-1 flex-col">
         {isBlank ? (
@@ -1092,14 +830,10 @@ export function EmergencyOwnersTab({
 }
 
 /**
- * The Emergency Access detail screen, shared by V1 and V2.
+ * The Emergency Access detail screen.
  *
- * The versions differ in how a draft is *finished* — V1 a checklist dock, V2 a
- * create stepper. Once the profile is live, this is one screen, so it lives here
- * rather than being copied.
- *
- * `basePath` is the version that opened it: the same profile can be reached from
- * any list, and leaving (delete, not-found) must go back where you came from.
+ * A draft is finished beside the real tabs — the checklist docks on the right.
+ * `basePath` is where delete and not-found send the reader back to the list.
  */
 export function EmergencyAccessDetail({
   id,
@@ -1108,26 +842,18 @@ export function EmergencyAccessDetail({
 }: {
   id: string;
   basePath: string;
-  /** V1: open the right-hand checklist — after create, or any other caller. Drafts also open it on their own. */
+  /** Open the right-hand checklist — after create, or any other caller. Drafts also open it on their own. */
   openSetup?: boolean;
 }) {
-  /**
-   * V1 only — the owner is comparing the modules side by side, so the Setup
-   * checklist lands on one of them first. `basePath` is already how this
-   * component knows which version opened it.
-   */
-  const isV1 = basePath === '/iga/emergency';
-
   const [basicsOpen, setBasicsOpen] = React.useState(false);
   const [checklistOpen, setChecklistOpen] = React.useState(
-    () => openSetup || (isV1 && Boolean(getEmergencyAccess(id)?.isDraft)),
+    () => openSetup || Boolean(getEmergencyAccess(id)?.isDraft),
   );
   const router = useRouter();
   const toast = useToast();
   const [tab, setTab] = React.useState(() => {
-    // V1 opens a draft on the work rather than on a summary, because the
+    // A draft opens on the work rather than on a summary, because the
     // checklist is beside the first unfinished tab rather than replacing Overview.
-    if (!isV1) return 'overview';
     const draft = getEmergencyAccess(id);
     return draft?.isDraft ? firstUnfinishedGuidedTab(draft) : 'overview';
   });
@@ -1161,9 +887,6 @@ export function EmergencyAccessDetail({
     );
   }
 
-  /** V1: the guide icon and dock stay available after activate — a completed checklist, not draft-only chrome. */
-  const showSetupDock = isV1;
-
   /**
    * The tab actually shown, which is not always the one in state.
    *
@@ -1189,18 +912,15 @@ export function EmergencyAccessDetail({
 
   return (
     <div className="flex h-full flex-col">
-      <div className={`flex min-h-0 flex-1 -mx-8 ${showSetupDock ? '-mt-6 -mb-6' : ''}`}>
+      <div className="flex min-h-0 flex-1 -mx-8 -mt-6 -mb-6">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       {/*
         The page header, full-bleed.
 
-        On V1 a draft docks the checklist to the right of this column, so the
-        header, tabs and body share one left pane. Without that dock the header
-        still pulls up under the top bar on its own.
+        The checklist docks to the right of this column, so the header, tabs
+        and body share one left pane.
       */}
-      <div
-        className={`shrink-0 bg-canvas px-8 pt-3 ${showSetupDock ? '' : '-mt-6'}`}
-      >
+      <div className="shrink-0 bg-canvas px-8 pt-3">
         <div className="relative z-10 mb-3 flex items-center justify-between gap-4">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <Avatar name={ea.name} initials={ea.initial} size="md" />
@@ -1281,20 +1001,18 @@ export function EmergencyAccessDetail({
                 },
               ]}
             />
-            {showSetupDock && (
-              <EmergencyAccessGuideButton
-                expanded={checklistOpen}
-                progress={
-                  ea.isDraft
-                    ? {
-                        done: EA_REQUIRED_STEPS - blocking.length,
-                        total: EA_REQUIRED_STEPS,
-                      }
-                    : undefined
-                }
-                onClick={() => setChecklistOpen((open) => !open)}
-              />
-            )}
+            <EmergencyAccessGuideButton
+              expanded={checklistOpen}
+              progress={
+                ea.isDraft
+                  ? {
+                      done: EA_REQUIRED_STEPS - blocking.length,
+                      total: EA_REQUIRED_STEPS,
+                    }
+                  : undefined
+              }
+              onClick={() => setChecklistOpen((open) => !open)}
+            />
           </div>
         </div>
       </div>
@@ -1315,16 +1033,16 @@ export function EmergencyAccessDetail({
           <OverviewTab ea={ea} />
         )}
         {shownTab ==='owners' && (
-          <EmergencyOwnersTab ea={ea} onChanged={bump} switcher={isV1 ? 'rail' : 'segments'} />
+          <EmergencyOwnersTab ea={ea} onChanged={bump} />
         )}
         {shownTab ==='eligibility' && <EligibilityCriteriaTab eaId={ea.id} onChanged={bump} />}
         {shownTab ==='assignments' && (
-          <EmergencyAssignmentsTab eaId={id} onChanged={bump} switcher={isV1 ? 'rail' : 'segments'} />
+          <EmergencyAssignmentsTab eaId={id} onChanged={bump} />
         )}
         {shownTab ==='advanced' && <AdvancedConfigurationTab eaId={ea.id} onChanged={bump} />}
           </div>
         </div>
-        {showSetupDock && checklistOpen && (
+        {checklistOpen && (
           <SetupChecklistDock
             steps={setupSteps}
             currentTab={shownTab}

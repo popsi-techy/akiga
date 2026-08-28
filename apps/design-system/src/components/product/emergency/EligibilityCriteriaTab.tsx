@@ -22,7 +22,7 @@ export function EligibilityCriteriaTab({
   onChanged,
 }: {
   eaId: string;
-  /** Rules changed — lets a host surface (the V2 stepper) re-read readiness. */
+  /** Rules changed — lets a host surface re-read readiness. */
   onChanged?: () => void;
 }) {
   const toast = useToast();
