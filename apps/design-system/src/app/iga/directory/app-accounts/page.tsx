@@ -2,9 +2,9 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { StatusChip, type Column } from '@ds/components';
+import { IdentityCell, StatusChip, type Column } from '@ds/components';
 import { listAppAccounts, type AppAccountRow } from '@/data/directory';
-import { DirectoryListPage, EntityAvatar } from '@/components/product/directory';
+import { DirectoryListPage } from '@/components/product/directory';
 import { AppBadge } from '@/components/product/sod/labels';
 
 export default function AppAccountsListPage() {
@@ -14,16 +14,17 @@ export default function AppAccountsListPage() {
       id: 'name',
       header: 'Account Name',
       sortable: true,
+      wrap: true,
       value: (r) => r.accountName,
       render: (r) => (
-        <div className="flex items-center gap-3">
-          <EntityAvatar kind="account" name={r.accountName} />
-          <span className="text-body-sm-strong text-text-primary">{r.accountName}</span>
-          {r.orphan && <StatusChip intent="warning" label="Orphan" />}
-        </div>
+        <IdentityCell
+          name={r.accountName}
+          email={r.email}
+          kind="entity"
+          trailing={r.orphan ? <StatusChip intent="warning" label="Orphan" /> : undefined}
+        />
       ),
     },
-    { id: 'email', header: 'Email', sortable: true, value: (r) => r.email, render: (r) => <span className="text-text-secondary">{r.email || '—'}</span> },
     {
       id: 'application',
       header: 'Application',

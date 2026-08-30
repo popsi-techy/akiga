@@ -4,7 +4,7 @@ import * as React from 'react';
 import CheckCircle from '@mui/icons-material/CheckCircle';
 import CloseOutlined from '@mui/icons-material/CloseOutlined';
 import { Button } from '../Button/Button';
-import { StatusChip } from '../StatusChip/StatusChip';
+import { StatusChip, type StatusIntent } from '../StatusChip/StatusChip';
 
 /** One checklist row — presentation only. Order and required-ness come from the caller. */
 export interface SetupChecklistStep {
@@ -18,8 +18,15 @@ export interface SetupChecklistStep {
   tab: string;
   required: boolean;
   done: boolean;
-  /** Qualifier for a step that is done without anyone deciding anything. */
+  /** Qualifier chip under a done step — factory defaults, or that they changed. */
   doneLabel?: string;
+  /** Chip colour. Factory defaults stay `info`; a human change is `neutral`. */
+  doneLabelIntent?: StatusIntent;
+  /**
+   * Satisfied without a decision (factory defaults). Does not unlock Next.
+   * A `doneLabel` of “Modified” is a decision — pass `false` so it counts.
+   */
+  passiveDone?: boolean;
   /**
    * Done because the object exists, not because someone finished it. Excluded
    * from “someone finished” / Next so a brand-new draft does not prompt.
@@ -38,7 +45,8 @@ export interface SetupChecklistStep {
  *
  * The CTA is a prompt that appears only after someone actually finishes a
  * step — any step. Switching tabs is not finishing. A `seedDone` step (name
- * already saved) and a `doneLabel` qualifier (factory defaults) do not count.
+ * already saved) and a `passiveDone` qualifier (factory defaults) do not
+ * count. A “Modified” chip is a decision and does.
  *
  * It also does not restate the tab you are on. Follow the prompt and it
  * drops: you are there, and the page owns the work again.
@@ -56,6 +64,14 @@ export interface SetupChecklistDockProps {
   gateVerb?: 'activate' | 'connect';
 }
 
+function countsAsFinished(step: SetupChecklistStep): boolean {
+  if (!step.done) return false;
+  if (step.passiveDone === true) return false;
+  // Legacy: a qualifier with no flag was factory and did not count.
+  if (step.doneLabel && step.passiveDone === undefined) return false;
+  return true;
+}
+
 export function SetupChecklistDock({
   steps,
   currentTab,
@@ -66,10 +82,7 @@ export function SetupChecklistDock({
   const required = steps.filter((s) => s.required);
   const additional = steps.filter((s) => !s.required);
   const listed = [...required.filter((s) => !s.seedDone), ...additional];
-  // A qualifier chip means the step is satisfied without anyone deciding —
-  // Advanced's factory defaults. That is not a completion, so it must not
-  // unlock the "what's next" prompt on a brand-new draft.
-  const someoneFinished = listed.some((s) => s.done && !s.doneLabel);
+  const someoneFinished = listed.some(countsAsFinished);
   const nextId = someoneFinished ? listed.find((s) => !s.done)?.id : undefined;
   // Primary while Activate is still blocked — this is then the only filled
   // action in the dock. Secondary once required work is done, so the header
@@ -215,7 +228,7 @@ function StepRow({
           )}
           {step.done && step.doneLabel && (
             <span className="mt-1 block">
-              <StatusChip intent="info" label={step.doneLabel} dot={false} />
+              <StatusChip intent={step.doneLabelIntent ?? 'info'} label={step.doneLabel} dot={false} />
             </span>
           )}
           {showNext && (

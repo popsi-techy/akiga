@@ -39,6 +39,7 @@ export const navigation: NavSection[] = [
       { label: 'Button', href: '/components/button', status: 'ready' },
       { label: 'Card', href: '/components/card', status: 'ready' },
       { label: 'Avatar', href: '/components/avatar', status: 'ready' },
+      { label: 'Identity Cell', href: '/components/identity-cell', status: 'ready' },
       { label: 'App Icon', href: '/components/app-icon', status: 'ready' },
       { label: 'Info Row', href: '/components/info-row', status: 'ready' },
       { label: 'Overflow Chips', href: '/components/overflow-chips', status: 'ready' },

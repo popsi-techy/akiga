@@ -1,15 +1,20 @@
 /**
  * Destinations on the System Settings hub.
  *
- * Grouped by job, not by product module: identities, access, then sign-in.
+ * Grouped by job, not by product module: general, identities, access, then sign-in.
  * Every destination here has its own route and form.
  */
 
 export const SYSTEM_SETTINGS_GROUPS = [
   {
+    id: 'general',
+    title: 'General Settings',
+    description: 'Tenant-wide defaults that are not specific to identity, access, or sign-in.',
+  },
+  {
     id: 'identities',
     title: 'Identity data and correlation',
-    description: 'Identities, attributes, account matching, and usage location.',
+    description: 'Identities, attributes, and account matching.',
   },
   {
     id: 'access',
@@ -161,13 +166,23 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
   {
     id: 'locale-regional',
     href: '/iga/configurations/locale-regional',
-    title: 'Usage Location',
-    group: 'identities',
-    description: 'Set the default usage country for users who do not already have one.',
-    actionLabel: 'Change location',
+    title: 'General Settings',
+    group: 'general',
+    description: 'Usage location and other tenant-wide defaults. More settings will be added here.',
+    actionLabel: 'Manage',
     pageDescription:
-      'Default country and locale settings applied during user provisioning.',
-    keywords: ['iso', 'country', 'location', 'm365', 'license', 'locale', 'region'],
+      'Tenant-wide defaults. Usage location is here today; more general settings will follow.',
+    keywords: [
+      'general',
+      'usage location',
+      'iso',
+      'country',
+      'location',
+      'm365',
+      'license',
+      'locale',
+      'region',
+    ],
     implemented: true,
   },
 ];

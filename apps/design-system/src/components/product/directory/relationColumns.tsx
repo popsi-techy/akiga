@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { StatusChip, type Column } from '@ds/components';
+import { IdentityCell, StatusChip, type Column } from '@ds/components';
 import { AppBadge } from '@/components/product/sod/labels';
 import type { EntitlementRow, RoleRow, AppAccountRow, UserIdentityRow, ApplicationRow } from '@/data/directory';
 import { EntityAvatar, type EntityKind } from './EntityAvatar';
@@ -48,16 +48,17 @@ export const accountColumns: Column<AppAccountRow>[] = [
     id: 'name',
     header: 'Account',
     sortable: true,
+    wrap: true,
     value: (r) => r.accountName,
     render: (r) => (
-      <div className="flex items-center gap-3">
-        <EntityAvatar kind="account" name={r.accountName} />
-        <span className="text-body-sm-strong text-text-primary">{r.accountName}</span>
-        {r.orphan && <StatusChip intent="warning" label="Orphan" />}
-      </div>
+      <IdentityCell
+        name={r.accountName}
+        email={r.email}
+        kind="entity"
+        trailing={r.orphan ? <StatusChip intent="warning" label="Orphan" /> : undefined}
+      />
     ),
   },
-  { id: 'email', header: 'Email', sortable: true, value: (r) => r.email, render: (r) => <span className="text-text-secondary">{r.email || '—'}</span> },
   {
     id: 'application',
     header: 'Application',
@@ -77,18 +78,10 @@ export const peopleColumns: Column<UserIdentityRow>[] = [
     id: 'name',
     header: 'User Identity',
     sortable: true,
+    wrap: true,
     value: (r) => r.name,
-    render: (r) => (
-      <div className="flex items-center gap-3">
-        <EntityAvatar kind="user" name={r.name} />
-        <div className="min-w-0">
-          <div className="truncate text-body-sm-strong text-text-primary">{r.name}</div>
-          <div className="truncate text-caption text-text-secondary">{r.jobTitle}</div>
-        </div>
-      </div>
-    ),
+    render: (r) => <IdentityCell name={r.name} email={r.email} />,
   },
-  { id: 'email', header: 'Email', sortable: true, value: (r) => r.email, render: (r) => <span className="text-text-secondary">{r.email}</span> },
   { id: 'department', header: 'Department', sortable: true, value: (r) => r.department, render: (r) => <span className="text-text-secondary">{r.department}</span> },
 ];
 

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { PageHeader, Section, Example, PropsTable, DoDont, Code } from '@/components/docs/primitives';
-import { SelectionPanel, DataTable, Avatar, type Column } from '@ds/components';
+import { SelectionPanel, DataTable, Avatar, IdentityCell, type Column } from '@ds/components';
 
 type Person = { id: string; name: string; email: string };
 
@@ -21,22 +21,17 @@ export default function SelectionPanelDocs() {
       id: 'name',
       header: 'Name',
       sortable: true,
+      wrap: true,
       value: (p) => p.name,
-      render: (p) => (
-        <div className="flex items-center gap-3">
-          <Avatar name={p.name} size="sm" />
-          <span className="text-body-sm-strong text-text-primary">{p.name}</span>
-        </div>
-      ),
+      render: (p) => <IdentityCell name={p.name} email={p.email} />,
     },
-    { id: 'email', header: 'Email', value: (p) => p.email, render: (p) => <span className="text-text-secondary">{p.email}</span> },
   ];
 
   const items = PEOPLE.filter((p) => selected.includes(p.id)).map((p) => ({
     id: p.id,
     label: p.name,
     sublabel: p.email,
-    icon: <Avatar name={p.name} size="sm" />,
+    icon: <Avatar name={p.name} size="sm" kind="person" />,
   }));
 
   return (

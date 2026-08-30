@@ -43,6 +43,9 @@ export type {
 export { Avatar, AvatarGroup, initialsOf } from './Avatar/Avatar';
 export type { AvatarProps, AvatarGroupProps, AvatarSize, AvatarKind } from './Avatar/Avatar';
 
+export { IdentityCell } from './IdentityCell/IdentityCell';
+export type { IdentityCellProps } from './IdentityCell/IdentityCell';
+
 export { AppIcon, resolveAppIcon, liveAppLogoUrl } from './AppIcon/AppIcon';
 export type { AppIconProps, AppLogo } from './AppIcon/AppIcon';
 

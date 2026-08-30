@@ -27,6 +27,7 @@
         "person",
         "entity",
         "xs",
+        "s",
         "sm",
         "md",
         "lg",
@@ -38,7 +39,7 @@
         "image"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/avatar/page.tsx",
-      "notes": "SHAPE CARRIES MEANING: `kind=\"person\"` is round, `kind=\"entity\"` (default) is a rounded square (radius.avatar 6px). Almost every list here mixes people with things — an owners table, an application, a policy, a governance team all arrive as a letter on a tint — and the shape is what says which before the name is read; it is also the convention readers bring in from Slack, Google and GitHub. The prop asks what the subject IS, not what it should look like: a caller always knows whether it is rendering a person and should not also have to know that people are round. It replaced `shape=\"soft\"|\"circle\"`, which left the mapping to memory and produced an audit log whose actor was round, an owners table where the same people were square, and governance teams that looked like people. The grey outline (ring + 2px surface gap) appears on every person avatar EXCEPT xs — it is what separates a person's tint from the surface behind it, and a screen mixing ringless 32px avatars with ringed 40px ones reads as two components; at 24px the ring is a third of the box's visual radius and reads as a smudge. It paints outside the avatar's own box, so a clipping container shaves it — give that DataTable column `wrap`. Letter sizes: xs 12 / sm 16 / md 20 / lg 24, one character always. See ADR-0009 and the brand-tint contrast waiver. AvatarGroup takes the same `kind` and forwards it — it previously hardcoded a square ring, so a group of people rendered circles inside rounded-square rings. Overlap is box/4, not the box/3 a photo facepile would use: a one-letter avatar loses its only identifying content under a heavier stack, and the +N chip is set at 0.75 of the letter size so a two-glyph count does not outweigh the initials it summarises. `icon` renders a glyph instead of the letter, for a tile standing for a KIND of thing rather than a named one; it supersedes initials/name the way StatusChip's icon supersedes its dot. It replaces an ad-hoc `grid h-8 w-8 place-items-center rounded-md bg-brand-subtle` tile that had been hand-rolled in eight places at three sizes, two radii and two icon colours. The glyph is sized at half the box via `[&>svg]:!text-[1em]`, so one rule covers every avatar size."
+      "notes": "SHAPE CARRIES MEANING: `kind=\"person\"` is round, `kind=\"entity\"` (default) is a rounded square (radius.avatar 6px). Almost every list here mixes people with things — an owners table, an application, a policy, a governance team all arrive as a letter on a tint — and the shape is what says which before the name is read; it is also the convention readers bring in from Slack, Google and GitHub. The prop asks what the subject IS, not what it should look like: a caller always knows whether it is rendering a person and should not also have to know that people are round. It replaced `shape=\"soft\"|\"circle\"`, which left the mapping to memory and produced an audit log whose actor was round, an owners table where the same people were square, and governance teams that looked like people. Every person avatar carries the grey outline — it is what separates the brand tint from the surface behind it, and it has to sit off the fill (border.default on the tint is invisible). s/sm/md/lg use a 2px surface gap; xs uses 1px so the ring still lands on white without swallowing the 24px mark. The ring paints outside the avatar's own box, so a clipping container shaves it — give that DataTable column `wrap`. Letter sizes: xs 12 / s 14 / sm 16 / md 20 / lg 24, one character always. `s` is 28px — the table mark (IdentityCell; Directory EntityAvatar `sm` maps to it so a letter matches a 28px app logo). See ADR-0009 and the brand-tint contrast waiver. AvatarGroup takes the same `kind` and forwards it — it previously hardcoded a square ring, so a group of people rendered circles inside rounded-square rings. Overlap is box/4, not the box/3 a photo facepile would use: a one-letter avatar loses its only identifying content under a heavier stack, and the +N chip is set at 0.75 of the letter size so a two-glyph count does not outweigh the initials it summarises. `icon` renders a glyph instead of the letter, for a tile standing for a KIND of thing rather than a named one; it supersedes initials/name the way StatusChip's icon supersedes its dot. It replaces an ad-hoc `grid h-8 w-8 place-items-center rounded-md bg-brand-subtle` tile that had been hand-rolled in eight places at three sizes, two radii and two icon colours. The glyph is sized at half the box via `[&>svg]:!text-[1em]`, so one rule covers every avatar size."
     },
     {
       "name": "BarChart",
@@ -327,6 +328,25 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/components/info-row/page.tsx",
       "notes": "Table-like label/value rows via InfoRowGroup — values share one left edge. Do not right-align or hug the label. `icon` is the default on a scan list; omit it on every row in a group (a tight peek) never on one row only. Product code sources icons from the shared `infoIcon` vocabulary (components/product/directory/infoIcons.tsx), which reuses the sidebar icon for each noun."
+    },
+    {
+      "name": "IdentityCell",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/IdentityCell/IdentityCell.tsx",
+      "extends": null,
+      "variants": [
+        "person",
+        "entity",
+        "with-email",
+        "name-only",
+        "trailing"
+      ],
+      "states": [
+        "default",
+        "empty-email"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/identity-cell/page.tsx",
+      "notes": "The table treatment for a person or an account: Avatar s (28px, person ring with a 2px gap), name, email on the line under it. Email is not a column — a dedicated Email column is a second scan target for the same fact and the first thing a drawer or Peek has to hide. Size is not a caller prop; tables always use s. Pass `email` (including empty) so row heights stay even; omit it for a name-only cell. The column that holds it needs `wrap`. `kind` is Avatar's: person is round, entity (accounts) is a rounded square. `trailing` is for a chip that belongs to the identity (Orphan). A header or a profile card is Avatar md, not this — they do not stack an email."
     },
     {
       "name": "Input",
@@ -875,7 +895,7 @@
         "next-prompt"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/setup-checklist-dock/page.tsx",
-      "notes": "Right-hand remaining-work column on a draft. Not a navigator — the tabs still are. Next appears only after someone finishes a step; seedDone (object exists) and doneLabel (factory defaults) do not count. gateVerb is activate or connect. Promoted from Emergency Access; Applications onboarding consumes it. See object-detail-setup and ADR-0015."
+      "notes": "Right-hand remaining-work column on a draft. Not a navigator — the tabs still are. Next appears only after someone finishes a step; seedDone (object exists) and passiveDone (factory defaults) do not count. A doneLabel of Modified is a decision and does. gateVerb is activate or connect. Promoted from Emergency Access; Applications onboarding consumes it. See object-detail-setup and ADR-0015."
     },
     {
       "name": "SetupProgress",

@@ -51,6 +51,7 @@ const INITIAL: SetupChecklistStep[] = [
     required: false,
     done: true,
     doneLabel: 'Default applied',
+    passiveDone: true,
   },
 ];
 
@@ -86,7 +87,7 @@ export default function SetupChecklistDockDocs() {
       <PageHeader
         eyebrow="Components"
         title="Setup Checklist Dock"
-        description="Remaining work, docked to the right of a draft. The Next prompt appears only after someone actually finishes a step — a seedDone name or a factory-default chip does not count."
+        description="Remaining work, docked to the right of a draft. The Next prompt appears only after someone actually finishes a step — a seedDone name or a passiveDone factory chip does not count. A “Modified” chip does."
       />
 
       <Section
@@ -136,7 +137,7 @@ export default function SetupChecklistDockDocs() {
       <Section title="Props">
         <PropsTable
           rows={[
-            { name: 'steps', type: 'SetupChecklistStep[]', description: '{ id, label, hint, cta, tab, required, done, doneLabel?, seedDone? }.' },
+            { name: 'steps', type: 'SetupChecklistStep[]', description: '{ id, label, hint, cta, tab, required, done, doneLabel?, doneLabelIntent?, passiveDone?, seedDone? }.' },
             { name: 'currentTab', type: 'string', description: 'The open section. The matching row is current; it does not get a Next CTA.' },
             { name: 'onClose', type: '() => void', description: 'Hides the dock.' },
             { name: 'onGoTo', type: '(step) => void', description: 'Opens the step’s tab or drawer.' },

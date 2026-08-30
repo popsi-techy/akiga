@@ -31,7 +31,7 @@ import * as React from 'react';
  * The letter is decorative in practice — `aria-label` carries the full name — but it
  * is still visible text, so this is a real, deliberate trade.
  */
-export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg';
+export type AvatarSize = 'xs' | 's' | 'sm' | 'md' | 'lg';
 /** What the avatar stands for. Drives the shape — see the note above. */
 export type AvatarKind = 'person' | 'entity';
 
@@ -64,10 +64,15 @@ export interface AvatarProps {
 /**
  * Box + letter. Soft avatars use `radius.avatar` (6px). The letter is half the
  * box at md/lg so a single glyph reads as the mark rather than a caption inside
- * a tile; smaller sizes stay slightly under half so 24/32 boxes don't feel cramped.
+ * a tile; smaller sizes stay slightly under half so 24/28/32 boxes don't feel cramped.
+ *
+ * `s` (28) sits between xs and sm — the table mark. IdentityCell uses it, and
+ * Directory's EntityAvatar already treated "sm" as 28px for app logos; this is
+ * that size as a first-class step so a letter and a logo in the same row match.
  */
 const sizePx: Record<AvatarSize, { box: number; font: number }> = {
   xs: { box: 24, font: 12 },
+  s: { box: 28, font: 14 },
   sm: { box: 32, font: 16 },
   md: { box: 40, font: 20 },
   lg: { box: 48, font: 24 },
@@ -99,19 +104,23 @@ export function Avatar({
   const radius = person ? 'var(--ds-radius-pill)' : 'var(--ds-radius-avatar)';
   const style: React.CSSProperties = { width: box, height: box, borderRadius: radius };
   /**
-   * The grey outline now appears on every person avatar except `xs`.
+   * Every person avatar carries the grey outline. It is what separates the brand
+   * tint from the surface behind it — without it, a letter on `#FFF4EE` in a
+   * white table cell disappears.
    *
-   * It was restricted to md/lg on the reasoning that a dense row does not need the
-   * weight — but in practice it is what separates a person's tint from the surface
-   * behind it, and a list where the 32px avatars had no ring and the 40px ones did
-   * looked like two components. `xs` stays bare: at 24px a 1px ring with a 2px
-   * offset is a third of the box's visual radius and reads as a smudge.
+   * The ring has to sit *off* the fill: `border.default` (#E1E4E8) on the tint
+   * is 1.06:1 and reads as no ring at all. s / sm / md / lg use a 2px surface
+   * gap. At `xs` that gap is a third of the box, so the gap is 1px — enough
+   * for the grey to land on white without swallowing the 24px mark.
    *
-   * It is drawn *outside* the avatar's own box, so a container that clips its
+   * The ring paints outside the avatar's own box, so a container that clips
    * overflow will shave it — in a `DataTable`, that column needs `wrap`.
    */
-  const ringClass =
-    person && size !== 'xs' ? 'ring-1 ring-border ring-offset-2 ring-offset-surface' : '';
+  const ringClass = !person
+    ? ''
+    : size === 'xs'
+      ? 'ring-1 ring-border ring-offset-1 ring-offset-surface'
+      : 'ring-1 ring-border ring-offset-2 ring-offset-surface';
 
   if (src) {
     return (

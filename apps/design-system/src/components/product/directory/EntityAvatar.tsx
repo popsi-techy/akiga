@@ -49,7 +49,9 @@ export function EntityAvatar({
   if (kind === 'application') {
     return <AppBadge app={name ?? ''} logoFrom={appType} size={px} appearance="logo" />;
   }
-  return <Avatar name={name} size={size} kind={kind === 'user' ? 'person' : 'entity'} />;
+  // Table `sm` is Avatar `s` (28px) — the same box AppBadge already used, so a
+  // letter and a logo in one directory row are the same size.
+  return <Avatar name={name} size={size === 'md' ? 'md' : 's'} kind={kind === 'user' ? 'person' : 'entity'} />;
 }
 
 export default EntityAvatar;

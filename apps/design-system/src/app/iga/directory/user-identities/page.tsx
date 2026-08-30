@@ -2,10 +2,10 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { StatusChip, type Column, type StatusIntent } from '@ds/components';
+import { IdentityCell, StatusChip, type Column, type StatusIntent } from '@ds/components';
 import { listUserIdentities, type UserIdentityRow } from '@/data/directory';
 import type { IdentityStatus } from '@/data/seed';
-import { DirectoryListPage, EntityAvatar, IdentityKindChip, RiskScoreChip } from '@/components/product/directory';
+import { DirectoryListPage, IdentityKindChip, RiskScoreChip } from '@/components/product/directory';
 
 const STATUS: Record<IdentityStatus, { label: string; intent: StatusIntent }> = {
   active: { label: 'Active', intent: 'success' },
@@ -21,26 +21,16 @@ export default function UserIdentitiesListPage() {
       id: 'name',
       header: 'Name',
       sortable: true,
-      width: '26%',
-      // Two lines by design — name over job title — so it opts out of the
-      // single-line default and each line truncates on its own.
+      width: '40%',
+      // Two lines — name over email — so it opts out of the single-line default.
       wrap: true,
       value: (r) => r.name,
-      render: (r) => (
-        <div className="flex items-center gap-3">
-          <EntityAvatar kind="user" name={r.name} />
-          <div className="min-w-0">
-            <div className="truncate text-body-sm-strong text-text-primary">{r.name}</div>
-            <div className="truncate text-caption text-text-secondary">{r.jobTitle}</div>
-          </div>
-        </div>
-      ),
+      render: (r) => <IdentityCell name={r.name} email={r.email} />,
     },
     // Before Department, not after Status: whether someone is on the payroll
     // changes how the rest of the row should be read, so it belongs beside the
     // name rather than at the end with the measurements.
     { id: 'kind', header: 'Type', sortable: true, width: 140, wrap: true, value: (r) => (r.kind === 'external' ? 'External' : 'Workforce'), render: (r) => <IdentityKindChip kind={r.kind} /> },
-    { id: 'email', header: 'Email', sortable: true, width: '24%', value: (r) => r.email, render: (r) => <span className="text-text-secondary">{r.email}</span> },
     { id: 'department', header: 'Department', sortable: true, width: '16%', value: (r) => r.department, render: (r) => <span className="text-text-secondary">{r.department}</span> },
     { id: 'status', header: 'Status', sortable: true, width: 120, wrap: true, value: (r) => STATUS[r.status].label, render: (r) => <StatusChip intent={STATUS[r.status].intent} label={STATUS[r.status].label} /> },
     { id: 'risk', header: 'Risk', sortable: true, align: 'right', width: 120, wrap: true, value: (r) => r.riskScore, render: (r) => <RiskScoreChip score={r.riskScore} /> },

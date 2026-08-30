@@ -84,6 +84,7 @@
         "TableSelectDrawer",
         "Drawer",
         "DataTable",
+        "IdentityCell",
         "SelectionPanel",
         "PickerSlot"
       ],

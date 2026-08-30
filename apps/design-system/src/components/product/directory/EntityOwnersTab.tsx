@@ -13,6 +13,7 @@ import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
 import {
   DataTable,
   Avatar,
+  IdentityCell,
   Button,
   Card,
   Input,
@@ -135,31 +136,15 @@ export function EntityOwnersTab({
      rows. Search and a header over nothing read as a failed load. */
   const isBlank = view === 'individual' ? ownerIds.length === 0 : teams.length === 0;
 
-  const personCell = (o: UserIdentityRow) => (
-    <div className="flex items-center gap-3">
-      <Avatar name={o.name} size="sm" kind="person" />
-      <div className="min-w-0">
-        <div className="truncate text-body-sm-strong text-text-primary">{o.name}</div>
-        <div className="truncate text-caption text-text-secondary">{o.jobTitle}</div>
-      </div>
-    </div>
-  );
-
   const columns: Column<UserIdentityRow>[] = [
-    { id: 'name', header: label, sortable: true, value: (o) => o.name, render: personCell },
-    /* Email stands down while the panel is open — the panel carries it, and the
-       ~416px it leaves is not enough for name, email and actions. */
-    ...(peek === null
-      ? [
-          {
-            id: 'email',
-            header: 'Email',
-            sortable: true,
-            value: (o: UserIdentityRow) => o.email,
-            render: (o: UserIdentityRow) => <span className="text-text-secondary">{o.email}</span>,
-          },
-        ]
-      : []),
+    {
+      id: 'name',
+      header: label,
+      sortable: true,
+      wrap: true,
+      value: (o) => o.name,
+      render: (o) => <IdentityCell name={o.name} email={o.email} />,
+    },
     {
       id: 'actions',
       header: 'Actions',
@@ -185,15 +170,10 @@ export function EntityOwnersTab({
       id: 'name',
       header: 'Name',
       sortable: true,
+      wrap: true,
       value: (o) => o.name,
-      render: (o) => (
-        <div className="flex items-center gap-3">
-          <Avatar name={o.name} size="sm" kind="person" />
-          <span className="text-body-sm-strong text-text-primary">{o.name}</span>
-        </div>
-      ),
+      render: (o) => <IdentityCell name={o.name} email={o.email} />,
     },
-    { id: 'email', header: 'Email', sortable: true, value: (o) => o.email, render: (o) => <span className="text-text-secondary">{o.email}</span> },
   ];
 
   const teamColumns: Column<GovernanceTeamRow>[] = [

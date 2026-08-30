@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
-import { DataTable, Avatar, Input, Tabs, type Column, type TabItem } from '@ds/components';
+import { DataTable, IdentityCell, Input, Tabs, type Column, type TabItem } from '@ds/components';
 import { listMyReviews } from '@/data/sod';
 import { hasV3Draft, v3ReviewerStatus } from '@/data/sod-resolution-v3-store';
 import type { MyReviewRow } from '@/data/sod-types';
@@ -80,16 +80,9 @@ export default function SodResolutionV3ListPage() {
       id: 'user',
       header: 'User',
       sortable: true,
+      wrap: true,
       value: (r) => r.userName,
-      render: (r) => (
-        <div className="flex items-center gap-3">
-          <Avatar name={r.userName} initials={r.userName.trim().charAt(0).toUpperCase()} size="sm" kind="person" />
-          <div className="min-w-0">
-            <div className="truncate text-body-sm-strong text-text-primary">{r.userName}</div>
-            <div className="truncate text-caption text-text-secondary">{r.userEmail}</div>
-          </div>
-        </div>
-      ),
+      render: (r) => <IdentityCell name={r.userName} email={r.userEmail} />,
     },
     {
       id: 'policy',

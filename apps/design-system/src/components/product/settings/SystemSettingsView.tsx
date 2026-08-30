@@ -12,8 +12,9 @@ import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import { SYSTEM_SETTINGS_ICONS } from './settingsIcons';
 import { SettingsDenied, useAdminSettings } from './SettingsChrome';
 
-/** One token hue per job — orange, blue, green. */
+/** One token hue per job. General and Access share info (blue). */
 const GROUP_ICON_TONE: Record<string, DestinationListIconTone> = {
+  general: 'info',
   identities: 'brand',
   access: 'info',
   'sign-in': 'success',
@@ -82,7 +83,7 @@ export function SystemSettingsView() {
               <div>
                 <p className="text-body-sm-strong text-text-primary">No settings match</p>
                 <p className="mt-1 text-caption text-text-secondary">
-                  Nothing named “{query.trim()}”. Try identities, access, or sign-in.
+                  Nothing named “{query.trim()}”. Try general, identities, access, or sign-in.
                 </p>
               </div>
             }
@@ -90,10 +91,17 @@ export function SystemSettingsView() {
         ) : (
           <div className="flex flex-col gap-8">
             {groups.map(({ group, items }) => (
-              <section key={group.id} aria-labelledby={`settings-${group.id}`}>
-                <h2 id={`settings-${group.id}`} className="mb-3 text-h5 text-text-primary">
-                  {group.title}
-                </h2>
+              <section
+                key={group.id}
+                {...(group.id === 'general'
+                  ? { 'aria-label': group.title }
+                  : { 'aria-labelledby': `settings-${group.id}` })}
+              >
+                {group.id !== 'general' && (
+                  <h2 id={`settings-${group.id}`} className="mb-3 text-h5 text-text-primary">
+                    {group.title}
+                  </h2>
+                )}
                 <DestinationList
                   appearance="plain"
                   columns={3}

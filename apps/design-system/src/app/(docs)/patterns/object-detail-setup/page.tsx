@@ -36,8 +36,9 @@ export default function ObjectDetailSetupPattern() {
           </li>
           <li>
             Existence-only steps pass <code className="text-caption">seedDone</code>.
-            Factory defaults pass <code className="text-caption">doneLabel</code>.
-            Neither unlocks the Next prompt.
+            Factory defaults pass <code className="text-caption">passiveDone</code> and
+            keep a <code className="text-caption">doneLabel</code> (“Default applied”).
+            A saved change keeps the chip, now “Modified”, and does count.
           </li>
         </ol>
         <p className="mt-4 text-body-sm text-text-secondary">

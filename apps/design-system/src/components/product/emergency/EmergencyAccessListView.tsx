@@ -19,6 +19,7 @@ import {
   type Column,
 } from '@ds/components';
 import { deleteEmergencyAccess, getEmergencyAccessList, type EARow } from '@/data/emergency-access';
+import { LastModified } from '@/components/product/LastModified';
 import { EmergencyAccessEmptyState } from './EmergencyAccessEmptyState';
 
 /**
@@ -74,6 +75,14 @@ export function EmergencyAccessListView({
         ) : (
           <span className="text-text-disabled">N/A</span>
         ),
+    },
+    {
+      id: 'updatedOn',
+      header: 'Modified',
+      sortable: true,
+      width: 196,
+      value: (r) => r.updatedOn,
+      render: (r) => <LastModified at={r.updatedOn} />,
     },
     {
       id: 'actions',

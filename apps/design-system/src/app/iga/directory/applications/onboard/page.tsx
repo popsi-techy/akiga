@@ -107,7 +107,7 @@ export default function OnboardApplicationPage() {
             />
           </div>
           <p className="mt-2.5 text-body-sm text-text-secondary">
-            Need a system we don&apos;t list?{' '}
+            Have a system we don&apos;t list?{' '}
             <button
               type="button"
               className="text-body-sm-medium text-text-link hover:underline"

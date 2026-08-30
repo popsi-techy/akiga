@@ -16,9 +16,10 @@ export default function AvatarDocs() {
         description="Identity mark for people and entities. Default soft shape is a rounded-square for lists and tables. Circle shape is the profile-card treatment — fully round with a brand-tint ring. Shows an image when available, otherwise a single letter in brand orange (#EB5424) on the brand tint (#FFF4EE) — one letter, one colour pair, every avatar. That pairing is 3.33:1, a deliberate sub-AA exception recorded as a waiver in check-contrast.ts; the aria-label carries the full name, so nothing depends on reading the letter."
       />
 
-      <Section title="Sizes" description="Box · letter — xs 24/12 · sm 32/16 · md 40/20 · lg 48/24. Entity corners use radius.avatar (6px).">
-        <Example label="xs · sm · md · lg">
+      <Section title="Sizes" description="Box · letter — xs 24/12 · s 28/14 · sm 32/16 · md 40/20 · lg 48/24. Entity corners use radius.avatar (6px). s is the table mark — IdentityCell, and Directory rows that sit next to a 28px app logo.">
+        <Example label="xs · s · sm · md · lg">
           <Avatar name="Amelia Ford" size="xs" />
+          <Avatar name="Amelia Ford" size="s" />
           <Avatar name="Amelia Ford" size="sm" />
           <Avatar name="Amelia Ford" size="md" />
           <Avatar name="Amelia Ford" size="lg" />
@@ -36,17 +37,16 @@ export default function AvatarDocs() {
           <Avatar name="Finance SoD Policy" initials="F" size="md" />
         </Example>
         <p className="mt-3 max-w-2xl text-body-sm text-text-secondary">
-          The grey outline appears on every person avatar except <code>xs</code>. It was once limited to{' '}
-          <code>md</code> and <code>lg</code> on the reasoning that a dense row does not need the weight,
-          but the ring is what separates a person&rsquo;s tint from the surface behind it, and a screen
-          where the 32px avatars had no ring and the 40px ones did read as two components. At{' '}
-          <code>xs</code> it stays off: a 1px ring with a 2px offset is a third of a 24px box&rsquo;s
-          visual radius and reads as a smudge. It is drawn <em>outside</em> the avatar&rsquo;s own box, so a
-          container that clips its overflow will shave it — in a <code>DataTable</code>, give that column{' '}
-          <code>wrap</code>.
+          Every person avatar carries the grey outline — it is what separates the brand tint from the
+          surface behind it, and it has to sit <em>off</em> the fill: the default border on the brand
+          tint is invisible. <code>s</code>, <code>sm</code>, <code>md</code> and <code>lg</code> use a
+          2px surface gap; <code>xs</code> uses 1px so the ring still lands on white without swallowing
+          the 24px mark. The ring paints outside the avatar&rsquo;s own box, so a container that clips
+          its overflow will shave it — in a <code>DataTable</code>, give that column <code>wrap</code>.
         </p>
-        <Example label="xs — no ring; sm · md · lg — ring">
+        <Example label="xs — 1px gap; s · sm · md · lg — 2px gap">
           <Avatar name="Amelia Ford" size="xs" kind="person" />
+          <Avatar name="Amelia Ford" size="s" kind="person" />
           <Avatar name="Amelia Ford" size="sm" kind="person" />
           <Avatar name="Amelia Ford" size="md" kind="person" />
           <Avatar name="Amelia Ford" size="lg" kind="person" />
@@ -123,7 +123,7 @@ export default function AvatarDocs() {
             { name: 'name', type: 'string', description: 'Used to derive initials and the aria-label.' },
             { name: 'src', type: 'string', description: 'Image URL; falls back to initials if absent.' },
             { name: 'initials', type: 'string', description: 'Override the derived initials (apps/entities).' },
-            { name: 'size', type: "'xs' | 'sm' | 'md' | 'lg'", default: "'sm'", description: '24 / 32 / 40 / 48px.' },
+            { name: 'size', type: "'xs' | 's' | 'sm' | 'md' | 'lg'", default: "'sm'", description: '24 / 28 / 32 / 40 / 48px. s is the table mark.' },
             {
               name: 'shape',
               type: "'soft' | 'circle'",
@@ -139,14 +139,15 @@ export default function AvatarDocs() {
           dos={[
             'Pass name so the avatar has an accessible label.',
             'Use kind="person" on profile / identity cards.',
-            'Use soft (default) in tables, groups, and dense lists.',
-            'Use size sm in tables, md in profile headers, lg on detail pages.',
+            'Use IdentityCell in tables of people or accounts — s (28px) avatar, email under the name, no Email column.',
+            'Use size s in two-line table cells; sm in chips and single-line lists; md in profile headers; lg on detail pages.',
           ]}
           donts={[
             'Don’t put white text on a solid brand fill at this size (fails AA).',
             'Don’t use images without a name/alt.',
             'Don’t hand-roll avatar circles — use kind="person".',
             'Don’t pass more than one character to initials — it is truncated anyway.',
+            'Don’t hand-roll Avatar + name + email in a table cell — that is IdentityCell.',
           ]}
         />
         <p className="mt-3 text-body-sm text-text-tertiary">

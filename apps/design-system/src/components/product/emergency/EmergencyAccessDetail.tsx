@@ -31,6 +31,7 @@ import {
   InfoRowGroup,
   StatusChip,
   Avatar,
+  IdentityCell,
   Button,
   Menu,
   DataTable,
@@ -505,15 +506,10 @@ export function EmergencyOwnersTab({
       id: 'name',
       header: 'Name',
       sortable: true,
+      wrap: true,
       value: (o) => o.name,
-      render: (o) => (
-        <div className="flex items-center gap-3">
-          <Avatar name={o.name} size="sm" kind="person" />
-          <span className="text-body-sm-strong text-text-primary">{o.name}</span>
-        </div>
-      ),
+      render: (o) => <IdentityCell name={o.name} email={o.email} />,
     },
-    { id: 'email', header: 'Email', sortable: true, value: (o) => o.email, render: (o) => <span className="text-text-secondary">{o.email}</span> },
   ];
 
   const columns: Column<SeedEAOwner>[] = [
@@ -521,29 +517,10 @@ export function EmergencyOwnersTab({
       id: 'name',
       header: 'Owners',
       sortable: true,
+      wrap: true,
       value: (o) => o.name,
-      render: (o) => (
-        <div className="flex items-center gap-3">
-          <Avatar name={o.name} size="sm" kind="person" />
-          <span className="text-body-sm-strong text-text-primary">{o.name}</span>
-        </div>
-      ),
+      render: (o) => <IdentityCell name={o.name} email={o.email} />,
     },
-    /* Email stands down while the panel is open — the panel carries it, in the subtitle
-       and again in the record, and four columns plus a checkbox do not fit in the ~416px
-       the panel leaves. Without this the Actions cell scrolled out of reach, taking the
-       button that had just been pressed with it. */
-    ...(peek === null
-      ? [
-          {
-            id: 'email',
-            header: 'Email',
-            sortable: true,
-            value: (o: SeedEAOwner) => o.email,
-            render: (o: SeedEAOwner) => <span className="text-text-secondary">{o.email}</span>,
-          },
-        ]
-      : []),
     {
       id: 'actions',
       header: 'Actions',

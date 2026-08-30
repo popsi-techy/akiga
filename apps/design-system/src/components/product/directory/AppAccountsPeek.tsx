@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
-import { Button, Tooltip, type Column } from '@ds/components';
+import { Button, IdentityCell, Tooltip, type Column } from '@ds/components';
 import { AppBadge } from '../sod/labels';
 import { EntityAvatar } from './EntityAvatar';
 import { RelationTable } from './DetailShell';
@@ -30,20 +30,9 @@ export function AppAccountsPeek({ accounts }: { accounts: AppAccountRow[] }) {
       id: 'name',
       header: 'Account',
       sortable: true,
+      wrap: true,
       value: (r) => r.accountName,
-      render: (r) => (
-        <div className="flex items-center gap-3">
-          <EntityAvatar kind="account" name={r.accountName} />
-          <span className="truncate text-body-sm-strong text-text-primary">{r.accountName}</span>
-        </div>
-      ),
-    },
-    {
-      id: 'email',
-      header: 'Email',
-      sortable: true,
-      value: (r) => r.email,
-      render: (r) => <span className="text-text-secondary">{r.email || '—'}</span>,
+      render: (r) => <IdentityCell name={r.accountName} email={r.email} kind="entity" />,
     },
     {
       id: 'application',

@@ -176,6 +176,7 @@ export default function DataTableDocs() {
           dos={[
             'Prefer layout="fixed" for a new list, and declare a width on every column. Auto layout lets one long value widen the table past its container and makes truncation impossible.',
             'Give the identity column the largest share. Under fixed layout a column that does not ask for a width gets the same as the status column beside it.',
+            'Use IdentityCell for a person or an account — s (28px) avatar, email under the name. Set Column.wrap on that column. Do not add a dedicated Email column.',
             'Use Column.wrap for a two-line cell or anything that paints outside its box — a chip’s border, an avatar’s ring — which the default clipping would shave.',
             'Provide value() for custom-rendered sortable columns.',
             'Pass selectionToolbar for the first-row selection banner (select-all matching, clear). Put icon-only bulk actions on the page toolbar, to the right of Filter.',

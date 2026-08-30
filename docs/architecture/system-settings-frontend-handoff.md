@@ -77,6 +77,7 @@ Hub icon tones (one hue per group — the *glyph* is colored, the 36×36 well st
 
 | Group | Tone prop | Glyph color |
 |---|---|---|
+| General Settings | `info` | `#0D47A1` |
 | Identity data and correlation | `brand` | `#EB5424` |
 | Access lifecycle and fulfillment | `info` | `#0D47A1` |
 | Authentication | `success` | `#00695C` |
@@ -164,9 +165,10 @@ No visible title. Search stays pinned; only the catalog scrolls.
 - Group `h2`: `text-h5` `text-primary`, `mb-3` (12px).
 - Copy (in this order):
 
-  1. **Identity data and correlation**
-  2. **Access lifecycle and fulfillment**
-  3. **Authentication**
+  1. **General Settings** — no visible heading; Usage Location is the first tile
+  2. **Identity data and correlation**
+  3. **Access lifecycle and fulfillment**
+  4. **Authentication**
 
 ### Destination tile (`DestinationList appearance="plain" columns={3}`)
 
@@ -350,9 +352,9 @@ This is a directory of records. Do not restyle it as grey wells.
 
 | Title | Group | Route | Shape |
 |---|---|---|---|
+| General Settings | general | `/iga/configurations/locale-regional` | form wells (Usage Location first) |
 | Custom Attributes | identities | `/iga/configurations/custom-attributes` | list + drawer |
 | User Identity Correlation | identities | `/iga/configurations/identity-correlation` | list + drawer |
-| Usage Location | identities | `/iga/configurations/locale-regional` | form wells |
 | Micro Certification | access | `/iga/configurations/micro-certification` | form wells |
 | Access Request | access | `/iga/configurations/access-request` | rail + wells |
 | Entitlement Types | access | `/iga/configurations/entitlement-types` | list + drawer |
@@ -361,7 +363,7 @@ This is a directory of records. Do not restyle it as grey wells.
 | MFA | sign-in | `/iga/configurations/mfa` | form wells |
 | SSO OAuth Login | sign-in | `/iga/configurations/sso-oauth` | form wells |
 
-Hub descriptions are ~15 words. Do not invent a fourth group.
+Hub descriptions are ~15 words. Groups are General Settings, Identity data and correlation, Access lifecycle and fulfillment, then Authentication.
 
 ---
 

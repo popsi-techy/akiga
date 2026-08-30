@@ -54,6 +54,7 @@ export interface EARow {
   status: { intent: 'warning' | 'success'; label: string };
   risk: { intent: 'info' | 'warning' | 'caution' | 'danger'; label: string } | null;
   activeUsers: number | null;
+  updatedOn: string;
 }
 
 /**
@@ -83,22 +84,33 @@ const deletedIds = new Set<string>();
  */
 const basicsById = new Map<string, { name: string; description: string }>();
 
+/** Session stamps. The seed’s `updatedOn` is what the profile started as. */
+const updatedOnById = new Map<string, string>();
+
+function touchEmergencyAccess(id: string): void {
+  updatedOnById.set(id, new Date().toISOString());
+}
+
 export function updateEmergencyAccessBasics(
   id: string,
   input: { name: string; description: string },
 ): void {
   basicsById.set(id, { name: input.name.trim(), description: input.description.trim() });
+  touchEmergencyAccess(id);
 }
 
 const withBasics = (ea: SeedEmergencyAccess): SeedEmergencyAccess => {
   const edit = basicsById.get(ea.id);
-  if (!edit) return ea;
-  return {
-    ...ea,
-    name: edit.name,
-    description: edit.description,
-    initial: (edit.name.charAt(0) || ea.initial).toUpperCase(),
-  };
+  const updatedOn = updatedOnById.get(ea.id);
+  const named = edit
+    ? {
+        ...ea,
+        name: edit.name,
+        description: edit.description,
+        initial: (edit.name.charAt(0) || ea.initial).toUpperCase(),
+      }
+    : ea;
+  return updatedOn ? { ...named, updatedOn } : named;
 };
 
 const allProfiles = (): SeedEmergencyAccess[] =>
@@ -116,6 +128,8 @@ export function deleteEmergencyAccess(id: string): void {
   ownersById.delete(id);
   groupOwnersById.delete(id);
   advancedConfigById.delete(id);
+  basicsById.delete(id);
+  updatedOnById.delete(id);
 }
 
 
@@ -163,6 +177,7 @@ export function getEmergencyAccessList(): EARow[] {
         : { intent: 'warning', label: 'Draft' },
       risk: liveRiskChip(ea.id, ea, active),
       activeUsers: ea.activeUsers ?? null,
+      updatedOn: ea.updatedOn,
     };
   });
 }
@@ -241,7 +256,9 @@ export function getEmergencyAccess(id: string): EADetail | null {
 
 /** Persist eligibility groups for an emergency-access profile (session memory). */
 export function setEmergencyAccessEligibility(id: string, groups: EligibilityGroup[]): EligibilityGroup[] {
-  return setEligibilityGroups(id, groups);
+  const next = setEligibilityGroups(id, groups);
+  touchEmergencyAccess(id);
+  return next;
 }
 
 /**
@@ -259,6 +276,7 @@ export function getEAGovernanceTeams(id: string): string[] {
 
 export function setEAGovernanceTeams(id: string, ids: string[]): string[] {
   groupOwnersById.set(id, ids);
+  touchEmergencyAccess(id);
   return ids;
 }
 
@@ -288,6 +306,7 @@ export function getEAOwners(id: string): SeedEAOwner[] {
 
 export function setEAOwners(id: string, owners: SeedEAOwner[]): SeedEAOwner[] {
   ownersById.set(id, owners);
+  touchEmergencyAccess(id);
   return owners;
 }
 
@@ -323,12 +342,14 @@ const isActive = (id: string, seeded: EAStatus) =>
 /** Turns a draft on. Idempotent — activating an active profile is not an error. */
 export function activateEmergencyAccess(id: string): void {
   activatedIds.add(id);
+  touchEmergencyAccess(id);
 }
 
 /** Puts an active profile back into draft. Sessions already granted are unaffected. */
 export function deactivateEmergencyAccess(id: string): void {
   activatedIds.delete(id);
   deactivatedIds.add(id);
+  touchEmergencyAccess(id);
 }
 
 const deactivatedIds = new Set<string>();
@@ -537,6 +558,7 @@ export function getEAAssignments(id: string): EAAssignments {
 
 export function setEAAssignments(id: string, next: EAAssignments): EAAssignments {
   assignmentsById.set(id, next);
+  touchEmergencyAccess(id);
   return next;
 }
 
@@ -639,6 +661,7 @@ export function getAdvancedConfig(id: string): EAAdvancedConfig {
 export function setAdvancedConfig(id: string, config: EAAdvancedConfig): EAAdvancedConfig {
   const next = { ...config, days: [...config.days] };
   advancedConfigById.set(id, next);
+  touchEmergencyAccess(id);
   return { ...next, days: [...next.days] };
 }
 

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { StatusChip, Tooltip, type Column, type StatusIntent } from '@ds/components';
+import { IdentityCell, StatusChip, Tooltip, type Column, type StatusIntent } from '@ds/components';
 import {
   accessExpired,
   getUserIdentityDetail,
@@ -10,7 +10,7 @@ import {
   type UserIdentityRow,
 } from '@/data/directory';
 import type { IdentityStatus } from '@/data/seed';
-import { DirectoryListPage, EntityAvatar, IdentityKindChip, RiskScoreChip } from '@/components/product/directory';
+import { DirectoryListPage, IdentityKindChip, RiskScoreChip } from '@/components/product/directory';
 import { formatDate } from '@/lib/datetime';
 
 const STATUS: Record<IdentityStatus, { label: string; intent: StatusIntent }> = {
@@ -55,25 +55,7 @@ export default function ExternalIdentitiesListPage() {
       width: '28%',
       wrap: true,
       value: (r) => r.name,
-      render: (r) => (
-        <div className="flex items-center gap-3">
-          <EntityAvatar kind="user" name={r.name} />
-          <div className="min-w-0">
-            <div className="truncate text-body-sm-strong text-text-primary">{r.name}</div>
-            {/* Email, not the job title. This list has no Email column — the seven
-                it does have are all about the external relationship — so the
-                address was absent from the page entirely, and it is the thing you
-                need to contact a contractor about their expiring access. The job
-                title is still searchable and still on the identity's own page.
-                `title` because the longest external address still will not fit at
-                any width this table can spare, and half an email is worth nothing —
-                `DataTable` only adds one automatically to cells it renders itself. */}
-            <div className="truncate text-caption text-text-secondary" title={r.email}>
-              {r.email}
-            </div>
-          </div>
-        </div>
-      ),
+      render: (r) => <IdentityCell name={r.name} email={r.email} />,
     },
     {
       id: 'kind',
