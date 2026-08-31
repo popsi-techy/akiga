@@ -379,7 +379,15 @@ export function DataTable<Row extends { id: string }>({
                     key={row.id}
                     hover
                     selected={isSelected}
-                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    onClick={
+                      onRowClick
+                        ? (e) => {
+                            const target = e.target as HTMLElement | null;
+                            if (target?.closest('a, button, input, textarea, select, [role="button"]')) return;
+                            onRowClick(row);
+                          }
+                        : undefined
+                    }
                     sx={{
                       cursor: onRowClick ? 'pointer' : 'default',
                       '&.Mui-selected': { backgroundColor: 'var(--ds-color-surface-selected)' },

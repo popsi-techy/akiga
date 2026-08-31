@@ -65,6 +65,7 @@
         { "id": "reviewer-dashboard", "label": "Dashboard", "route": "/iga/reviewer/dashboard", "icon": "dashboard" },
         { "id": "review-requests", "label": "Review Requests", "route": "/iga/reviewer/review-requests", "icon": "task", "requiresAction": true },
         { "id": "access-certification", "label": "Access Certification", "route": "/iga/reviewer/access-certification", "icon": "campaign" },
+        { "id": "access-certification-v2", "label": "Access Certification V2", "route": "/iga/reviewer/access-certification-v2", "icon": "campaign" },
         { "id": "sod-resolution-v3", "label": "SoD Policy Violation V3", "route": "/iga/reviewer/sod-resolution-v3", "icon": "policy" }
       ]
     },

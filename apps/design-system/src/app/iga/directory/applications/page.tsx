@@ -1,17 +1,58 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AddOutlined from '@mui/icons-material/AddOutlined';
-import { Button, type Column, type FilterGroup } from '@ds/components';
+import ManageAccountsOutlined from '@mui/icons-material/ManageAccountsOutlined';
+import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
+import { Button, OverflowChips, StatusChip, Tooltip, type Column, type FilterGroup } from '@ds/components';
 import {
+  applicationOwners,
   listCataloguedApplications,
   listOnboardedApplicationRows,
   type ApplicationRow,
 } from '@/data/directory';
-import { reconciliationSummary } from '@/data/reconciliation';
-import { formatDateTime } from '@/components/product/sod/labels';
 import { DirectoryListPage, EntityAvatar } from '@/components/product/directory';
+
+const AUTH_CHIP = {
+  authorized: { label: 'Authorized', intent: 'success' as const },
+  pending: { label: 'Pending', intent: 'warning' as const },
+};
+
+const METRIC_ICON = { fontSize: 16 } as const;
+
+function ReconciliationCounts({
+  name,
+  accounts,
+  entitlements,
+  href,
+}: {
+  name: string;
+  accounts: number;
+  entitlements: number;
+  href: string;
+}) {
+  return (
+    <Tooltip title={`${accounts} accounts · ${entitlements} entitlements`} describeChild>
+      <Link
+        href={href}
+        onClick={(e) => e.stopPropagation()}
+        aria-label={`Open reconciliation for ${name}: ${accounts} accounts, ${entitlements} entitlements`}
+        className="inline-flex items-center gap-3 text-text-primary hover:text-text-link"
+      >
+        <span className="inline-flex items-center gap-1">
+          <ManageAccountsOutlined sx={METRIC_ICON} className="shrink-0 text-icon-subtle" aria-hidden />
+          <span className="tabular-nums text-body-sm">{accounts}</span>
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <ShieldOutlined sx={METRIC_ICON} className="shrink-0 text-icon-subtle" aria-hidden />
+          <span className="tabular-nums text-body-sm">{entitlements}</span>
+        </span>
+      </Link>
+    </Tooltip>
+  );
+}
 
 export default function ApplicationsListPage() {
   const router = useRouter();
@@ -24,14 +65,6 @@ export default function ApplicationsListPage() {
     () => [...onboarded, ...listCataloguedApplications()],
     [onboarded],
   );
-
-  const lastSyncAt = React.useMemo(() => {
-    const map = new Map<string, string | null>();
-    for (const a of apps) {
-      map.set(a.id, reconciliationSummary(a.id).lastSync?.at ?? null);
-    }
-    return map;
-  }, [apps]);
 
   /**
    * One category today. The modal is built for several, so the shape is here
@@ -67,70 +100,46 @@ export default function ApplicationsListPage() {
       ),
     },
     {
-      id: 'lastSync',
-      header: 'Last Sync',
+      id: 'discoverySource',
+      header: 'Discovery source',
       sortable: true,
-      width: 200,
-      value: (r) => lastSyncAt.get(r.id) ?? '',
+      width: 150,
+      value: (r) => r.discoverySource,
+      render: (r) => <StatusChip intent="info" label={r.discoverySource} dot={false} />,
+    },
+    {
+      id: 'authorizationStatus',
+      header: 'Authorization Status',
+      sortable: true,
+      width: 170,
+      value: (r) => r.authorizationStatus,
       render: (r) => {
-        const at = lastSyncAt.get(r.id);
-        return (
-          <span className="whitespace-nowrap text-text-secondary">
-            {at ? formatDateTime(at) : '—'}
-          </span>
-        );
+        const chip = AUTH_CHIP[r.authorizationStatus];
+        return <StatusChip intent={chip.intent} label={chip.label} />;
       },
     },
     {
       id: 'owners',
       header: 'Owners',
       sortable: true,
-      align: 'right',
-      width: 100,
-      value: (r) => r.ownerCount,
-      render: (r) => (
-        <span className="tabular-nums text-text-secondary">{r.ownerCount}</span>
-      ),
+      wrap: true,
+      width: 200,
+      value: (r) => applicationOwners(r.id).map((o) => o.name).join(', '),
+      render: (r) => <OverflowChips items={applicationOwners(r.id)} max={1} emptyLabel="—" />,
     },
     {
-      id: 'externalProvisioning',
-      header: 'External Provisioning',
+      id: 'reconciliation',
+      header: 'Reconciliation',
       sortable: true,
-      width: 170,
-      value: (r) => r.externalProvisioning,
-      render: (r) =>
-        r.externalProvisioning === 'enabled' ? (
-          <span className="text-text-secondary">Enabled</span>
-        ) : (
-          <span className="text-text-tertiary">Disabled</span>
-        ),
-    },
-    {
-      id: 'provisioningType',
-      header: 'Provisioning Type',
-      sortable: true,
-      width: 150,
-      value: (r) => r.provisioningType,
+      width: 148,
+      value: (r) => r.accountCount + r.entitlementCount,
       render: (r) => (
-        <span className="capitalize text-text-secondary">{r.provisioningType}</span>
-      ),
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      width: 120,
-      render: (r) => (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            open(r.id);
-          }}
-          aria-label={`View details for ${r.name}`}
-          className="text-body-sm-strong text-text-link hover:underline"
-        >
-          View details
-        </button>
+        <ReconciliationCounts
+          name={r.name}
+          accounts={r.accountCount}
+          entitlements={r.entitlementCount}
+          href={`/iga/directory/applications/${r.id}?tab=reconciliation`}
+        />
       ),
     },
   ];
@@ -142,7 +151,10 @@ export default function ApplicationsListPage() {
       columns={columns}
       rows={apps}
       matches={(r, q) =>
-        r.name.toLowerCase().includes(q) || (r.description ?? '').toLowerCase().includes(q)
+        r.name.toLowerCase().includes(q) ||
+        (r.description ?? '').toLowerCase().includes(q) ||
+        r.discoverySource.toLowerCase().includes(q) ||
+        applicationOwners(r.id).some((o) => o.name.toLowerCase().includes(q))
       }
       onOpen={open}
       emptyTitle="No applications found"

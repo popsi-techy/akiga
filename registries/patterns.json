@@ -106,6 +106,20 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/patterns/object-detail-setup/page.tsx",
       "adr": "docs/architecture/decisions/0015-promote-object-setup-compositions.md"
+    },
+    {
+      "name": "bulk-selection-dock",
+      "status": "stable",
+      "problem": "The reader has selected rows and needs to act on them without losing the list or stealing a table row for a banner.",
+      "useWhen": "Selectable tables whose bulk actions apply to the current matching set (certify, revoke, belongs to me).",
+      "avoidWhen": "A single-row action. Filtering. Setup of a draft object — that is SetupChecklistDock.",
+      "components": [
+        "SelectionDock",
+        "DataTable",
+        "Button"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/selection-dock/page.tsx",
+      "adr": "docs/architecture/decisions/0016-selection-dock.md"
     }
   ]
 }

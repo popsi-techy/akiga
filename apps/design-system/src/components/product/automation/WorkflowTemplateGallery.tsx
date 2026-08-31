@@ -51,11 +51,24 @@ const AUDIENCE_CHIP: Record<
   Contractor: { intent: 'caution', icon: <BadgeOutlined /> },
 };
 
+function formatDraftDate(d = new Date()) {
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+/** Title-case the template name so the draft reads as a proper name, not a sentence. */
+function titleCaseName(name: string) {
+  return name.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+}
+
 /** A unique draft name so two empties created the same day do not collide in the list. */
 function scratchDraft() {
   const n = listWorkflows().filter((w) => /^New workflow/i.test(w.name)).length + 1;
-  const d = new Date();
-  return `New workflow ${n} · ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  return `New workflow ${n} · ${formatDraftDate()}`;
+}
+
+/** Template name plus the day it was created — e.g. Employee Onboarding - Aug 31, 2026. */
+function templateDraftName(name: string) {
+  return `${titleCaseName(name)} - ${formatDraftDate()}`;
 }
 
 /**
@@ -126,11 +139,12 @@ export function WorkflowTemplateGallery() {
   };
 
   const openDraft = (source: WorkflowTemplate | 'scratch') => {
+    if (source !== 'scratch' && !source.available) return;
     if (source === 'scratch') {
       setDraftName(scratchDraft());
       setDraftDescription('');
     } else {
-      setDraftName(source.name);
+      setDraftName(templateDraftName(source.name));
       setDraftDescription(source.summary);
     }
     setDraftSource(source);
@@ -145,7 +159,7 @@ export function WorkflowTemplateGallery() {
   };
 
   const usePreview = () => {
-    if (!preview) return;
+    if (!preview?.available) return;
     const template = preview;
     setPreview(null);
     openDraft(template);
@@ -161,7 +175,6 @@ export function WorkflowTemplateGallery() {
             name,
             description: draftDescription.trim(),
             eventType: draftSource.event,
-            root: draftSource.root,
           });
     const fromTemplate = draftSource !== 'scratch';
     closeDraft();
@@ -269,9 +282,11 @@ export function WorkflowTemplateGallery() {
             <Button variant="tertiary" onClick={() => setPreview(null)}>
               Close
             </Button>
-            <Button endIcon={<ArrowForwardOutlined />} onClick={usePreview}>
-              Use this template
-            </Button>
+            {preview?.available && (
+              <Button endIcon={<ArrowForwardOutlined />} onClick={usePreview}>
+                Use this template
+              </Button>
+            )}
           </>
         }
       >
@@ -332,19 +347,31 @@ function TemplateCard({
   onPreview: () => void;
   onUse: () => void;
 }) {
+  const soon = !template.available;
+  const audience = AUDIENCE_CHIP[template.audience];
   return (
-    <article className="flex h-full flex-col rounded-xl border border-border bg-surface p-4 transition-all duration-200 hover:border-border-strong hover:shadow-sm">
-      <div className="self-start">
+    <article
+      className={[
+        'flex h-full flex-col rounded-xl border border-border p-4 transition-all duration-200',
+        soon ? 'bg-subtle' : 'bg-surface hover:border-border-strong hover:shadow-sm',
+      ].join(' ')}
+    >
+      <div className="flex flex-wrap items-center gap-1.5 self-start">
         <StatusChip
-          intent={AUDIENCE_CHIP[template.audience].intent}
+          intent={soon ? 'neutral' : audience.intent}
           label={template.audience}
-          icon={AUDIENCE_CHIP[template.audience].icon}
+          icon={audience.icon}
         />
+        {soon && <StatusChip intent="neutral" label="Coming soon" />}
       </div>
-      <h3 className="mt-2 truncate text-body-strong text-text-primary">{template.name}</h3>
-      <p className="mt-0.5 line-clamp-2 text-body-sm text-text-secondary">{template.summary}</p>
+      <h3 className={`mt-2 truncate text-body-strong ${soon ? 'text-text-tertiary' : 'text-text-primary'}`}>
+        {template.name}
+      </h3>
+      <p className={`mt-0.5 line-clamp-2 text-body-sm ${soon ? 'text-text-tertiary' : 'text-text-secondary'}`}>
+        {template.summary}
+      </p>
       <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
-        <div className="flex min-w-0 items-center gap-1.5">
+        <div className={`flex min-w-0 items-center gap-1.5 ${soon ? 'opacity-50' : ''}`}>
           {template.systems.map((name) => (
             <SystemMark key={name} name={name} />
           ))}
@@ -352,18 +379,24 @@ function TemplateCard({
         <div className="flex shrink-0 items-center gap-3">
           <button
             type="button"
-            className="text-caption-medium text-text-secondary hover:text-text-primary hover:underline"
+            className={`text-caption-medium hover:underline ${
+              soon
+                ? 'text-text-tertiary hover:text-text-secondary'
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
             onClick={onPreview}
           >
             Preview
           </button>
-          <button
-            type="button"
-            className="rounded-sm bg-surface-inverse px-2.5 py-1 text-caption-medium text-text-inverse hover:bg-sidebar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-            onClick={onUse}
-          >
-            Use template
-          </button>
+          {!soon && (
+            <button
+              type="button"
+              className="rounded-sm bg-surface-inverse px-2.5 py-1 text-caption-medium text-text-inverse hover:bg-sidebar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+              onClick={onUse}
+            >
+              Use template
+            </button>
+          )}
         </div>
       </div>
     </article>

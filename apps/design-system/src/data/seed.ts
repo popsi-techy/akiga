@@ -222,7 +222,7 @@ export const approvalPolicySeed: import('./automation-types').ApprovalPolicy[] =
  * They also change on a different cadence, from the connector rather than from
  * governance.
  */
-export type AppDiscoverySource = 'IAM' | 'Direct';
+export type AppDiscoverySource = 'IAM' | 'Direct' | 'PAM';
 export type AppAuthorizationStatus = 'authorized' | 'pending';
 export type AppExternalProvisioning = 'enabled' | 'disabled';
 export type AppProvisioningType = 'manual' | 'auto';

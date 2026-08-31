@@ -5,6 +5,7 @@ import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import { AppIcon, Button, Drawer, Input, Switch, Tooltip } from '@ds/components';
 import type { AppTypeOption } from '@/data/app-types';
 import { onboardApplication } from '@/data/applications-store';
+import { suggestedApplicationName } from '@/data/directory';
 
 /** Short name for “Onboard {name} Application” — Google Workspace reads as Google. */
 function onboardAppLabel(name: string): string {
@@ -44,7 +45,7 @@ export function AddApplicationDrawer({
   // Reopening for a different type must not inherit the last one's answers.
   React.useEffect(() => {
     if (!open) return;
-    setName('');
+    setName(appType ? suggestedApplicationName(appType.name) : '');
     setDescription('');
     setAccessUrl('');
     setEnableProvisioning(false);
@@ -88,7 +89,7 @@ export function AddApplicationDrawer({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={save}>Save</Button>
+          <Button onClick={save}>Continue</Button>
         </>
       }
     >
@@ -96,7 +97,7 @@ export function AddApplicationDrawer({
         <Input
           label="Application Name"
           required
-          hint="Shown everywhere in IGA. Two applications of the same type are told apart by this name."
+          hint="Pre-filled from the type. Change it if this instance needs a different name."
           placeholder="Enter Application Name"
           value={name}
           onChange={(e) => setName(e.target.value)}

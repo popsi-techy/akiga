@@ -30,11 +30,9 @@ export type WfInsertLoc = { path: WfPathStep[]; index: number };
 /**
  * Palette sections.
  *
- * "Lifecycle" is separate from "Tasks" on purpose: a Task is something the
- * workflow does inside the IGA model (grant an entitlement, send a mail), where a
- * Lifecycle operation reaches into a connected system and changes an account's
- * existence or state. Mixing them put "Delete account" next to "Notification" in
- * one undifferentiated list of nine.
+ * Lifecycle types still exist on stored trees and in template previews, but they
+ * are not offered in the builder palette — the catalog is back to the original
+ * Filters / Tasks / Branching / Flow Control set, scoped per event.
  */
 export type WfSection = 'Filters' | 'Tasks' | 'Lifecycle' | 'Branching' | 'Flow Control';
 
@@ -67,13 +65,6 @@ export const BLOCK_PALETTE: WorkflowBlockType[] = [
   'userFilter',
   'assignEntities',
   'notification',
-  'provisionAccount',
-  'setAttributes',
-  'manageLicense',
-  'revokeAccess',
-  'accountAction',
-  'delegateAccess',
-  'triggerReview',
   'multisplitBranch',
   'wfConditionalBranch',
   'delay',
@@ -84,55 +75,14 @@ export const BLOCK_PALETTE: WorkflowBlockType[] = [
 /**
  * Blocks offered in the palette for a lifecycle event.
  *
- * Scoped by what the event can sensibly do, not by what has been built: a joiner
- * never revokes access, and a leaver never provisions an account. Shaping the
- * palette this way is the cheapest correctness control in the builder — an
- * operation that cannot appear cannot be mis-assembled.
- *
- * Flow control and branching are available to all three, because every event
- * needs to wait, split and stop.
+ * The original scoping, before the template library widened every event:
+ * Joiner gets the full original set; Mover is User Filter + Assign Entities;
+ * Leaver is Notification only. Empty sections stay hidden in the sidebar.
  */
-const COMMON: WorkflowBlockType[] = [
-  'userFilter',
-  'notification',
-  'multisplitBranch',
-  'wfConditionalBranch',
-  'delay',
-  'waitForUser',
-  'exit',
-];
-
 export function paletteBlocksForEvent(eventType?: WorkflowEventType | null): WorkflowBlockType[] {
-  if (eventType === 'joiner') {
-    return orderLikePalette([...COMMON, 'provisionAccount', 'setAttributes', 'assignEntities', 'manageLicense']);
-  }
-  if (eventType === 'mover') {
-    return orderLikePalette([
-      ...COMMON,
-      'setAttributes',
-      'assignEntities',
-      'revokeAccess',
-      'manageLicense',
-      'triggerReview',
-    ]);
-  }
-  if (eventType === 'leaver') {
-    return orderLikePalette([
-      ...COMMON,
-      'accountAction',
-      'revokeAccess',
-      'manageLicense',
-      'delegateAccess',
-      'setAttributes',
-    ]);
-  }
+  if (eventType === 'leaver') return ['notification'];
+  if (eventType === 'mover') return ['userFilter', 'assignEntities'];
   return BLOCK_PALETTE;
-}
-
-/** Keeps every event's palette in one canonical order, so blocks do not move about. */
-function orderLikePalette(types: WorkflowBlockType[]): WorkflowBlockType[] {
-  const wanted = new Set(types);
-  return BLOCK_PALETTE.filter((t) => wanted.has(t));
 }
 
 export function defaultAssignEntitiesConfig(): AssignEntitiesConfig {

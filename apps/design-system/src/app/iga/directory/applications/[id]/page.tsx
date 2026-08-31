@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import {
@@ -67,7 +67,8 @@ export default function ApplicationDetailPage() {
   const id = String(useParams().id);
   const router = useRouter();
   const toast = useToast();
-  const [tab, setTab] = React.useState('overview');
+  const requestedTab = useSearchParams().get('tab');
+  const [tab, setTab] = React.useState(requestedTab ?? 'overview');
   const [basicsOpen, setBasicsOpen] = React.useState(false);
   const [checklistOpen, setChecklistOpen] = React.useState(false);
   const [, bump] = React.useReducer((n: number) => n + 1, 0);

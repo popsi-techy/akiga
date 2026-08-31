@@ -70,6 +70,7 @@ export const navigation: NavSection[] = [
       { label: 'Mode Bar', href: '/components/mode-bar', status: 'ready' },
       { label: 'Selectable List', href: '/components/selectable-list', status: 'ready' },
       { label: 'Selection Panel', href: '/components/selection-panel', status: 'ready' },
+      { label: 'Selection Dock', href: '/components/selection-dock', status: 'ready' },
       { label: 'Picker Slot', href: '/components/picker-slot', status: 'ready' },
       { label: 'Segmented Control', href: '/components/segmented-control', status: 'ready' },
       { label: 'Quick Filter', href: '/components/quick-filter', status: 'ready' },

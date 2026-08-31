@@ -94,6 +94,8 @@ export { PickerSlot } from './PickerSlot/PickerSlot';
 export type { PickerSlotProps } from './PickerSlot/PickerSlot';
 export { SelectionPanel } from './SelectionPanel/SelectionPanel';
 export type { SelectionPanelProps, SelectionItem } from './SelectionPanel/SelectionPanel';
+export { SelectionDock } from './SelectionDock/SelectionDock';
+export type { SelectionDockProps } from './SelectionDock/SelectionDock';
 
 export { RadioCardGroup } from './RadioCardGroup/RadioCardGroup';
 export type { RadioCardGroupProps, RadioCardOption } from './RadioCardGroup/RadioCardGroup';

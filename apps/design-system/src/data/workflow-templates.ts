@@ -64,6 +64,11 @@ export interface WorkflowTemplate {
   event: WorkflowEventType;
   /** The population it serves, for the gallery's second-level grouping. */
   audience: 'Employee' | 'Student' | 'Contractor';
+  /**
+   * Built and usable today. The rest keep their place in the gallery so the
+   * set of lifecycle processes is still legible — they recede as coming soon.
+   */
+  available: boolean;
   name: string;
   /** One sentence, short enough to finish in three caption lines in the gallery rail. */
   summary: string;
@@ -83,6 +88,7 @@ const employeeOnboarding: WorkflowTemplate = {
   id: 'employee-onboarding',
   event: 'joiner',
   audience: 'Employee',
+  available: true,
   name: 'Employee onboarding',
   summary:
     'A new hire gets an account, mailbox, licence, birthright access, and a welcome to them and their manager.',
@@ -122,6 +128,7 @@ const employeeRehire: WorkflowTemplate = {
   id: 'employee-rehire',
   event: 'joiner',
   audience: 'Employee',
+  available: false,
   name: 'Employee rehire',
   summary:
     'A returning employee keeps their identity. The account is re-enabled with access for the new role.',
@@ -154,6 +161,7 @@ const studentEnrolment: WorkflowTemplate = {
   id: 'student-enrolment',
   event: 'joiner',
   audience: 'Student',
+  available: false,
   name: 'Student enrolment',
   summary:
     'A new admission gets an account, mailbox, class membership, and access to the LMS, library and portal.',
@@ -185,6 +193,7 @@ const studentReturning: WorkflowTemplate = {
   id: 'student-returning',
   event: 'joiner',
   audience: 'Student',
+  available: false,
   name: 'Returning student',
   summary:
     'A student back from leave is restored on the same identity, with access rebuilt from their programme.',
@@ -212,6 +221,7 @@ const contractorJoiner: WorkflowTemplate = {
   id: 'contractor-joiner',
   event: 'joiner',
   audience: 'Contractor',
+  available: false,
   name: 'Contractor onboarding',
   summary:
     'A contractor gets a time-boxed identity and only the access their engagement needs.',
@@ -250,6 +260,7 @@ const employeeMove: WorkflowTemplate = {
   id: 'employee-move',
   event: 'mover',
   audience: 'Employee',
+  available: true,
   name: 'Employee role or department change',
   summary:
     'A change of department, role or manager updates attributes and access, and puts the old permissions in review.',
@@ -292,6 +303,7 @@ const studentMove: WorkflowTemplate = {
   id: 'student-move',
   event: 'mover',
   audience: 'Student',
+  available: false,
   name: 'Student programme change',
   summary:
     'A change of major, programme or enrolment rebuilds class membership and application access.',
@@ -319,6 +331,7 @@ const employeeOffboarding: WorkflowTemplate = {
   id: 'employee-offboarding',
   event: 'leaver',
   audience: 'Employee',
+  available: true,
   name: 'Employee offboarding',
   summary:
     'Sign-in is killed at once, then access, licence, mailbox and files are wound down after retention.',
@@ -352,6 +365,7 @@ const studentGraduation: WorkflowTemplate = {
   id: 'student-graduation',
   event: 'leaver',
   audience: 'Student',
+  available: false,
   name: 'Student graduation',
   summary:
     'Access stays through a grace period for transcripts, then becomes an alumni identity.',
@@ -379,6 +393,7 @@ const studentWithdrawal: WorkflowTemplate = {
   id: 'student-withdrawal',
   event: 'leaver',
   audience: 'Student',
+  available: false,
   name: 'Student dismissal or withdrawal',
   summary:
     'Application access stops at once; mail stays briefly, then the account is deactivated. No alumni conversion.',
@@ -401,6 +416,7 @@ const contractorEnd: WorkflowTemplate = {
   id: 'contractor-end',
   event: 'leaver',
   audience: 'Contractor',
+  available: false,
   name: 'Contractor contract end',
   summary:
     'Everyone is warned a week before the contract ends; on the date the account is disabled unless it was extended.',

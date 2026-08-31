@@ -757,6 +757,22 @@
       "notes": "The \"what you selected\" side panel for multi-select drawers. Pairs with SelectableList when the selection grows long enough to lose track of."
     },
     {
+      "name": "SelectionDock",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/SelectionDock/SelectionDock.tsx",
+      "extends": null,
+      "variants": [
+        "default"
+      ],
+      "states": [
+        "hidden",
+        "partial",
+        "all-selected"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/selection-dock/page.tsx",
+      "notes": "Bottom-aligned floating inverse toolbar for bulk work on a selectable list. Uses background.sidebar (same as the navbar) so it lifts off the light table. Compact: count badge, separators, tertiary xs buttons in inverse text. Overlay only — does not change table height. Replaces DataTable selectionToolbar + toolbar icon actions. Sit in a relative work surface. Not SetupBar. See ADR-0016."
+    },
+    {
       "name": "StatTile",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/StatTile/StatTile.tsx",

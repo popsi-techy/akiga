@@ -15,6 +15,7 @@ import ChevronRight from '@mui/icons-material/ChevronRight';
 import {
   Avatar,
   Button,
+  IdentityCell,
   DataTable,
   Dialog,
   FilterDrawer,
@@ -25,6 +26,7 @@ import {
   Stepper,
   Tooltip,
   useToast,
+  SelectionDock,
   type Column,
   type FilterGroup,
   type FilterSelection,
@@ -105,6 +107,14 @@ function BulkIcon({
 }
 
 export default function AccessCertificationReviewPage() {
+  return <AccessCertificationReview bulkSurface="row" />;
+}
+
+export function AccessCertificationReview({
+  bulkSurface = 'row',
+}: {
+  bulkSurface?: 'row' | 'dock';
+}) {
   const toast = useToast();
   const [campaign, setCampaign] = React.useState<ReviewCampaign | null>(null);
   const [loaded, setLoaded] = React.useState(false);
@@ -250,12 +260,7 @@ export default function AccessCertificationReviewPage() {
       sortable: true,
       wrap: true,
       value: (r) => r.name,
-      render: (r) => (
-        <div className="flex items-center gap-2.5">
-          <Avatar name={r.name} initials={r.name.charAt(0)} size="sm" kind="person" />
-          <span className="truncate text-body-sm-strong text-text-primary">{r.name}</span>
-        </div>
-      ),
+      render: (r) => <IdentityCell name={r.name} kind="person" />,
     },
     {
       id: 'kind',
@@ -334,12 +339,7 @@ export default function AccessCertificationReviewPage() {
       sortable: true,
       wrap: true,
       value: (r) => r.name,
-      render: (r) => (
-        <div className="flex items-center gap-2.5">
-          <Avatar name={r.name} initials={r.name.charAt(0)} size="sm" kind="person" />
-          <span className="truncate text-body-sm-strong text-text-primary">{r.name}</span>
-        </div>
-      ),
+      render: (r) => <IdentityCell name={r.name} kind="person" />,
     },
     {
       id: 'entitlement',
@@ -525,7 +525,7 @@ export default function AccessCertificationReviewPage() {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col px-5 pt-4">
+      <div className="relative flex min-h-0 flex-1 flex-col px-5 pt-4">
         {step === 0 && (
           <div
             role="note"
@@ -561,7 +561,7 @@ export default function AccessCertificationReviewPage() {
           >
             Filter{filterCount > 0 ? ` (${filterCount})` : ''}
           </Button>
-          {actionableIds.length > 0 && (
+          {bulkSurface === 'row' && actionableIds.length > 0 && (
             <div className="flex items-center gap-1 border-l border-border pl-3">
               {step === 0 ? (
                 <>
@@ -602,7 +602,7 @@ export default function AccessCertificationReviewPage() {
           )}
         </div>
 
-        <div className="min-h-0 flex-1 pb-4">
+        <div className="relative min-h-0 flex-1 pb-4">
           {step === 0 ? (
             <DataTable<ReviewAccount>
               columns={ownershipColumns}
@@ -610,7 +610,7 @@ export default function AccessCertificationReviewPage() {
               selectable
               selectedIds={selectedIds}
               onSelectionChange={setSelectedIds}
-              selectionToolbar={selectionToolbar}
+              selectionToolbar={bulkSurface === 'row' ? selectionToolbar : undefined}
               fillHeight
               defaultRowsPerPage={12}
               rowsPerPageOptions={[12, 24]}
@@ -628,7 +628,7 @@ export default function AccessCertificationReviewPage() {
               selectable
               selectedIds={selectedIds}
               onSelectionChange={setSelectedIds}
-              selectionToolbar={selectionToolbar}
+              selectionToolbar={bulkSurface === 'row' ? selectionToolbar : undefined}
               fillHeight
               defaultRowsPerPage={12}
               rowsPerPageOptions={[12, 24]}
@@ -639,6 +639,57 @@ export default function AccessCertificationReviewPage() {
                   : 'Try a different search or clear filters.'
               }
             />
+          )}
+          {bulkSurface === 'dock' && (
+            <SelectionDock
+              open={actionableIds.length > 0}
+              count={actionableIds.length}
+              total={visibleIds.length}
+              noun={noun}
+              allSelected={allMatchingSelected}
+              onSelectAll={() => setSelectedIds(visibleIds)}
+              onClear={() => setSelectedIds([])}
+            >
+              {step === 0 ? (
+                <>
+                  <Button
+                    variant="tertiary"
+                    size="xs"
+                    startIcon={<HowToRegOutlined />}
+                    onClick={() => applyOwnershipBulk(actionableIds, 'mine')}
+                  >
+                    Belongs to me
+                  </Button>
+                  <Button
+                    variant="tertiary"
+                    size="xs"
+                    startIcon={<PersonOffOutlined />}
+                    onClick={() => setBulkPending({ kind: 'not-mine', ids: actionableIds })}
+                  >
+                    Does not belong
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="tertiary"
+                    size="xs"
+                    startIcon={<CheckCircleOutline />}
+                    onClick={() => applyEntitlementBulk(actionableIds, 'certify')}
+                  >
+                    Certify
+                  </Button>
+                  <Button
+                    variant="tertiary"
+                    size="xs"
+                    startIcon={<CancelOutlined />}
+                    onClick={() => setBulkPending({ kind: 'revoke', ids: actionableIds })}
+                  >
+                    Revoke
+                  </Button>
+                </>
+              )}
+            </SelectionDock>
           )}
         </div>
       </div>

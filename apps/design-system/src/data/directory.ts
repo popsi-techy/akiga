@@ -30,7 +30,7 @@ import {
   getOnboardedApplication,
   type OnboardedApplication,
 } from './applications-store';
-import type { OwnedEntityType } from './entity-owners';
+import { getOwners, type OwnedEntityType } from './entity-owners';
 
 // ---- back-compat (consumed by automation approver pickers) ------------
 export interface DirUser {
@@ -166,6 +166,12 @@ const toEntRow = (e: FlatEntitlement): EntitlementRow => ({
 /** Owner/reviewer ids → User Identity rows (skips unknown ids). */
 export function resolvePeople(ids: string[]): UserIdentityRow[] {
   return ids.map((id) => identityById.get(id)).filter(Boolean).map((u) => toUserRow(u as SeedUserIdentity));
+}
+
+/** Individual owners of an application — seed plus anything saved in the owners store. */
+export function applicationOwners(id: string): { id: string; name: string }[] {
+  const seed = catalogApps.find((a) => a.id === id)?.ownerIds ?? [];
+  return resolvePeople(getOwners('application', id, seed)).map((p) => ({ id: p.id, name: p.name }));
 }
 
 /**
@@ -307,7 +313,8 @@ const onboardedRow = (a: OnboardedApplication): ApplicationRow => ({
   accountCount: 0,
   entitlementCount: 0,
   appType: a.appType,
-  discoverySource: a.appTypeCategory === 'iam' ? 'IAM' : 'Direct',
+  discoverySource:
+    a.appTypeCategory === 'iam' ? 'IAM' : a.appTypeCategory === 'pam' ? 'PAM' : 'Direct',
   authorizationStatus: 'authorized',
   externalProvisioning: a.enableProvisioning ? 'enabled' : 'disabled',
   provisioningType: a.enableProvisioning ? 'auto' : 'manual',
@@ -340,6 +347,22 @@ export function listOnboardedApplicationRows(): ApplicationRow[] {
 export function listApplications(): ApplicationRow[] {
   // Onboarded first: the one you just added is the one you came back to see.
   return [...listOnboardedApplicationRows(), ...listCataloguedApplications()];
+}
+
+/**
+ * A unique instance name for a newly onboarded type.
+ *
+ * The type name is the honest default — two Salesforce tenants share a type and
+ * differ by name — so the first one is "Salesforce" and the next is
+ * "Salesforce 2", skipping anything already in the catalog or the onboard store.
+ */
+export function suggestedApplicationName(typeName: string): string {
+  const used = new Set(listApplications().map((a) => a.name.trim().toLowerCase()));
+  const base = typeName.trim();
+  if (!used.has(base.toLowerCase())) return base;
+  let n = 2;
+  while (used.has(`${base} ${n}`.toLowerCase())) n += 1;
+  return `${base} ${n}`;
 }
 export function getApplicationDetail(id: string) {
   const onboarded = getOnboardedApplication(id);
