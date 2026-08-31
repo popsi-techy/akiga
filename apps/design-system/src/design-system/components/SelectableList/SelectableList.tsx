@@ -55,7 +55,7 @@ export function SelectableList({
   const selFill =
     tone === 'danger'
       ? 'bg-[var(--ds-color-status-danger-subtle)]'
-      : 'bg-brand-subtle';
+      : 'bg-surface-selected';
   return (
     <div role="group" aria-label={ariaLabel} className={plain ? 'space-y-2' : 'space-y-1.5'}>
       {items.map((item) => {

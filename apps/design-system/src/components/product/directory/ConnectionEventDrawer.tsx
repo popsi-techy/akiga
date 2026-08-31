@@ -7,7 +7,7 @@ import { Button, Drawer, Input, Select, Switch, Tabs, Tooltip, useToast } from '
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import {
   BODY_TYPES,
-  EVENT_KINDS,
+  eventKindMeta,
   HTTP_METHODS,
   emptyEvent,
   saveConnectionEvent,
@@ -32,6 +32,7 @@ export function ConnectionEventDrawer({
   applicationId,
   authorizations,
   existing,
+  initialKind,
   onClose,
   onSaved,
 }: {
@@ -40,6 +41,8 @@ export function ConnectionEventDrawer({
   /** The application's stored authorizations — an event signs in with one of them. */
   authorizations: AppAuthorization[];
   existing: ConnectionEvent | null;
+  /** When adding from the catalog, lock the drawer to this event type. */
+  initialKind?: EventKind;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -50,10 +53,10 @@ export function ConnectionEventDrawer({
 
   React.useEffect(() => {
     if (!open) return;
-    setDraft(existing ? { ...existing } : emptyEvent(applicationId));
+    setDraft(existing ? { ...existing, enabled: true } : emptyEvent(applicationId, initialKind));
     setSection('headers');
     setTouched(false);
-  }, [open, existing, applicationId]);
+  }, [open, existing, applicationId, initialKind]);
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((d) => ({ ...d, [key]: value }));
 
@@ -105,13 +108,16 @@ export function ConnectionEventDrawer({
           onChange={(e) => set('name', e.target.value)}
           error={required(draft.name)}
         />
-        <Select
-          label="Event"
-          required
-          options={EVENT_KINDS.map((k) => ({ value: k.value, label: k.label }))}
-          value={draft.kind}
-          onChange={(v) => set('kind', v as EventKind)}
-        />
+        <div>
+          <p className="mb-1.5 text-body-sm-strong text-text-primary">Event</p>
+          <p className="text-body-sm text-text-secondary">
+            {eventKindMeta(draft.kind).label}
+            <span className="text-text-tertiary">
+              {' · '}
+              {eventKindMeta(draft.kind).direction === 'inbound' ? 'Inbound' : 'Outbound'}
+            </span>
+          </p>
+        </div>
 
         {authorizations.length === 0 ? (
           <div>

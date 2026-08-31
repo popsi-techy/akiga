@@ -73,7 +73,7 @@ akiga is a **light** system with a short ladder. Depth comes from tone and hairl
 | Recessed | `background.subtle` `#F9FAFB` | Working areas that sit *behind* content — workspace columns, canvas |
 | Sunken | `background.sunken` `#F8F8FA` | Inset strips: trail bars, table headers, code blocks |
 | Surface | `surface.default` `#FFFFFF` | Cards, rows, menus — the thing you read |
-| Selected | `surface.selected` `#FFF4EE` | The row or node you picked |
+| Selected | `surface.selected` `#FFF4EE` | The row or node you picked (orange[50]) |
 
 Note that canvas and surface are both white. **That is deliberate**: a card is distinguished by its
 hairline and its padding, not by being a different white. Only *recessed* areas tint.

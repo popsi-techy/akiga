@@ -35,6 +35,12 @@ export const muiTheme = createTheme({
     action: {
       disabled: color.text.disabled,
       disabledBackground: color.surface.disabled,
+      // MUI TableRow / ListItem still mix `primary.main` at `selectedOpacity`
+      // (~0.08) unless we override the component. These values cover any
+      // consumer that reads `action.selected` directly.
+      selected: color.surface.selected,
+      selectedOpacity: 1,
+      hover: color.surface.hover,
     },
   },
   shape: { borderRadius: 8 },
@@ -147,6 +153,44 @@ export const muiTheme = createTheme({
     },
     // Contained-thumb baseline for any MUI Switch still used outside the DS
     // wrapper. Prefer `@ds/components` Switch — it owns size + full token styling.
+    // Selected rows / list items use `surface.selected` (orange[50] #FFF4EE),
+    // not MUI's default 8% wash of brand orange.
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          '&.Mui-selected': {
+            backgroundColor: 'var(--ds-color-surface-selected)',
+          },
+          '&.Mui-selected:hover': {
+            backgroundColor: 'var(--ds-color-surface-selectedHover)',
+          },
+        },
+      },
+    },
+    MuiListItemButton: {
+      styleOverrides: {
+        root: {
+          '&.Mui-selected': {
+            backgroundColor: 'var(--ds-color-surface-selected)',
+          },
+          '&.Mui-selected:hover': {
+            backgroundColor: 'var(--ds-color-surface-selectedHover)',
+          },
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          '&.Mui-selected': {
+            backgroundColor: 'var(--ds-color-surface-selected)',
+          },
+          '&.Mui-selected:hover': {
+            backgroundColor: 'var(--ds-color-surface-selectedHover)',
+          },
+        },
+      },
+    },
     MuiSwitch: {
       defaultProps: { disableRipple: true },
       styleOverrides: {

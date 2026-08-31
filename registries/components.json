@@ -770,7 +770,7 @@
         "all-selected"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/selection-dock/page.tsx",
-      "notes": "Bottom-aligned floating inverse toolbar for bulk work on a selectable list. Uses background.sidebar (same as the navbar) so it lifts off the light table. Compact: count badge, separators, tertiary xs buttons in inverse text. Overlay only — does not change table height. Replaces DataTable selectionToolbar + toolbar icon actions. Sit in a relative work surface. Not SetupBar. See ADR-0016."
+      "notes": "Floating card for bulk work on a selectable list. placement bottom (default): inverse toolbar at the foot, same sidebar colour as the navbar. placement header: light Notion-style pill on the table header — drag handle, count, Select all N (Clear all when the set is full), icon actions. Overlay only — does not change table height. The handle moves the pill inside its relative work surface; position resets when the dock closes. Replaces DataTable selectionToolbar + toolbar icon actions. Sit in a relative work surface. Not SetupBar. See ADR-0016."
     },
     {
       "name": "StatTile",

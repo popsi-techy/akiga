@@ -75,6 +75,13 @@ for (const [bn, bg] of Object.entries(backgrounds)) {
   checks.push({ label: `text.link on ${bn}`, fg: color.text.link, bg, min: AA_TEXT });
 }
 checks.push({ label: 'text.brand on surface', fg: color.text.brand, bg: color.surface.default, min: AA_TEXT });
+// Selected rows are orange[50] and carry the same body/link type as a white row.
+checks.push({ label: 'text.primary on surface.selected', fg: color.text.primary, bg: color.surface.selected, min: AA_TEXT });
+checks.push({ label: 'text.secondary on surface.selected', fg: color.text.secondary, bg: color.surface.selected, min: AA_TEXT });
+checks.push({ label: 'text.tertiary on surface.selected', fg: color.text.tertiary, bg: color.surface.selected, min: AA_TEXT });
+checks.push({ label: 'text.link on surface.selected', fg: color.text.link, bg: color.surface.selected, min: AA_TEXT });
+checks.push({ label: 'text.primary on surface.selectedHover', fg: color.text.primary, bg: color.surface.selectedHover, min: AA_TEXT });
+checks.push({ label: 'text.secondary on surface.selectedHover', fg: color.text.secondary, bg: color.surface.selectedHover, min: AA_TEXT });
 // Brand-colored text on the brand tint (active nav, brand labels) uses the darkest orange.
 checks.push({ label: 'brand.primaryActive on brand.subtle', fg: color.brand.primaryActive, bg: color.brand.subtle, min: AA_TEXT });
 // Avatar initials, however, are brand.primary by owner's decision — see the waiver.
@@ -174,6 +181,8 @@ checks.push({ label: 'border.focus on canvas', fg: color.border.focus, bg: color
 // rows (surface) and striped/selected ones (subtle) — so both must clear 3:1.
 checks.push({ label: 'border.control on surface', fg: color.border.control, bg: color.surface.default, min: AA_UI });
 checks.push({ label: 'border.control on subtle', fg: color.border.control, bg: color.background.subtle, min: AA_UI });
+checks.push({ label: 'border.control on surface.selected', fg: color.border.control, bg: color.surface.selected, min: AA_UI });
+checks.push({ label: 'icon.default on surface.selected', fg: color.icon.default, bg: color.surface.selected, min: AA_UI });
 // Graphical fills (bars, chart segments, legend dots) carry meaning, so each must
 // clear 3:1 against the card it sits on and against the subtle track behind it.
 for (const [k, s] of Object.entries(color.status)) {

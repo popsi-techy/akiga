@@ -15,7 +15,7 @@ export default function SelectionDockDocs() {
       <PageHeader
         eyebrow="Components"
         title="Selection Dock"
-        description="A compact inverse toolbar for bulk work. It sits on the same sidebar colour as the navbar so it does not merge with the table. Count in a badge, hairline separators, tertiary buttons — the table height does not change."
+        description="A floating card for bulk work. `bottom` is an inverse toolbar at the foot of the list. `header` is a light pill on the table header — drag handle, count, Select all N (Clear all when the set is full), icon actions — so the table height does not change. Drag the handle to move the pill inside the work surface."
       />
 
       <Section
@@ -46,6 +46,27 @@ export default function SelectionDockDocs() {
             Demo count: {count} of {total}. Click Select all (it becomes Deselect all), an action, or the close control.
           </p>
         </Example>
+        <Example label="on the table header">
+          <div className="relative h-40 overflow-hidden rounded-lg border border-border bg-canvas">
+            <div className="border-b border-border bg-sunken px-4 py-2.5 text-caption text-text-secondary">
+              Header row
+            </div>
+            <SelectionDock
+              open
+              placement="header"
+              count={count}
+              total={total}
+              noun="account"
+              allSelected={count === total}
+              onSelectAll={() => setCount(total)}
+              onClear={() => setCount(0)}
+            >
+              <Button variant="tertiary" size="xs" startIcon={<CheckCircleOutline />}>
+                Certify
+              </Button>
+            </SelectionDock>
+          </div>
+        </Example>
       </Section>
 
       <Section title="When to use">
@@ -54,6 +75,7 @@ export default function SelectionDockDocs() {
             'A selectable table whose bulk actions used to live in the first row or next to Filter.',
             'Place the dock in a `relative` work surface so it stays inside the content column.',
             'Tertiary (text) `xs` buttons on the card — icon + label, no fill or outline.',
+            'On `header`, drag the six-dot handle to park the pill where it is not covering the row you are reading.',
           ]}
           donts={[
             'The in-table selection banner (DataTable `selectionToolbar`) on the same screen.',
@@ -76,7 +98,8 @@ export default function SelectionDockDocs() {
             { name: 'total', type: 'number', description: 'How many rows the current set has — used for Select all N.' },
             { name: 'noun', type: 'string', description: 'Singular, e.g. account or entitlement.' },
             { name: 'nounPlural', type: 'string', description: 'Defaults to noun + s.' },
-            { name: 'allSelected', type: 'boolean', description: 'Switches Select all N to Deselect all N.' },
+            { name: 'allSelected', type: 'boolean', description: 'header: Select all N becomes Clear all. bottom: Select all N becomes Deselect all N.' },
+            { name: 'placement', type: "'bottom' | 'header'", default: "'bottom'", description: 'bottom: inverse card at the foot of the list. header: light Notion-style pill on the table header, with a drag handle to move it.' },
             { name: 'onSelectAll', type: '() => void', description: 'Selects every row in the current set.' },
             { name: 'onClear', type: '() => void', description: 'Clears the selection and dismisses the card.' },
             { name: 'children', type: 'ReactNode', description: 'Bulk actions — tertiary xs Buttons.' },

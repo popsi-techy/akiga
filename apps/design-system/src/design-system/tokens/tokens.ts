@@ -20,7 +20,8 @@ export const color = {
   surface: {
     default: p.white, //         cards, sheets, menus
     hover: p.neutral[50],
-    selected: p.orange[50], //   selected row / active tint
+    selected: p.orange[50], //       #FFF4EE selected row / list pick
+    selectedHover: p.orange[100], // #FFE5D8 selected + hover
     disabled: p.neutral[100],
     inverse: p.ink[800],
   },

@@ -14,14 +14,38 @@
 import { catalogApps, appProfileFor } from './seed';
 
 export const EVENT_KINDS = [
-  { value: 'user-import', label: 'User import' },
-  { value: 'user-create', label: 'User create' },
-  { value: 'user-update', label: 'User update' },
-  { value: 'user-deactivate', label: 'User deactivate' },
-  { value: 'group-import', label: 'Group import' },
-  { value: 'entitlement-import', label: 'Entitlement import' },
+  { value: 'accounts-fetch', label: 'Accounts Fetch', direction: 'inbound' },
+  { value: 'entitlements-fetch', label: 'Entitlements Fetch', direction: 'inbound' },
+  { value: 'accounts-entitlements-fetch', label: 'Accounts and Entitlements Fetch', direction: 'inbound' },
+  { value: 'account-create', label: 'Account Create', direction: 'outbound' },
+  { value: 'account-update', label: 'Account Update', direction: 'outbound' },
+  { value: 'account-delete', label: 'Account Delete', direction: 'outbound' },
+  { value: 'group-create', label: 'Group Create', direction: 'outbound' },
+  { value: 'group-update', label: 'Group Update', direction: 'outbound' },
+  { value: 'group-delete', label: 'Group Delete', direction: 'outbound' },
+  { value: 'account-entitlement-assignment', label: 'Account Entitlement Assignment', direction: 'outbound' },
+  { value: 'account-entitlement-revocation', label: 'Account Entitlement Revocation', direction: 'outbound' },
 ] as const;
 export type EventKind = (typeof EVENT_KINDS)[number]['value'];
+export type EventDirection = (typeof EVENT_KINDS)[number]['direction'];
+
+const KIND_ALIASES: Record<string, EventKind> = {
+  'user-import': 'accounts-fetch',
+  'user-create': 'account-create',
+  'user-update': 'account-update',
+  'user-deactivate': 'account-delete',
+  'group-import': 'group-create',
+  'entitlement-import': 'entitlements-fetch',
+};
+
+export function eventKindMeta(kind: EventKind) {
+  return EVENT_KINDS.find((k) => k.value === kind) ?? EVENT_KINDS[0];
+}
+
+export function normalizeEventKind(kind: string): EventKind {
+  if (kind in KIND_ALIASES) return KIND_ALIASES[kind];
+  return EVENT_KINDS.some((k) => k.value === kind) ? (kind as EventKind) : EVENT_KINDS[0].value;
+}
 
 export const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
 export type HttpMethod = (typeof HTTP_METHODS)[number];
@@ -141,10 +165,13 @@ export function eventStatus(e: ConnectionEvent): EventStatus {
   return missingPieces(e).length === 0 ? 'ready' : 'partial';
 }
 
-export const emptyEvent = (applicationId: string): Omit<ConnectionEvent, 'id' | 'updatedAt'> => ({
+export const emptyEvent = (
+  applicationId: string,
+  kind: EventKind = EVENT_KINDS[0].value,
+): Omit<ConnectionEvent, 'id' | 'updatedAt'> => ({
   applicationId,
-  name: '',
-  kind: 'user-import',
+  name: eventKindMeta(kind).label,
+  kind,
   authorizationId: null,
   method: 'GET',
   url: '',
@@ -166,7 +193,7 @@ export const emptyEvent = (applicationId: string): Omit<ConnectionEvent, 'id' | 
 });
 
 const STORE_KEY = 'iga.connectionEvents.v1';
-const SEED_VERSION = 1;
+const SEED_VERSION = 2;
 
 interface Store {
   version?: number;
@@ -186,8 +213,8 @@ const seed: ConnectionEvent[] = catalogApps
     {
       ...emptyEvent(app.id),
       id: `evt-${app.id}-import`,
-      name: 'Nightly user import',
-      kind: 'user-import' as const,
+      name: 'Accounts Fetch',
+      kind: 'accounts-fetch' as const,
       authorizationId: `auth-${app.id}`,
       method: 'GET' as const,
       url: `https://api.${app.id.replace('app-', '')}.example.com/v1/users`,
@@ -209,7 +236,7 @@ const seed: ConnectionEvent[] = catalogApps
       ...emptyEvent(app.id),
       id: `evt-${app.id}-deactivate`,
       name: 'Deactivate leaver',
-      kind: 'user-deactivate' as const,
+      kind: 'account-delete' as const,
       authorizationId: `auth-${app.id}`,
       method: 'POST' as const,
       url: '',
@@ -237,6 +264,9 @@ function readStore(): Store {
     if (!parsed || typeof parsed !== 'object' || !parsed.events) return seedStore();
     if (parsed.version !== SEED_VERSION) {
       for (const e of seed) if (!parsed.events[e.id]) parsed.events[e.id] = structuredClone(e);
+      for (const e of Object.values(parsed.events)) {
+        e.kind = normalizeEventKind(e.kind);
+      }
       parsed.version = SEED_VERSION;
       window.localStorage.setItem(STORE_KEY, JSON.stringify(parsed));
     }

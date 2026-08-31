@@ -18,14 +18,15 @@ We will own a **SelectionDock** in the Design System: a bottom-aligned floating
 card on the work surface. It holds the count in a badge, select-all and the
 bulk actions as tertiary (text) buttons separated by hairlines, and clear.
 
-The in-table `selectionToolbar` remains for v1 screens. New bulk-selection
-surfaces MUST use SelectionDock and MUST NOT also pass `selectionToolbar`.
+New bulk-selection surfaces MUST use SelectionDock and MUST NOT also pass
+`selectionToolbar`. Access Certification V1 uses `placement="header"` (a
+Notion-style pill on the table header). V2 uses the default `bottom` dock.
 
 This is not SetupBar. SetupBar walks a draft’s remaining steps and is parked.
 
 ## Consequences
 
-- Access Certification V2 is the first product caller.
+- Access Certification V1 uses `placement="header"`; V2 uses `bottom`.
 - The dock’s ancestor MUST be `relative` so it does not cover the sidebar.
 - Icon-only bulk actions beside Filter are a defect on a dock screen.
 

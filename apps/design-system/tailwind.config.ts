@@ -64,6 +64,7 @@ const config: Config = {
           DEFAULT: 'var(--ds-color-surface-default)',
           hover: 'var(--ds-color-surface-hover)',
           selected: 'var(--ds-color-surface-selected)',
+          'selected-hover': 'var(--ds-color-surface-selectedHover)',
           disabled: 'var(--ds-color-surface-disabled)',
           inverse: 'var(--ds-color-surface-inverse)',
         },

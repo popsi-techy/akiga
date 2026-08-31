@@ -59,7 +59,7 @@ Do **not** use page `h1`–`h4` on settings screens. `h5` is the largest visible
 | Grey well / striped | `background.subtle` / `bg-subtle` | `#F9FAFB` | `SettingsRow surface="subtle"` |
 | Card / nested panel | `surface.default` / `bg-surface` | `#FFFFFF` | Nested panel, rail Card |
 | Row hover | `surface.hover` | `#F9FAFB` | Hub item, Reset/Edit, NavList |
-| Selected / brand tint | `surface.selected` | `#FFF4EE` | Selected rows elsewhere |
+| Selected / brand tint | `surface.selected` | `#FFF4EE` | Selected rows / list picks |
 | Default border | `border.default` | `#E1E4E8` | Dividers, chips, tabs baseline |
 | Strong border | `border.strong` | `#C4C9D2` | Hub icon well outline |
 | Brand / focus / tab underline | `brand.primary` | `#EB5424` | Save, tabs, NavList outline, focus |

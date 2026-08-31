@@ -35,6 +35,8 @@ export default function ColorsPage() {
             <Swatch value={color.background.subtle} name="background.subtle" ring />
             <Swatch value={color.background.sidebar} name="background.sidebar" />
             <Swatch value={color.surface.hover} name="surface.hover" ring />
+            <Swatch value={color.surface.selected} name="surface.selected" ring />
+            <Swatch value={color.surface.selectedHover} name="surface.selectedHover" ring />
             <Swatch value={color.border.default} name="border.default" ring />
             <Swatch value={color.border.strong} name="border.strong" ring />
           </div>

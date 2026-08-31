@@ -108,6 +108,11 @@ export interface DataTableProps<Row extends { id: string }> {
    * across-row consequence.
    */
   selectionToolbar?: React.ReactNode;
+  /**
+   * `surface.selected` fill while selected. Turn off when selection is shown
+   * only by the checkbox (and a page-level dock). @default true
+   */
+  highlightSelectedRows?: boolean;
   /** Fill the parent's height; body scrolls internally with a sticky header and
    *  pinned pagination. The parent must have a definite height. @default false */
   fillHeight?: boolean;
@@ -131,6 +136,7 @@ export function DataTable<Row extends { id: string }>({
   onSelectionChange,
   selectedIds,
   selectionToolbar,
+  highlightSelectedRows = true,
   fillHeight = false,
 }: DataTableProps<Row>) {
   const [order, setOrder] = React.useState<Order>('asc');
@@ -390,8 +396,15 @@ export function DataTable<Row extends { id: string }>({
                     }
                     sx={{
                       cursor: onRowClick ? 'pointer' : 'default',
-                      '&.Mui-selected': { backgroundColor: 'var(--ds-color-surface-selected)' },
-                      '&.Mui-selected:hover': { backgroundColor: 'var(--ds-color-brand-subtleHover)' },
+                      ...(highlightSelectedRows
+                        ? {
+                            '&.Mui-selected': { backgroundColor: 'var(--ds-color-surface-selected)' },
+                            '&.Mui-selected:hover': { backgroundColor: 'var(--ds-color-surface-selectedHover)' },
+                          }
+                        : {
+                            '&.Mui-selected': { backgroundColor: 'transparent' },
+                            '&.Mui-selected:hover': { backgroundColor: 'var(--ds-color-surface-hover)' },
+                          }),
                     }}
                   >
                     {selectable && (
