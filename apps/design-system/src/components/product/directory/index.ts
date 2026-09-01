@@ -13,7 +13,6 @@ export { DirectoryListPage } from './DirectoryListPage';
 export { entitlementColumns, applicationColumns, accountColumns, peopleColumns, roleColumns } from './relationColumns';
 export { AuthorizationDrawer } from './AuthorizationDrawer';
 export { ProvisioningSetupTab } from './ProvisioningSetupTab';
-export { ProvisioningRules } from './ProvisioningRules';
 export { ConnectionConfiguration } from './ConnectionConfiguration';
 export { ConnectionEventDrawer } from './ConnectionEventDrawer';
 export { AttributeMappingDrawer } from './AttributeMappingDrawer';

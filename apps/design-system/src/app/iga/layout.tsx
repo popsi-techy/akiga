@@ -18,7 +18,7 @@ export default function IgaLayout({ children }: { children: React.ReactNode }) {
               the rail's collapsed width via AppFrame. */}
           <AppFrame>
             <ProductTopbar />
-            <main className="ds-scroll flex-1 overflow-y-auto px-8 py-6">{children}</main>
+            <main className="ds-scroll min-h-0 flex-1 overflow-y-auto px-8 py-6">{children}</main>
           </AppFrame>
         </BreadcrumbProvider>
       </SidebarProvider>

@@ -20,7 +20,6 @@ import {
 } from '@ds/components';
 import { AuthorizationDrawer } from './AuthorizationDrawer';
 import { ConnectionConfiguration } from './ConnectionConfiguration';
-import { ProvisioningRules } from './ProvisioningRules';
 import {
   GRANT_TYPES,
   METHOD_LABEL,
@@ -30,18 +29,17 @@ import {
   type AppAuthorization,
 } from '@/data/provisioning-auth';
 
-type Section = 'authorization' | 'connection' | 'rules';
+type Section = 'authorization' | 'connection';
 
 /**
  * Provisioning — everything the connector needs before it can act on this
- * application. Authorization, then connection configuration, then provisioning
- * rules (attribute mapping): sign-in has to exist before a call can be tested,
- * and a call has to exist before its fields can be mapped.
+ * application. Authorization, then connection configuration: sign-in has to
+ * exist before a call can be tested.
  *
- * The three jobs are a segmented control at the top, not a list in a card down
+ * The two jobs are a segmented control at the top, not a list in a card down
  * the left — same as Emergency Access assignments. A NavList beside the detail
- * rail looked like a second navigator, and spent a 264px column on a choice of
- * three that a control states in one row.
+ * rail looked like a second navigator, and spent a 264px column on a choice
+ * that a control states in one row.
  */
 export function ProvisioningSetupTab({
   applicationId,
@@ -206,7 +204,6 @@ export function ProvisioningSetupTab({
           options={[
             { value: 'authorization', label: 'Authorization' },
             { value: 'connection', label: 'Connection configuration' },
-            { value: 'rules', label: 'Provisioning rules' },
           ]}
         />
       </div>
@@ -258,21 +255,14 @@ export function ProvisioningSetupTab({
             </div>
           </>
         ))}
+      {/* No scroller here: the section is a catalog beside a peek panel, and it
+          owns the scroll on the catalog column so the panel keeps full height. */}
       {section === 'connection' && (
         <div className="min-h-0 flex-1">
           <ConnectionConfiguration
             applicationId={applicationId}
             applicationName={applicationName}
             authorizations={rows}
-            onChanged={onChanged}
-          />
-        </div>
-      )}
-      {section === 'rules' && (
-        <div className="min-h-0 flex-1">
-          <ProvisioningRules
-            applicationId={applicationId}
-            applicationName={applicationName}
             onChanged={onChanged}
           />
         </div>

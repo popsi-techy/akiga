@@ -54,7 +54,15 @@ export function DetailShell({
   const withDock = docked || Boolean(dock);
 
   return (
-    <div className={withDock ? 'flex h-full -mx-8 -mt-6 -mb-6' : 'flex h-full flex-col'}>
+    <div
+      className={
+        withDock
+          ? // 100% is main's content box; add the frame's py-6 back so the dock
+            // meets the viewport bottom. Negative margin-bottom cannot stretch it.
+            'flex h-[calc(100%+var(--ds-space-12))] min-h-0 -mx-8 -mt-6'
+          : 'flex h-full min-h-0 flex-col'
+      }
+    >
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* Sticky identity band: 12px above the title block and 12px before the tabs —
             enough air that the block doesn't kiss the topbar or the tab strip, tight
@@ -94,7 +102,13 @@ export function DetailShell({
           </div>
         )}
 
-        <div className={withDock ? 'min-h-0 min-w-0 flex-1 px-8 py-5' : 'min-h-0 flex-1 pt-5'}>
+        <div
+          className={
+            withDock
+              ? 'flex min-h-0 min-w-0 flex-1 flex-col px-8 py-5'
+              : 'flex min-h-0 flex-1 flex-col pt-5'
+          }
+        >
           {children}
         </div>
       </div>

@@ -92,7 +92,7 @@ export function SetupChecklistDock({
 
   return (
     <aside
-      className="flex w-72 shrink-0 flex-col border-l border-border bg-subtle"
+      className="flex h-full w-72 shrink-0 flex-col border-l border-border bg-subtle"
       aria-label="Setup checklist"
     >
       <header className="flex shrink-0 items-start justify-between gap-3 px-4 py-4">
