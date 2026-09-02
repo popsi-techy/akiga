@@ -154,6 +154,7 @@ export default function DataTableDocs() {
             { name: 'emptyTitle / emptyMessage', type: 'string', description: 'Empty-state copy.' },
             { name: 'emptyAction', type: 'ReactNode', description: 'Centered under the empty copy — the one action that fills the table. Hide the matching toolbar button while the table is empty so it is not in two places.' },
             { name: 'defaultRowsPerPage', type: 'number', default: '10', description: 'Initial page size.' },
+            { name: 'paginated', type: 'boolean', default: 'true', description: 'Whether the table pages at all. Turn it off for a list that is short by construction — one drawer tab, the three rows behind a summary — where a page-size selector that can change nothing and a range reading “1–2 of 2” is more chrome than the table it serves. Leave it on for anything that could grow.' },
             { name: 'onRowClick', type: '(row) => void', description: 'Row click (e.g. open detail).' },
             { name: 'selectionToolbar', type: 'ReactNode', description: 'First-row selection banner while rows are selected (select-all matching, clear). Icon-only bulk actions sit on the page toolbar, to the right of Filter.' },
             { name: 'highlightSelectedRows', type: 'boolean', default: 'true', description: 'Fills selected rows with `surface.selected` (orange[50] #FFF4EE). Set false when the checkbox (and a SelectionDock) is the only selection mark.' },

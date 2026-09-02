@@ -23,6 +23,13 @@ export interface MenuActionItem {
   disabled?: boolean;
   /** Render a divider after this item. */
   divider?: boolean;
+  /**
+   * Mark this item as the one currently in force — for a menu of mutually
+   * exclusive choices, such as the sections a tab strip could not fit. Setting
+   * it on any item turns the whole list into a radio group, so a screen reader
+   * announces the choice as well as showing it.
+   */
+  selected?: boolean;
 }
 
 export interface MenuProps {
@@ -42,10 +49,19 @@ export function Menu({ items, trigger, ariaLabel = 'Actions' }: MenuProps) {
   };
   const close = () => setAnchorEl(null);
 
+  // `aria-haspopup`/`aria-expanded` go on the trigger, not the menu: without
+  // them a screen reader announces a plain button and gives no warning that
+  // activating it opens a list, or any way to tell that the list is already
+  // open. Cloned onto a custom trigger too, so a caller cannot forget them.
+  const popupProps = { 'aria-haspopup': 'menu', 'aria-expanded': open } as const;
+
+  /** A list where one item is in force, rather than a list of actions. */
+  const choosing = items.some((i) => i.selected !== undefined);
+
   const triggerEl = trigger ? (
-    React.cloneElement(trigger, { onClick: openMenu } as Partial<unknown>)
+    React.cloneElement(trigger, { onClick: openMenu, ...popupProps } as Partial<unknown>)
   ) : (
-    <IconButton size="small" aria-label={ariaLabel} onClick={openMenu}>
+    <IconButton size="small" aria-label={ariaLabel} onClick={openMenu} {...popupProps}>
       <MoreVertIcon sx={{ fontSize: 18, color: 'var(--ds-color-icon-default)' }} />
     </IconButton>
   );
@@ -75,6 +91,12 @@ export function Menu({ items, trigger, ariaLabel = 'Actions' }: MenuProps) {
             <MuiMenuItem
               key={`i-${i}`}
               disabled={item.disabled}
+              selected={item.selected}
+              // A radio only when the caller has said which one is chosen;
+              // otherwise these are plain actions and claiming otherwise would
+              // have a screen reader announce "not checked" on every one.
+              role={choosing ? 'menuitemradio' : 'menuitem'}
+              aria-checked={choosing ? Boolean(item.selected) : undefined}
               onClick={() => {
                 item.onClick?.();
                 close();
@@ -87,6 +109,11 @@ export function Menu({ items, trigger, ariaLabel = 'Actions' }: MenuProps) {
                   backgroundColor: item.danger
                     ? 'var(--ds-color-status-danger-subtle)'
                     : 'var(--ds-color-surface-hover)',
+                },
+                '&.Mui-selected': {
+                  backgroundColor: 'var(--ds-color-surface-selected)',
+                  color: 'var(--ds-color-brand-primary)',
+                  '&:hover': { backgroundColor: 'var(--ds-color-surface-selectedHover)' },
                 },
               }}
             >

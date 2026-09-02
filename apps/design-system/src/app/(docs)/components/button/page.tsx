@@ -2,6 +2,8 @@
 
 import AddIcon from '@mui/icons-material/Add';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import DeleteOutline from '@mui/icons-material/DeleteOutline';
+import EditOutlined from '@mui/icons-material/EditOutlined';
 import { PageHeader, Section, Example, PropsTable, DoDont, Code } from '@/components/docs/primitives';
 import { Button } from '@ds/components';
 
@@ -44,6 +46,23 @@ export default function ButtonDocs() {
       </Section>
 
       <Section
+        title="Icon only"
+        description="Squares the button to the same control height, for a bordered icon action sitting beside a labelled one — a card footer, a toolbar. It needs an aria-label, since there is no text to name it, and usually a Tooltip: an icon says bin, not what it removes. A borderless icon action inside a table row is RowActions, not this."
+      >
+        <Example label="labelled action + icon-only actions">
+          <Button variant="secondary" size="xs" startIcon={<AddIcon />}>
+            Add rule
+          </Button>
+          <Button iconOnly variant="secondary" size="xs" aria-label="Edit rule">
+            <EditOutlined sx={{ fontSize: 16 }} />
+          </Button>
+          <Button iconOnly variant="secondary" size="xs" aria-label="Remove rule">
+            <DeleteOutline sx={{ fontSize: 16 }} />
+          </Button>
+        </Example>
+      </Section>
+
+      <Section
         title="States"
         description="Unavailable actions stay in the tab order. Native disabled would drop them from the keyboard and hide a hover-only ‘why’ from anyone not using a mouse. Loading is the exception — a spinner is not something to inspect."
       >
@@ -69,6 +88,7 @@ export default function ButtonDocs() {
             { name: 'loading', type: 'boolean', default: 'false', description: 'Shows a spinner and disables interaction.' },
             { name: 'disabled', type: 'boolean', default: 'false', description: 'Marks the action unavailable (aria-disabled). Stays focusable so a tooltip can explain why. Loading uses native disabled instead.' },
             { name: 'startIcon / endIcon', type: 'ReactNode', description: 'Leading / trailing icon (MUI icon).' },
+            { name: 'iconOnly', type: 'boolean', default: 'false', description: 'Squares the button around a lone icon child. Needs an aria-label.' },
             { name: '…MuiButtonProps', type: 'ButtonProps', description: 'onClick, href, fullWidth, etc. pass through.' },
           ]}
         />

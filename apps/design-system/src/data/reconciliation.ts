@@ -28,11 +28,26 @@ export const SYNC_EVENTS = [
 ] as const;
 export type SyncEvent = (typeof SYNC_EVENTS)[number];
 
+/** One account or entitlement, as a run's change list names it. */
+export interface SyncItem {
+  id: string;
+  name: string;
+  /** Second line — the email for an account, the description for an entitlement. */
+  detail: string;
+}
+
 export interface SyncDelta {
   /** Total after this run. */
   total: number;
   added: number;
   removed: number;
+  /** The `added` of them, named. */
+  addedItems: SyncItem[];
+  /** The `removed` of them, named. Gone from the application, so these are not
+   *  in the Directory today — they only exist in the runs that took them out. */
+  removedItems: SyncItem[];
+  /** There before this run and still there after it: `total - added` of them. */
+  unchangedItems: SyncItem[];
 }
 
 export interface SyncRun {
@@ -78,6 +93,59 @@ function rng(seed: number) {
   };
 }
 
+/**
+ * Names for the things a run took away.
+ *
+ * They cannot be drawn from the Directory: the Directory holds what the
+ * application has now, and these are precisely what it no longer has. The pool
+ * is small and plainly synthetic on purpose — a leaver, a service account
+ * nobody renewed, a role that outlived its project — which is the shape of what
+ * actually falls out of a connector between runs.
+ */
+const RETIRED_ACCOUNTS: readonly [string, string][] = [
+  ['dana.whitfield', 'dana.whitfield@acme.com'],
+  ['svc-legacy-sync', 'No email'],
+  ['omar.haddad', 'omar.haddad@acme.com'],
+  ['contractor-42', 'No email'],
+  ['tomas.novak', 'tomas.novak@acme.com'],
+  ['svc-batch-import', 'No email'],
+  ['kelly.moore', 'kelly.moore@acme.com'],
+  ['j.okafor', 'joy.okafor@acme.com'],
+  ['temp-analyst', 'No email'],
+  ['r.iyer', 'ravi.iyer@acme.com'],
+];
+
+const RETIRED_ENTITLEMENTS: readonly [string, string][] = [
+  ['Legacy Reporting', 'Retired reporting role from the previous finance stack.'],
+  ['Sandbox Admin', 'Administration of the decommissioned sandbox tenant.'],
+  ['Contractor Access', 'Time-boxed access granted for the Q1 migration.'],
+  ['Deprecated API Role', 'Machine role for the v1 API, switched off with it.'],
+  ['Migration Operator', 'Ran the cutover jobs; removed once cutover finished.'],
+  ['Temporary Elevation', 'Break-glass elevation that expired on schedule.'],
+  ['Beta Feature Access', 'Early access to features now generally available.'],
+  ['Archived Project Lead', 'Lead on a project that has since been closed out.'],
+];
+
+/** `n` names from a pool, starting at `from`, so no two runs report the same loss. */
+function retired(
+  pool: readonly [string, string][],
+  applicationId: string,
+  from: number,
+  n: number,
+): SyncItem[] {
+  return Array.from({ length: n }, (_, k) => {
+    const i = (from + k) % pool.length;
+    const [name, detail] = pool[i];
+    return { id: `${applicationId}-gone-${from + k}`, name, detail };
+  });
+}
+
+/** `n` items from `list`, starting at `from` and wrapping. `n <= list.length`. */
+function slice<T>(list: T[], from: number, n: number): T[] {
+  if (list.length === 0) return [];
+  return Array.from({ length: n }, (_, k) => list[(from + k) % list.length]);
+}
+
 export function listSyncRuns(applicationId: string): SyncRun[] {
   const detail = getApplicationDetail(applicationId);
   if (!detail) return [];
@@ -92,9 +160,24 @@ export function listSyncRuns(applicationId: string): SyncRun[] {
   const pick = <T,>(list: readonly T[]) => list[Math.floor(next() * list.length)];
   const between = (lo: number, hi: number) => lo + Math.floor(next() * (hi - lo + 1));
 
-  let accountTotal = detail.accounts.length;
-  let entitlementTotal = detail.entitlements.length;
+  // The walk carries the *lists*, not just their lengths: a run has to be able
+  // to name what it added and what it took away, and the only honest source for
+  // "what this application held then" is today's holdings wound backwards.
+  let accounts: SyncItem[] = detail.accounts.map((a) => ({
+    id: a.id,
+    name: a.accountName,
+    detail: a.email || 'No email',
+  }));
+  let entitlements: SyncItem[] = detail.entitlements.map((e) => ({
+    id: e.id,
+    name: e.name,
+    detail: e.description,
+  }));
   let at = NOW;
+  // Runs onwards through the retired pools, so one leaver is not reported as
+  // having left four separate times.
+  let goneAccounts = 0;
+  let goneEntitlements = 0;
 
   /**
    * A run's change is sized against the total it acted on, and never removes
@@ -112,32 +195,65 @@ export function listSyncRuns(applicationId: string): SyncRun[] {
 
   const runs: SyncRun[] = [];
   for (let i = 0; i < HISTORY_LENGTH; i += 1) {
-    const acc = delta(accountTotal);
-    const ent = delta(entitlementTotal);
+    const acc = delta(accounts.length);
+    const ent = delta(entitlements.length);
     // A failed run reached the application but committed nothing, so it moves
     // no totals — which is why the deltas below are zeroed for it.
     const outcome: SyncOutcome = next() < 0.12 ? 'failed' : 'success';
+    const accMoved = outcome === 'failed' ? { added: 0, removed: 0 } : acc;
+    const entMoved = outcome === 'failed' ? { added: 0, removed: 0 } : ent;
 
-    const accounts: SyncDelta = { total: accountTotal, ...(outcome === 'failed' ? { added: 0, removed: 0 } : acc) };
-    const entitlements: SyncDelta = {
-      total: entitlementTotal,
-      ...(outcome === 'failed' ? { added: 0, removed: 0 } : ent),
+    /**
+     * Splits the state after a run into what the run brought in and what was
+     * already there, and names what it took out. Returns the state *before* the
+     * run so the walk can continue into the past.
+     */
+    const attribute = (
+      after: SyncItem[],
+      moved: { added: number; removed: number },
+      pool: readonly [string, string][],
+      goneFrom: number,
+    ) => {
+      // Rotating window, so consecutive runs do not all claim to have added the
+      // first account in the list.
+      const addedItems = slice(after, between(0, Math.max(0, after.length - 1)), moved.added);
+      const addedIds = new Set(addedItems.map((x) => x.id));
+      const unchangedItems = after.filter((x) => !addedIds.has(x.id));
+      const removedItems = retired(pool, applicationId, goneFrom, moved.removed);
+      return {
+        delta: {
+          total: after.length,
+          added: moved.added,
+          removed: moved.removed,
+          addedItems,
+          removedItems,
+          unchangedItems,
+        } satisfies SyncDelta,
+        // What the application held before this run: without the ones it added,
+        // with the ones it took away put back.
+        before: [...unchangedItems, ...removedItems],
+      };
     };
+
+    const accountsPart = attribute(accounts, accMoved, RETIRED_ACCOUNTS, goneAccounts);
+    const entitlementsPart = attribute(entitlements, entMoved, RETIRED_ENTITLEMENTS, goneEntitlements);
 
     runs.push({
       id: `${applicationId}-sync-${i}`,
       at: new Date(at).toISOString(),
       trigger: i === 0 || next() < 0.25 ? 'manual' : 'auto',
       event: pick(SYNC_EVENTS),
-      accounts,
-      entitlements,
+      accounts: accountsPart.delta,
+      entitlements: entitlementsPart.delta,
       outcome,
     });
 
     // Step back to the state before this run, and to the previous run's time.
     // No clamp is needed: `delta` never adds more than the total it saw.
-    accountTotal = accountTotal - (accounts.added - accounts.removed);
-    entitlementTotal = entitlementTotal - (entitlements.added - entitlements.removed);
+    accounts = accountsPart.before;
+    entitlements = entitlementsPart.before;
+    goneAccounts += accMoved.removed;
+    goneEntitlements += entMoved.removed;
     at -= between(6, 40) * 60 * 60 * 1000;
   }
   return runs;

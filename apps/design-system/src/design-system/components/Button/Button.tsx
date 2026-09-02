@@ -29,6 +29,17 @@ export interface ButtonProps
   size?: ButtonSize;
   /** Shows a spinner and disables the button. */
   loading?: boolean;
+  /**
+   * Square the button around a lone icon — pass the icon as `children`, not as
+   * `startIcon`, and always pass `aria-label`, since the button has no text to
+   * name it. Usually worth a `Tooltip` too: an icon says *bin*, not *what it
+   * removes*.
+   *
+   * For a **bordered** icon action sitting beside a labelled one, so the set
+   * reads as one row of buttons. A borderless icon action in a table row is
+   * `RowActions`, not this.
+   */
+  iconOnly?: boolean;
 }
 
 const sizeMap: Record<ButtonSize, MuiButtonProps['size']> = {
@@ -60,6 +71,7 @@ export function Button({
   size = 'sm',
   loading = false,
   disabled = false,
+  iconOnly = false,
   startIcon,
   children,
   sx,
@@ -112,6 +124,14 @@ export function Button({
   // the SAME height per size, so same-size controls always line up in a toolbar.
   const heightSx = { minHeight: CONTROL_HEIGHT[size], height: CONTROL_HEIGHT[size] };
 
+  // Square: width follows the shared height scale, so an icon button and the
+  // labelled button beside it are the same height and the icon sits centred.
+  // MUI's 64px `minWidth` and text padding both have to go, or the "square"
+  // comes out as a wide pill with a glyph adrift in it.
+  const iconOnlySx = iconOnly
+    ? { minWidth: CONTROL_HEIGHT[size], width: CONTROL_HEIGHT[size], paddingInline: 0 }
+    : {};
+
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (unavailable) {
       event.preventDefault();
@@ -131,7 +151,7 @@ export function Button({
       className={[unavailable ? 'Mui-disabled' : '', className].filter(Boolean).join(' ') || undefined}
       onClick={handleClick}
       startIcon={loading ? <CircularProgress size={16} color="inherit" thickness={5} /> : startIcon}
-      sx={{ ...heightSx, ...secondarySx, ...tertiarySx, ...sx }}
+      sx={{ ...heightSx, ...iconOnlySx, ...secondarySx, ...tertiarySx, ...sx }}
       {...rest}
     >
       {children}

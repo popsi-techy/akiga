@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { PageHeader, Section, PropsTable, DoDont } from '@/components/docs/primitives';
-import { InfoRow, InfoRowGroup, OverflowChips } from '@ds/components';
+import { Avatar, InfoRow, InfoRowGroup, OverflowChips } from '@ds/components';
 
 const APPS = [
   { id: 'okta', name: 'Okta' },
@@ -10,6 +10,12 @@ const APPS = [
   { id: 'gh', name: 'GitHub' },
   { id: 'aws', name: 'AWS' },
   { id: 'sap', name: 'SAP S/4HANA Finance' },
+];
+
+const OWNERS = [
+  { id: 'ml', name: 'Marcus Lee' },
+  { id: 'ht', name: 'Henry Taylor' },
+  { id: 'ps', name: 'Priya Sharma' },
 ];
 
 export default function OverflowChipsDocs() {
@@ -45,6 +51,29 @@ export default function OverflowChipsDocs() {
         </div>
       </Section>
 
+      <Section
+        title="People"
+        description="A set of people is named with the round mark and the plain name, not the tinted chip — the shape is how the rest of the product says “person”, and a pill around a name says “one of a set of values” instead. Pass it through renderItem, which also drops the group pill, so the cell reads as a face and a name with the +n after it. This is the Owners column in Applications."
+      >
+        <div className="flex flex-col items-start gap-4">
+          <OverflowChips
+            items={OWNERS}
+            max={1}
+            emptyLabel="—"
+            renderItem={(o) => (
+              <span className="inline-flex min-w-0 items-center gap-2">
+                <Avatar name={o.name} size="xs" kind="person" />
+                <span className="truncate text-body-sm text-text-primary">{o.name}</span>
+              </span>
+            )}
+          />
+        </div>
+        <p className="mt-3 text-body-sm text-text-secondary">
+          The person ring paints outside the avatar&rsquo;s box, so the column holding this needs{' '}
+          <span className="font-mono text-caption">wrap: true</span> — the default clip shaves it.
+        </p>
+      </Section>
+
       <Section title="Guidance">
         <DoDont
           dos={[
@@ -66,7 +95,7 @@ export default function OverflowChipsDocs() {
             { name: 'items', type: '{ id: string; name: string }[]', description: 'The full set. Order is respected — the first `max` are named.' },
             { name: 'max', type: 'number', default: '1', description: 'How many to name before collapsing the rest into +n.' },
             { name: 'emptyLabel', type: 'string', default: "'None'", description: 'Shown when there is nothing to name.' },
-            { name: 'renderItem', type: '(item) => ReactNode', default: '—', description: 'Custom chip. Use when the chip already has its own chrome (app mark + name). Those stay ungrouped so two pills are not nested.' },
+            { name: 'renderItem', type: '(item) => ReactNode', default: '—', description: 'Custom chip, used in the row and in the +n overlay. For an item that carries its own mark — an access pill with an app logo, a person with their avatar. Those stay ungrouped, so a second pill is not wrapped around a shape that is already one.' },
             { name: 'tone', type: "'default' | 'onSubtle'", default: "'default'", description: 'onSubtle inverts the grouped chrome for a grey well: a white capsule, grey named pills. Use it on SettingsRow surface="subtle".' },
           ]}
         />

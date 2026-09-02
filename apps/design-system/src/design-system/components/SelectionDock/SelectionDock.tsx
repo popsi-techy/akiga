@@ -8,9 +8,26 @@ import RemoveDoneOutlined from '@mui/icons-material/RemoveDoneOutlined';
 import { spacing, zIndex } from '../../tokens/tokens';
 import { Button } from '../Button/Button';
 
-const HEADER_LEFT = Number.parseInt(spacing[12], 10);
-const HEADER_TOP = Number.parseInt(spacing[2], 10);
+/** How close the dragged pill may get to the edge of the area it can be seen in. */
 const DRAG_INSET = Number.parseInt(spacing[2], 10);
+
+/**
+ * How far the pill may be dragged: the nearest ancestor that clips, which is
+ * the page's scroll container in every current use.
+ *
+ * Not the `relative` parent it is positioned against — that parent is usually
+ * the table, and stopping there means the toolbar and the whitespace around the
+ * table are unreachable even though the pill would paint there perfectly well.
+ * Not the viewport either: past a clipping ancestor the pill is simply cut off,
+ * so a wider limit would let you drag it out of existence.
+ */
+function boundsFor(node: HTMLElement): HTMLElement {
+  for (let el = node.parentElement; el; el = el.parentElement) {
+    const { overflow, overflowX, overflowY } = getComputedStyle(el);
+    if ([overflow, overflowX, overflowY].some((v) => v !== 'visible')) return el;
+  }
+  return document.documentElement;
+}
 
 /**
  * SelectionDock — a floating card for bulk work.
@@ -23,8 +40,10 @@ const DRAG_INSET = Number.parseInt(spacing[2], 10);
  * `bottom` (default) — inverse toolbar, bottom-center. Access Certification V2.
  * `header` — Notion-style: a light pill that overlays the table header, a
  * drag handle, count, Select all N (Clear all when the set is full) as a
- * link, icon actions, and a close. Access Certification V1. The handle
- * moves the pill inside its relative work surface.
+ * link, icon actions, and a close. Access Certification V1. The handle moves
+ * the pill anywhere on the page area it can be seen — it starts over the table
+ * header, where it is in the way of the rows you are about to act on, so it has
+ * to be able to leave the table (see {@link boundsFor}).
  *
  * Overlay only: `absolute` + out of flow, so it never grows or shrinks the
  * table. Sit it in a `relative` ancestor that is the work surface (not the
@@ -111,16 +130,29 @@ export function SelectionDock({
   const [offset, setOffset] = React.useState({ x: 0, y: 0 });
   const [dragging, setDragging] = React.useState(false);
 
+  /**
+   * Measured off live rects rather than the parent's padding box, so the limit
+   * holds whatever the pill is positioned against and wherever the page has
+   * been scrolled to. `offsetRef` is subtracted to recover where the pill would
+   * sit at rest, which is the origin the offsets are relative to.
+   */
   const clampOffset = React.useCallback((x: number, y: number) => {
     const wrap = rootRef.current;
-    const parent = wrap?.offsetParent as HTMLElement | null;
     const card = wrap?.firstElementChild as HTMLElement | null;
-    if (!wrap || !parent || !card) return { x, y };
-    const maxX = parent.clientWidth - card.offsetWidth - HEADER_LEFT - DRAG_INSET;
-    const maxY = parent.clientHeight - card.offsetHeight - HEADER_TOP - DRAG_INSET;
+    if (!wrap || !card) return { x, y };
+    const limit = boundsFor(wrap).getBoundingClientRect();
+    const rect = card.getBoundingClientRect();
+    const restLeft = rect.left - offsetRef.current.x;
+    const restTop = rect.top - offsetRef.current.y;
+    const minX = limit.left + DRAG_INSET - restLeft;
+    const minY = limit.top + DRAG_INSET - restTop;
+    // `Math.max(max, min)` so an area too small for the pill pins it to the
+    // top-left corner instead of inverting the range and jumping it off-screen.
+    const maxX = Math.max(limit.right - DRAG_INSET - rect.width - restLeft, minX);
+    const maxY = Math.max(limit.bottom - DRAG_INSET - rect.height - restTop, minY);
     return {
-      x: Math.min(Math.max(x, -HEADER_LEFT + DRAG_INSET), Math.max(maxX, -HEADER_LEFT + DRAG_INSET)),
-      y: Math.min(Math.max(y, -HEADER_TOP + DRAG_INSET), Math.max(maxY, -HEADER_TOP + DRAG_INSET)),
+      x: Math.min(Math.max(x, minX), maxX),
+      y: Math.min(Math.max(y, minY), maxY),
     };
   }, []);
 

@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import AddOutlined from '@mui/icons-material/AddOutlined';
-import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import Tune from '@mui/icons-material/Tune';
 import { Button, Drawer, Input, Select, Tooltip, useToast } from '@ds/components';
@@ -105,18 +104,6 @@ export function AttributeMappingDrawer({
       }
     >
       <div className="space-y-4">
-        <div className="flex items-start gap-2.5 rounded-lg border border-[var(--ds-color-status-info-border)] bg-[var(--ds-color-status-info-subtle)] p-4">
-          <InfoOutlined
-            sx={{ fontSize: 18, color: 'var(--ds-color-status-info-fg)' }}
-            className="mt-0.5 shrink-0"
-            aria-hidden
-          />
-          <p className="text-body-sm text-text-secondary">
-            <span className="text-body-sm-strong text-text-primary">This mapping is retroactive.</span> The next sync
-            rewrites accounts and entitlements already imported from {applicationName} to match it, not only new ones.
-          </p>
-        </div>
-
         <div className="flex justify-end">
           <Button variant="secondary" startIcon={<AddOutlined />} onClick={addRow}>
             Add attribute

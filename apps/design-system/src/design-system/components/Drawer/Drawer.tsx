@@ -101,7 +101,9 @@ export function Drawer({
           <div className="shrink-0 border-b border-border bg-surface px-6 py-3">{subheader}</div>
         ) : null}
 
-        {toolbar ? <div className="shrink-0 bg-surface px-6">{toolbar}</div> : null}
+        {/* 8px above, none below: Tabs bring their own baseline rule, and a tab
+            strip flush against the header's border reads as one thick divider. */}
+        {toolbar ? <div className="shrink-0 bg-surface px-6 pt-2">{toolbar}</div> : null}
 
         <div className={`ds-scroll flex-1 overflow-y-auto ${disablePadding ? 'min-h-0' : 'px-6 py-5'}`}>
           {children}

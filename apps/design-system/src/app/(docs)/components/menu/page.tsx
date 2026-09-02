@@ -36,7 +36,14 @@ export default function MenuDocs() {
       <Section title="Props">
         <PropsTable
           rows={[
-            { name: 'items', type: 'MenuActionItem[]', description: '{ label, icon?, onClick?, danger?, disabled?, divider? }.' },
+            { name: 'items', type: 'MenuActionItem[]', description: '{ label, icon?, onClick?, danger?, disabled?, divider?, selected? }.' },
+            {
+              name: 'items[].selected',
+              type: 'boolean',
+              default: '—',
+              description:
+                'Marks the item currently in force, for a menu of mutually exclusive choices rather than actions — the sections a Tabs strip could not fit, for example. Setting it on any item turns the list into a radio group, so the state is announced and not only tinted.',
+            },
             { name: 'trigger', type: 'ReactElement', description: 'Custom trigger; defaults to a ⋮ icon button.' },
             { name: 'ariaLabel', type: 'string', default: "'Actions'", description: 'Accessible name for the default trigger.' },
           ]}

@@ -91,7 +91,7 @@ export default function OnboardApplicationPage() {
   return (
     <div className="-mx-8 -my-6 flex h-[calc(100%+3rem)] flex-col">
       <header className="relative shrink-0 overflow-hidden border-b border-border px-6 py-7">
-        <AtmosphericBackground tone="mint" />
+        <AtmosphericBackground />
         <div className="relative mx-auto flex w-full max-w-2xl flex-col items-center text-center">
           <h1 className="text-balance text-h3 text-text-primary">
             Start onboarding faster with ready-to-use application types

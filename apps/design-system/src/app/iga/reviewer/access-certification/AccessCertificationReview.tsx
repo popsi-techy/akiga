@@ -12,6 +12,7 @@ import PersonOffOutlined from '@mui/icons-material/PersonOffOutlined';
 import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlined from '@mui/icons-material/CancelOutlined';
 import ChevronRight from '@mui/icons-material/ChevronRight';
+import ExpandMoreOutlined from '@mui/icons-material/ExpandMoreOutlined';
 import {
   Avatar,
   Button,
@@ -20,6 +21,7 @@ import {
   Dialog,
   FilterDrawer,
   Input,
+  Menu,
   Meter,
   Select,
   StatusChip,
@@ -30,6 +32,7 @@ import {
   type Column,
   type FilterGroup,
   type FilterSelection,
+  type MenuActionItem,
 } from '@ds/components';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import {
@@ -79,13 +82,30 @@ function iconBtnClass(active: boolean, tone: 'success' | 'danger') {
   ].join(' ');
 }
 
-/** Quiet icon on the Notion-style header dock — no boxed chrome. */
+/**
+ * Quiet icon on the Notion-style header dock — no boxed chrome.
+ *
+ * Carries the row buttons' green and red, since it is the same two decisions
+ * applied to many rows instead of one, and an approve that is grey in the dock
+ * and green in the row reads as a different action. Only the glyph is tinted:
+ * the row buttons can afford a bordered box because they sit in whitespace,
+ * while these sit shoulder to shoulder inside a pill that is already a box.
+ */
+const HEADER_ACTION_TONE = {
+  neutral: 'text-icon hover:bg-subtle',
+  success:
+    'text-[var(--ds-color-status-success-fg)] hover:bg-[var(--ds-color-status-success-subtle)]',
+  danger: 'text-[var(--ds-color-status-danger-fg)] hover:bg-[var(--ds-color-status-danger-subtle)]',
+} as const;
+
 function HeaderAction({
   label,
+  tone = 'neutral',
   onClick,
   children,
 }: {
   label: string;
+  tone?: keyof typeof HEADER_ACTION_TONE;
   onClick: () => void;
   children: React.ReactNode;
 }) {
@@ -96,7 +116,7 @@ function HeaderAction({
           type="button"
           aria-label={label}
           onClick={onClick}
-          className="grid h-8 w-8 place-items-center rounded-sm text-icon transition-colors hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+          className={`grid h-8 w-8 place-items-center rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle ${HEADER_ACTION_TONE[tone]}`}
         >
           {children}
         </button>
@@ -105,10 +125,25 @@ function HeaderAction({
   );
 }
 
+/**
+ * Where the bulk actions for a selection live.
+ *
+ * - `row` (V1) — a draggable pill over the table header, icon actions.
+ * - `dock` (V2) — an inverse toolbar at the foot of the list, labelled actions.
+ * - `toolbar` (V3) — a Bulk action menu parked beside Filter, inert until
+ *   something is selected. Nothing floats and nothing moves: the control is in
+ *   the same place before and after you select, so the page does not reflow
+ *   under the pointer, and the actions never cover the rows they apply to.
+ *   The trade is discovery — a disabled button has to be noticed rather than
+ *   arriving in front of you — which is why the selection count and Select all
+ *   sit next to it, appearing at the moment the button wakes up.
+ */
+export type BulkSurface = 'row' | 'dock' | 'toolbar';
+
 export function AccessCertificationReview({
   bulkSurface = 'row',
 }: {
-  bulkSurface?: 'row' | 'dock';
+  bulkSurface?: BulkSurface;
 }) {
   const toast = useToast();
   const [campaign, setCampaign] = React.useState<ReviewCampaign | null>(null);
@@ -404,14 +439,55 @@ export function AccessCertificationReview({
   ];
 
   const noun = step === 0 ? 'account' : 'entitlement';
+
+  /**
+   * The same two decisions the rows offer, named identically so the menu is
+   * recognisably "that, but to all of these". The destructive one routes
+   * through the confirm dialog; marking accounts as yours or certifying an
+   * entitlement is undoable from the row, so it applies straight away.
+   */
+  const bulkMenuItems: MenuActionItem[] =
+    step === 0
+      ? [
+          {
+            label: 'Belongs to me',
+            icon: <HowToRegOutlined sx={{ fontSize: 18 }} />,
+            onClick: () => applyOwnershipBulk(actionableIds, 'mine'),
+          },
+          {
+            label: 'Does not belong to me',
+            icon: <PersonOffOutlined sx={{ fontSize: 18 }} />,
+            danger: true,
+            onClick: () => setBulkPending({ kind: 'not-mine', ids: actionableIds }),
+          },
+        ]
+      : [
+          {
+            label: 'Certify',
+            icon: <CheckCircleOutline sx={{ fontSize: 18 }} />,
+            onClick: () => applyEntitlementBulk(actionableIds, 'certify'),
+          },
+          {
+            label: 'Revoke',
+            icon: <CancelOutlined sx={{ fontSize: 18 }} />,
+            danger: true,
+            onClick: () => setBulkPending({ kind: 'revoke', ids: actionableIds }),
+          },
+        ];
+
   const headerActions =
     step === 0 ? (
       <>
-        <HeaderAction label="Belongs to me" onClick={() => applyOwnershipBulk(actionableIds, 'mine')}>
+        <HeaderAction
+          label="Belongs to me"
+          tone="success"
+          onClick={() => applyOwnershipBulk(actionableIds, 'mine')}
+        >
           <HowToRegOutlined sx={{ fontSize: 18 }} />
         </HeaderAction>
         <HeaderAction
           label="Does not belong to me"
+          tone="danger"
           onClick={() => setBulkPending({ kind: 'not-mine', ids: actionableIds })}
         >
           <PersonOffOutlined sx={{ fontSize: 18 }} />
@@ -419,11 +495,16 @@ export function AccessCertificationReview({
       </>
     ) : (
       <>
-        <HeaderAction label="Certify" onClick={() => applyEntitlementBulk(actionableIds, 'certify')}>
+        <HeaderAction
+          label="Certify"
+          tone="success"
+          onClick={() => applyEntitlementBulk(actionableIds, 'certify')}
+        >
           <CheckCircleOutline sx={{ fontSize: 18 }} />
         </HeaderAction>
         <HeaderAction
           label="Revoke"
+          tone="danger"
           onClick={() => setBulkPending({ kind: 'revoke', ids: actionableIds })}
         >
           <CancelOutlined sx={{ fontSize: 18 }} />
@@ -550,6 +631,52 @@ export function AccessCertificationReview({
           >
             Filter{filterCount > 0 ? ` (${filterCount})` : ''}
           </Button>
+
+          {bulkSurface === 'toolbar' && (
+            <div className="flex items-center gap-3">
+              {/* Present and disabled rather than absent until needed: a control
+                  that appears mid-task pushes the toolbar around and has to be
+                  found again. `disabled` here is aria-disabled, so it keeps its
+                  tab stop and the tooltip explaining itself opens on focus. */}
+              <Tooltip
+                title={
+                  actionableIds.length === 0 ? `Select ${noun}s in the table to act on them` : ''
+                }
+              >
+                <span className="inline-flex">
+                  <Menu
+                    ariaLabel="Bulk action"
+                    items={bulkMenuItems}
+                    trigger={
+                      <Button
+                        variant="secondary"
+                        endIcon={<ExpandMoreOutlined />}
+                        disabled={actionableIds.length === 0}
+                      >
+                        Bulk action
+                      </Button>
+                    }
+                  />
+                </span>
+              </Tooltip>
+
+              {/* The reach of the selection, beside the control that spends it.
+                  The table's header checkbox only takes the page it is on, so
+                  this is the only way to reach the rows a filter matches but
+                  the page does not show. */}
+              {actionableIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    allMatchingSelected ? setSelectedIds([]) : setSelectedIds(visibleIds)
+                  }
+                  className="rounded-sm text-body-sm-medium text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+                >
+                  {allMatchingSelected ? 'Clear all' : `Select all ${visibleIds.length}`}
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="relative min-h-0 flex-1 pb-4">
@@ -560,7 +687,7 @@ export function AccessCertificationReview({
               selectable
               selectedIds={selectedIds}
               onSelectionChange={setSelectedIds}
-              highlightSelectedRows={bulkSurface === 'row'}
+              highlightSelectedRows={bulkSurface !== 'dock'}
               fillHeight
               defaultRowsPerPage={12}
               rowsPerPageOptions={[12, 24]}
@@ -578,7 +705,7 @@ export function AccessCertificationReview({
               selectable
               selectedIds={selectedIds}
               onSelectionChange={setSelectedIds}
-              highlightSelectedRows={bulkSurface === 'row'}
+              highlightSelectedRows={bulkSurface !== 'dock'}
               fillHeight
               defaultRowsPerPage={12}
               rowsPerPageOptions={[12, 24]}

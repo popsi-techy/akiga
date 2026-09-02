@@ -96,6 +96,19 @@ export interface DataTableProps<Row extends { id: string }> {
   emptyAction?: React.ReactNode;
   defaultRowsPerPage?: number;
   rowsPerPageOptions?: number[];
+  /**
+   * Whether the table pages at all.
+   *
+   * Turn it **off** for a list that is short by construction — the contents of
+   * one drawer tab, the three rows behind a summary — where the footer is more
+   * chrome than the table it serves: a page-size selector that can change
+   * nothing and a range that reads "1–2 of 2".
+   *
+   * Leave it **on** for anything that could grow. A list that quietly runs to
+   * ninety rows with no pager is worse than a pager on a list of two.
+   * @default true
+   */
+  paginated?: boolean;
   onRowClick?: (row: Row) => void;
   onSelectionChange?: (ids: string[]) => void;
   /** Controlled selection — when provided, the table reflects these ids and all
@@ -132,6 +145,7 @@ export function DataTable<Row extends { id: string }>({
   emptyAction,
   defaultRowsPerPage = 10,
   rowsPerPageOptions = [10, 25, 50],
+  paginated = true,
   onRowClick,
   onSelectionChange,
   selectedIds,
@@ -172,8 +186,8 @@ export function DataTable<Row extends { id: string }>({
   }, [rows, orderBy, order, columns, getValue]);
 
   const pagedRows = React.useMemo(
-    () => sortedRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-    [sortedRows, page, rowsPerPage],
+    () => (paginated ? sortedRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage) : sortedRows),
+    [sortedRows, page, rowsPerPage, paginated],
   );
 
   const emitSelection = (next: Set<string>) => {
@@ -444,7 +458,7 @@ export function DataTable<Row extends { id: string }>({
         </Table>
       </TableContainer>
 
-      {!loading && rows.length > 0 && (
+      {paginated && !loading && rows.length > 0 && (
         <div className={`flex shrink-0 items-center justify-between border-t border-border px-4 py-2.5`}>
           {/* Left: rows-per-page selector */}
           <Select

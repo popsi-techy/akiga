@@ -15,7 +15,7 @@ export default function SelectionDockDocs() {
       <PageHeader
         eyebrow="Components"
         title="Selection Dock"
-        description="A floating card for bulk work. `bottom` is an inverse toolbar at the foot of the list. `header` is a light pill on the table header — drag handle, count, Select all N (Clear all when the set is full), icon actions — so the table height does not change. Drag the handle to move the pill inside the work surface."
+        description="A floating card for bulk work. `bottom` is an inverse toolbar at the foot of the list. `header` is a light pill on the table header — drag handle, count, Select all N (Clear all when the set is full), icon actions — so the table height does not change. Drag the handle to move the pill anywhere on the page area it can be seen — it starts on the table header, so it has to be able to leave the table."
       />
 
       <Section
@@ -73,7 +73,7 @@ export default function SelectionDockDocs() {
         <DoDont
           dos={[
             'A selectable table whose bulk actions used to live in the first row or next to Filter.',
-            'Place the dock in a `relative` work surface so it stays inside the content column.',
+            'Place the dock in a `relative` work surface so it opens over the right table.',
             'Tertiary (text) `xs` buttons on the card — icon + label, no fill or outline.',
             'On `header`, drag the six-dot handle to park the pill where it is not covering the row you are reading.',
           ]}

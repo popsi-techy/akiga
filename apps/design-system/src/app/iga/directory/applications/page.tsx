@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import AddOutlined from '@mui/icons-material/AddOutlined';
 import ManageAccountsOutlined from '@mui/icons-material/ManageAccountsOutlined';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
-import { Button, OverflowChips, StatusChip, Tooltip, type Column, type FilterGroup } from '@ds/components';
+import { Avatar, Button, OverflowChips, StatusChip, Tooltip, type Column, type FilterGroup } from '@ds/components';
 import {
   applicationOwners,
   listCataloguedApplications,
@@ -21,6 +21,27 @@ const AUTH_CHIP = {
 };
 
 const METRIC_ICON = { fontSize: 16 } as const;
+
+/**
+ * An owner in the Owners cell: the round person mark, then the name.
+ *
+ * Not the default tinted chip. A pill around a name says "one of a set of
+ * values"; these are people, and the round mark is what the rest of the product
+ * uses to say so — the same thing `IdentityCell` does in a table whose subject
+ * *is* the person. Passing it through `renderItem` also drops the group pill, so
+ * the cell reads as a face and a name with the `+n` after it rather than a
+ * capsule the eye has to open.
+ */
+function OwnerChip({ name }: { name: string }) {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-2">
+      <Avatar name={name} size="xs" kind="person" />
+      <span className="truncate text-body-sm text-text-primary" title={name}>
+        {name}
+      </span>
+    </span>
+  );
+}
 
 function ReconciliationCounts({
   name,
@@ -125,7 +146,14 @@ export default function ApplicationsListPage() {
       wrap: true,
       width: 200,
       value: (r) => applicationOwners(r.id).map((o) => o.name).join(', '),
-      render: (r) => <OverflowChips items={applicationOwners(r.id)} max={1} emptyLabel="—" />,
+      render: (r) => (
+        <OverflowChips
+          items={applicationOwners(r.id)}
+          max={1}
+          emptyLabel="—"
+          renderItem={(o) => <OwnerChip name={o.name} />}
+        />
+      ),
     },
     {
       id: 'reconciliation',

@@ -9,6 +9,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { Button, Card, DataTable, StatusChip, useToast, type Column } from '@ds/components';
 import { InfoRow, InfoRowGroup } from './DetailShell';
 import { infoIcon } from './infoIcons';
+import { SyncChangesDrawer, type SyncChangeKind } from './SyncChangesDrawer';
 import { formatDateTime } from '../sod/labels';
 import { listSyncRuns, reconciliationSummary, type SyncRun } from '@/data/reconciliation';
 
@@ -21,10 +22,25 @@ import { listSyncRuns, reconciliationSummary, type SyncRun } from '@/data/reconc
  * and event are facts about a run, not states of one, so they stay as text —
  * chipping them would put four pills on every row and bury the failure.
  */
-export function ReconciliationTab({ applicationId }: { applicationId: string }) {
+export function ReconciliationTab({
+  applicationId,
+  applicationName,
+}: {
+  applicationId: string;
+  applicationName: string;
+}) {
   const toast = useToast();
   const summary = reconciliationSummary(applicationId);
   const runs = listSyncRuns(applicationId);
+
+  // Which run's change list is open. The run is kept after `open` goes false so
+  // the drawer has something to render while it slides out.
+  const [inspecting, setInspecting] = React.useState<{ run: SyncRun; kind: SyncChangeKind } | null>(null);
+  const [changesOpen, setChangesOpen] = React.useState(false);
+  const inspect = (run: SyncRun, kind: SyncChangeKind) => {
+    setInspecting({ run, kind });
+    setChangesOpen(true);
+  };
 
   // Demo sync: spinner, then a result. No run is written — the history stays
   // deterministic, which is what makes the totals above add up.
@@ -73,7 +89,15 @@ export function ReconciliationTab({ applicationId }: { applicationId: string }) 
       sortable: true,
       width: 150,
       value: (r) => r.accounts.total,
-      render: (r) => <Delta total={r.accounts.total} added={r.accounts.added} removed={r.accounts.removed} />,
+      render: (r) => (
+        <Delta
+          total={r.accounts.total}
+          added={r.accounts.added}
+          removed={r.accounts.removed}
+          noun="account"
+          onClick={() => inspect(r, 'accounts')}
+        />
+      ),
     },
     {
       id: 'entitlements',
@@ -82,7 +106,13 @@ export function ReconciliationTab({ applicationId }: { applicationId: string }) 
       width: 150,
       value: (r) => r.entitlements.total,
       render: (r) => (
-        <Delta total={r.entitlements.total} added={r.entitlements.added} removed={r.entitlements.removed} />
+        <Delta
+          total={r.entitlements.total}
+          added={r.entitlements.added}
+          removed={r.entitlements.removed}
+          noun="entitlement"
+          onClick={() => inspect(r, 'entitlements')}
+        />
       ),
     },
     {
@@ -125,7 +155,14 @@ export function ReconciliationTab({ applicationId }: { applicationId: string }) 
               <InfoRow
                 icon={infoIcon.sync}
                 label="Modifications in last sync"
-                value={<Delta added={summary.accounts.added} removed={summary.accounts.removed} />}
+                value={
+                  <Delta
+                    added={summary.accounts.added}
+                    removed={summary.accounts.removed}
+                    noun="account"
+                    onClick={runs[0] ? () => inspect(runs[0], 'accounts') : undefined}
+                  />
+                }
               />
             </InfoRowGroup>
           </Card>
@@ -140,7 +177,14 @@ export function ReconciliationTab({ applicationId }: { applicationId: string }) 
               <InfoRow
                 icon={infoIcon.sync}
                 label="Modifications in last sync"
-                value={<Delta added={summary.entitlements.added} removed={summary.entitlements.removed} />}
+                value={
+                  <Delta
+                    added={summary.entitlements.added}
+                    removed={summary.entitlements.removed}
+                    noun="entitlement"
+                    onClick={runs[0] ? () => inspect(runs[0], 'entitlements') : undefined}
+                  />
+                }
               />
             </InfoRowGroup>
           </Card>
@@ -180,6 +224,14 @@ export function ReconciliationTab({ applicationId }: { applicationId: string }) 
           />
         </div>
       </div>
+
+      <SyncChangesDrawer
+        open={changesOpen}
+        run={inspecting?.run ?? null}
+        kind={inspecting?.kind ?? 'accounts'}
+        applicationName={applicationName}
+        onClose={() => setChangesOpen(false)}
+      />
     </div>
   );
 }
@@ -195,11 +247,31 @@ export function ReconciliationTab({ applicationId }: { applicationId: string }) 
  *
  * Geometry matches `StatusChip` (rounded-pill, px-2 py-0.5, caption-medium), so
  * a row of chips sits on one baseline whichever column it is in.
+ *
+ * Given `onClick` it becomes a button to the names behind the numbers. The
+ * chrome is identical either way — a chip that changed shape when it happened
+ * to be actionable would make the two columns look like different data — so the
+ * affordance is carried by the hover, the pointer, and the accessible name.
  */
-export function Delta({ total, added, removed }: { total?: number; added: number; removed: number }) {
+export function Delta({
+  total,
+  added,
+  removed,
+  onClick,
+  noun,
+}: {
+  total?: number;
+  added: number;
+  removed: number;
+  onClick?: () => void;
+  /** Singular, for the button's accessible name — "account", "entitlement". */
+  noun?: string;
+}) {
   const still = added === 0 && removed === 0;
-  return (
-    <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border border-border bg-subtle px-2 py-0.5 text-caption-medium">
+  const chrome =
+    'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border border-border bg-subtle px-2 py-0.5 text-caption-medium';
+  const body = (
+    <>
       {total !== undefined && <span className="text-text-primary">{total}</span>}
       {still ? (
         <span className="text-text-tertiary">No change</span>
@@ -209,6 +281,21 @@ export function Delta({ total, added, removed }: { total?: number; added: number
           <span className="text-danger">−{removed}</span>
         </>
       )}
-    </span>
+    </>
+  );
+
+  if (!onClick) return <span className={chrome}>{body}</span>;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      // The chip's own glyphs are shorthand a screen reader cannot expand, so
+      // the button says what it is and what opening it gets you.
+      aria-label={`${added} ${noun ?? 'item'}${added === 1 ? '' : 's'} added, ${removed} removed. Show which ones.`}
+      className={`${chrome} transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle`}
+    >
+      {body}
+    </button>
   );
 }

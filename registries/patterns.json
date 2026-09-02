@@ -120,6 +120,19 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/components/selection-dock/page.tsx",
       "adr": "docs/architecture/decisions/0016-selection-dock.md"
+    },
+    {
+      "name": "bulk-action-toolbar",
+      "status": "experimental",
+      "problem": "The same need as bulk-selection-dock, without anything appearing over the rows or moving the page once a selection starts.",
+      "useWhen": "The bulk actions are few enough to sit in one menu, and the list is dense enough that a floating card would cover rows the reader is still deciding about.",
+      "avoidWhen": "The actions deserve to be visible without a click, or the table is long enough that the reader will have scrolled the toolbar off screen — that is bulk-selection-dock.",
+      "components": [
+        "Menu",
+        "Button",
+        "DataTable"
+      ],
+      "docs": "apps/design-system/src/app/iga/reviewer/access-certification-v3/page.tsx"
     }
   ]
 }

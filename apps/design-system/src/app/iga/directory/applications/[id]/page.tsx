@@ -221,7 +221,9 @@ export default function ApplicationDetailPage() {
             emptyMessage="This application exposes no entitlements yet."
           />
         )}
-        {shownTab === 'reconciliation' && <ReconciliationTab applicationId={app.id} />}
+        {shownTab === 'reconciliation' && (
+          <ReconciliationTab applicationId={app.id} applicationName={app.name} />
+        )}
         {shownTab === 'provisioning' && (
           <ProvisioningSetupTab applicationId={app.id} applicationName={app.name} onChanged={bump} />
         )}

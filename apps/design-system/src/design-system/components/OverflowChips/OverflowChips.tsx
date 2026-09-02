@@ -27,9 +27,12 @@ export interface OverflowChipItem {
  * of "one chip and a +n" would have drifted in chip shape, and the chip shape is
  * the whole point of the pattern.
  *
- * `renderItem` is for chips that already have their own chrome (an access pill
- * with an app mark, for example). Those stay ungrouped: wrapping them in a
- * second tinted pill would nest two answers.
+ * `renderItem` is for items that carry their own mark — an access pill with an
+ * app logo, a person with their avatar. Those stay ungrouped: wrapping them in a
+ * second tinted pill would nest two answers. People in particular are named with
+ * the round avatar and the plain name rather than the default chip, since the
+ * shape is what the rest of the product uses to say "person" and a pill around a
+ * name claims it is one value among a set.
  */
 export interface OverflowChipsProps<T extends OverflowChipItem = OverflowChipItem> {
   items: T[];
@@ -82,7 +85,10 @@ export function OverflowChips<T extends OverflowChipItem = OverflowChipItem>({
   return (
     <span
       className={[
-        'flex flex-nowrap items-center gap-1.5',
+        // `inline-flex`, so the group is as wide as the chips in it. A block
+        // flex container stretches to its cell, which turns the tinted pill
+        // into a band across the column and reads as a filled field.
+        'inline-flex max-w-full flex-nowrap items-center gap-1.5 align-middle',
         grouped
           ? onSubtle
             ? 'rounded-pill border border-border bg-surface py-1 pl-1 pr-2.5'

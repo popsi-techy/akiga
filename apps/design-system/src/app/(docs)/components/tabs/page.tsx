@@ -49,6 +49,22 @@ export default function TabsDocs() {
         </Example>
       </Section>
 
+      <Section
+        title="Overflow"
+        description="Tabs that do not fit collapse into a More menu, which states how many are hidden and lists them. Nothing is done by the caller — the strip measures itself and re-decides on every resize. The narrow frame below holds the same six tabs as the first example."
+      >
+        <Example label="Same items, 360px of room">
+          <div className="w-[360px] rounded-lg border border-border bg-surface px-5">
+            <Tabs items={items} value={tab} onChange={setTab} aria-label="Overflow demo" />
+          </div>
+        </Example>
+        <p className="mt-3 text-body-sm text-text-secondary">
+          Choosing a hidden section leaves no tab selected, so More takes the underline and marks
+          the section inside its menu — a strip showing no selection at all would read as a page
+          with nothing open.
+        </p>
+      </Section>
+
       <Section title="Props">
         <PropsTable
           rows={[
@@ -87,7 +103,7 @@ export default function TabsDocs() {
             'Don’t write the brackets into the `label` — pass `count` and let the component format it, or two tab strips will disagree about the punctuation.',
             'Don’t count a tab that holds no collection. A count on “Overview” is a number with no referent.',
             'Don’t use tabs for primary app navigation (that’s the sidebar).',
-            'Don’t exceed ~7 tabs — reconsider the IA.',
+            'Don’t exceed ~7 tabs — reconsider the IA. The More menu keeps a long strip usable at any width; it does not make a long strip a good idea.',
             'Don’t hide destructive actions behind a tab.',
             'Don’t recolor the indicator — it’s the brand accent.',
             'Don’t pad the band to change the tab height — a tab is 32px and owns it.',
