@@ -10,6 +10,7 @@
  * fresh tenant has onboarded nothing.
  */
 import type { AppTypeCategory } from './app-types';
+import { directoryListLifecycle, type DirectoryListAppId } from './application-directory-list';
 
 export interface OnboardedApplication {
   id: string;
@@ -25,20 +26,30 @@ export interface OnboardedApplication {
   appTypeId: string;
   appType: string;
   appTypeCategory: AppTypeCategory;
-  /** Draft until the connector is connected; then active in the catalog. */
-  status: 'setup' | 'active';
+  /**
+   * `setup` is still being onboarded. `active` is live. `inactive` was live and
+   * then deactivated — Activate brings it back without repeating setup.
+   */
+  status: 'setup' | 'active' | 'inactive';
   createdAt: string; // ISO
   updatedAt: string; // ISO
 }
 
-const STORE_KEY = 'iga.onboardedApplications.v1';
+const STORE_KEY = 'iga.onboardedApplications.v2';
 
 interface Store {
   applications: Record<string, OnboardedApplication>;
+  /**
+   * Seeded catalog ids the admin removed from the list. The seed itself is
+   * immutable; hiding is how Delete works for those ten applications.
+   */
+  hiddenCatalogIds: string[];
+  /** Lifecycle overlay for seeded catalog apps (default active). */
+  catalogLifecycle: Record<string, 'active' | 'inactive'>;
 }
 
 const hasWindow = () => typeof window !== 'undefined';
-const emptyStore = (): Store => ({ applications: {} });
+const emptyStore = (): Store => ({ applications: {}, hiddenCatalogIds: [], catalogLifecycle: {} });
 
 function readStore(): Store {
   if (!hasWindow()) return emptyStore(); // SSR: nothing onboarded yet
@@ -47,7 +58,14 @@ function readStore(): Store {
     if (!raw) return emptyStore();
     const parsed = JSON.parse(raw) as Store;
     if (!parsed || typeof parsed !== 'object' || !parsed.applications) return emptyStore();
-    return parsed;
+    return {
+      applications: parsed.applications,
+      hiddenCatalogIds: Array.isArray(parsed.hiddenCatalogIds) ? parsed.hiddenCatalogIds : [],
+      catalogLifecycle:
+        parsed.catalogLifecycle && typeof parsed.catalogLifecycle === 'object'
+          ? parsed.catalogLifecycle
+          : {},
+    };
   } catch {
     return emptyStore();
   }
@@ -60,10 +78,11 @@ function writeStore(s: Store) {
 function normalizeOnboarded(raw: OnboardedApplication): OnboardedApplication {
   return {
     ...raw,
-    status: raw.status ?? 'setup',
+    status: raw.status === 'active' || raw.status === 'inactive' ? raw.status : 'setup',
     name: raw.name ?? '',
     description: raw.description ?? '',
     accessUrl: raw.accessUrl ?? '',
+    enableProvisioning: Boolean(raw.enableProvisioning),
     appType: raw.appType ?? '',
   };
 }
@@ -121,6 +140,22 @@ export function deleteOnboardedApplication(id: string): void {
   writeStore(store);
 }
 
+export function listHiddenCatalogIds(): string[] {
+  return readStore().hiddenCatalogIds;
+}
+
+export function isCatalogHidden(id: string): boolean {
+  return readStore().hiddenCatalogIds.includes(id);
+}
+
+/** Soft-delete a seeded catalog application so it leaves the list. */
+export function hideCatalogApplication(id: string): void {
+  const store = readStore();
+  if (store.hiddenCatalogIds.includes(id)) return;
+  store.hiddenCatalogIds = [...store.hiddenCatalogIds, id];
+  writeStore(store);
+}
+
 export function updateApplicationBasics(
   id: string,
   basics: { name: string; description: string },
@@ -141,12 +176,54 @@ export function updateApplicationBasics(
 }
 
 export function connectApplication(id: string): OnboardedApplication | null {
+  return activateOnboardedApplication(id);
+}
+
+export function activateOnboardedApplication(id: string): OnboardedApplication | null {
   const store = readStore();
   const app = store.applications[id];
-  if (!app || app.status === 'active') return app ? normalizeOnboarded(app) : null;
+  if (!app) return null;
+  if (app.status === 'active') return normalizeOnboarded(app);
   const now = new Date().toISOString();
   const next = normalizeOnboarded({ ...app, status: 'active', updatedAt: now });
   store.applications[id] = next;
   writeStore(store);
   return next;
+}
+
+export function deactivateOnboardedApplication(id: string): OnboardedApplication | null {
+  const store = readStore();
+  const app = store.applications[id];
+  if (!app || app.status !== 'active') return app ? normalizeOnboarded(app) : null;
+  const now = new Date().toISOString();
+  const next = normalizeOnboarded({ ...app, status: 'inactive', updatedAt: now });
+  store.applications[id] = next;
+  writeStore(store);
+  return next;
+}
+
+export function catalogApplicationLifecycle(id: string): 'active' | 'inactive' {
+  const overlay = readStore().catalogLifecycle[id];
+  if (overlay) return overlay;
+  if (id in directoryListLifecycle) return directoryListLifecycle[id as DirectoryListAppId];
+  return 'active';
+}
+
+export function setCatalogApplicationLifecycle(id: string, status: 'active' | 'inactive'): void {
+  const store = readStore();
+  store.catalogLifecycle = { ...store.catalogLifecycle, [id]: status };
+  writeStore(store);
+}
+
+export type ApplicationLifecycle = 'draft' | 'active' | 'inactive';
+
+/** Draft while onboarding, then Active or Inactive after the first activate. */
+export function applicationLifecycle(id: string): ApplicationLifecycle {
+  const onboarded = getOnboardedApplication(id);
+  if (onboarded) {
+    if (onboarded.status === 'active') return 'active';
+    if (onboarded.status === 'inactive') return 'inactive';
+    return 'draft';
+  }
+  return catalogApplicationLifecycle(id);
 }

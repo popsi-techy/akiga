@@ -60,6 +60,7 @@ export const navigation: NavSection[] = [
       { label: 'Date Picker', href: '/components/date-picker', status: 'ready' },
       { label: 'Time Picker', href: '/components/time-picker', status: 'ready' },
       { label: 'Rich Text Editor', href: '/components/rich-text-editor', status: 'ready' },
+      { label: 'File Attachment', href: '/components/file-attachment', status: 'ready' },
       { label: 'Click to Edit', href: '/components/click-to-edit', status: 'ready' },
     ],
   },

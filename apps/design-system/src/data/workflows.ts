@@ -1,18 +1,26 @@
 /**
  * Workflows service — hybrid persistence (localStorage `iga.workflows.v1`).
- * No seed: an empty list is valid. Load runs the legacy migration.
+ * The seed primes an empty store; thereafter localStorage is the source of
+ * truth. Bump `SEED_VERSION` to top-up missing sample workflows without
+ * overwriting ones the administrator already edited or created.
  */
 import type {
   AutomationWorkflow,
+  ConditionGroup,
   WorkflowEvent,
   WorkflowEventType,
   WorkflowNode,
   WorkflowRow,
 } from './automation-types';
 import { migrateSeq } from '@/lib/workflow-tree';
+import { defaultNotificationConfig } from './notification-templates';
 
 const STORE_KEY = 'iga.workflows.v1';
+/** Bump to add newly-authored sample workflows to existing stores. */
+const SEED_VERSION = 1;
+
 interface Store {
+  version?: number;
   workflows: Record<string, AutomationWorkflow>;
 }
 
@@ -42,19 +50,148 @@ export function eventFromType(type: WorkflowEventType): WorkflowEvent {
   return { type, label: meta.label, description: meta.description };
 }
 
+function rule(id: string, attribute: string, value: string): ConditionGroup['children'][number] {
+  return { kind: 'rule', id, attribute, operator: 'equals', value };
+}
+
+function orGroup(id: string, ...children: ConditionGroup['children']): ConditionGroup {
+  return { kind: 'group', id, combinator: 'OR', children };
+}
+
+function andGroup(id: string, ...children: ConditionGroup['children']): ConditionGroup {
+  return { kind: 'group', id, combinator: 'AND', children };
+}
+
+/**
+ * The live joiner automation the Execution History already narrates.
+ *
+ * Node ids match `workflow-runs.ts` (`n1`…`n5`) so a run's step list and the
+ * canvas are the same tree, not two stories about the same hire.
+ */
+const JOINER_ONBOARDING: AutomationWorkflow = {
+  id: 'wf-joiner-onboarding',
+  name: 'Joiner onboarding',
+  description:
+    'When a new identity joins Data, Finance or Engineering, grant the role-appropriate access and send a welcome.',
+  status: 'active',
+  event: eventFromType('joiner'),
+  createdAt: '2026-03-12T09:00:00.000Z',
+  updatedAt: '2026-08-09T06:02:00.000Z',
+  root: [
+    {
+      id: 'n1',
+      type: 'userFilter',
+      name: 'User Filter',
+      config: {
+        condition: orGroup(
+          'grp-depts',
+          rule('r-data', 'department', 'Data'),
+          rule('r-fin', 'department', 'Finance'),
+          rule('r-eng', 'department', 'Engineering'),
+        ),
+      },
+    },
+    {
+      id: 'n2',
+      type: 'wfConditionalBranch',
+      name: 'Conditional Branch',
+      branches: [
+        {
+          id: 'br-if',
+          label: 'IF',
+          kind: 'if',
+          condition: andGroup('grp-title', rule('r-title', 'jobTitle', 'Data Engineer')),
+          seq: [
+            {
+              id: 'n3',
+              type: 'assignEntities',
+              name: 'Assign Entities',
+              config: {
+                entitlements: [{ id: 'ent-snow-read', name: 'Snowflake Read', appName: 'Snowflake' }],
+                technicalRoles: [],
+                businessRoles: [],
+              },
+            },
+          ],
+        },
+        {
+          id: 'br-else',
+          label: 'ELSE',
+          kind: 'else',
+          locked: true,
+          seq: [
+            {
+              id: 'n4',
+              type: 'assignEntities',
+              name: 'Assign Entities',
+              config: {
+                entitlements: [{ id: 'ent-ns-read', name: 'NetSuite Read', appName: 'NetSuite' }],
+                technicalRoles: [],
+                businessRoles: [{ id: 'br-fin-analyst', name: 'Finance Analyst', appName: 'Workday' }],
+              },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'n5',
+      type: 'notification',
+      name: 'Notification',
+      config: {
+        ...defaultNotificationConfig(),
+        email: {
+          enabled: true,
+          template: {
+            name: 'Joiner welcome',
+            subject: 'Welcome to {{resource}}',
+            body: '<p>Hi {{requester.name}},</p><p>Your joiner access has been granted. Check your email for next steps.</p>',
+          },
+        },
+      },
+    },
+  ],
+};
+
+const WORKFLOW_SEED: AutomationWorkflow[] = [JOINER_ONBOARDING];
+
+function seedStore(): Store {
+  const workflows: Record<string, AutomationWorkflow> = {};
+  for (const wf of WORKFLOW_SEED) workflows[wf.id] = structuredClone(wf);
+  return { version: SEED_VERSION, workflows };
+}
+
 function readStore(): Store {
-  if (!hasWindow()) return { workflows: {} };
+  if (!hasWindow()) return seedStore();
   try {
     const raw = window.localStorage.getItem(STORE_KEY);
-    if (!raw) return { workflows: {} };
+    if (!raw) {
+      const seeded = seedStore();
+      window.localStorage.setItem(STORE_KEY, JSON.stringify(seeded));
+      return seeded;
+    }
     const parsed = JSON.parse(raw) as Store;
-    return parsed?.workflows ? parsed : { workflows: {} };
+    if (!parsed || typeof parsed !== 'object' || !parsed.workflows) {
+      const seeded = seedStore();
+      window.localStorage.setItem(STORE_KEY, JSON.stringify(seeded));
+      return seeded;
+    }
+    if (parsed.version !== SEED_VERSION) {
+      for (const wf of WORKFLOW_SEED) {
+        if (!parsed.workflows[wf.id]) parsed.workflows[wf.id] = structuredClone(wf);
+      }
+      parsed.version = SEED_VERSION;
+      window.localStorage.setItem(STORE_KEY, JSON.stringify(parsed));
+    }
+    return parsed;
   } catch {
-    return { workflows: {} };
+    return seedStore();
   }
 }
+
 function writeStore(store: Store): void {
   if (!hasWindow()) return;
+  store.version = store.version ?? SEED_VERSION;
   window.localStorage.setItem(STORE_KEY, JSON.stringify(store));
 }
 function nowIso() {

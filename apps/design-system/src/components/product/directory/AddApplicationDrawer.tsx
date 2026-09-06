@@ -113,6 +113,13 @@ export function AddApplicationDrawer({
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
+        <Input
+          label="Application Access URL"
+          hint="Where users are sent when they open this application from IGA."
+          placeholder="https://app.example.com"
+          value={accessUrl}
+          onChange={(e) => setAccessUrl(e.target.value)}
+        />
 
         <div className="space-y-3">
           <ToggleRow
@@ -146,14 +153,6 @@ export function AddApplicationDrawer({
             disabled={!requestable}
           />
         </div>
-
-        <Input
-          label="Application Access URL"
-          hint="Where users are sent when they open this application from IGA."
-          placeholder="https://app.example.com"
-          value={accessUrl}
-          onChange={(e) => setAccessUrl(e.target.value)}
-        />
       </div>
     </Drawer>
   );

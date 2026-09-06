@@ -3,8 +3,22 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import AddIcon from '@mui/icons-material/Add';
+import FilterListOutlined from '@mui/icons-material/FilterListOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
-import { Avatar, Button, DataTable, Dialog, Input, Menu, Select, StatusChip, useToast, type Column } from '@ds/components';
+import {
+  Avatar,
+  Button,
+  DataTable,
+  Dialog,
+  FilterDrawer,
+  Input,
+  Menu,
+  StatusChip,
+  useToast,
+  type Column,
+  type FilterGroup,
+  type FilterSelection,
+} from '@ds/components';
 import {
   SCOPE_TYPE_LABEL,
   deleteReport,
@@ -13,6 +27,7 @@ import {
   reportKindLabel,
   reportTypeLabel,
   type Report,
+  type ScopeType,
 } from '@/data/governance-analytics';
 import { formatDate } from '@/lib/datetime';
 
@@ -38,6 +53,38 @@ const toRow = (r: Report): Row => ({
   ready: r.status === 'ready',
 });
 
+const REPORT_SCOPE_TYPES: ScopeType[] = [
+  'department',
+  'application',
+  'policyType',
+  'identityType',
+  'governanceTeam',
+];
+
+const FILTER_GROUPS: FilterGroup[] = [
+  {
+    id: 'type',
+    label: 'Report type',
+    options: REPORT_SCOPE_TYPES.map((id) => ({ id, label: SCOPE_TYPE_LABEL[id] })),
+  },
+  {
+    id: 'status',
+    label: 'Status',
+    options: [
+      { id: 'ready', label: 'Ready' },
+      { id: 'draft', label: 'Draft' },
+    ],
+  },
+];
+
+function matchesFilters(report: Report, selection: FilterSelection) {
+  const types = selection.type;
+  const statuses = selection.status;
+  if (types?.length && !types.includes(report.scope.type)) return false;
+  if (statuses?.length && !statuses.includes(report.status)) return false;
+  return true;
+}
+
 /**
  * The Governance Analytics landing page: a list of reports, never a dashboard.
  *
@@ -52,7 +99,8 @@ export function ReportsListView() {
   const toast = useToast();
   const [rows, setRows] = React.useState<Report[] | null>(null);
   const [query, setQuery] = React.useState('');
-  const [kind, setKind] = React.useState('all');
+  const [filterOpen, setFilterOpen] = React.useState(false);
+  const [filterSelection, setFilterSelection] = React.useState<FilterSelection>({});
   const [confirmDelete, setConfirmDelete] = React.useState<Report | null>(null);
 
   // localStorage-backed, so read after mount — `null` keeps DataTable in its
@@ -60,14 +108,12 @@ export function ReportsListView() {
   const reload = React.useCallback(() => setRows(listReports()), []);
   React.useEffect(reload, [reload]);
 
-  // Same label the Type column shows — a filter offering "Department Governance
-  // Overview" for a column reading "Department" is two names for one thing.
-  const kinds = React.useMemo(() => [...new Set((rows ?? []).map(reportTypeLabel))].sort(), [rows]);
+  const activeFilters = Object.values(filterSelection).reduce((n, ids) => n + ids.length, 0);
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
     return (rows ?? [])
-      .filter((r) => kind === 'all' || reportTypeLabel(r) === kind)
+      .filter((r) => matchesFilters(r, filterSelection))
       .filter(
         (r) =>
           !q ||
@@ -75,7 +121,7 @@ export function ReportsListView() {
           r.scope.value.toLowerCase().includes(q) ||
           reportKindLabel(r).toLowerCase().includes(q),
       );
-  }, [rows, query, kind]);
+  }, [rows, query, filterSelection]);
 
   const open = (id: string) => router.push(`/iga/governance-analytics/report/${id}`);
 
@@ -116,7 +162,7 @@ export function ReportsListView() {
       // left edge, so a list of authors scans as a column rather than ragged text.
       render: (r) => (
         <div className="flex min-w-0 items-center gap-2.5">
-          <Avatar name={r.createdBy} size="sm" kind="person" />
+          <Avatar name={r.createdBy} size="s" kind="person" />
           <span className="min-w-0 truncate text-body-sm text-text-primary">{r.createdBy}</span>
         </div>
       ),
@@ -172,17 +218,12 @@ export function ReportsListView() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="mb-5 flex shrink-0 flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-h2 text-text-primary">Governance Analytics</h1>
-          <p className="mt-1 max-w-2xl text-body-sm text-text-secondary">
-            Generate evidence-backed reports on identities, access, applications, policies, ownership, and
-            risk.
-          </p>
-        </div>
-        <Button startIcon={<AddIcon />} onClick={() => router.push('/iga/governance-analytics/create')}>
-          Create report
-        </Button>
+      <div className="mb-5 shrink-0">
+        <h1 className="text-h2 text-text-primary">Governance Analytics</h1>
+        <p className="mt-1 max-w-2xl text-body-sm text-text-secondary">
+          Generate evidence-backed reports on identities, access, applications, policies, ownership, and
+          risk.
+        </p>
       </div>
 
       <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
@@ -195,19 +236,14 @@ export function ReportsListView() {
             startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
           />
         </div>
-        <div className="w-56">
-          <Select
-            aria-label="Filter by report type"
-            value={kind}
-            onChange={setKind}
-            options={[{ value: 'all', label: 'All report types' }, ...kinds.map((k) => ({ value: k, label: k }))]}
-          />
+        <Button variant="secondary" startIcon={<FilterListOutlined />} onClick={() => setFilterOpen(true)}>
+          Filter{activeFilters > 0 ? ` (${activeFilters})` : ''}
+        </Button>
+        <div className="ml-auto">
+          <Button startIcon={<AddIcon />} onClick={() => router.push('/iga/governance-analytics/create')}>
+            Create report
+          </Button>
         </div>
-        {rows && (
-          <span className="text-caption tabular-nums text-text-tertiary">
-            {filtered.length} of {rows.length} reports
-          </span>
-        )}
       </div>
 
       <div className="min-h-0 flex-1">
@@ -221,14 +257,23 @@ export function ReportsListView() {
           layout="fixed"
           fillHeight
           onRowClick={(r) => open(r.id)}
-          emptyTitle={query || kind !== 'all' ? 'No reports match' : 'No reports yet'}
+          emptyTitle={query || activeFilters > 0 ? 'No reports match' : 'No reports yet'}
           emptyMessage={
-            query || kind !== 'all'
+            query || activeFilters > 0
               ? 'Nothing here matches that search. Clear it to see every report.'
               : 'Create a report to capture the governance posture of a department, application, policy or team.'
           }
         />
       </div>
+
+      <FilterDrawer
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        groups={FILTER_GROUPS}
+        value={filterSelection}
+        onApply={setFilterSelection}
+        subtitle="Filter as per your requirement."
+      />
 
       <Dialog
         open={confirmDelete !== null}

@@ -53,19 +53,24 @@ const COPY: Record<AppSetupStepId, { hint: string; cta: string; tab: string }> =
  * adds where a step is edited, which is a fact about the screens rather than the domain.
  */
 export function applicationSetupSteps(app: OnboardedApplication): ApplicationSetupStep[] {
-  return APP_SETUP_STEPS.map((step) => {
-    const copy = COPY[step.id];
-    const done = isAppSetupStepDone(step.id, app);
-    const emptyInventory = step.id === 'reconciliation' && !reconciliationSummary(app.id).lastSync;
-    return {
-      id: step.id,
-      label: step.label,
-      required: isRequiredAppSetupStep(step.id),
-      done,
-      ...copy,
-      doneLabel: done && emptyInventory ? 'Nothing to pull' : undefined,
-    };
-  });
+  return APP_SETUP_STEPS.filter(
+    (step) =>
+      (step.id !== 'provisioning' && step.id !== 'reconciliation') || app.enableProvisioning,
+  ).map(
+    (step) => {
+      const copy = COPY[step.id];
+      const done = isAppSetupStepDone(step.id, app);
+      const emptyInventory = step.id === 'reconciliation' && !reconciliationSummary(app.id).lastSync;
+      return {
+        id: step.id,
+        label: step.label,
+        required: isRequiredAppSetupStep(step.id, app),
+        done,
+        ...copy,
+        doneLabel: done && emptyInventory ? 'Nothing to pull' : undefined,
+      };
+    },
+  );
 }
 
 /** First unfinished setup tab, or the last one once everything is in place. */

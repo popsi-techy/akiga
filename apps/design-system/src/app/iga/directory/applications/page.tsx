@@ -6,18 +6,31 @@ import { useRouter } from 'next/navigation';
 import AddOutlined from '@mui/icons-material/AddOutlined';
 import ManageAccountsOutlined from '@mui/icons-material/ManageAccountsOutlined';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
-import { Avatar, Button, OverflowChips, StatusChip, Tooltip, type Column, type FilterGroup } from '@ds/components';
+import {
+  Avatar,
+  Button,
+  Dialog,
+  Menu,
+  OverflowChips,
+  StatusChip,
+  Tooltip,
+  useToast,
+  type Column,
+  type FilterGroup,
+} from '@ds/components';
 import {
   applicationOwners,
-  listCataloguedApplications,
+  deleteApplication,
+  listDirectoryCatalogApplications,
   listOnboardedApplicationRows,
+  listVisibleDirectoryApplications,
   type ApplicationRow,
 } from '@/data/directory';
-import { DirectoryListPage, EntityAvatar } from '@/components/product/directory';
+import { APPLICATION_LIFECYCLE_CHIP, DirectoryListPage, EntityAvatar } from '@/components/product/directory';
 
 const AUTH_CHIP = {
   authorized: { label: 'Authorized', intent: 'success' as const },
-  pending: { label: 'Pending', intent: 'warning' as const },
+  pending: { label: 'Not authorized', intent: 'warning' as const },
 };
 
 const METRIC_ICON = { fontSize: 16 } as const;
@@ -77,15 +90,22 @@ function ReconciliationCounts({
 
 export default function ApplicationsListPage() {
   const router = useRouter();
-  // The catalog paints straight away; onboarded applications live in
-  // localStorage, so they can only be read after mount — reading them during
-  // render would give the server one list and the client another.
+  const toast = useToast();
+  // The catalog paints straight away; onboarded applications and hidden
+  // catalog ids live in localStorage, so they can only be read after mount —
+  // reading them during render would give the server one list and the client
+  // another.
   const [onboarded, setOnboarded] = React.useState<ApplicationRow[]>([]);
-  React.useEffect(() => setOnboarded(listOnboardedApplicationRows()), []);
-  const apps = React.useMemo(
-    () => [...onboarded, ...listCataloguedApplications()],
-    [onboarded],
-  );
+  const [catalog, setCatalog] = React.useState<ApplicationRow[]>(() => listDirectoryCatalogApplications());
+  const [pendingDelete, setPendingDelete] = React.useState<ApplicationRow | null>(null);
+
+  const refresh = React.useCallback(() => {
+    setOnboarded(listOnboardedApplicationRows());
+    setCatalog(listVisibleDirectoryApplications());
+  }, []);
+  React.useEffect(refresh, [refresh]);
+
+  const apps = React.useMemo(() => [...onboarded, ...catalog], [onboarded, catalog]);
 
   /**
    * One category today. The modal is built for several, so the shape is here
@@ -112,13 +132,30 @@ export default function ApplicationsListPage() {
       id: 'name',
       header: 'App Name',
       sortable: true,
+      wrap: true,
       value: (r) => r.name,
       render: (r) => (
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-2.5">
           <EntityAvatar kind="application" name={r.name} appType={r.appType} />
-          <span className="truncate text-body-sm-strong text-text-primary">{r.name}</span>
+          <div className="min-w-0">
+            <div className="truncate text-body-sm-strong text-text-primary">{r.name}</div>
+            <div className="truncate text-caption text-text-secondary" title={r.appType}>
+              {r.appType}
+            </div>
+          </div>
         </div>
       ),
+    },
+    {
+      id: 'lifecycle',
+      header: 'Status',
+      sortable: true,
+      width: 120,
+      value: (r) => r.lifecycle,
+      render: (r) => {
+        const chip = APPLICATION_LIFECYCLE_CHIP[r.lifecycle];
+        return <StatusChip intent={chip.intent} label={chip.label} />;
+      },
     },
     {
       id: 'discoverySource',
@@ -146,14 +183,33 @@ export default function ApplicationsListPage() {
       wrap: true,
       width: 200,
       value: (r) => applicationOwners(r.id).map((o) => o.name).join(', '),
-      render: (r) => (
-        <OverflowChips
-          items={applicationOwners(r.id)}
-          max={1}
-          emptyLabel="—"
-          renderItem={(o) => <OwnerChip name={o.name} />}
-        />
-      ),
+      render: (r) => {
+        const owners = applicationOwners(r.id);
+        if (owners.length === 0) {
+          // A dash says "nothing here" and leaves the gap. The row already
+          // opens the application; this link is the next useful step — the
+          // Owners tab, where the empty page has the Add control. Named for
+          // the column, not the page: "+ Add application" would send the
+          // reader to onboard a second system from a cell about people.
+          return (
+            <Link
+              href={`/iga/directory/applications/${r.id}?tab=owners`}
+              onClick={(e) => e.stopPropagation()}
+              aria-label={`Add owner for ${r.name}`}
+              className="rounded-sm text-body-sm text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+            >
+              + Add owner
+            </Link>
+          );
+        }
+        return (
+          <OverflowChips
+            items={owners}
+            max={1}
+            renderItem={(o) => <OwnerChip name={o.name} />}
+          />
+        );
+      },
     },
     {
       id: 'reconciliation',
@@ -170,33 +226,76 @@ export default function ApplicationsListPage() {
         />
       ),
     },
+    {
+      id: 'actions',
+      header: 'Actions',
+      align: 'right',
+      width: 56,
+      render: (r) => (
+        <Menu
+          ariaLabel={`Actions for ${r.name}`}
+          items={[
+            {
+              label: 'Delete',
+              danger: true,
+              onClick: () => setPendingDelete(r),
+            },
+          ]}
+        />
+      ),
+    },
   ];
   return (
-    <DirectoryListPage<ApplicationRow>
-      title="Applications"
-      description="Systems integrated with the IGA platform."
-      searchPlaceholder="Search applications"
-      columns={columns}
-      rows={apps}
-      matches={(r, q) =>
-        r.name.toLowerCase().includes(q) ||
-        (r.description ?? '').toLowerCase().includes(q) ||
-        r.discoverySource.toLowerCase().includes(q) ||
-        applicationOwners(r.id).some((o) => o.name.toLowerCase().includes(q))
-      }
-      onOpen={open}
-      emptyTitle="No applications found"
-      emptyMessage="No applications match your search."
-      actions={
-        <Button startIcon={<AddOutlined />} onClick={() => router.push('/iga/directory/applications/onboard')}>
-          Onboard new application
-        </Button>
-      }
-      filterGroups={filterGroups}
-      filterMatches={(r, s) => {
-        const picked = s.application ?? [];
-        return picked.length === 0 || picked.includes(r.id);
-      }}
-    />
+    <>
+      <DirectoryListPage<ApplicationRow>
+        title="Applications"
+        description="Systems integrated with the IGA platform."
+        searchPlaceholder="Search applications"
+        columns={columns}
+        rows={apps}
+        matches={(r, q) =>
+          r.name.toLowerCase().includes(q) ||
+          r.appType.toLowerCase().includes(q) ||
+          (r.description ?? '').toLowerCase().includes(q) ||
+          r.discoverySource.toLowerCase().includes(q) ||
+          applicationOwners(r.id).some((o) => o.name.toLowerCase().includes(q))
+        }
+        onOpen={open}
+        emptyTitle="No applications found"
+        emptyMessage="No applications match your search."
+        actions={
+          <Button startIcon={<AddOutlined />} onClick={() => router.push('/iga/directory/applications/onboard')}>
+            Onboard new application
+          </Button>
+        }
+        filterGroups={filterGroups}
+        filterMatches={(r, s) => {
+          const picked = s.application ?? [];
+          return picked.length === 0 || picked.includes(r.id);
+        }}
+      />
+
+      <Dialog
+        open={Boolean(pendingDelete)}
+        onClose={() => setPendingDelete(null)}
+        title={pendingDelete ? `Delete ${pendingDelete.name}?` : 'Delete application?'}
+        tone="danger"
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (!pendingDelete) return;
+          const { id, name } = pendingDelete;
+          const ok = deleteApplication(id);
+          setPendingDelete(null);
+          if (ok) {
+            refresh();
+            toast.success(`“${name}” was deleted.`);
+          } else {
+            toast.error('Could not delete this application.');
+          }
+        }}
+      >
+        This removes the application from the catalog. This cannot be undone.
+      </Dialog>
+    </>
   );
 }

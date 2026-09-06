@@ -72,7 +72,7 @@ export interface WorkflowTemplate {
   name: string;
   /** One sentence, short enough to finish in three caption lines in the gallery rail. */
   summary: string;
-  /** The systems it touches, for the card's chips. */
+  /** The systems it touches — used by gallery search, not shown on the card. */
   systems: string[];
   /** What an administrator must confirm before switching it on. Never empty. */
   needsAttention: string[];

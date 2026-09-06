@@ -5,15 +5,10 @@ import { useRouter } from 'next/navigation';
 import ArrowForwardOutlined from '@mui/icons-material/ArrowForward';
 import DrawOutlined from '@mui/icons-material/DrawOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
-import StorageOutlined from '@mui/icons-material/StorageOutlined';
 import BadgeOutlined from '@mui/icons-material/BadgeOutlined';
-import MailOutline from '@mui/icons-material/MailOutline';
-import AccountTreeOutlined from '@mui/icons-material/AccountTreeOutlined';
-import MenuBookOutlined from '@mui/icons-material/MenuBookOutlined';
 import SchoolOutlined from '@mui/icons-material/SchoolOutlined';
-import HubOutlined from '@mui/icons-material/HubOutlined';
 import PersonOutline from '@mui/icons-material/PersonOutline';
-import type { SvgIconComponent } from '@mui/icons-material';
+import PublicOutlined from '@mui/icons-material/PublicOutlined';
 import { Button, Drawer, Input, Modal, NavList, StatusChip, useToast, type StatusIntent } from '@ds/components';
 import { createWorkflow, listWorkflows } from '@/data/workflows';
 import {
@@ -371,10 +366,12 @@ function TemplateCard({
         {template.summary}
       </p>
       <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
-        <div className={`flex min-w-0 items-center gap-1.5 ${soon ? 'opacity-50' : ''}`}>
-          {template.systems.map((name) => (
-            <SystemMark key={name} name={name} />
-          ))}
+        <div
+          aria-label="Scope: Global"
+          className={`flex min-w-0 items-center gap-1 text-caption text-text-secondary ${soon ? 'opacity-50' : ''}`}
+        >
+          <PublicOutlined sx={{ fontSize: 16 }} className="shrink-0 text-icon-subtle" aria-hidden />
+          <span>Global</span>
         </div>
         <div className="flex shrink-0 items-center gap-3">
           <button
@@ -400,30 +397,6 @@ function TemplateCard({
         </div>
       </div>
     </article>
-  );
-}
-
-function systemGlyph(name: string): SvgIconComponent {
-  const n = name.toLowerCase();
-  if (n.includes('sis') || n.includes('student')) return SchoolOutlined;
-  if (n.includes('peoplesoft') || n.includes('hrms')) return StorageOutlined;
-  if (n.includes('entra') || n.includes('azure')) return BadgeOutlined;
-  if (n.includes('office') || n.includes('365')) return MailOutline;
-  if (n.includes('active directory')) return AccountTreeOutlined;
-  if (n.includes('blackboard') || n.includes('lms')) return MenuBookOutlined;
-  return HubOutlined;
-}
-
-/** Outlined square, quiet icon — same weight as overview-card header marks. */
-function SystemMark({ name }: { name: string }) {
-  const Icon = systemGlyph(name);
-  return (
-    <span
-      title={name}
-      className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-border text-icon-subtle"
-    >
-      <Icon sx={{ fontSize: 14, color: 'inherit' }} />
-    </span>
   );
 }
 

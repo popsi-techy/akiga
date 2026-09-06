@@ -37,9 +37,14 @@ export interface MenuProps {
   /** Custom trigger element; defaults to a ⋮ icon button. */
   trigger?: React.ReactElement;
   ariaLabel?: string;
+  /**
+   * Extra space between the trigger and the list, in spacing steps.
+   * Use when the list would cover nearby chrome — a floating dock, a toolbar.
+   */
+  offset?: 1 | 2 | 3 | 4 | 5 | 6;
 }
 
-export function Menu({ items, trigger, ariaLabel = 'Actions' }: MenuProps) {
+export function Menu({ items, trigger, ariaLabel = 'Actions', offset }: MenuProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -79,6 +84,7 @@ export function Menu({ items, trigger, ariaLabel = 'Actions' }: MenuProps) {
         PaperProps={{
           sx: {
             minWidth: 190,
+            marginTop: offset != null ? `var(--ds-space-${offset})` : undefined,
             borderRadius: 'var(--ds-radius-md)',
             border: '1px solid var(--ds-color-border-default)',
             boxShadow: 'var(--ds-elevation-lg)',

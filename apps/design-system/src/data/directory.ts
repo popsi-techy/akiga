@@ -28,9 +28,21 @@ import {
 import {
   listOnboardedApplications,
   getOnboardedApplication,
+  deleteOnboardedApplication,
+  hideCatalogApplication,
+  isCatalogHidden,
+  listHiddenCatalogIds,
+  activateOnboardedApplication,
+  deactivateOnboardedApplication,
+  setCatalogApplicationLifecycle,
+  applicationLifecycle,
+  type ApplicationLifecycle,
   type OnboardedApplication,
 } from './applications-store';
+import { DIRECTORY_LIST_ID_SET } from './application-directory-list';
 import { getOwners, type OwnedEntityType } from './entity-owners';
+import { listAuthorizations } from './provisioning-auth';
+import { listStoredEntitlements } from './entitlements-store';
 
 // ---- back-compat (consumed by automation approver pickers) ------------
 export interface DirUser {
@@ -78,7 +90,27 @@ interface FlatEntitlement {
 const flatEntitlements: FlatEntitlement[] = catalogApps.flatMap((app) =>
   app.entitlements.map((e) => ({ ...e, applicationId: app.id, applicationName: app.name })),
 );
-const entById = new Map(flatEntitlements.map((e) => [e.id, e]));
+
+function applicationNameFor(id: string): string {
+  return appById.get(id)?.name ?? getOnboardedApplication(id)?.name ?? id;
+}
+
+function allFlatEntitlements(): FlatEntitlement[] {
+  const custom: FlatEntitlement[] = listStoredEntitlements().map((e) => ({
+    id: e.id,
+    name: e.name,
+    description: e.description,
+    risk: e.risk,
+    ownerIds: [],
+    applicationId: e.applicationId,
+    applicationName: applicationNameFor(e.applicationId),
+  }));
+  return [...flatEntitlements, ...custom];
+}
+
+function entitlementById(id: string): FlatEntitlement | undefined {
+  return allFlatEntitlements().find((e) => e.id === id);
+}
 
 // ---- row projections (list tables) -----------------------------------
 export interface UserIdentityRow {
@@ -114,6 +146,8 @@ export interface ApplicationRow {
   ownerCount: number;
   accountCount: number;
   entitlementCount: number;
+  /** Draft while onboarding, then Active or Inactive. */
+  lifecycle: ApplicationLifecycle;
   /** Integration facts — see `appProfiles` in the seed. */
   appType: string;
   discoverySource: AppDiscoverySource;
@@ -225,7 +259,7 @@ export function listGoverningTeams(
     .map((g) => ({ id: g.id, name: g.name, description: g.description, reviewerCount: g.reviewerIds.length }));
 }
 export function resolveEntitlements(ids: string[]): EntitlementRow[] {
-  return ids.map((id) => entById.get(id)).filter(Boolean).map((e) => toEntRow(e as FlatEntitlement));
+  return ids.map((id) => entitlementById(id)).filter(Boolean).map((e) => toEntRow(e as FlatEntitlement));
 }
 
 // ---- User Identity ---------------------------------------------------
@@ -240,6 +274,11 @@ export function resolveEntitlements(ids: string[]): EntitlementRow[] {
  */
 export function listUserIdentities(): UserIdentityRow[] {
   return userIdentities.map(toUserRow);
+}
+
+export function getUserIdentity(id: string): UserIdentityRow | undefined {
+  const row = identityById.get(id);
+  return row ? toUserRow(row) : undefined;
 }
 
 /** The external subset — contractors, vendors, partners, auditors. */
@@ -312,10 +351,11 @@ const onboardedRow = (a: OnboardedApplication): ApplicationRow => ({
   ownerCount: 0,
   accountCount: 0,
   entitlementCount: 0,
+  lifecycle: applicationLifecycle(a.id),
   appType: a.appType,
   discoverySource:
     a.appTypeCategory === 'iam' ? 'IAM' : a.appTypeCategory === 'pam' ? 'PAM' : 'Direct',
-  authorizationStatus: 'authorized',
+  authorizationStatus: applicationIsAuthorized(a.id) ? 'authorized' : 'pending',
   externalProvisioning: a.enableProvisioning ? 'enabled' : 'disabled',
   provisioningType: a.enableProvisioning ? 'auto' : 'manual',
 });
@@ -327,16 +367,26 @@ const onboardedRow = (a: OnboardedApplication): ApplicationRow => ({
  * merge the localStorage-backed half after mount, instead of rendering an empty
  * table (and its "no applications" message) for one frame.
  */
-export function listCataloguedApplications(): ApplicationRow[] {
-  return catalogApps.map((app) => ({
+function toCatalogRow(app: CatalogApp): ApplicationRow {
+  return {
     id: app.id,
     name: app.name,
     description: app.description,
     ownerCount: app.ownerIds.length,
     accountCount: appAccounts.filter((a) => a.applicationId === app.id).length,
     entitlementCount: app.entitlements.length,
+    lifecycle: applicationLifecycle(app.id),
     ...appProfileFor(app.id),
-  }));
+  };
+}
+
+export function listCataloguedApplications(): ApplicationRow[] {
+  return catalogApps.map(toCatalogRow);
+}
+
+/** The ten typed instances shown on the Applications directory list. */
+export function listDirectoryCatalogApplications(): ApplicationRow[] {
+  return catalogApps.filter((app) => DIRECTORY_LIST_ID_SET.has(app.id)).map(toCatalogRow);
 }
 
 /** Browser-only: empty during server render. */
@@ -344,9 +394,42 @@ export function listOnboardedApplicationRows(): ApplicationRow[] {
   return listOnboardedApplications().map(onboardedRow);
 }
 
+/**
+ * Catalog rows the admin has not deleted. Browser-only filter — the seed list
+ * stays identical on the server so the table can paint without a hydration miss.
+ */
+export function listVisibleCataloguedApplications(): ApplicationRow[] {
+  const hidden = new Set(listHiddenCatalogIds());
+  return listCataloguedApplications().filter((a) => !hidden.has(a.id));
+}
+
+/** Directory list: typed seeds the admin has not deleted. */
+export function listVisibleDirectoryApplications(): ApplicationRow[] {
+  const hidden = new Set(listHiddenCatalogIds());
+  return listDirectoryCatalogApplications().filter((a) => !hidden.has(a.id));
+}
+
+/**
+ * Removes an application from the directory list.
+ *
+ * Onboarded rows are deleted from the session store. Seeded catalog rows are
+ * hidden — the seed is immutable — and then disappear from this read model.
+ */
+export function deleteApplication(id: string): boolean {
+  if (getOnboardedApplication(id)) {
+    deleteOnboardedApplication(id);
+    return true;
+  }
+  if (appById.has(id)) {
+    hideCatalogApplication(id);
+    return true;
+  }
+  return false;
+}
+
 export function listApplications(): ApplicationRow[] {
   // Onboarded first: the one you just added is the one you came back to see.
-  return [...listOnboardedApplicationRows(), ...listCataloguedApplications()];
+  return [...listOnboardedApplicationRows(), ...listVisibleCataloguedApplications()];
 }
 
 /**
@@ -376,6 +459,7 @@ export function getApplicationDetail(id: string) {
       onboarded,
     };
   }
+  if (isCatalogHidden(id)) return null;
   const app = appById.get(id);
   if (!app) return null;
   return {
@@ -385,12 +469,38 @@ export function getApplicationDetail(id: string) {
   };
 }
 
+export { applicationLifecycle };
+
+/** Connector signed in, or no connector is required. */
+export function applicationIsAuthorized(id: string): boolean {
+  const onboarded = getOnboardedApplication(id);
+  if (onboarded) {
+    if (!onboarded.enableProvisioning) return true;
+    return listAuthorizations(id).some((a) => a.authorized);
+  }
+  return appProfileFor(id).authorizationStatus === 'authorized';
+}
+
+export function activateApplication(id: string): boolean {
+  if (getOnboardedApplication(id)) return Boolean(activateOnboardedApplication(id));
+  if (!appById.has(id) || isCatalogHidden(id)) return false;
+  setCatalogApplicationLifecycle(id, 'active');
+  return true;
+}
+
+export function deactivateApplication(id: string): boolean {
+  if (getOnboardedApplication(id)) return Boolean(deactivateOnboardedApplication(id));
+  if (!appById.has(id) || isCatalogHidden(id)) return false;
+  setCatalogApplicationLifecycle(id, 'inactive');
+  return true;
+}
+
 // ---- Entitlement -----------------------------------------------------
 export function listEntitlementRows(): EntitlementRow[] {
-  return flatEntitlements.map(toEntRow);
+  return allFlatEntitlements().map(toEntRow);
 }
 export function getEntitlementDetail(id: string) {
-  const ent = entById.get(id);
+  const ent = entitlementById(id);
   if (!ent) return null;
   return {
     entitlement: ent,
@@ -450,10 +560,10 @@ export function getGovernanceTeamDetail(id: string) {
   return {
     team,
     reviewers: resolvePeople(team.reviewerIds),
-    ownedApplications: team.ownedApplicationIds.map((aid) => appById.get(aid)).filter(Boolean).map((a) => ({
-      id: a!.id, name: a!.name, description: a!.description, ownerCount: a!.ownerIds.length,
-      accountCount: appAccounts.filter((x) => x.applicationId === a!.id).length, entitlementCount: a!.entitlements.length,
-    })) as ApplicationRow[],
+    ownedApplications: team.ownedApplicationIds
+      .map((aid) => appById.get(aid))
+      .filter((a): a is CatalogApp => Boolean(a))
+      .map(toCatalogRow),
     ownedEntitlements: resolveEntitlements(team.ownedEntitlementIds),
     ownedTechnicalRoles: team.ownedTechnicalRoleIds.map((tid) => techRoleById.get(tid)).filter(Boolean).map((r) => toRoleRow(r!)),
     ownedBusinessRoles: team.ownedBusinessRoleIds.map((bid) => bizRoleById.get(bid)).filter(Boolean).map((r) => toRoleRow(r!)),

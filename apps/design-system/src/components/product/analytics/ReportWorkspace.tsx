@@ -10,7 +10,6 @@ import {
   SCOPE_TYPE_LABEL,
   blankReport,
   describeFilters,
-  describeProvenance,
   divergesFromTemplate,
   reportBlockers,
   reportFromTemplate,
@@ -56,7 +55,6 @@ export function ReportWorkspace({
 
   const context = React.useMemo(() => buildScopeContext(report), [report]);
   const blocks = React.useMemo(() => assembleReport(report, context), [report, context]);
-  const provenance = describeProvenance(report.scope, report.filters);
 
   /**
    * Save, which is also generate.
@@ -150,7 +148,7 @@ export function ReportWorkspace({
           <EmptyWorkspace onOpenConfig={() => setConfigOpen(true)} />
         ) : (
           <div className="px-6 pb-10">
-            <ReportBody blocks={blocks} provenance={provenance} />
+            <ReportBody blocks={blocks} />
           </div>
         )}
       </div>

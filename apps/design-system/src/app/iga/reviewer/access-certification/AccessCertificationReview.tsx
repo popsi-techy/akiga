@@ -13,6 +13,7 @@ import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlined from '@mui/icons-material/CancelOutlined';
 import ChevronRight from '@mui/icons-material/ChevronRight';
 import ExpandMoreOutlined from '@mui/icons-material/ExpandMoreOutlined';
+import MoreVertOutlined from '@mui/icons-material/MoreVertOutlined';
 import {
   Avatar,
   Button,
@@ -130,13 +131,11 @@ function HeaderAction({
  *
  * - `row` (V1) — a draggable pill over the table header, icon actions.
  * - `dock` (V2) — an inverse toolbar at the foot of the list, labelled actions.
- * - `toolbar` (V3) — a Bulk action menu parked beside Filter, inert until
- *   something is selected. Nothing floats and nothing moves: the control is in
- *   the same place before and after you select, so the page does not reflow
- *   under the pointer, and the actions never cover the rows they apply to.
- *   The trade is discovery — a disabled button has to be noticed rather than
- *   arriving in front of you — which is why the selection count and Select all
- *   sit next to it, appearing at the moment the button wakes up.
+ * - `toolbar` (V3) — a Bulk action menu that joins Filter once a row is
+ *   selected. Nothing floats over the table; the menu is gone until there is
+ *   something to act on, so an empty selection does not advertise a disabled
+ *   control. Select all sits next to it so the header checkbox is not the only
+ *   way to reach every matching row.
  */
 export type BulkSurface = 'row' | 'dock' | 'toolbar';
 
@@ -475,6 +474,32 @@ export function AccessCertificationReview({
           },
         ];
 
+  const headerOverflow = (
+    <Menu
+      ariaLabel="More actions"
+      offset={4}
+      trigger={
+        <button
+          type="button"
+          aria-label="More actions"
+          className="grid h-8 w-8 place-items-center rounded-sm text-icon hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+        >
+          <MoreVertOutlined sx={{ fontSize: 18 }} />
+        </button>
+      }
+      items={[
+        {
+          label: 'Add comment',
+          onClick: () => toast.info('Add comment is not available in this prototype'),
+        },
+        {
+          label: 'Export selected',
+          onClick: () => toast.info('Export is not available in this prototype'),
+        },
+      ]}
+    />
+  );
+
   const headerActions =
     step === 0 ? (
       <>
@@ -492,6 +517,7 @@ export function AccessCertificationReview({
         >
           <PersonOffOutlined sx={{ fontSize: 18 }} />
         </HeaderAction>
+        {headerOverflow}
       </>
     ) : (
       <>
@@ -509,6 +535,7 @@ export function AccessCertificationReview({
         >
           <CancelOutlined sx={{ fontSize: 18 }} />
         </HeaderAction>
+        {headerOverflow}
       </>
     );
 
@@ -632,39 +659,24 @@ export function AccessCertificationReview({
             Filter{filterCount > 0 ? ` (${filterCount})` : ''}
           </Button>
 
-          {bulkSurface === 'toolbar' && (
+          {bulkSurface === 'toolbar' && actionableIds.length > 0 && (
             <div className="flex items-center gap-3">
-              {/* Present and disabled rather than absent until needed: a control
-                  that appears mid-task pushes the toolbar around and has to be
-                  found again. `disabled` here is aria-disabled, so it keeps its
-                  tab stop and the tooltip explaining itself opens on focus. */}
-              <Tooltip
-                title={
-                  actionableIds.length === 0 ? `Select ${noun}s in the table to act on them` : ''
+              <Menu
+                ariaLabel="Bulk action"
+                items={bulkMenuItems}
+                trigger={
+                  <Button variant="secondary" endIcon={<ExpandMoreOutlined />}>
+                    Bulk action
+                  </Button>
                 }
-              >
-                <span className="inline-flex">
-                  <Menu
-                    ariaLabel="Bulk action"
-                    items={bulkMenuItems}
-                    trigger={
-                      <Button
-                        variant="secondary"
-                        endIcon={<ExpandMoreOutlined />}
-                        disabled={actionableIds.length === 0}
-                      >
-                        Bulk action
-                      </Button>
-                    }
-                  />
-                </span>
-              </Tooltip>
+              />
 
-              {/* The reach of the selection, beside the control that spends it.
-                  The table's header checkbox only takes the page it is on, so
-                  this is the only way to reach the rows a filter matches but
-                  the page does not show. */}
-              {actionableIds.length > 0 && (
+              {/* How many are chosen, then the reach of the set. The table's
+                  header checkbox only takes the page it is on, so Select all
+                  is the way to reach rows a filter matches but the page does
+                  not show. */}
+              <p className="text-body-sm text-text-secondary">
+                {`${actionableIds.length} selected, `}
                 <button
                   type="button"
                   onClick={() =>
@@ -674,7 +686,7 @@ export function AccessCertificationReview({
                 >
                   {allMatchingSelected ? 'Clear all' : `Select all ${visibleIds.length}`}
                 </button>
-              )}
+              </p>
             </div>
           )}
         </div>

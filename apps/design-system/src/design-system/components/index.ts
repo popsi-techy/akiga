@@ -55,6 +55,28 @@ export type { ClickToEditTextProps } from './ClickToEditText/ClickToEditText';
 export { Input } from './Input/Input';
 export type { InputProps } from './Input/Input';
 
+export {
+  FileAttachmentField,
+  FILE_ATTACHMENT_ACCEPT,
+  FILE_ATTACHMENT_MAX_BYTES,
+  blobUrlFromDataUrl,
+  downloadFileAttachment,
+  fileAttachmentCanPreview,
+  fileAttachmentKind,
+  fileAttachmentKindLabel,
+  fileAttachmentIsReady,
+  fileAttachmentStatus,
+  formatFileSize,
+  readFileAsAttachment,
+} from './FileAttachmentField/FileAttachmentField';
+export type {
+  FileAttachment,
+  FileAttachmentFieldProps,
+  FileAttachmentKind,
+  FileAttachmentReject,
+  FileAttachmentStatus,
+} from './FileAttachmentField/FileAttachmentField';
+
 export { Select } from './Select/Select';
 export type { SelectProps, SelectOption } from './Select/Select';
 

@@ -46,6 +46,7 @@ export default function MenuDocs() {
             },
             { name: 'trigger', type: 'ReactElement', description: 'Custom trigger; defaults to a ⋮ icon button.' },
             { name: 'ariaLabel', type: 'string', default: "'Actions'", description: 'Accessible name for the default trigger.' },
+            { name: 'offset', type: '1 | 2 | 3 | 4 | 5 | 6', description: 'Spacing steps between the trigger and the list, when the list would cover nearby chrome.' },
           ]}
         />
       </Section>

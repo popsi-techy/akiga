@@ -7,10 +7,11 @@ import * as React from 'react';
  * user). Driven by the top-bar apps switcher; swaps the sidebar nav and the
  * dashboard. Persisted to localStorage so it survives reloads.
  */
-export type Persona = 'admin' | 'reviewer' | 'endUser';
+export type Persona = 'admin' | 'reviewer' | 'endUser' | 'emailTemplate';
 
 const KEY = 'iga.persona';
-const isPersona = (v: unknown): v is Persona => v === 'admin' || v === 'reviewer' || v === 'endUser';
+const isPersona = (v: unknown): v is Persona =>
+  v === 'admin' || v === 'reviewer' || v === 'endUser' || v === 'emailTemplate';
 
 interface PersonaCtx {
   persona: Persona;

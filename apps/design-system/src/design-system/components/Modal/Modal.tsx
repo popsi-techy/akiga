@@ -30,12 +30,48 @@ export interface ModalProps {
   height?: number | string;
   /** Show the header close (✕) button. @default true */
   showClose?: boolean;
+  /**
+   * `header` — ✕ sits in the header band beside the title (default).
+   * `floating` — no header band; ✕ is pinned to the panel's top-right corner.
+   * Use when the body carries a centered hero and a header strip would only
+   * leave awkward whitespace above the close control.
+   */
+  closePlacement?: 'header' | 'floating';
+  /**
+   * When false the panel sizes to its content instead of growing to 85vh with a
+   * scrolling body. Use for compact decision modals that should not scroll.
+   * @default true
+   */
+  scrollBody?: boolean;
   children?: React.ReactNode;
 }
 
-export function Modal({ open, onClose, title, subtitle, icon, footer, width = 480, height, showClose = true, children }: ModalProps) {
+const closeButtonClass =
+  'grid h-8 w-8 shrink-0 place-items-center rounded-md text-icon hover:bg-surface-hover';
+
+export function Modal({
+  open,
+  onClose,
+  title,
+  subtitle,
+  icon,
+  footer,
+  width = 480,
+  height,
+  showClose = true,
+  closePlacement = 'header',
+  scrollBody = true,
+  children,
+}: ModalProps) {
   const titleId = React.useId();
   const filled = height != null;
+  const floating = closePlacement === 'floating';
+  const shellClass = filled
+    ? 'flex h-full flex-col'
+    : scrollBody
+      ? 'flex max-h-[85vh] flex-col'
+      : 'flex flex-col';
+
   return (
     <MuiDialog
       open={open}
@@ -50,36 +86,51 @@ export function Modal({ open, onClose, title, subtitle, icon, footer, width = 48
         'aria-labelledby': titleId,
       }}
     >
-      <div className={filled ? 'flex h-full flex-col' : 'flex max-h-[85vh] flex-col'}>
-        <header className="flex items-start gap-3 px-5 pb-1 pt-4">
-          {icon && (
-            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-subtle text-icon-brand">
-              {icon}
-            </span>
-          )}
-          <div className="min-w-0 flex-1">
-            <h2 id={titleId} className="text-h5 leading-tight text-text-primary">
+      <div className={`relative ${shellClass}`}>
+        {floating ? (
+          <>
+            <h2 id={titleId} className="sr-only">
               {title}
             </h2>
-            {subtitle != null && <div className="mt-0.5 text-caption text-text-secondary">{subtitle}</div>}
-          </div>
-          {showClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close"
-              className="-mr-1 grid h-8 w-8 shrink-0 place-items-center rounded-md text-icon hover:bg-surface-hover"
-            >
-              <CloseIcon sx={{ fontSize: 20 }} />
-            </button>
-          )}
-        </header>
+            {showClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className={`absolute right-4 top-4 z-10 ${closeButtonClass}`}
+              >
+                <CloseIcon sx={{ fontSize: 20 }} />
+              </button>
+            )}
+          </>
+        ) : (
+          <header className="flex items-start gap-3 px-5 pb-1 pt-4">
+            {icon && (
+              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-subtle text-icon-brand">
+                {icon}
+              </span>
+            )}
+            <div className="min-w-0 flex-1">
+              <h2 id={titleId} className="text-h5 leading-tight text-text-primary">
+                {title}
+              </h2>
+              {subtitle != null && <div className="mt-0.5 text-caption text-text-secondary">{subtitle}</div>}
+            </div>
+            {showClose && (
+              <button type="button" onClick={onClose} aria-label="Close" className={`-mr-1 ${closeButtonClass}`}>
+                <CloseIcon sx={{ fontSize: 20 }} />
+              </button>
+            )}
+          </header>
+        )}
 
         <div
           className={
             filled
-              ? 'min-h-0 flex-1 overflow-hidden px-5 py-4'
-              : 'ds-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4'
+              ? `min-h-0 flex-1 overflow-hidden px-5 py-4${floating ? ' pt-4' : ''}`
+              : scrollBody
+                ? `ds-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4${floating ? ' pt-4' : ''}`
+                : `shrink-0 px-5 py-4${floating ? ' pt-4' : ''}`
           }
         >
           {children}

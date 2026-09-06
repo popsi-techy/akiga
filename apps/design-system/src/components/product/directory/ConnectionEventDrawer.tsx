@@ -2,25 +2,46 @@
 
 import * as React from 'react';
 import SettingsEthernet from '@mui/icons-material/SettingsEthernet';
+import AddOutlined from '@mui/icons-material/AddOutlined';
+import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import ContentCopyOutlined from '@mui/icons-material/ContentCopyOutlined';
-import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
-import ErrorOutline from '@mui/icons-material/ErrorOutline';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
-import { Button, Drawer, Input, Select, Switch, Tabs, Tooltip, useToast } from '@ds/components';
+import { Button, Dialog, Drawer, Input, Menu, Select, StatusChip, Switch, Tabs, Tooltip, useToast } from '@ds/components';
 import {
   BODY_TYPES,
   HTTP_METHODS,
+  deleteConnectionEvent,
   emptyEvent,
+  eventKindMeta,
+  eventStatus,
+  mappingComplete,
   saveConnectionEvent,
   type ConnectionEvent,
   type EventKind,
+  type EventStatus,
   type HttpMethod,
 } from '@/data/connection-events';
 import { METHOD_LABEL, type AppAuthorization } from '@/data/provisioning-auth';
+import { AttributeMappingEditor, blankMappingRow } from './AttributeMappingEditor';
 
-type Draft = Omit<ConnectionEvent, 'id' | 'updatedAt'> & { id?: string };
+type Draft = Omit<ConnectionEvent, 'updatedAt'> & { id: string };
 
-type Section = 'details' | 'call' | 'response' | 'advanced';
+type Section = 'request' | 'response' | 'advanced' | 'mapping';
+
+const isDraftId = (id: string) => id.startsWith('__new__');
+const makeDraftId = () => `__new__-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+const EVENT_STATUS: Record<EventStatus | 'draft', { intent: 'success' | 'warning' | 'neutral' | 'info'; label: string }> = {
+  ready: { intent: 'success', label: 'Ready' },
+  partial: { intent: 'warning', label: 'Incomplete' },
+  disabled: { intent: 'neutral', label: 'Off' },
+  draft: { intent: 'info', label: 'Draft' },
+};
+
+function statusOf(row: Draft) {
+  if (isDraftId(row.id)) return EVENT_STATUS.draft;
+  return EVENT_STATUS[eventStatus({ ...row, updatedAt: '' })];
+}
 
 interface TestOutcome {
   ok: boolean;
@@ -29,60 +50,79 @@ interface TestOutcome {
 }
 
 /**
- * One API call, described — in the order you would describe it.
+ * One event type — every call of that kind, then the one you are describing.
  *
- * Four tabs, each a question with an answer: what is this and what does it sign
- * in with, what request goes out, how do we read what comes back, and how does
- * it behave across a sync. Nothing sits above the tabs: a band of "common"
- * fields over a tab strip means the form has two organising ideas and the
- * reader has to hold both.
- *
- * The first three carry a completion tick, because their required fields are
- * now on separate screens and Save must not be the thing that discovers a gap.
- * Advanced has none — it ships with working defaults, so it is never *pending*.
+ * The left rail stores the calls. The right side describes the selected one:
+ * the request, how to read the answer, how it behaves across a sync, and
+ * which attributes it writes. Mapping sits with Advanced because it is the
+ * last thing you set on a call, not a separate trip back to the catalog.
  */
 export function ConnectionEventDrawer({
   open,
+  kind,
+  events,
   applicationId,
   applicationName,
   authorizations,
-  existing,
-  initialKind,
   onClose,
-  onSaved,
+  onChanged,
 }: {
   open: boolean;
+  kind: EventKind | null;
+  events: ConnectionEvent[];
   applicationId: string;
   applicationName?: string;
-  /** The application's stored authorizations — an event signs in with one of them. */
   authorizations: AppAuthorization[];
-  existing: ConnectionEvent | null;
-  /** When adding from the catalog, lock the drawer to this event type. */
-  initialKind?: EventKind;
   onClose: () => void;
-  onSaved: () => void;
+  onChanged: () => void;
 }) {
   const toast = useToast();
-  const [draft, setDraft] = React.useState<Draft>(() => emptyEvent(applicationId));
-  const [section, setSection] = React.useState<Section>('details');
+  const [rows, setRows] = React.useState<Draft[]>([]);
+  const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [section, setSection] = React.useState<Section>('request');
   const [touched, setTouched] = React.useState(false);
   const [testing, setTesting] = React.useState(false);
   const [test, setTest] = React.useState<TestOutcome | null>(null);
+  const [removing, setRemoving] = React.useState<Draft | null>(null);
   const testTimer = React.useRef<number>();
+  const kindRef = React.useRef<EventKind | null>(null);
+  const displayKindRef = React.useRef<EventKind | null>(null);
 
-  React.useEffect(() => {
-    if (!open) return;
-    // Keep `enabled` as it stands: the catalog switch owns whether a type runs,
-    // so editing a call must not quietly switch it back on.
-    setDraft(existing ? { ...existing } : emptyEvent(applicationId, initialKind));
-    setSection('details');
+  if (kind) displayKindRef.current = kind;
+
+  const displayKind = kind ?? displayKindRef.current;
+  const meta = displayKind ? eventKindMeta(displayKind) : null;
+  const selected = rows.find((r) => r.id === selectedId) ?? null;
+  const draft: Draft = selected ?? { ...emptyEvent(applicationId), id: '' };
+  const hasDraft = selected !== null;
+
+  const focusRow = (id: string | null) => {
+    setSelectedId(id);
+    setSection('request');
     setTouched(false);
     setTest(null);
-  }, [open, existing, applicationId, initialKind]);
+  };
+
+  React.useEffect(() => {
+    if (!open || !kind) return;
+    const opened = kindRef.current !== kind;
+    kindRef.current = kind;
+    if (!opened) return;
+    const next = events.map((e) => ({ ...e }));
+    setRows(next);
+    focusRow(next[0]?.id ?? null);
+    // Only reset when this type's drawer opens — a save refresh must not wipe drafts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, kind]);
+
+  React.useEffect(() => {
+    if (!open) kindRef.current = null;
+  }, [open]);
 
   React.useEffect(() => () => window.clearTimeout(testTimer.current), []);
 
-  const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((d) => ({ ...d, [key]: value }));
+  const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
+    setRows((rs) => rs.map((r) => (r.id === selectedId ? { ...r, [key]: value } : r)));
 
   // A result describes one particular request. Change the request and it is no
   // longer a result, it is a leftover.
@@ -93,21 +133,82 @@ export function ConnectionEventDrawer({
 
   const required = (value: string) => (touched && !value.trim() ? 'Required.' : undefined);
 
-  const detailsDone = draft.name.trim() !== '' && draft.authorizationId !== null;
-  const callDone = draft.url.trim() !== '';
+  const requestDone = draft.name.trim() !== '' && draft.authorizationId !== null && draft.url.trim() !== '';
+  const callReady = draft.url.trim() !== '';
   const responseDone = draft.successStatusCode.trim() !== '' && draft.successMessageKey.trim() !== '';
+  const mappingRows = draft.attributes.length > 0 ? draft.attributes : [];
+  const mappingStarted = mappingRows.filter(
+    (r) => r.applicationField.trim() !== '' || r.igaAttribute !== '' || r.expression.trim() !== '',
+  );
+  const mappingDone = mappingStarted.length > 0 && mappingStarted.every(mappingComplete);
 
   const save = () => {
+    if (!hasDraft || !kind) return;
     setTouched(true);
-    const gap: Section | null = !detailsDone ? 'details' : !callDone ? 'call' : !responseDone ? 'response' : null;
+    const gap: Section | null = !requestDone ? 'request' : !responseDone ? 'response' : null;
     if (gap) {
       setSection(gap);
       toast.error('Some required fields are still empty.');
       return;
     }
-    saveConnectionEvent({ ...draft, name: draft.name.trim(), url: draft.url.trim() });
-    toast.success(existing ? 'Event updated.' : 'Event added. It runs on the next sync.');
-    onSaved();
+    const incomplete = mappingStarted.filter((r) => !mappingComplete(r));
+    if (incomplete.length > 0) {
+      setSection('mapping');
+      toast.error('Some attribute mappings are still incomplete.');
+      return;
+    }
+    const wasDraft = isDraftId(draft.id);
+    const record = saveConnectionEvent({
+      ...draft,
+      id: wasDraft ? undefined : draft.id,
+      kind,
+      name: draft.name.trim(),
+      url: draft.url.trim(),
+      attributes: mappingStarted,
+    });
+    setRows((rs) => rs.map((r) => (r.id === selectedId ? { ...record } : r)));
+    setSelectedId(record.id);
+    toast.success(wasDraft ? 'Event added. It runs on the next sync.' : 'Event updated.');
+    onChanged();
+  };
+
+  const addEvent = () => {
+    if (!kind) return;
+    const taken = new Set(rows.map((e) => e.name));
+    const base = eventKindMeta(kind).label;
+    let name = base;
+    let n = 2;
+    while (taken.has(name)) {
+      name = `${base} ${n}`;
+      n += 1;
+    }
+    const next: Draft = { ...emptyEvent(applicationId, kind), id: makeDraftId(), name };
+    setRows((rs) => [next, ...rs]);
+    focusRow(next.id);
+  };
+
+  const dropRow = (id: string) => {
+    const leftover = rows.filter((r) => r.id !== id);
+    setRows(leftover);
+    if (selectedId === id) focusRow(leftover[0]?.id ?? null);
+  };
+
+  const selectEvent = (id: string) => {
+    if (id === selectedId) return;
+    focusRow(id);
+  };
+
+  const confirmRemove = () => {
+    if (!removing) return;
+    if (!isDraftId(removing.id)) {
+      deleteConnectionEvent(removing.id);
+      onChanged();
+      toast.success('Call removed. IGA no longer makes it.');
+    } else {
+      toast.info('Draft discarded.');
+    }
+    dropRow(removing.id);
+    setRemoving(null);
   };
 
   const copyUrl = () => {
@@ -152,32 +253,93 @@ export function ConnectionEventDrawer({
       open={open}
       onClose={onClose}
       icon={<SettingsEthernet sx={{ fontSize: 22 }} />}
-      title={existing ? 'Edit event' : 'Add event'}
-      subtitle="The API call IGA makes to this application, and how to read its answer."
-      width={560}
-      toolbar={
-        <Tabs
-          aria-label="Event settings"
-          value={section}
-          onChange={(v) => setSection(v as Section)}
-          items={[
-            { value: 'details', label: 'Details', status: detailsDone ? 'complete' : 'pending' },
-            { value: 'call', label: 'API call', status: callDone ? 'complete' : 'pending' },
-            { value: 'response', label: 'Response', status: responseDone ? 'complete' : 'pending' },
-            { value: 'advanced', label: 'Advanced' },
-          ]}
-        />
-      }
+      title={meta?.label ?? 'Event'}
+      subtitle={`${meta?.direction === 'inbound' ? 'Inbound' : 'Outbound'}. Add the calls IGA makes, then describe each one.`}
+      width={1040}
+      disablePadding
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={save}>Save</Button>
+          {hasDraft ? <Button onClick={save}>Save</Button> : null}
         </>
       }
     >
-      {section === 'details' && (
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <aside className="flex h-full w-[240px] shrink-0 flex-col self-stretch border-r border-border bg-subtle">
+          <div className="ds-scroll min-h-0 flex-1 overflow-y-auto p-1">
+            <div role="tablist" aria-label={`${meta?.label ?? 'Event'} calls`} className="flex flex-col gap-1">
+              {rows.map((row) => (
+                <RailItem
+                  key={row.id}
+                  label={row.name.trim() || 'New event'}
+                  status={statusOf(row)}
+                  active={row.id === selectedId}
+                  onSelect={() => selectEvent(row.id)}
+                  onDelete={() => {
+                    if (isDraftId(row.id)) {
+                      dropRow(row.id);
+                      toast.info('Draft discarded.');
+                      return;
+                    }
+                    setRemoving(row);
+                  }}
+                />
+              ))}
+              {rows.length === 0 && (
+                <p className="px-2.5 py-6 text-center text-caption text-text-secondary">
+                  No calls yet
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="shrink-0 border-t border-border p-3">
+            <Button className="w-full" variant="secondary" startIcon={<AddOutlined />} onClick={addEvent}>
+              Add event
+            </Button>
+          </div>
+        </aside>
+
+        <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+          {hasDraft ? (
+            <div className="shrink-0 bg-surface px-6 pt-2">
+              <Tabs
+                aria-label="Event settings"
+                value={section}
+                onChange={(v) => setSection(v as Section)}
+                items={[
+                  { value: 'request', label: 'Request', status: requestDone ? 'complete' : 'pending' },
+                  { value: 'response', label: 'Response', status: responseDone ? 'complete' : 'pending' },
+                  { value: 'advanced', label: 'Advanced' },
+                  {
+                    value: 'mapping',
+                    label: 'Attribute mapping',
+                    status: mappingDone ? 'complete' : 'pending',
+                  },
+                ]}
+              />
+            </div>
+          ) : null}
+
+          {!hasDraft && (
+            <div className="grid min-h-0 flex-1 place-items-center px-6">
+              <div className="flex max-w-sm flex-col items-center text-center">
+                <p className="text-body-sm-strong text-text-primary">No calls yet</p>
+                <p className="mt-1 text-body-sm text-text-secondary">
+                  Add the API call IGA makes to {applicationName ?? 'this application'} for {meta?.label ?? 'this event'}.
+                </p>
+                <div className="mt-5">
+                  <Button startIcon={<AddOutlined />} onClick={addEvent}>
+                    Add event
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+      {hasDraft && section === 'request' && (
+        <div className="ds-scroll min-h-0 flex-1 overflow-y-auto px-6 py-5">
         <div className="space-y-5">
           <Input
             label="Event name"
@@ -209,11 +371,7 @@ export function ConnectionEventDrawer({
               error={touched && !draft.authorizationId ? 'Required.' : undefined}
             />
           )}
-        </div>
-      )}
 
-      {section === 'call' && (
-        <div className="space-y-5">
           <div>
             <label
               className="mb-1.5 flex items-center gap-1.5 text-body-sm-strong text-text-primary"
@@ -266,7 +424,7 @@ export function ConnectionEventDrawer({
 
           <Input
             label="Custom headers"
-            hint="JSON object. Authorization is added for you from the credentials on Details — do not repeat it here."
+            hint="JSON object. Authorization is added for you from the credentials above — do not repeat it here."
             placeholder={'{\n  "Accept": "application/json"\n}'}
             multiline
             minRows={4}
@@ -293,105 +451,79 @@ export function ConnectionEventDrawer({
             onChange={(e) => setRequest('body', e.target.value)}
             disabled={noBody}
           />
+        </div>
+        </div>
+      )}
 
-          {/* A dry run, and it says so. Anything that looks like it reached the
-              application but did not is worse than no test at all. */}
-          <div className="rounded-lg bg-subtle px-4 py-3">
-            <div className="flex items-center justify-between gap-4">
-              <p className="min-w-0 text-body-sm text-text-secondary">
-                Try the call as configured. Simulated — nothing is sent to {target}.
-              </p>
-              <Button
-                variant="secondary"
-                loading={testing}
-                disabled={!callDone || draft.authorizationId === null}
-                onClick={runTest}
-                className="shrink-0"
-              >
-                Test event
-              </Button>
-            </div>
+      {hasDraft && section === 'response' && (
+        <div className="flex h-full min-h-0 overflow-hidden">
+          <div className="ds-scroll min-h-0 w-[420px] shrink-0 overflow-y-auto px-6 py-5">
+            <div className="space-y-5">
+              <Input
+                label="Success status code"
+                required
+                hint="Anything else is treated as a failure and shows in sync history."
+                value={draft.successStatusCode}
+                onChange={(e) => set('successStatusCode', e.target.value)}
+                error={required(draft.successStatusCode)}
+              />
+              <Input
+                label="Success message key"
+                required
+                hint="Where to read the application's own wording for a success. Dotted paths are supported."
+                placeholder="message"
+                value={draft.successMessageKey}
+                onChange={(e) => set('successMessageKey', e.target.value)}
+                error={required(draft.successMessageKey)}
+              />
+              <Input
+                label="Error message key"
+                hint="Where to read the reason for a failure, so sync history can quote the application instead of a status code."
+                placeholder="error.message"
+                value={draft.errorMessageKey}
+                onChange={(e) => set('errorMessageKey', e.target.value)}
+              />
+              <Input
+                label="External identifier"
+                hint="The field that uniquely identifies a record in the response. IGA matches on it to avoid creating duplicates."
+                placeholder="id"
+                value={draft.externalIdKey}
+                onChange={(e) => set('externalIdKey', e.target.value)}
+              />
+              <Input
+                label="Records key"
+                hint="The key holding the list of records in the response — often 'users', 'data' or 'Resources'."
+                placeholder="users"
+                value={draft.usersKey}
+                onChange={(e) => set('usersKey', e.target.value)}
+              />
 
-            {test && (
-              <div
-                role="status"
-                className="mt-3 flex items-start gap-2 rounded-md border p-3"
-                style={{
-                  borderColor: test.ok
-                    ? 'var(--ds-color-status-success-border)'
-                    : 'var(--ds-color-status-danger-border)',
-                  backgroundColor: test.ok
-                    ? 'var(--ds-color-status-success-subtle)'
-                    : 'var(--ds-color-status-danger-subtle)',
-                }}
-              >
-                {test.ok ? (
-                  <CheckCircleOutline
-                    sx={{ fontSize: 18, color: 'var(--ds-color-status-success-fg)' }}
-                    className="mt-0.5 shrink-0"
-                    aria-hidden
-                  />
-                ) : (
-                  <ErrorOutline
-                    sx={{ fontSize: 18, color: 'var(--ds-color-status-danger-fg)' }}
-                    className="mt-0.5 shrink-0"
-                    aria-hidden
-                  />
-                )}
-                <div className="min-w-0">
-                  <p className="text-body-sm-strong text-text-primary">{test.title}</p>
-                  <p className="mt-0.5 break-words text-caption text-text-secondary">{test.detail}</p>
+              <div className="rounded-lg bg-subtle px-4 py-3">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="min-w-0 text-body-sm text-text-secondary">
+                    Dry-run the call. Nothing is sent to {target} — the panel shows a sample
+                    first, then what IGA would have read.
+                  </p>
+                  <Button
+                    variant="secondary"
+                    loading={testing}
+                    disabled={!callReady || draft.authorizationId === null}
+                    onClick={runTest}
+                    className="shrink-0"
+                  >
+                    Test event
+                  </Button>
                 </div>
               </div>
-            )}
+            </div>
           </div>
+
+          <ResponsePreview draft={draft} test={test} testing={testing} />
         </div>
       )}
 
-      {section === 'response' && (
-        <div className="space-y-5">
-          <Input
-            label="Success status code"
-            required
-            hint="Anything else is treated as a failure and shows in sync history."
-            value={draft.successStatusCode}
-            onChange={(e) => set('successStatusCode', e.target.value)}
-            error={required(draft.successStatusCode)}
-          />
-          <Input
-            label="Success message key"
-            required
-            hint="Where to read the application's own wording for a success. Dotted paths are supported."
-            placeholder="message"
-            value={draft.successMessageKey}
-            onChange={(e) => set('successMessageKey', e.target.value)}
-            error={required(draft.successMessageKey)}
-          />
-          <Input
-            label="Error message key"
-            hint="Where to read the reason for a failure, so sync history can quote the application instead of a status code."
-            placeholder="error.message"
-            value={draft.errorMessageKey}
-            onChange={(e) => set('errorMessageKey', e.target.value)}
-          />
-          <Input
-            label="External identifier"
-            hint="The field that uniquely identifies a record in the response. IGA matches on it to avoid creating duplicates."
-            placeholder="id"
-            value={draft.externalIdKey}
-            onChange={(e) => set('externalIdKey', e.target.value)}
-          />
-          <Input
-            label="Records key"
-            hint="The key holding the list of records in the response — often 'users', 'data' or 'Resources'."
-            placeholder="users"
-            value={draft.usersKey}
-            onChange={(e) => set('usersKey', e.target.value)}
-          />
-        </div>
-      )}
-
-      {section === 'advanced' && (
+      {hasDraft && section === 'advanced' && (
+        <div className="ds-scroll min-h-0 flex-1 overflow-y-auto px-6 py-5">
         <div className="space-y-5">
           <Input
             label="Event priority"
@@ -436,8 +568,261 @@ export function ConnectionEventDrawer({
             />
           </div>
         </div>
+        </div>
       )}
+
+      {hasDraft && section === 'mapping' && (
+        <div className="ds-scroll min-h-0 flex-1 overflow-y-auto px-6 py-5">
+          <AttributeMappingEditor
+            rows={mappingRows.length > 0 ? mappingRows : [blankMappingRow(0)]}
+            onChange={(rows) => set('attributes', rows)}
+            applicationName={applicationName ?? 'Application'}
+            touched={touched}
+          />
+        </div>
+      )}
+        </div>
+      </div>
+
+      <Dialog
+        open={removing !== null}
+        onClose={() => setRemoving(null)}
+        title="Remove this call?"
+        confirmLabel="Remove"
+        tone="danger"
+        onConfirm={confirmRemove}
+      >
+        {removing?.name} stops running immediately and its attribute mapping is deleted. The accounts and
+        entitlements it already imported are kept.
+      </Dialog>
     </Drawer>
+  );
+}
+
+function RailItem({
+  label,
+  status,
+  active,
+  onSelect,
+  onDelete,
+}: {
+  label: string;
+  status: { intent: 'success' | 'warning' | 'neutral' | 'info'; label: string };
+  active: boolean;
+  onSelect: () => void;
+  onDelete?: () => void;
+}) {
+  return (
+    <div
+      className={[
+        'flex w-full items-start gap-0.5 rounded-md border bg-surface py-1.5 pl-2 pr-0.5',
+        active ? 'border-brand' : 'border-border hover:border-border-strong',
+      ].join(' ')}
+    >
+      <button
+        type="button"
+        role="tab"
+        aria-selected={active}
+        onClick={onSelect}
+        className="min-w-0 flex-1 py-0.5 text-left"
+      >
+        <span className="block truncate text-body-sm-medium text-text-primary">{label}</span>
+        <span className="mt-1.5 block">
+          <StatusChip intent={status.intent} label={status.label} />
+        </span>
+      </button>
+      {onDelete ? (
+        <Menu
+          ariaLabel={`Actions for ${label}`}
+          items={[
+            {
+              label: 'Delete',
+              icon: <DeleteOutline sx={{ fontSize: 18 }} />,
+              danger: true,
+              onClick: onDelete,
+            },
+          ]}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+const SAMPLE_RECORDS = [
+  {
+    id: '00u1a2b3c4d5e6',
+    externalId: 'ext-30281',
+    userName: 'jane.doe@example.com',
+    givenName: 'Jane',
+    familyName: 'Doe',
+    displayName: 'Jane Doe',
+    email: 'jane.doe@example.com',
+    title: 'Senior Product Manager',
+    department: 'Engineering',
+    active: true,
+  },
+  {
+    id: '00u7f8g9h0i1j2',
+    externalId: 'ext-44109',
+    userName: 'lee.park@example.com',
+    givenName: 'Lee',
+    familyName: 'Park',
+    displayName: 'Lee Park',
+    email: 'lee.park@example.com',
+    title: 'Identity Engineer',
+    department: 'Security',
+    active: true,
+  },
+] as const;
+
+function setAtPath(obj: Record<string, unknown>, path: string, value: unknown) {
+  const parts = path.split('.').map((p) => p.trim()).filter(Boolean);
+  if (parts.length === 0) return obj;
+  let cur: Record<string, unknown> = obj;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const key = parts[i];
+    const next = cur[key];
+    if (!next || typeof next !== 'object' || Array.isArray(next)) cur[key] = {};
+    cur = cur[key] as Record<string, unknown>;
+  }
+  cur[parts[parts.length - 1]] = value;
+  return obj;
+}
+
+function getAtPath(obj: unknown, path: string): unknown {
+  return path
+    .split('.')
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .reduce<unknown>((acc, key) => {
+      if (acc && typeof acc === 'object' && !Array.isArray(acc)) {
+        return (acc as Record<string, unknown>)[key];
+      }
+      return undefined;
+    }, obj);
+}
+
+function recordsKeyOf(draft: Draft) {
+  return draft.usersKey.trim() || 'users';
+}
+
+function idKeyOf(draft: Draft) {
+  return draft.externalIdKey.trim() || 'id';
+}
+
+function previewPayload(draft: Draft, test: TestOutcome | null): unknown {
+  if (test && !test.ok) {
+    const body: Record<string, unknown> = {};
+    setAtPath(body, draft.errorMessageKey.trim() || 'error.message', 'Authorization is not connected.');
+    return body;
+  }
+
+  const idKey = idKeyOf(draft);
+  const records = SAMPLE_RECORDS.map((row) => {
+    const rec: Record<string, unknown> = { ...row };
+    if (!(idKey in rec)) rec[idKey] = row.id;
+    return rec;
+  });
+
+  const body: Record<string, unknown> = {};
+  setAtPath(body, recordsKeyOf(draft), records);
+  const messageKey = draft.successMessageKey.trim();
+  if (messageKey) {
+    setAtPath(body, messageKey, test?.ok ? 'Accounts fetched.' : 'OK');
+  }
+  return body;
+}
+
+function ResponsePreview({
+  draft,
+  test,
+  testing,
+}: {
+  draft: Draft;
+  test: TestOutcome | null;
+  testing: boolean;
+}) {
+  const payload = previewPayload(draft, test);
+  const records = getAtPath(payload, recordsKeyOf(draft));
+  const recordCount = Array.isArray(records) ? records.length : 0;
+  const firstId =
+    Array.isArray(records) && records[0] && typeof records[0] === 'object'
+      ? String((records[0] as Record<string, unknown>)[idKeyOf(draft)] ?? '—')
+      : '—';
+  const message = getAtPath(payload, draft.successMessageKey.trim());
+  const error = getAtPath(payload, draft.errorMessageKey.trim() || 'error.message');
+  const status = test?.ok === false ? '401' : draft.successStatusCode.trim() || '200';
+
+  const title = test ? 'Simulated reply' : 'Sample response';
+  const lead = testing
+    ? 'Trying the call as configured. Nothing is sent.'
+    : test?.ok
+      ? 'Nothing was sent. This is what IGA would read using the keys on the left.'
+      : test
+        ? 'Nothing was sent. IGA would quote the error from the key you named.'
+        : 'A typical payload. The keys on the left tell IGA where to look — change Records key and this sample follows.';
+
+  return (
+    <aside
+      aria-label={title}
+      aria-live="polite"
+      className="flex h-full w-[380px] shrink-0 flex-col border-l border-border bg-subtle"
+    >
+      <header className="shrink-0 px-5 pt-5 pb-3">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-body-sm-strong text-text-primary">{title}</h3>
+          {testing ? (
+            <StatusChip intent="neutral" label="Testing" />
+          ) : test?.ok ? (
+            <StatusChip intent="success" label={status} />
+          ) : test ? (
+            <StatusChip intent="danger" label={status} />
+          ) : (
+            <StatusChip intent="info" label="Sample" />
+          )}
+        </div>
+        <p className="mt-1.5 text-caption text-text-secondary">{lead}</p>
+      </header>
+
+      <div className="flex min-h-0 flex-1 flex-col px-5 pb-5">
+        {test && !testing && (
+          <dl className="mb-4 shrink-0 space-y-2">
+            <p className="text-caption-strong text-text-tertiary">What IGA would read</p>
+            <Readout label="Status" value={status} />
+            {test.ok ? (
+              <>
+                {draft.successMessageKey.trim() ? (
+                  <Readout label={draft.successMessageKey.trim()} value={String(message ?? '—')} />
+                ) : null}
+                <Readout
+                  label={recordsKeyOf(draft)}
+                  value={`${recordCount} record${recordCount === 1 ? '' : 's'}`}
+                />
+                <Readout label={idKeyOf(draft)} value={firstId} />
+              </>
+            ) : (
+              <Readout
+                label={draft.errorMessageKey.trim() || 'error.message'}
+                value={String(error ?? '—')}
+              />
+            )}
+          </dl>
+        )}
+
+        <pre className="ds-scroll min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-surface p-4 font-mono text-caption leading-6 text-text-primary">
+          {JSON.stringify(payload, null, 2)}
+        </pre>
+      </div>
+    </aside>
+  );
+}
+
+function Readout({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 border-t border-border pt-2">
+      <dt className="min-w-0 truncate font-mono text-caption text-text-secondary">{label}</dt>
+      <dd className="shrink-0 text-caption text-text-primary">{value}</dd>
+    </div>
   );
 }
 

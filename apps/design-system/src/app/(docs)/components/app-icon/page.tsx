@@ -64,7 +64,7 @@ export default function AppIconDocs() {
 
       <Section
         title="Size and variant"
-        description="variant sets the tile fill: subtle on a canvas or surface, surface when the icon sits inside an already-tinted chip so it does not disappear into it."
+        description="variant sets the tile fill: subtle on a canvas or surface, surface when the icon sits inside an already-tinted chip, wash for the same grey tile with a tighter radius and a smaller mark."
       >
         <Example label="Sizes">
           {[20, 24, 28, 32, 40].map((s) => (
@@ -80,6 +80,14 @@ export default function AppIconDocs() {
             <span className="text-caption text-text-secondary">AWS</span>
           </span>
         </Example>
+        <Example label="variant=wash — grey tile, inset mark">
+          {['Google Workspace', 'Adobe', 'GitHub Enterprise', 'Salesforce'].map((app) => (
+            <span key={app} className="inline-flex items-center gap-2">
+              <AppIcon app={app} size={48} variant="wash" />
+              <span className="text-body-sm text-text-secondary">{app}</span>
+            </span>
+          ))}
+        </Example>
       </Section>
 
       <Section
@@ -90,8 +98,8 @@ export default function AppIconDocs() {
           rows={[
             { name: 'app', type: 'string', description: 'Application display name. Matched against the catalog by pattern. Used for the tooltip and the letter fallback.' },
             { name: 'logoFrom', type: 'string', description: 'Optional extra catalog key, tried before `app`. Pass the app type when the instance name is custom.' },
-            { name: 'size', type: 'number', default: '24', description: 'Tile edge in px. The mark is drawn at 72% of it.' },
-            { name: 'variant', type: "'subtle' | 'surface'", default: "'subtle'", description: 'Tile fill — subtle on canvas, surface inside tinted chips.' },
+            { name: 'size', type: 'number', default: '24', description: 'Tile edge in px. The mark is 72% of it, or 50% on wash so the tile has air.' },
+            { name: 'variant', type: "'subtle' | 'surface' | 'wash'", default: "'subtle'", description: 'Tile fill — subtle on canvas, surface inside tinted chips, wash the same grey tile with a tighter radius and inset mark.' },
           ]}
         />
         <p className="mt-3 text-body-sm text-text-secondary">

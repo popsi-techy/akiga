@@ -3,25 +3,33 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
-import { AppIcon, Input, NavList, StatusChip, resolveAppIcon } from '@ds/components';
+import TuneOutlined from '@mui/icons-material/TuneOutlined';
+import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
+import {
+  AppIcon,
+  Button,
+  FilterDrawer,
+  Input,
+  Modal,
+  NavList,
+  StatusChip,
+  resolveAppIcon,
+  type FilterGroup,
+  type FilterSelection,
+} from '@ds/components';
 import { AddApplicationDrawer } from '@/components/product/directory';
 import { AtmosphericBackground } from '@/components/atmosphere/AtmosphericBackground';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import {
   appTypeCategories,
   appTypeMatches,
+  appTypeMatchesFilters,
   getCustomAppType,
+  listAppTypeProtocols,
   listAppTypes,
   type AppTypeOption,
   type AppTypeCategory,
 } from '@/data/app-types';
-
-/** One-line support under the section name — short enough to sit beside it. */
-const CATEGORY_LINE: Record<AppTypeCategory, string> = {
-  application: 'Onboard a business app directly',
-  iam: 'Discover many apps at once',
-  pam: 'Privileged and break-glass access',
-};
 
 /**
  * Onboard an application — the application-type catalog.
@@ -38,7 +46,10 @@ export default function OnboardApplicationPage() {
 
   const router = useRouter();
   const [picked, setPicked] = React.useState<AppTypeOption | null>(null);
+  const [preview, setPreview] = React.useState<AppTypeOption | null>(null);
   const [query, setQuery] = React.useState('');
+  const [filterOpen, setFilterOpen] = React.useState(false);
+  const [filters, setFilters] = React.useState<FilterSelection>({});
   const [active, setActive] = React.useState<AppTypeCategory>('application');
 
   const scroller = React.useRef<HTMLDivElement>(null);
@@ -46,10 +57,36 @@ export default function OnboardApplicationPage() {
 
   const all = listAppTypes();
   const custom = getCustomAppType();
-  const matched = all.filter((t) => appTypeMatches(t, query));
+  const filterGroups = React.useMemo<FilterGroup[]>(
+    () => [
+      {
+        id: 'category',
+        label: 'Category',
+        optionHeader: 'Category',
+        searchPlaceholder: 'Search categories',
+        options: appTypeCategories.map((c) => ({ id: c.id, label: c.label })),
+      },
+      {
+        id: 'protocol',
+        label: 'Protocol',
+        optionHeader: 'Protocol',
+        searchPlaceholder: 'Search protocols',
+        options: listAppTypeProtocols().map((p) => ({ id: p, label: p })),
+      },
+    ],
+    [],
+  );
+  const activeFilters = Object.values(filters).reduce((n, ids) => n + ids.length, 0);
+  const matched = all.filter((t) => appTypeMatches(t, query) && appTypeMatchesFilters(t, filters));
   const catalog = matched.filter((t) => t.id !== 'at-custom');
   const byCategory = (id: AppTypeCategory) => catalog.filter((t) => t.category === id);
   const visibleCategories = appTypeCategories.filter((cat) => byCategory(cat.id).length > 0);
+  const firstVisible = visibleCategories[0]?.id;
+  const activeVisible = visibleCategories.some((c) => c.id === active);
+
+  React.useEffect(() => {
+    if (firstVisible && !activeVisible) setActive(firstVisible);
+  }, [activeVisible, firstVisible]);
 
   const jumpTo = (id: AppTypeCategory) => {
     setActive(id);
@@ -104,6 +141,29 @@ export default function OnboardApplicationPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+              endAdornment={
+                <button
+                  type="button"
+                  aria-label={
+                    activeFilters > 0
+                      ? `Filter application types, ${activeFilters} applied`
+                      : 'Filter application types'
+                  }
+                  aria-expanded={filterOpen}
+                  onClick={() => setFilterOpen(true)}
+                  className={`relative rounded-md p-0.5 hover:bg-surface-hover ${
+                    activeFilters > 0 ? 'text-icon-brand' : 'text-icon'
+                  }`}
+                >
+                  <TuneOutlined sx={{ fontSize: 18 }} />
+                  {activeFilters > 0 && (
+                    <span
+                      className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-brand"
+                      aria-hidden
+                    />
+                  )}
+                </button>
+              }
             />
           </div>
           <p className="mt-2.5 text-body-sm text-text-secondary">
@@ -139,10 +199,11 @@ export default function OnboardApplicationPage() {
           onScroll={onScroll}
           className="ds-scroll min-h-0 min-w-0 flex-1 overflow-y-auto"
         >
-          {catalog.length === 0 && q ? (
+          {catalog.length === 0 && (q || activeFilters > 0) ? (
             <p className="text-body-sm text-text-secondary">
-              “{q}” isn’t in the catalog yet. It will be present shortly — until then, use a custom
-              application.
+              {q
+                ? `“${q}” isn’t in the catalog yet. It will be present shortly — until then, use a custom application.`
+                : 'No types match those filters. Clear them to see the full catalog, or start with a custom application.'}
             </p>
           ) : (
             <div className="flex flex-col gap-8">
@@ -154,15 +215,15 @@ export default function OnboardApplicationPage() {
                     else sections.current.delete(cat.id);
                   }}
                 >
-                  <div className="flex min-w-0 items-baseline gap-2">
-                    <h2 className="shrink-0 text-h5 text-text-primary">{cat.label}</h2>
-                    <p className="min-w-0 truncate text-caption text-text-tertiary">
-                      {CATEGORY_LINE[cat.id]}
-                    </p>
-                  </div>
+                  <h2 className="text-h5 text-text-primary">{cat.label}</h2>
                   <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                     {byCategory(cat.id).map((t) => (
-                      <AppTypeTile key={t.id} appType={t} onSelect={pick} />
+                      <AppTypeTile
+                        key={t.id}
+                        appType={t}
+                        onPreview={() => setPreview(t)}
+                        onSelect={pick}
+                      />
                     ))}
                   </div>
                 </section>
@@ -171,6 +232,52 @@ export default function OnboardApplicationPage() {
           )}
         </div>
       </div>
+
+      <FilterDrawer
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        groups={filterGroups}
+        value={filters}
+        onApply={setFilters}
+        title="Filter application types"
+        subtitle="Narrow the catalog by category or protocol."
+        renderStatus={(staged) => {
+          const n = all.filter(
+            (t) =>
+              t.id !== 'at-custom' &&
+              appTypeMatches(t, query) &&
+              appTypeMatchesFilters(t, staged),
+          ).length;
+          return `${n} type${n === 1 ? '' : 's'} available`;
+        }}
+      />
+
+      <Modal
+        open={preview !== null}
+        onClose={() => setPreview(null)}
+        title={preview?.name ?? ''}
+        subtitle={preview?.summary}
+        width={640}
+        footer={
+          <>
+            <Button variant="tertiary" onClick={() => setPreview(null)}>
+              Close
+            </Button>
+            {preview && preview.status !== 'coming-soon' ? (
+              <Button
+                onClick={() => {
+                  setPreview(null);
+                  pick(preview);
+                }}
+              >
+                Proceed
+              </Button>
+            ) : null}
+          </>
+        }
+      >
+        {preview ? <AppTypePreview appType={preview} /> : null}
+      </Modal>
 
       <AddApplicationDrawer
         open={picked !== null}
@@ -183,75 +290,116 @@ export default function OnboardApplicationPage() {
 }
 
 /**
- * One catalog tile. Brand types lead with their logo; everything else gets a
- * small identification mark so a letter tile is not the only fallback. A
- * coming-soon type stays in place — knowing it is on the way is the answer to
- * "can I onboard this?" — but it recedes and stops being a control.
+ * Same frame as a workflow template card: mark where the audience chip sits,
+ * title and summary, then protocol tags where Global sits, Preview + Proceed.
  */
 function AppTypeTile({
   appType,
+  onPreview,
   onSelect,
 }: {
   appType: AppTypeOption;
+  onPreview: () => void;
   onSelect: (t: AppTypeOption) => void;
 }) {
   const soon = appType.status === 'coming-soon';
   return (
-    <button
-      type="button"
-      disabled={soon}
-      onClick={() => onSelect(appType)}
+    <article
       className={[
-        'flex flex-col items-start gap-2.5 rounded-xl border p-4 text-left transition-all',
-        soon
-          ? 'cursor-default border-border bg-subtle'
-          : 'border-border bg-surface hover:border-border-strong hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle',
+        'flex h-full flex-col rounded-xl border border-border p-4 transition-all duration-200',
+        soon ? 'bg-subtle' : 'bg-surface hover:border-border-strong hover:shadow-sm',
       ].join(' ')}
     >
-      <span className="flex w-full items-start justify-between gap-2">
+      <div className="flex flex-wrap items-center gap-1.5 self-start">
         <TypeMark name={appType.name} size={40} muted={soon} />
-        {soon && (
-          <span className="shrink-0 text-caption-strong uppercase tracking-wider text-text-tertiary">
-            Soon
-          </span>
-        )}
-      </span>
-      <h3 className={`w-full min-w-0 truncate text-body-strong ${soon ? 'text-text-tertiary' : 'text-text-primary'}`}>
+        {soon && <StatusChip intent="neutral" label="Coming soon" />}
+      </div>
+      <h3 className={`mt-2 truncate text-body-strong ${soon ? 'text-text-tertiary' : 'text-text-primary'}`}>
         {appType.name}
       </h3>
-      <span className="flex flex-wrap gap-1">
-        {appType.protocols.map((p) =>
-          soon ? (
-            <span key={p} className="rounded-pill bg-surface px-2 py-0.5 text-caption text-text-tertiary">
-              {p}
-            </span>
-          ) : (
-            <StatusChip key={p} intent="info" label={p} dot={false} />
-          ),
-        )}
-      </span>
-    </button>
+      <p className={`mt-0.5 line-clamp-2 text-body-sm ${soon ? 'text-text-tertiary' : 'text-text-secondary'}`}>
+        {appType.summary}
+      </p>
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
+        <div className={`flex min-w-0 flex-wrap gap-1 ${soon ? 'opacity-50' : ''}`}>
+          {appType.protocols.map((p) => (
+            <StatusChip key={p} intent={soon ? 'neutral' : 'info'} label={p} dot={false} />
+          ))}
+        </div>
+        <div className="flex shrink-0 items-center gap-3">
+          <button
+            type="button"
+            className={`text-caption-medium hover:underline ${
+              soon
+                ? 'text-text-tertiary hover:text-text-secondary'
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
+            onClick={onPreview}
+          >
+            Preview
+          </button>
+          {!soon && (
+            <button
+              type="button"
+              className="rounded-sm bg-surface-inverse px-2.5 py-1 text-caption-medium text-text-inverse hover:bg-sidebar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+              onClick={() => onSelect(appType)}
+            >
+              Proceed
+            </button>
+          )}
+        </div>
+      </div>
+    </article>
   );
 }
 
-/** Brand logo when we have one; identification mark when we don't. Same footprint. */
+function AppTypePreview({ appType }: { appType: AppTypeOption }) {
+  return (
+    <div className="flex flex-col gap-6">
+      <section>
+        <h3 className="text-body-sm-strong text-text-primary">Capabilities supported</h3>
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+          {appType.capabilities.map((item) => (
+            <li key={item} className="flex items-start gap-2 text-body-sm text-text-primary">
+              <CheckCircleOutlined sx={{ fontSize: 18 }} className="mt-0.5 shrink-0 text-success" aria-hidden />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section>
+        <h3 className="text-body-sm-strong text-text-primary">Prerequisites required</h3>
+        <ul className="mt-3 flex flex-col gap-2">
+          {appType.prerequisites.map((item) => (
+            <li key={item} className="flex items-start gap-2 text-body-sm text-text-primary">
+              <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-text-secondary" aria-hidden />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  );
+}
+
+/** Single-tone wash, no outline. Logo sits inset so the tile has air. */
 function TypeMark({ name, size, muted }: { name: string; size: number; muted?: boolean }) {
   if (resolveAppIcon(name)) {
     return (
       <span className={muted ? 'opacity-50' : undefined}>
-        <AppIcon app={name} size={size} />
+        <AppIcon app={name} size={size} variant="wash" />
       </span>
     );
   }
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center rounded-lg ${
-        muted ? 'bg-surface text-icon-subtle' : 'bg-subtle text-icon'
+      className={`inline-flex shrink-0 items-center justify-center rounded-sm bg-subtle ${
+        muted ? 'text-icon-subtle opacity-50' : 'text-icon'
       }`}
       style={{ width: size, height: size }}
       title={name}
     >
-      <TypeGlyph name={name} size={Math.round(size * 0.58)} />
+      <TypeGlyph name={name} size={Math.round(size * 0.5)} />
     </span>
   );
 }

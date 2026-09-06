@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import AssignmentOutlined from '@mui/icons-material/AssignmentOutlined';
 import ArrowForwardOutlined from '@mui/icons-material/ArrowForwardOutlined';
-import { Button, Drawer, InfoRow, InfoRowGroup, Input, Select, useToast } from '@ds/components';
+import { Button, Drawer, FileAttachmentField, InfoRow, InfoRowGroup, Input, Select, useToast } from '@ds/components';
 import type { AccessRequest } from '@/data/access-request-types';
 import {
   accessDurationLabel,
@@ -93,6 +93,10 @@ export function ReviewRequestQuickDrawer({
           <InfoRow icon={infoIcon.submitted} label="Submitted on" value={formatRequestDateTime(request.submittedAt)} />
           <InfoRow icon={infoIcon.status} label="Status" value={<RequestStatusChip status={request.status} />} />
         </InfoRowGroup>
+
+        {(request.attachments?.length ?? 0) > 0 && (
+          <FileAttachmentField files={request.attachments ?? []} readOnly />
+        )}
 
         <div
           className={[

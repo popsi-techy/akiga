@@ -60,6 +60,7 @@ const config: Config = {
         subtle: 'var(--ds-color-background-subtle)',
         sunken: 'var(--ds-color-background-sunken)',
         sidebar: 'var(--ds-color-background-sidebar)',
+        'email-preview': 'var(--ds-color-background-emailPreview)',
         surface: {
           DEFAULT: 'var(--ds-color-surface-default)',
           hover: 'var(--ds-color-surface-hover)',

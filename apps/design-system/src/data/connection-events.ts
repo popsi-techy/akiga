@@ -193,7 +193,7 @@ export const emptyEvent = (
 });
 
 const STORE_KEY = 'iga.connectionEvents.v1';
-const SEED_VERSION = 2;
+const SEED_VERSION = 3;
 
 interface Store {
   version?: number;

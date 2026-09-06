@@ -2,10 +2,27 @@
  * Access requests service — reviewer queue with localStorage persistence.
  */
 import { accessRequestSeed } from './access-requests-seed';
-import type { AccessRequest, AccessRequestStatus, ReviewRequestRow } from './access-request-types';
+import type {
+  AccessRequest,
+  AccessRequestItem,
+  AccessRequestRiskSeverity,
+  AccessRequestStatus,
+  EndUserRequestRow,
+  EndUserRequestStatus,
+  ReviewRequestRow,
+} from './access-request-types';
+import { riskTier } from '@/lib/risk';
 
 const STORE_KEY = 'iga.accessRequests.v1';
-const SEED_VERSION = 2;
+const SEED_VERSION = 3;
+
+/** The signed-in end user — same prototype account as the top bar. */
+export const CURRENT_END_USER = {
+  id: 'u-amelia',
+  name: 'Amelia Ford',
+  email: 'amelia.ford@acme.com',
+  title: 'Access Reviewer',
+};
 
 type Store = { version: number; requests: Record<string, AccessRequest> };
 
@@ -16,7 +33,7 @@ function readStore(): Store {
     if (!raw) return writeStore(seedStore());
     const parsed = JSON.parse(raw) as Store;
     if (!parsed?.requests || parsed.version !== SEED_VERSION) return writeStore(seedStore());
-    return parsed;
+    return hydrateSeedAttachments(parsed);
   } catch {
     return writeStore(seedStore());
   }
@@ -29,6 +46,18 @@ function writeStore(store: Store): Store {
 
 function seedStore(): Store {
   return { version: SEED_VERSION, requests: Object.fromEntries(accessRequestSeed.map((r) => [r.id, r])) };
+}
+
+/** Fill seed evidence onto existing requests that predate attachments, without wiping drafts. */
+function hydrateSeedAttachments(store: Store): Store {
+  let changed = false;
+  for (const seed of accessRequestSeed) {
+    const current = store.requests[seed.id];
+    if (!current || current.attachments !== undefined || !seed.attachments?.length) continue;
+    store.requests[seed.id] = { ...current, attachments: seed.attachments };
+    changed = true;
+  }
+  return changed ? writeStore(store) : store;
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -87,6 +116,39 @@ export function slaElapsedPercent(submittedAt: string, dueAt: string, now = Date
   return ((now - start) / (end - start)) * 100;
 }
 
+function defaultExpiresAt(submittedAt: string): string {
+  const d = new Date(submittedAt);
+  if (Number.isNaN(d.getTime())) return submittedAt;
+  d.setUTCDate(d.getUTCDate() + 60);
+  return d.toISOString();
+}
+
+export function requestItems(req: AccessRequest): AccessRequestItem[] {
+  if (req.items && req.items.length > 0) return req.items;
+  if (!req.itemName) return [];
+  return [
+    {
+      entitlementId: req.entitlementCode ?? req.id,
+      entitlementName: req.itemName,
+      applicationId: req.appId ?? '',
+      applicationName: req.appName ?? req.itemName,
+      description: req.itemDescription,
+      risk: req.itemRiskScore,
+      accessDurationKind: req.accessDurationKind,
+      accessDurationUntil: req.accessDurationUntil,
+    },
+  ];
+}
+
+export function endUserStatusOf(req: AccessRequest, now = Date.now()): EndUserRequestStatus {
+  if (req.status === 'draft') return 'draft';
+  if (req.status === 'rejected') return 'rejected';
+  if (req.status === 'approved') return 'completed';
+  const exp = req.expiresAt ?? req.dueAt;
+  if (exp && new Date(exp).getTime() < now) return 'expired';
+  return 'pending';
+}
+
 function withDefaults(req: AccessRequest): AccessRequest {
   return {
     ...req,
@@ -94,6 +156,9 @@ function withDefaults(req: AccessRequest): AccessRequest {
     itemRiskScore: req.itemRiskScore ?? 55,
     itemRiskSeverity: req.itemRiskSeverity ?? 'medium',
     sodViolationCount: req.sodViolationCount ?? (req.recommendation === 'reject' ? 2 : 0),
+    items: requestItems(req),
+    expiresAt: req.expiresAt ?? defaultExpiresAt(req.submittedAt),
+    attachments: req.attachments ?? [],
   };
 }
 
@@ -115,7 +180,9 @@ function toRow(req: AccessRequest): ReviewRequestRow {
 }
 
 export function listReviewRequests(status?: AccessRequestStatus): ReviewRequestRow[] {
-  const rows = Object.values(readStore().requests).map(toRow);
+  const rows = Object.values(readStore().requests)
+    .filter((r) => r.status !== 'draft')
+    .map(toRow);
   const filtered = status ? rows.filter((r) => r.status === status) : rows;
   return filtered.sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
 }
@@ -162,4 +229,148 @@ export function decideReviewRequest(
 
 export function pendingReviewRequestCount(): number {
   return Object.values(readStore().requests).filter((r) => r.status === 'pending').length;
+}
+
+function nextDraftIds(store: Store): { id: string; reference: string } {
+  let max = 0;
+  for (const req of Object.values(store.requests)) {
+    const n = Number.parseInt(req.reference.replace(/\D/g, ''), 10);
+    if (Number.isFinite(n)) max = Math.max(max, n);
+  }
+  const next = max + 1;
+  return { id: `ar-${String(next).padStart(3, '0')}`, reference: `AR-${String(next).padStart(3, '0')}` };
+}
+
+function toEndUserRow(req: AccessRequest): EndUserRequestRow {
+  const full = withDefaults(req);
+  return {
+    id: full.id,
+    reference: full.reference,
+    type: full.type,
+    requestedForName: full.requestedForName,
+    requestedForEmail: full.requestedForEmail,
+    items: requestItems(full),
+    submittedAt: full.submittedAt,
+    expiresAt: full.expiresAt ?? full.dueAt,
+    status: endUserStatusOf(full),
+  };
+}
+
+export function listEndUserRequests(): EndUserRequestRow[] {
+  return Object.values(readStore().requests)
+    .map(toEndUserRow)
+    .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+}
+
+export function requestApplicationIds(req: AccessRequest): string[] {
+  const fromField = req.applicationIds ?? [];
+  const fromItems = requestItems(req).map((i) => i.applicationId).filter(Boolean);
+  return [...new Set([...fromField, ...fromItems])];
+}
+
+export function createEntitlementDraft(by = CURRENT_END_USER): AccessRequest {
+  const store = readStore();
+  const { id, reference } = nextDraftIds(store);
+  const now = new Date().toISOString();
+  const next: AccessRequest = {
+    id,
+    reference,
+    type: 'entitlement',
+    status: 'draft',
+    itemName: '',
+    requestedForId: by.id,
+    requestedForName: by.name,
+    requestedForEmail: by.email,
+    requestedForTitle: by.title,
+    requestedById: by.id,
+    requestedByName: by.name,
+    requestedByEmail: by.email,
+    requestedByTitle: by.title,
+    submittedAt: now,
+    dueAt: defaultExpiresAt(now),
+    expiresAt: defaultExpiresAt(now),
+    accessDurationKind: 'permanent',
+    businessJustification: '',
+    attachments: [],
+    recommendation: 'review',
+    recommendationSummary: '',
+    items: [],
+    applicationIds: [],
+    beneficiaryKind: 'self',
+  };
+  store.requests[id] = next;
+  writeStore(store);
+  return withDefaults(next);
+}
+
+export function updateAccessRequest(id: string, patch: Partial<AccessRequest>): AccessRequest | null {
+  const store = readStore();
+  const req = store.requests[id];
+  if (!req) return null;
+  const next: AccessRequest = { ...req, ...patch };
+  store.requests[id] = next;
+  try {
+    writeStore(store);
+  } catch {
+    store.requests[id] = req;
+    return null;
+  }
+  return withDefaults(next);
+}
+
+export function deleteAccessRequest(id: string): boolean {
+  const store = readStore();
+  if (!store.requests[id]) return false;
+  delete store.requests[id];
+  writeStore(store);
+  return true;
+}
+
+function severityFromScore(score: number): AccessRequestRiskSeverity {
+  return riskTier(score);
+}
+
+export function submitAccessRequest(
+  id: string,
+  justification: string,
+  justificationReason?: string,
+): AccessRequest | null {
+  const store = readStore();
+  const req = store.requests[id];
+  if (!req || req.status !== 'draft') return null;
+  const items = requestItems(req);
+  if (items.length === 0) return null;
+  const now = new Date();
+  const due = new Date(now);
+  due.setUTCDate(due.getUTCDate() + 7);
+  const maxRisk = Math.max(0, ...items.map((i) => i.risk ?? 0));
+  const first = items[0];
+  const next: AccessRequest = {
+    ...req,
+    status: 'pending',
+    itemName: items.length === 1 ? first.entitlementName : `${items.length} entitlements`,
+    itemDescription: first.description,
+    appId: first.applicationId,
+    appName: first.applicationName,
+    entitlementCode: first.entitlementName,
+    itemRiskScore: maxRisk,
+    itemRiskSeverity: severityFromScore(maxRisk),
+    sodViolationCount: 0,
+    submittedAt: now.toISOString(),
+    dueAt: due.toISOString(),
+    expiresAt: defaultExpiresAt(now.toISOString()),
+    accessDurationKind: items.every((i) => i.accessDurationKind === 'permanent') ? 'permanent' : 'temporary',
+    businessJustification: justification,
+    justificationReason,
+    recommendation: maxRisk >= 75 ? 'review' : 'approve',
+    recommendationSummary:
+      maxRisk >= 75
+        ? 'High-risk entitlements are in this request. Review before approving.'
+        : `It is recommended to approve this request as there are ${req.sodViolationCount ?? 0} SoD violations.`,
+    items,
+    attachments: (req.attachments ?? []).filter((a) => (a.status ?? 'success') === 'success' && a.dataUrl),
+  };
+  store.requests[id] = next;
+  writeStore(store);
+  return withDefaults(next);
 }

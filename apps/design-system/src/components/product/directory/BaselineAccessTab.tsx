@@ -14,14 +14,14 @@ import { deleteBaseline, listBaselines, setDefaultBaseline, type AccessBaseline 
 import type { EntitlementRow } from '@/data/directory';
 
 /**
- * Baseline Governance — the access this application is expected to grant.
+ * Baseline Access — the access this application is expected to grant.
  *
  * A baseline is a reference set, not a control: nothing is blocked by it. It
  * exists so drift has something to be measured against, which is why the table
  * says what each one holds and which is the default, and nothing about
  * enforcement.
  */
-export function BaselineGovernanceTab({
+export function BaselineAccessTab({
   applicationId,
   entitlements,
 }: {

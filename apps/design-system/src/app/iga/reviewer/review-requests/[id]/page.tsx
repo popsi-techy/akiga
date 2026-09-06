@@ -13,6 +13,7 @@ import {
   Avatar,
   Button,
   Card,
+  FileAttachmentField,
   Input,
   AppIcon,
   Meter,
@@ -247,6 +248,11 @@ function RequestedItemSection({ request }: { request: AccessRequest }) {
             </div>
 
             <JustificationInset text={request.businessJustification} />
+            {(request.attachments?.length ?? 0) > 0 && (
+              <div className="mt-3">
+                <FileAttachmentField files={request.attachments ?? []} readOnly />
+              </div>
+            )}
           </div>
         </div>
       </div>

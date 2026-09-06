@@ -35,6 +35,7 @@
     ]},
     { "group": "administration", "label": "Administration", "items": [
       { "id": "license-governance", "label": "License Governance", "route": "/iga/license-governance", "icon": "card_membership", "personas": ["administrator", "auditor"] },
+      { "id": "request-governance", "label": "Request Governance", "route": "/iga/request-governance", "icon": "fact_check", "personas": ["administrator"] },
       { "id": "emergency", "label": "Emergency Access", "route": "/iga/emergency", "icon": "key", "personas": ["administrator"] },
       { "id": "provisioning-tasks", "label": "Provisioning Tasks", "route": "/iga/provisioning-tasks", "icon": "playlist_add_check", "personas": ["administrator"] }
     ]},
@@ -75,7 +76,15 @@
       "description": "Request and track your access",
       "items": [
         { "id": "enduser-dashboard", "label": "Dashboard", "route": "/iga/enduser/dashboard", "icon": "dashboard" },
+        { "id": "access-requests", "label": "Access Requests", "route": "/iga/enduser/access-requests", "icon": "assignment" },
         { "id": "my-assets", "label": "My Assets", "route": "/iga/enduser/my-assets", "icon": "inventory" }
+      ]
+    },
+    "emailTemplate": {
+      "label": "Email Template",
+      "description": "Design and preview notification emails",
+      "items": [
+        { "id": "email-templates", "label": "Email Templates", "route": "/iga/email-templates", "icon": "mail" }
       ]
     }
   }

@@ -1,7 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { BarChart, DonutChart, Drawer } from '@ds/components';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import PieChartIcon from '@mui/icons-material/PieChart';
+import { BarChart, Card, DonutChart, Drawer } from '@ds/components';
 import { ReportTable, Cell } from './ReportTable';
 import type {
   AssembledBlock,
@@ -21,7 +23,7 @@ import type {
  * their attention on the boxes rather than the tables inside them — which are the
  * evidence, and the only reason the page exists.
  */
-export function ReportBody({ blocks, provenance }: { blocks: AssembledBlock[]; provenance: string }) {
+export function ReportBody({ blocks }: { blocks: AssembledBlock[] }) {
   const [detail, setDetail] = React.useState<{ section: DerivedSection; row: DerivedRow } | null>(null);
 
   return (
@@ -29,7 +31,7 @@ export function ReportBody({ blocks, provenance }: { blocks: AssembledBlock[]; p
       <div className="divide-y divide-border">
         {blocks.map((b) =>
           b.kind === 'insights' ? (
-            <InsightsBand key="insights" number={b.number} plots={b.plots ?? []} provenance={provenance} />
+            <InsightsBand key="insights" number={b.number} plots={b.plots ?? []} />
           ) : (
             <SectionBlock
               key={b.section!.id}
@@ -132,15 +134,7 @@ function KpiGrid({ kpis }: { kpis: DerivedKpi[] }) {
  * evidence, whatever sections the reader picked. Omitted entirely when no plots
  * are enabled, never rendered as an empty chart area.
  */
-function InsightsBand({
-  number,
-  plots,
-  provenance,
-}: {
-  number: string;
-  plots: DerivedPlot[];
-  provenance: string;
-}) {
+function InsightsBand({ number, plots }: { number: string; plots: DerivedPlot[] }) {
   return (
     <section className="py-8 first:pt-0">
       <SectionHeading
@@ -150,7 +144,7 @@ function InsightsBand({
       />
       <div className="grid gap-5 lg:grid-cols-2">
         {plots.map((p) => (
-          <PlotCard key={p.id} plot={p} provenance={provenance} />
+          <PlotCard key={p.id} plot={p} />
         ))}
       </div>
     </section>
@@ -158,50 +152,33 @@ function InsightsBand({
 }
 
 /**
- * One plot.
- *
- * A bordered card here, unlike the sections — because two plots sit side by side
- * and something has to say where one ends and the next begins. The section rules
- * cannot do it for a grid.
- *
- * Every card prints the report's scope and filters at its foot. Without it a plot
- * lifted into a slide deck, or simply read after scrolling past the header, can be
- * mistaken for the whole organisation — and a governance chart read against the
- * wrong population is worse than no chart.
+ * One plot — the shared framed `Card` used everywhere else charts sit in a grid
+ * (dashboard, directory).
  */
-function PlotCard({ plot, provenance }: { plot: DerivedPlot; provenance: string }) {
+function PlotCard({ plot }: { plot: DerivedPlot }) {
   const total = plot.series.reduce((s, x) => s + x.value, 0);
 
   return (
-    <div className="flex flex-col rounded-xl border border-border bg-surface p-5">
-      <div className="mb-4">
-        <h3 className="text-body-strong text-text-primary">{plot.title}</h3>
-        <p className="mt-0.5 text-caption text-text-secondary">{plot.description}</p>
-      </div>
-
-      <div className="flex-1">
-        {plot.series.length === 0 ? (
-          <p className="text-body-sm text-text-tertiary">Nothing to plot in this scope.</p>
-        ) : plot.viz === 'donut' ? (
-          <DonutChart
-            segments={plot.series}
-            size={160}
-            thickness={20}
-            centerValue={plot.percent ? `${plot.series[0]?.value ?? 0}%` : total}
-            centerLabel={plot.centerLabel}
-            ariaLabel={`${plot.title}: ${plot.series.map((s) => `${s.label} ${s.value}`).join(', ')}`}
-          />
-        ) : (
-          <BarChart
-            bars={plot.series}
-            suffix={plot.percent ? '%' : ''}
-            ariaLabel={plot.title}
-          />
-        )}
-      </div>
-
-      <p className="mt-4 border-t border-border pt-3 text-caption text-text-tertiary">{provenance}</p>
-    </div>
+    <Card
+      title={plot.title}
+      icon={plot.viz === 'donut' ? <PieChartIcon /> : <BarChartIcon />}
+      className="h-full"
+    >
+      {plot.series.length === 0 ? (
+        <p className="text-body-sm text-text-tertiary">Nothing to plot in this scope.</p>
+      ) : plot.viz === 'donut' ? (
+        <DonutChart
+          segments={plot.series}
+          size={160}
+          thickness={20}
+          centerValue={plot.percent ? `${plot.series[0]?.value ?? 0}%` : total}
+          centerLabel={plot.centerLabel}
+          ariaLabel={`${plot.title}: ${plot.series.map((s) => `${s.label} ${s.value}`).join(', ')}`}
+        />
+      ) : (
+        <BarChart bars={plot.series} suffix={plot.percent ? '%' : ''} ariaLabel={plot.title} />
+      )}
+    </Card>
   );
 }
 

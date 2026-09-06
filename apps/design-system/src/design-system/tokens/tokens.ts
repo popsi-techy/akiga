@@ -15,6 +15,7 @@ export const color = {
     subtle: p.neutral[50], //    alternate / striped surfaces
     sunken: p.neutral[100], //   wells, code blocks
     sidebar: p.sidebar, //       product dark navigation
+    emailPreview: p.neutral[700], // #D7DBE0 — email template outer canvas
   },
   // Surfaces (component-level)
   surface: {

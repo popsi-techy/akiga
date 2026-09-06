@@ -241,7 +241,7 @@ export function SelectionDock({
       if (rootRef.current?.contains(node)) return;
       if (
         node.closest(
-          'table, [role="checkbox"], .MuiModal-root, .MuiDrawer-root, [role="dialog"]',
+          'table, [role="checkbox"], .MuiModal-root, .MuiDrawer-root, .MuiMenu-root, [role="menu"], [role="dialog"]',
         )
       ) {
         return;
@@ -272,7 +272,7 @@ export function SelectionDock({
       <div
         className={
           header
-            ? `pointer-events-auto flex items-center gap-0.5 rounded-md border border-border bg-surface px-1.5 py-1 shadow-md ${dragging ? 'select-none' : ''}`
+            ? `pointer-events-auto flex items-center gap-0.5 rounded-md border border-border-strong bg-surface px-1.5 py-1 shadow-lg ${dragging ? 'select-none' : ''}`
             : 'pointer-events-auto flex max-w-full items-center gap-2 rounded-md bg-sidebar px-2 py-2 shadow-lg'
         }
       >

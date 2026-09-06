@@ -41,7 +41,14 @@ export function NavList({ items, value, onChange, ariaLabel }: NavListProps) {
               active ? 'border-brand bg-surface text-text-primary' : 'border-transparent text-text-primary hover:bg-surface-hover',
             ].join(' ')}
           >
-            {item.icon && <span className="text-icon">{item.icon}</span>}
+            {item.icon && (
+              <span
+                aria-hidden
+                className="grid h-[18px] w-[18px] shrink-0 place-items-center text-icon [&>svg]:block"
+              >
+                {item.icon}
+              </span>
+            )}
             <span className="min-w-0 flex-1 truncate">{item.label}</span>
             {item.count != null && (
               <span

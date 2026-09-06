@@ -34,10 +34,13 @@ import CardMembershipOutlined from '@mui/icons-material/CardMembershipOutlined';
 import BoltOutlined from '@mui/icons-material/BoltOutlined';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import CampaignOutlined from '@mui/icons-material/CampaignOutlined';
+import AssignmentOutlined from '@mui/icons-material/AssignmentOutlined';
 import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined';
 import BusinessOutlined from '@mui/icons-material/BusinessOutlined';
 import LaptopOutlined from '@mui/icons-material/LaptopOutlined';
 import SchemaOutlined from '@mui/icons-material/SchemaOutlined';
+import EmailOutlined from '@mui/icons-material/EmailOutlined';
+import MarkEmailReadOutlined from '@mui/icons-material/MarkEmailReadOutlined';
 import navData from '@registries/navigation.json';
 import { myWork } from '@/data/seed';
 import type { Persona } from '@/lib/persona';
@@ -147,11 +150,13 @@ const ICONS: Record<string, ComponentType<{ sx?: object }>> = {
   bolt: BoltOutlined,
   shield: ShieldOutlined,
   campaign: CampaignOutlined,
+  assignment: AssignmentOutlined,
   visibility: VisibilityOutlined,
   business: BusinessOutlined,
   person: PersonOutline,
   laptop: LaptopOutlined,
   schema: SchemaOutlined,
+  mail: EmailOutlined,
 };
 const iconFor = (name: string) => ICONS[name] ?? DashboardOutlined;
 
@@ -199,7 +204,7 @@ interface PersonaView {
 }
 const personaViews = (navData as { personaViews: Record<string, PersonaView> }).personaViews;
 
-function buildPersonaNav(key: 'reviewer' | 'endUser'): IgaPersonaNav {
+function buildPersonaNav(key: 'reviewer' | 'endUser' | 'emailTemplate'): IgaPersonaNav {
   const view = personaViews[key];
   return {
     sections: [
@@ -217,6 +222,7 @@ export const navForPersona: Record<Persona, IgaPersonaNav> = {
   admin: { sections: adminSections, footer: adminFooter },
   reviewer: buildPersonaNav('reviewer'),
   endUser: buildPersonaNav('endUser'),
+  emailTemplate: buildPersonaNav('emailTemplate'),
 };
 
 /** The apps-switcher entries (top bar). */
@@ -230,4 +236,11 @@ export const PERSONAS: {
   { id: 'admin', label: 'Admin', description: 'Full governance console', dashboardHref: '/iga/dashboard', icon: AdminPanelSettingsOutlined },
   { id: 'reviewer', label: 'Reviewer', description: personaViews.reviewer.description, dashboardHref: personaViews.reviewer.items[0].route, icon: FactCheckOutlined },
   { id: 'endUser', label: 'End user', description: personaViews.endUser.description, dashboardHref: personaViews.endUser.items[0].route, icon: PersonOutline },
+  {
+    id: 'emailTemplate',
+    label: 'Email template',
+    description: personaViews.emailTemplate.description,
+    dashboardHref: personaViews.emailTemplate.items[0].route,
+    icon: MarkEmailReadOutlined,
+  },
 ];

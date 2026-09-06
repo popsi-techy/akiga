@@ -124,7 +124,7 @@
     {
       "name": "bulk-action-toolbar",
       "status": "experimental",
-      "problem": "The same need as bulk-selection-dock, without anything appearing over the rows or moving the page once a selection starts.",
+      "problem": "The same need as bulk-selection-dock, without anything appearing over the rows. A Bulk action menu joins the toolbar when a selection exists.",
       "useWhen": "The bulk actions are few enough to sit in one menu, and the list is dense enough that a floating card would cover rows the reader is still deciding about.",
       "avoidWhen": "The actions deserve to be visible without a click, or the table is long enough that the reader will have scrolled the toolbar off screen — that is bulk-selection-dock.",
       "components": [

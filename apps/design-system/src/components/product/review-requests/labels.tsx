@@ -20,6 +20,7 @@ export function RequestTypeChip({ type }: { type: AccessRequestType }) {
 }
 
 export const REQUEST_STATUS_META: Record<AccessRequestStatus, { label: string; intent: Intent }> = {
+  draft: { label: 'Draft', intent: 'warning' },
   pending: { label: 'Pending', intent: 'warning' },
   approved: { label: 'Approved', intent: 'success' },
   rejected: { label: 'Rejected', intent: 'danger' },

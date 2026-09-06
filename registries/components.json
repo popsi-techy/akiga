@@ -386,7 +386,7 @@
         "disabled-item"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/menu/page.tsx",
-      "notes": "The ⋮ row-actions dropdown. Destructive items take the danger role and should confirm before acting."
+      "notes": "The ⋮ row-actions dropdown. Destructive items take the danger role and should confirm before acting. Optional offset pushes the list below the trigger when nearby chrome would otherwise be covered."
     },
     {
       "name": "Meter",
@@ -662,6 +662,31 @@
       ],
       "docs": "apps/design-system/src/app/(docs)/components/rich-text-editor/page.tsx",
       "notes": "Uncontrolled contentEditable — writing value back each keystroke would reset the caret. Emits HTML via onChange; use the exported plainText() for emptiness and length validation, since an \"empty\" editor still contains markup."
+    },
+    {
+      "name": "FileAttachmentField",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/FileAttachmentField/FileAttachmentField.tsx",
+      "extends": null,
+      "variants": [
+        "empty",
+        "filled",
+        "read-only"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "drag-over",
+        "disabled",
+        "error",
+        "uploading",
+        "success",
+        "failed",
+        "empty",
+        "filled"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/file-attachment/page.tsx",
+      "notes": "MUI has no file-drop primitive. One surface field matching Input: empty is a quiet add row, filled is grey file cards plus Add more files. Each row shows uploading (bar + percent), success (check), or failed (reason + try again). Never a card-per-file stack. PDF, Word, and image only. Product stores ready FileAttachment records; this component does not talk to a backend."
     },
     {
       "name": "RowActions",

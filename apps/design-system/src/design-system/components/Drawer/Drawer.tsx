@@ -105,7 +105,13 @@ export function Drawer({
             strip flush against the header's border reads as one thick divider. */}
         {toolbar ? <div className="shrink-0 bg-surface px-6 pt-2">{toolbar}</div> : null}
 
-        <div className={`ds-scroll flex-1 overflow-y-auto ${disablePadding ? 'min-h-0' : 'px-6 py-5'}`}>
+        <div
+          className={
+            disablePadding
+              ? 'flex min-h-0 flex-1 flex-col overflow-hidden'
+              : 'ds-scroll flex-1 overflow-y-auto px-6 py-5'
+          }
+        >
           {children}
         </div>
 

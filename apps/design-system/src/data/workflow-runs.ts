@@ -20,9 +20,8 @@ import { RUNS_AS_OF, type ApprovalRun, type RunStats } from './approval-runs';
 export { RUNS_AS_OF };
 
 /**
- * Runs are keyed by workflow id. There is no workflow seed (an empty list is
- * valid), so these attach to whatever ids exist; a workflow with no runs simply
- * shows the empty state.
+ * Runs are keyed by workflow id. `wf-joiner-onboarding` is the seeded joiner
+ * automation; a workflow with no matching runs shows the empty state.
  */
 const WORKFLOW_RUNS: ApprovalRun[] = [
   {

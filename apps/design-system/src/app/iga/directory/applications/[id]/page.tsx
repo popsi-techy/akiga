@@ -4,33 +4,44 @@ import * as React from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
+import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
+import BlockOutlined from '@mui/icons-material/BlockOutlined';
 import {
   Button,
+  Dialog,
   Menu,
   StatusChip,
   Tooltip,
   useToast,
   type TabItem,
 } from '@ds/components';
-import { getApplicationDetail } from '@/data/directory';
-import { APP_REQUIRED_STEPS, appBlockingSteps } from '@/data/application-setup';
+import {
+  activateApplication,
+  applicationIsAuthorized,
+  applicationLifecycle,
+  deactivateApplication,
+  deleteApplication,
+  getApplicationDetail,
+} from '@/data/directory';
+import { appBlockingSteps, applicationShowsConfigure, requiredAppSetupCount } from '@/data/application-setup';
+import { appProfileFor } from '@/data/seed';
 import {
   applicationSetupSteps,
   firstUnfinishedAppTab,
 } from '@/components/product/directory/applicationSetupSteps';
-import { connectApplication } from '@/data/applications-store';
 import {
   DetailShell,
   DetailNotFound,
   RelationTable,
   EntityAvatar,
+  APPLICATION_LIFECYCLE_CHIP,
   ApplicationOverviewTab,
   ApplicationBasicDetailsDrawer,
   EntityOwnersTab,
   ApplicationApprovalPolicyTab,
   ReconciliationTab,
   ProvisioningSetupTab,
-  BaselineGovernanceTab,
+  BaselineAccessTab,
   RiskScoreChip,
   accountColumns,
   entitlementColumns,
@@ -48,7 +59,7 @@ const BASE_TABS: TabItem[] = [
   { value: 'provisioning', label: 'Configure' },
   { value: 'reconciliation', label: 'Reconciliation' },
   { value: 'owners', label: 'Owners' },
-  { value: 'baseline', label: 'Baseline Governance' },
+  { value: 'baseline', label: 'Baseline Access' },
   { value: 'approval', label: 'Approval Policy' },
 ];
 
@@ -71,6 +82,8 @@ export default function ApplicationDetailPage() {
   const [tab, setTab] = React.useState(requestedTab ?? 'overview');
   const [basicsOpen, setBasicsOpen] = React.useState(false);
   const [checklistOpen, setChecklistOpen] = React.useState(false);
+  const [pendingDelete, setPendingDelete] = React.useState(false);
+  const [pendingDeactivate, setPendingDeactivate] = React.useState(false);
   const [, bump] = React.useReducer((n: number) => n + 1, 0);
 
   /**
@@ -103,8 +116,18 @@ export default function ApplicationDetailPage() {
   const gov = getGovEntity(app.id);
   const blocking = onboarded ? appBlockingSteps(onboarded) : [];
   const steps = onboarded ? applicationSetupSteps(onboarded) : [];
+  const requiredTotal = onboarded ? requiredAppSetupCount(onboarded) : 0;
+  // Catalogued apps use the seed profile; onboarded apps use the toggle the
+  // admin set in the drawer. Off means IGA will not talk to the system — no
+  // Configure, no Reconciliation.
+  const showsConfigure = onboarded
+    ? applicationShowsConfigure(onboarded)
+    : appProfileFor(app.id).externalProvisioning === 'enabled';
 
-  const allSections = sectionsFor(accounts.length, entitlements.length);
+  const allSections = sectionsFor(accounts.length, entitlements.length).filter((s) => {
+    if (s.value === 'provisioning' || s.value === 'reconciliation') return showsConfigure;
+    return true;
+  });
   const visibleTabs = isDraft
     ? allSections.filter((s) => !CONNECTED_ONLY.has(s.value))
     : allSections;
@@ -115,12 +138,33 @@ export default function ApplicationDetailPage() {
       ? firstUnfinishedAppTab(onboarded)
       : 'overview';
 
-  const connect = () => {
-    if (!onboarded || blocking.length > 0) return;
-    connectApplication(onboarded.id);
-    toast.success(`“${onboarded.name}” is connected. IGA can now reach this application.`);
+  const lifecycle = applicationLifecycle(app.id);
+  const lifecycleChip = APPLICATION_LIFECYCLE_CHIP[lifecycle];
+  const authorized = applicationIsAuthorized(app.id);
+  const isActive = lifecycle === 'active';
+  const activateBlocked = isDraft && blocking.length > 0;
+
+  const activate = () => {
+    if (activateBlocked) return;
+    const ok = activateApplication(app.id);
+    if (!ok) {
+      toast.error('Could not activate this application.');
+      return;
+    }
+    toast.success(`“${app.name}” is active.`);
     bump();
-    setTab('overview');
+    if (isDraft) setTab('overview');
+  };
+
+  const deactivate = () => {
+    const ok = deactivateApplication(app.id);
+    setPendingDeactivate(false);
+    if (!ok) {
+      toast.error('Could not deactivate this application.');
+      return;
+    }
+    toast.success(`“${app.name}” is inactive.`);
+    bump();
   };
 
   return (
@@ -131,7 +175,11 @@ export default function ApplicationDetailPage() {
         description={app.description}
         chips={
           <>
-            {isDraft ? <StatusChip intent="warning" label="Draft" /> : null}
+            <StatusChip intent={lifecycleChip.intent} label={lifecycleChip.label} />
+            <StatusChip
+              intent={authorized ? 'success' : 'warning'}
+              label={authorized ? 'Authorized' : 'Not authorized'}
+            />
             {gov ? <RiskScoreChip score={gov.risk} /> : null}
           </>
         }
@@ -144,27 +192,41 @@ export default function ApplicationDetailPage() {
             >
               Basic Details
             </Button>
-            {isDraft && onboarded ? (
+            {isActive ? (
+              <Button
+                variant="secondary"
+                startIcon={<BlockOutlined />}
+                onClick={() => setPendingDeactivate(true)}
+              >
+                Deactivate
+              </Button>
+            ) : (
               <Tooltip
                 describeChild
                 title={
-                  blocking.length > 0
-                    ? `Add ${blocking.join(' and ')} before this can be connected.`
-                    : 'Let IGA reach this application'
+                  activateBlocked
+                    ? `Add ${blocking.join(' and ')} before this can be activated.`
+                    : isDraft
+                      ? 'Make this application live in the catalog'
+                      : 'Turn this application back on'
                 }
               >
-                <Button disabled={blocking.length > 0} onClick={connect}>
-                  Connect
+                <Button
+                  startIcon={<CheckCircleOutlined />}
+                  disabled={activateBlocked}
+                  onClick={activate}
+                >
+                  Activate
                 </Button>
               </Tooltip>
-            ) : null}
+            )}
             <Menu
               items={[
                 {
                   label: 'Delete',
                   icon: <DeleteOutline sx={{ fontSize: 18 }} />,
                   danger: true,
-                  onClick: () => toast.error('Delete is not available in this prototype'),
+                  onClick: () => setPendingDelete(true),
                 },
               ]}
             />
@@ -172,10 +234,10 @@ export default function ApplicationDetailPage() {
               <EmergencyAccessGuideButton
                 expanded={checklistOpen}
                 progress={
-                  isDraft
+                  isDraft && showsConfigure
                     ? {
-                        done: APP_REQUIRED_STEPS - blocking.length,
-                        total: APP_REQUIRED_STEPS,
+                        done: requiredTotal === 0 ? 1 : requiredTotal - blocking.length,
+                        total: Math.max(requiredTotal, 1),
                       }
                     : undefined
                 }
@@ -193,7 +255,7 @@ export default function ApplicationDetailPage() {
             <SetupChecklistDock
               steps={steps}
               currentTab={shownTab}
-              gateVerb="connect"
+              gateVerb="activate"
               onClose={() => setChecklistOpen(false)}
               onGoTo={(step) => setTab(step.tab)}
             />
@@ -227,7 +289,7 @@ export default function ApplicationDetailPage() {
         {shownTab === 'provisioning' && (
           <ProvisioningSetupTab applicationId={app.id} applicationName={app.name} onChanged={bump} />
         )}
-        {shownTab === 'baseline' && <BaselineGovernanceTab applicationId={app.id} entitlements={entitlements} />}
+        {shownTab === 'baseline' && <BaselineAccessTab applicationId={app.id} entitlements={entitlements} />}
         {shownTab === 'approval' && <ApplicationApprovalPolicyTab applicationId={app.id} />}
         {shownTab === 'owners' && (
           <EntityOwnersTab
@@ -252,6 +314,36 @@ export default function ApplicationDetailPage() {
           }}
         />
       ) : null}
+
+      <Dialog
+        open={pendingDeactivate}
+        onClose={() => setPendingDeactivate(false)}
+        title={`Deactivate ${app.name}?`}
+        confirmLabel="Deactivate"
+        onConfirm={deactivate}
+      >
+        IGA will treat this application as inactive. You can activate it again later.
+      </Dialog>
+
+      <Dialog
+        open={pendingDelete}
+        onClose={() => setPendingDelete(false)}
+        title={`Delete ${app.name}?`}
+        tone="danger"
+        confirmLabel="Delete"
+        onConfirm={() => {
+          const ok = deleteApplication(app.id);
+          setPendingDelete(false);
+          if (ok) {
+            toast.success(`“${app.name}” was deleted.`);
+            router.push(LIST_HREF);
+          } else {
+            toast.error('Could not delete this application.');
+          }
+        }}
+      >
+        This removes the application from the catalog. This cannot be undone.
+      </Dialog>
     </>
   );
 }

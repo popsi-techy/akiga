@@ -8,6 +8,8 @@
  * repository/API layer so a real backend can be swapped in without UI changes.
  */
 
+import { directoryListApps, directoryListProfiles } from './application-directory-list';
+
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 export type Tone = 'brand' | 'info' | 'success' | 'warning' | 'danger' | 'neutral';
 
@@ -245,6 +247,7 @@ export interface AppProfile {
 }
 
 export const appProfiles: Record<string, AppProfile> = {
+  ...directoryListProfiles,
   'app-okta': { appType: 'Okta', discoverySource: 'Direct', authorizationStatus: 'authorized', externalProvisioning: 'enabled', provisioningType: 'auto' },
   'app-salesforce': { appType: 'Salesforce', discoverySource: 'IAM', authorizationStatus: 'authorized', externalProvisioning: 'enabled', provisioningType: 'auto' },
   'app-github': { appType: 'GitHub', discoverySource: 'IAM', authorizationStatus: 'authorized', externalProvisioning: 'enabled', provisioningType: 'manual' },
@@ -261,7 +264,7 @@ export const appProfiles: Record<string, AppProfile> = {
 export const appProfileFor = (id: string): AppProfile =>
   appProfiles[id] ?? { appType: 'Unknown', discoverySource: 'Direct', authorizationStatus: 'pending', externalProvisioning: 'disabled', provisioningType: 'manual' };
 
-export const catalogApps: { id: string; name: string; description: string; ownerIds: string[]; entitlements: { id: string; name: string; description: string; risk: number; ownerIds: string[] }[] }[] = [
+const integrationCatalogApps: { id: string; name: string; description: string; ownerIds: string[]; entitlements: { id: string; name: string; description: string; risk: number; ownerIds: string[] }[] }[] = [
   { id: 'app-okta', name: 'Okta', description: 'Workforce identity & single sign-on.', ownerIds: ['o-marcus', 'o-henry'], entitlements: [
     { id: 'ent-okta-admin', name: 'Super Admin', description: 'Full tenant administration and user management.', risk: 88, ownerIds: ['o-marcus'] },
     { id: 'ent-okta-ro', name: 'Read-only Admin', description: 'View-only access to admin console.', risk: 32, ownerIds: ['o-henry'] },
@@ -321,6 +324,9 @@ export const catalogApps: { id: string; name: string; description: string; owner
     { id: 'ent-jira-contrib', name: 'Contributor', description: 'Create, comment on, and transition issues.', risk: 12, ownerIds: ['o-sofia'] },
   ] },
 ];
+
+/** Integration fixtures plus the ten typed directory-list instances. */
+export const catalogApps = [...directoryListApps, ...integrationCatalogApps];
 
 export const technicalRoles: { id: string; name: string; description: string; risk: number; entitlementIds: string[]; memberIds: string[]; ownerIds: string[] }[] = [
   { id: 'tr-eng-baseline', name: 'Engineering Baseline', description: 'Standard tooling for engineers', risk: 25, entitlementIds: ['ent-gh-write', 'ent-okta-user'], memberIds: ['o-frank', 'o-sofia', 'o-priya'], ownerIds: ['o-priya'] },

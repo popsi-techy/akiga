@@ -24,8 +24,11 @@ export interface AppIconProps {
    */
   logoFrom?: string;
   size?: number;
-  /** Tile fill: `subtle` on canvas/surface, `surface` inside tinted chips. */
-  variant?: 'subtle' | 'surface';
+  /**
+   * Tile fill. `subtle` on canvas, `surface` inside a tinted chip, `wash` the
+   * same grey tile with a smaller mark so the logo has air.
+   */
+  variant?: 'subtle' | 'surface' | 'wash';
 }
 
 /**
@@ -75,23 +78,28 @@ export function AppIcon({ app, logoFrom, size = 24, variant = 'subtle' }: AppIco
   const [failed, setFailed] = React.useState(false);
   React.useEffect(() => setFailed(false), [logo?.domain]);
 
+  const wash = variant === 'wash';
   const tile = [
-    'inline-flex shrink-0 items-center justify-center rounded-md',
+    'inline-flex shrink-0 items-center justify-center',
+    wash ? 'rounded-sm' : 'rounded-md',
     variant === 'surface' ? 'bg-surface' : 'bg-subtle',
-  ].join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
   const letter = app?.trim().charAt(0).toUpperCase() || '?';
+  const mark = Math.round(size * (wash ? 0.5 : 0.72));
+  const tileStyle: React.CSSProperties = { width: size, height: size };
 
   if (!logo || failed) {
     return (
-      <span className={`${tile} text-caption-strong text-text-secondary`} style={{ width: size, height: size }} title={app}>
+      <span className={`${tile} text-caption-strong text-text-secondary`} style={tileStyle} title={app}>
         {letter}
       </span>
     );
   }
 
-  const mark = Math.round(size * 0.72);
   return (
-    <span className={tile} style={{ width: size, height: size }} title={app}>
+    <span className={tile} style={tileStyle} title={app}>
       {/* eslint-disable-next-line @next/next/no-img-element -- live vendor icon; not a layout image */}
       <img
         src={liveAppLogoUrl(logo.domain)}

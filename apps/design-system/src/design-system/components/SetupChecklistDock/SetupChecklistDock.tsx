@@ -115,23 +115,25 @@ export function SetupChecklistDock({
       </header>
 
       <div className="ds-scroll min-h-0 flex-1 space-y-3 overflow-y-auto px-3 pb-4">
-        <StepGroup
-          heading={gateVerb === 'connect' ? 'Required to connect' : 'Required to activate'}
-          hint={
-            gateVerb === 'connect' ? 'these steps gate connection' : 'these steps gate activation'
-          }
-        >
-          {required.map((step) => (
-            <StepRow
-              key={step.id}
-              step={step}
-              current={step.tab === currentTab}
-              recommended={step.id === nextId}
-              ctaVariant={ctaVariant}
-              onGoTo={onGoTo}
-            />
-          ))}
-        </StepGroup>
+        {required.length > 0 && (
+          <StepGroup
+            heading={gateVerb === 'connect' ? 'Required to connect' : 'Required to activate'}
+            hint={
+              gateVerb === 'connect' ? 'these steps gate connection' : 'these steps gate activation'
+            }
+          >
+            {required.map((step) => (
+              <StepRow
+                key={step.id}
+                step={step}
+                current={step.tab === currentTab}
+                recommended={step.id === nextId}
+                ctaVariant={ctaVariant}
+                onGoTo={onGoTo}
+              />
+            ))}
+          </StepGroup>
+        )}
         {additional.length > 0 && (
           <StepGroup
             heading="Additional"

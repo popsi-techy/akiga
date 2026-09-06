@@ -36,6 +36,7 @@ const groups: { title: string; description: string; items: [string, string, stri
       ['Date Picker', '/components/date-picker', 'Themed month grid — replaces the native date input.'],
       ['Time Picker', '/components/time-picker', '12-hour field over a 24-hour value, three columns.'],
       ['Rich Text Editor', '/components/rich-text-editor', 'Lightweight formatted text for justifications and notes.'],
+      ['File Attachment', '/components/file-attachment', 'Optional supporting files — PDF, Word, or image.'],
       ['Click to Edit', '/components/click-to-edit', 'In-place title or description — the field overlays the line.'],
     ],
   },

@@ -4,22 +4,26 @@ import * as React from 'react';
 import AddOutlined from '@mui/icons-material/AddOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
+import KeyOutlined from '@mui/icons-material/KeyOutlined';
+import LanOutlined from '@mui/icons-material/LanOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import LinkOffOutlined from '@mui/icons-material/LinkOffOutlined';
 import {
   Button,
+  Card,
   DataTable,
   Dialog,
   Input,
   Menu,
-  SegmentedControl,
+  NavList,
   StatusChip,
   useToast,
   type Column,
 } from '@ds/components';
 import { AuthorizationDrawer } from './AuthorizationDrawer';
 import { ConnectionConfiguration } from './ConnectionConfiguration';
+import { ScimInboundPanel } from './ScimInboundPanel';
 import {
   GRANT_TYPES,
   METHOD_LABEL,
@@ -28,6 +32,8 @@ import {
   setAuthorized,
   type AppAuthorization,
 } from '@/data/provisioning-auth';
+import { listConnectionEvents } from '@/data/connection-events';
+import { applicationHasScimInbound } from '@/data/scim-inbound';
 
 type Section = 'authorization' | 'connection';
 
@@ -36,10 +42,8 @@ type Section = 'authorization' | 'connection';
  * application. Authorization, then connection configuration: sign-in has to
  * exist before a call can be tested.
  *
- * The two jobs are a segmented control at the top, not a list in a card down
- * the left — same as Emergency Access assignments. A NavList beside the detail
- * rail looked like a second navigator, and spent a 264px column on a choice
- * that a control states in one row.
+ * The two jobs sit in a 240px NavList rail, same as Owners — a section
+ * switcher beside the work, not a segmented control above it.
  */
 export function ProvisioningSetupTab({
   applicationId,
@@ -59,7 +63,12 @@ export function ProvisioningSetupTab({
   const [removing, setRemoving] = React.useState<AppAuthorization | null>(null);
 
   // Stored in localStorage, so it can only be read after mount.
-  const refresh = React.useCallback(() => setRows(listAuthorizations(applicationId)), [applicationId]);
+  const [eventCount, setEventCount] = React.useState(0);
+
+  const refresh = React.useCallback(() => {
+    setRows(listAuthorizations(applicationId));
+    setEventCount(listConnectionEvents(applicationId).length);
+  }, [applicationId]);
   React.useEffect(() => refresh(), [refresh]);
 
   const q = search.trim().toLowerCase();
@@ -78,6 +87,7 @@ export function ProvisioningSetupTab({
   };
 
   const noneYet = rows.length === 0;
+  const showScimInbound = applicationHasScimInbound(applicationId);
 
   const openAdd = () => {
     setEditing(null);
@@ -194,79 +204,99 @@ export function ProvisioningSetupTab({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/* 20px below the switcher, 12px below the toolbar: the switcher chooses
-          which job you are on, the toolbar acts within it. */}
-      <div className="mb-5 flex shrink-0 flex-wrap items-center gap-3">
-        <SegmentedControl<Section>
+    <div className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)] gap-5">
+      {/* 4px (2xs) clears the selected outline from a 240px rail without
+          spending 16px of the column on gutter. Same card as Owners. */}
+      <Card padding="2xs" className="h-full min-h-0 w-[240px]">
+        <NavList
           ariaLabel="Provisioning section"
           value={section}
-          onChange={setSection}
-          options={[
-            { value: 'authorization', label: 'Authorization' },
-            { value: 'connection', label: 'Connection configuration' },
+          onChange={(id) => setSection(id as Section)}
+          items={[
+            {
+              id: 'authorization',
+              icon: <KeyOutlined sx={{ fontSize: 18 }} />,
+              label: 'Authorization',
+              count: rows.length,
+            },
+            {
+              id: 'connection',
+              icon: <LanOutlined sx={{ fontSize: 18 }} />,
+              label: 'Connection configuration',
+              count: eventCount,
+            },
           ]}
         />
-      </div>
+      </Card>
 
-      {section === 'authorization' &&
-        (noneYet ? (
-          /* No search, no header row: a table with nothing under it reads as a failed
-             load rather than as "nothing granted yet". Same as Emergency Access
-             Assignments when no entitlements are granted. The switcher stays. */
-          <div className="grid min-h-0 flex-1 place-items-center">
-            <div className="flex max-w-md flex-col items-center px-6 py-10 text-center">
-              <h2 className="text-h5 text-text-primary">No authorization yet</h2>
-              <p className="mt-1.5 text-body-sm text-text-secondary">
-                IGA cannot reach this application until it knows how to sign in. Add an authorization
-                method to start provisioning.
-              </p>
-              <div className="mt-5">
-                <Button startIcon={<AddOutlined />} onClick={openAdd}>
-                  Add Authorization
-                </Button>
-              </div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        {section === 'authorization' && (
+          <div className="flex min-h-0 min-w-0 flex-1 gap-5">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+              {noneYet ? (
+                <div className="grid min-h-0 flex-1 place-items-center">
+                  <div className="flex max-w-md flex-col items-center px-6 py-10 text-center">
+                    <h2 className="text-h5 text-text-primary">No authorization yet</h2>
+                    <p className="mt-1.5 text-body-sm text-text-secondary">
+                      IGA cannot reach this application until it knows how to sign in. Add an
+                      authorization method to start provisioning.
+                    </p>
+                    <div className="mt-5">
+                      <Button startIcon={<AddOutlined />} onClick={openAdd}>
+                        Add Authorization
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
+                    <div className="w-full max-w-sm">
+                      <Input
+                        placeholder="Search methods"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+                      />
+                    </div>
+                    <div className="ml-auto">
+                      <Button startIcon={<AddOutlined />} onClick={openAdd}>
+                        Add Authorization
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="min-h-0 flex-1">
+                    <DataTable<AppAuthorization>
+                      columns={columns}
+                      rows={filtered}
+                      fillHeight
+                      emptyTitle="No methods match"
+                      emptyMessage="Try a different search, or add an authorization method."
+                    />
+                  </div>
+                </>
+              )}
             </div>
+            {showScimInbound ? <ScimInboundPanel applicationId={applicationId} /> : null}
           </div>
-        ) : (
-          <>
-            <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
-              <div className="w-full max-w-sm">
-                <Input
-                  placeholder="Search methods"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
-                />
-              </div>
-              <div className="ml-auto">
-                <Button startIcon={<AddOutlined />} onClick={openAdd}>
-                  Add Authorization
-                </Button>
-              </div>
-            </div>
-            <div className="min-h-0 flex-1">
-              <DataTable<AppAuthorization>
-                columns={columns}
-                rows={filtered}
-                fillHeight
-                emptyTitle="No methods match"
-                emptyMessage="Try a different search, or add an authorization method."
-              />
-            </div>
-          </>
-        ))}
-      {/* No scroller here: the section is a catalog beside a peek panel, and it
-          owns the scroll on the catalog column so the panel keeps full height. */}
-      {section === 'connection' && (
-        <div className="min-h-0 flex-1">
-          <ConnectionConfiguration
-            applicationId={applicationId}
-            applicationName={applicationName}
-            authorizations={rows}
-            onChanged={onChanged}
-          />
-        </div>
-      )}
+        )}
+        {/* No scroller here: the section is a catalog beside a peek panel, and it
+            owns the scroll on the catalog column so the panel keeps full height. */}
+        {section === 'connection' && (
+          <div className="min-h-0 flex-1">
+            <ConnectionConfiguration
+              applicationId={applicationId}
+              applicationName={applicationName}
+              authorizations={rows}
+              onChanged={() => {
+                refresh();
+                onChanged?.();
+              }}
+            />
+          </div>
+        )}
+      </div>
+    </div>
 
       <AuthorizationDrawer
         open={drawerOpen}

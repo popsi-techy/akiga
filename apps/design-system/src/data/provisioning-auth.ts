@@ -92,7 +92,7 @@ export const emptyOAuth = (applicationId: string): OAuthConfig => ({
 });
 
 const STORE_KEY = 'iga.appAuthorizations.v1';
-const SEED_VERSION = 1;
+const SEED_VERSION = 2;
 
 interface Store {
   version?: number;
