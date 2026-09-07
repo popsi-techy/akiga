@@ -263,7 +263,19 @@ export function EntityOwnersTab({
       : {
           title: 'No governance teams',
           message: 'No Governance Team lists this entity in its charter. Team ownership is assigned on the team.',
+          /*
+            No Add here, and that is the data model rather than an omission: a team's
+            charter lists the entities it governs, so this half of ownership is a
+            projection of team records (`listGoverningTeams` filters teams by whether
+            their charter includes this entity). There is nothing on this entity to write
+            to, and an Add button would be this screen editing a different entity's record.
+
+            What was missing is the way onward. The copy names where the job is done and
+            then left the reader to find it, which is the dead end this codebase forbids
+            elsewhere — so the sentence now comes with the door.
+          */
           action: null,
+          link: { label: 'Browse Governance Teams', href: '/iga/directory/governance-teams' },
         };
 
   return (
@@ -287,6 +299,19 @@ export function EntityOwnersTab({
                   <div className="mt-5">
                     <Button startIcon={<AddIcon />} onClick={openAdd}>
                       {emptyCopy.action}
+                    </Button>
+                  </div>
+                ) : null}
+                {'link' in emptyCopy && emptyCopy.link ? (
+                  <div className="mt-5">
+                    {/* Secondary, not primary: this leaves the entity rather than acting
+                        on it, and nothing here is the one thing the reader must do. */}
+                    <Button
+                      variant="secondary"
+                      endIcon={<OpenInNewOutlined sx={{ fontSize: 18 }} />}
+                      onClick={() => router.push(emptyCopy.link.href)}
+                    >
+                      {emptyCopy.link.label}
                     </Button>
                   </div>
                 ) : null}

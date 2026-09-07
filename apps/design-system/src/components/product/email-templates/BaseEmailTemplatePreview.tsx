@@ -1,3 +1,4 @@
+import * as React from 'react';
 import HeadsetMicOutlined from '@mui/icons-material/HeadsetMicOutlined';
 import { color } from '@ds/tokens/tokens';
 import type { EmailTemplateContent } from '@/data/email-templates';
@@ -16,7 +17,33 @@ function MiniorangeLogo({ className }: { className?: string }) {
   );
 }
 
-export function BaseEmailTemplatePreview({ content }: { content: EmailTemplateContent }) {
+/**
+ * The base template's chrome, with the middle left open.
+ *
+ * Extracted because two surfaces render this envelope: the read-only preview, and the
+ * email-type editor, which puts a live editor where the body goes. When the editor
+ * carried its own copy of the greeting, the sign-off and the legal footer, they drifted
+ * within a day — the footer's help line and a sentence of the disclaimer were already
+ * different. One definition is the only way "the editor shows the real email" stays true.
+ *
+ * The shell owns everything a tenant cannot change: greeting, logo, sign-off, disclaimer
+ * and support line. `children` is the part that differs between one email and the next.
+ */
+export function BaseEmailTemplateShell({
+  greetingName,
+  greetingLine,
+  signOff,
+  teamName,
+  ariaLabel,
+  children,
+}: {
+  greetingName: string;
+  greetingLine: string;
+  signOff: string;
+  teamName: string;
+  ariaLabel: string;
+  children: React.ReactNode;
+}) {
   return (
     <div
       className="flex min-h-full w-full flex-col items-center px-3 py-4 sm:px-4 sm:py-10"
@@ -26,29 +53,27 @@ export function BaseEmailTemplatePreview({ content }: { content: EmailTemplateCo
       <div className="w-full max-w-[650px] sm:rounded-[17px] sm:border-2 sm:border-white/80 sm:bg-white/30 sm:p-3 sm:backdrop-blur-sm">
         <article
           className="flex w-full min-w-0 flex-col overflow-hidden rounded-lg bg-surface shadow-md sm:rounded-xl"
-          aria-label="Email template preview"
+          aria-label={ariaLabel}
         >
           <header className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:gap-4 sm:px-6 sm:py-6">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-h5 text-text-primary">{content.greetingName}</span>
+                <span className="text-h5 text-text-primary">{greetingName}</span>
                 <span className="text-body-lg leading-none" aria-hidden>
                   👋
                 </span>
               </div>
-              <p className="mt-0.5 text-body-sm text-text-secondary">{content.greetingLine}</p>
+              <p className="mt-0.5 text-body-sm text-text-secondary">{greetingLine}</p>
             </div>
             <MiniorangeLogo className="self-center" />
           </header>
 
           <div className="flex flex-col gap-5 px-4 py-5 sm:gap-6 sm:px-6 sm:py-6">
-            <h1 className="break-words text-h5 text-text-primary sm:text-h4">{content.heading}</h1>
-
-            <EmailTemplateBodySlot content={content} />
+            {children}
 
             <div className="flex flex-col gap-1">
-              <p className="text-h5 text-text-secondary">{content.signOff}</p>
-              <p className="text-body-strong text-text-primary">{content.teamName}</p>
+              <p className="text-h5 text-text-secondary">{signOff}</p>
+              <p className="text-body-strong text-text-primary">{teamName}</p>
             </div>
           </div>
 
@@ -77,5 +102,20 @@ export function BaseEmailTemplatePreview({ content }: { content: EmailTemplateCo
         </article>
       </div>
     </div>
+  );
+}
+
+export function BaseEmailTemplatePreview({ content }: { content: EmailTemplateContent }) {
+  return (
+    <BaseEmailTemplateShell
+      greetingName={content.greetingName}
+      greetingLine={content.greetingLine}
+      signOff={content.signOff}
+      teamName={content.teamName}
+      ariaLabel="Email template preview"
+    >
+      <h1 className="break-words text-h5 text-text-primary sm:text-h4">{content.heading}</h1>
+      <EmailTemplateBodySlot content={content} />
+    </BaseEmailTemplateShell>
   );
 }

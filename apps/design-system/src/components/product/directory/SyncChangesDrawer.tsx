@@ -2,13 +2,14 @@
 
 import * as React from 'react';
 import PeopleOutlined from '@mui/icons-material/PeopleOutlined';
-import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
+import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
+import AppsOutlined from '@mui/icons-material/AppsOutlined';
 import { DataTable, Drawer, Tabs, type Column } from '@ds/components';
 import { formatDateTime } from '../sod/labels';
-import type { SyncItem, SyncRun } from '@/data/reconciliation';
+import type { SyncCollection, SyncItem, SyncRun } from '@/data/reconciliation';
 
-/** Which of a run's two change lists the drawer is showing. */
-export type SyncChangeKind = 'accounts' | 'entitlements';
+/** Which of a run's change lists the drawer is showing. */
+export type SyncChangeKind = SyncCollection;
 
 /** Which part of that list — the three tabs. */
 type Group = 'added' | 'removed' | 'unchanged';
@@ -36,12 +37,23 @@ const KIND = {
     detailHeader: 'Description',
     nameWidth: 170,
   },
+  applications: {
+    title: 'Applications',
+    noun: 'application',
+    icon: <AppsOutlined sx={{ fontSize: 22 }} />,
+    nameHeader: 'Application',
+    // Not "Description": what matters about a discovered application is what it is *and*
+    // how the connection reaches it, and the row carries both.
+    detailHeader: 'Integration',
+    nameWidth: 170,
+  },
 } as const;
 
 const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? '' : 's'}`;
 
 /**
- * What one sync run did to an application's accounts or entitlements.
+ * What one sync run did to one of an application's collections — its accounts, its
+ * entitlements, or, on an IAM or a vault, the applications it fronts.
  *
  * Opened from the delta chip in the Sync History row, which states the same
  * three numbers this drawer names. The counts answer "how much moved"; a

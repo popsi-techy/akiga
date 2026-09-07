@@ -6,6 +6,7 @@ import EditOutlined from '@mui/icons-material/EditOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
 import BlockOutlined from '@mui/icons-material/BlockOutlined';
+import SettingsOutlined from '@mui/icons-material/SettingsOutlined';
 import {
   Button,
   Dialog,
@@ -23,7 +24,12 @@ import {
   deleteApplication,
   getApplicationDetail,
 } from '@/data/directory';
-import { appBlockingSteps, applicationShowsConfigure, requiredAppSetupCount } from '@/data/application-setup';
+import {
+  appBlockingSteps,
+  applicationShowsConfigure,
+  isAppSetupStepDone,
+  requiredAppSetupCount,
+} from '@/data/application-setup';
 import { appProfileFor } from '@/data/seed';
 import {
   applicationSetupSteps,
@@ -65,6 +71,50 @@ const BASE_TABS: TabItem[] = [
 
 /** Collections that only exist once IGA can reach the application. */
 const CONNECTED_ONLY = new Set(['overview', 'accounts', 'entitlements']);
+
+/**
+ * Sections that cannot be set up until the connector is in place, and why.
+ *
+ * Each reason is a real dependency rather than a sequencing preference — a gate that
+ * only means "do this first because I said so" trains people to look for the way round
+ * it. Owners is deliberately absent: naming who answers for an application needs no
+ * connector, and it is the one piece of governance worth having before anything is
+ * reachable.
+ */
+const NEEDS_CONFIGURE: Record<string, string> = {
+  reconciliation:
+    'Reconciliation pulls this application’s accounts and entitlements over the connector. Until IGA can reach it, there is nothing to pull.',
+  baseline:
+    'A baseline is chosen from the entitlements reconciliation brings in, so the list to choose from does not exist yet.',
+  approval:
+    'An approval policy decides who may grant access here. Nothing can be granted until IGA can reach the application to provision it.',
+};
+
+/**
+ * What a section shows before the connector exists.
+ *
+ * Not a disabled tab: the reader came here to find out what this section is, and a tab
+ * that refuses to open answers nothing. It opens, says what it will hold, says why it
+ * cannot hold it yet, and offers the one thing that changes that.
+ */
+function NeedsConfigure({ reason, onGoToConfigure }: { reason: string; onGoToConfigure: () => void }) {
+  return (
+    <div className="grid min-h-0 flex-1 place-items-center">
+      <div className="flex max-w-md flex-col items-center px-6 py-10 text-center">
+        <span className="grid h-12 w-12 place-items-center rounded-full bg-subtle text-icon">
+          <SettingsOutlined sx={{ fontSize: 24 }} />
+        </span>
+        <h2 className="mt-4 text-h5 text-text-primary">Configure this application first</h2>
+        <p className="mt-1.5 text-body-sm text-text-secondary">{reason}</p>
+        <div className="mt-5">
+          <Button startIcon={<SettingsOutlined sx={{ fontSize: 18 }} />} onClick={onGoToConfigure}>
+            Go to Configure
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function sectionsFor(accounts: number, entitlements: number): TabItem[] {
   return BASE_TABS.map((t) => {
@@ -118,14 +168,22 @@ export default function ApplicationDetailPage() {
   const steps = onboarded ? applicationSetupSteps(onboarded) : [];
   const requiredTotal = onboarded ? requiredAppSetupCount(onboarded) : 0;
   // Catalogued apps use the seed profile; onboarded apps use the toggle the
-  // admin set in the drawer. Off means IGA will not talk to the system — no
-  // Configure, no Reconciliation.
+  // admin set in the drawer. Off means IGA will not push access to the system.
   const showsConfigure = onboarded
     ? applicationShowsConfigure(onboarded)
     : appProfileFor(app.id).externalProvisioning === 'enabled';
 
   const allSections = sectionsFor(accounts.length, entitlements.length).filter((s) => {
-    if (s.value === 'provisioning' || s.value === 'reconciliation') return showsConfigure;
+    /*
+      Only Configure follows the provisioning toggle.
+
+      Reconciliation used to be hidden with it, which conflated two directions:
+      provisioning is IGA *pushing* access out, reconciliation is IGA *pulling* the
+      inventory in. An application can be read without being written to — that is the
+      normal shape for a system IGA governs but does not administer — and hiding the
+      inventory left no way to see what it holds.
+    */
+    if (s.value === 'provisioning') return showsConfigure;
     return true;
   });
   const visibleTabs = isDraft
@@ -137,6 +195,18 @@ export default function ApplicationDetailPage() {
     : isDraft && onboarded
       ? firstUnfinishedAppTab(onboarded)
       : 'overview';
+
+  /**
+   * Whether the open section is one that needs the connector, and does not have it yet.
+   *
+   * Gated on `showsConfigure` as well as readiness: with provisioning off there is no
+   * Configure step at all, so gating on it would lock these sections behind a condition
+   * nothing on the page could ever satisfy.
+   */
+  const gateReason =
+    onboarded && showsConfigure && !isAppSetupStepDone('provisioning', onboarded)
+      ? NEEDS_CONFIGURE[shownTab]
+      : undefined;
 
   const lifecycle = applicationLifecycle(app.id);
   const lifecycleChip = APPLICATION_LIFECYCLE_CHIP[lifecycle];
@@ -262,44 +332,57 @@ export default function ApplicationDetailPage() {
           ) : undefined
         }
       >
-        {shownTab === 'overview' && (
-          <ApplicationOverviewTab app={app} accounts={accounts} entitlements={entitlements} />
-        )}
-        {shownTab === 'accounts' && (
-          <RelationTable
-            columns={accountColumns}
-            rows={accounts}
-            onRowClick={(r) => router.push(`/iga/directory/app-accounts/${r.id}`)}
-            emptyTitle="No app accounts"
-            emptyMessage="No accounts exist in this application yet."
-          />
-        )}
-        {shownTab === 'entitlements' && (
-          <RelationTable
-            columns={entitlementColumns}
-            rows={entitlements}
-            onRowClick={(r) => router.push(`/iga/directory/entitlements/${r.id}`)}
-            emptyTitle="No entitlements"
-            emptyMessage="This application exposes no entitlements yet."
-          />
-        )}
-        {shownTab === 'reconciliation' && (
-          <ReconciliationTab applicationId={app.id} applicationName={app.name} />
-        )}
-        {shownTab === 'provisioning' && (
-          <ProvisioningSetupTab applicationId={app.id} applicationName={app.name} onChanged={bump} />
-        )}
-        {shownTab === 'baseline' && <BaselineAccessTab applicationId={app.id} entitlements={entitlements} />}
-        {shownTab === 'approval' && <ApplicationApprovalPolicyTab applicationId={app.id} />}
-        {shownTab === 'owners' && (
-          <EntityOwnersTab
-            entityType="application"
-            entityId={app.id}
-            seedOwnerIds={app.ownerIds}
-            label="Owner"
-            emptyHint="Nobody is accountable for this application. Add an owner to approve access requests and attest to its risk."
-            onChanged={bump}
-          />
+        {/* A gated section shows why it is empty instead of its own machinery. */}
+        {gateReason ? (
+          <NeedsConfigure reason={gateReason} onGoToConfigure={() => setTab('provisioning')} />
+        ) : (
+          <>
+          {shownTab === 'overview' && (
+            <ApplicationOverviewTab app={app} accounts={accounts} entitlements={entitlements} />
+          )}
+          {shownTab === 'accounts' && (
+            <RelationTable
+              columns={accountColumns}
+              rows={accounts}
+              onRowClick={(r) => router.push(`/iga/directory/app-accounts/${r.id}`)}
+              emptyTitle="No app accounts"
+              emptyMessage="No accounts exist in this application yet."
+            />
+          )}
+          {shownTab === 'entitlements' && (
+            <RelationTable
+              columns={entitlementColumns}
+              rows={entitlements}
+              onRowClick={(r) => router.push(`/iga/directory/entitlements/${r.id}`)}
+              emptyTitle="No entitlements"
+              emptyMessage="This application exposes no entitlements yet."
+            />
+          )}
+          {shownTab === 'reconciliation' && (
+            <ReconciliationTab
+              applicationId={app.id}
+              applicationName={app.name}
+              // Same toggle that decides whether Configure exists: no connector, no sync
+              // to run. The inventory still reads.
+              canSync={showsConfigure}
+            />
+          )}
+          {shownTab === 'provisioning' && (
+            <ProvisioningSetupTab applicationId={app.id} applicationName={app.name} onChanged={bump} />
+          )}
+          {shownTab === 'baseline' && <BaselineAccessTab applicationId={app.id} entitlements={entitlements} />}
+          {shownTab === 'approval' && <ApplicationApprovalPolicyTab applicationId={app.id} />}
+          {shownTab === 'owners' && (
+            <EntityOwnersTab
+              entityType="application"
+              entityId={app.id}
+              seedOwnerIds={app.ownerIds}
+              label="Owner"
+              emptyHint="Nobody is accountable for this application. Add an owner to approve access requests and attest to its risk."
+              onChanged={bump}
+            />
+          )}
+          </>
         )}
       </DetailShell>
 

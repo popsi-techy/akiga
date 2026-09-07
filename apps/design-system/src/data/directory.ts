@@ -344,6 +344,10 @@ const onboardedApp = (a: OnboardedApplication): CatalogApp => ({
   entitlements: [],
 });
 
+/** The onboarding category, in the Directory's vocabulary. */
+const onboardedDiscoverySource = (a: OnboardedApplication): AppDiscoverySource =>
+  a.appTypeCategory === 'iam' ? 'IAM' : a.appTypeCategory === 'pam' ? 'PAM' : 'Direct';
+
 const onboardedRow = (a: OnboardedApplication): ApplicationRow => ({
   id: a.id,
   name: a.name,
@@ -353,8 +357,7 @@ const onboardedRow = (a: OnboardedApplication): ApplicationRow => ({
   entitlementCount: 0,
   lifecycle: applicationLifecycle(a.id),
   appType: a.appType,
-  discoverySource:
-    a.appTypeCategory === 'iam' ? 'IAM' : a.appTypeCategory === 'pam' ? 'PAM' : 'Direct',
+  discoverySource: onboardedDiscoverySource(a),
   authorizationStatus: applicationIsAuthorized(a.id) ? 'authorized' : 'pending',
   externalProvisioning: a.enableProvisioning ? 'enabled' : 'disabled',
   provisioningType: a.enableProvisioning ? 'auto' : 'manual',
@@ -467,6 +470,23 @@ export function getApplicationDetail(id: string) {
     accounts: appAccounts.filter((a) => a.applicationId === id).map(toAccountRow),
     entitlements: app.entitlements.map((e) => toEntRow({ ...e, applicationId: app.id, applicationName: app.name })),
   };
+}
+
+/**
+ * How IGA came to know about this application — and, read the other way, what kind of
+ * connection it is.
+ *
+ * `IAM` and `PAM` connections front other systems: an IAM federates applications, a vault
+ * holds credentials for them. That makes them the only applications with a third thing to
+ * reconcile beyond accounts and entitlements, which is why reconciliation asks.
+ *
+ * Null for an id the Directory does not hold, or one the admin has deleted.
+ */
+export function applicationDiscoverySource(id: string): AppDiscoverySource | null {
+  const onboarded = getOnboardedApplication(id);
+  if (onboarded) return onboardedDiscoverySource(onboarded);
+  if (isCatalogHidden(id) || !appById.has(id)) return null;
+  return appProfileFor(id).discoverySource;
 }
 
 export { applicationLifecycle };

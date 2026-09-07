@@ -5,6 +5,7 @@ import Sync from '@mui/icons-material/Sync';
 import People from '@mui/icons-material/People';
 import Shield from '@mui/icons-material/Shield';
 import WatchLater from '@mui/icons-material/WatchLater';
+import Widgets from '@mui/icons-material/Widgets';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Button, Card, DataTable, StatusChip, useToast, type Column } from '@ds/components';
 import { InfoRow, InfoRowGroup } from './DetailShell';
@@ -16,22 +17,49 @@ import { listSyncRuns, reconciliationSummary, type SyncRun } from '@/data/reconc
 /**
  * Reconciliation — what the connector last brought in, and every time it ran.
  *
- * Three cards state the position (how many, what moved, did it work), and the
- * history below explains how that position was reached. Only the outcome is
- * chipped: it is the one column where a value means someone has to act. Trigger
- * and event are facts about a run, not states of one, so they stay as text —
- * chipping them would put four pills on every row and bury the failure.
+ * Cards state the position (how many, what moved, did it work), and the history
+ * below explains how that position was reached. Only the outcome is chipped: it
+ * is the one column where a value means someone has to act. Trigger and event
+ * are facts about a run, not states of one, so they stay as text — chipping them
+ * would put four pills on every row and bury the failure.
+ *
+ * ## An IAM or a vault reconciles a third thing
+ *
+ * A direct application is a leaf: it has accounts and entitlements and nothing
+ * underneath. An IAM federates applications and a vault holds credentials for
+ * them, so its inventory has a third collection — and for an IAM that collection
+ * is the reason the connection was made, which is why it leads the cards rather
+ * than trailing them. `summary.applications` is present exactly when it applies,
+ * so the card, the history column and the drawer all appear or stay away
+ * together; there is no separate flag for a caller to get wrong.
  */
 export function ReconciliationTab({
   applicationId,
   applicationName,
+  canSync = true,
 }: {
   applicationId: string;
   applicationName: string;
+  /**
+   * Whether IGA can actually run a sync — false when the application has no
+   * connector configured.
+   *
+   * The inventory is still worth showing without one: totals, last-sync state and the
+   * history are all honest reads, and "nothing here, never synced" is the answer to what
+   * this application holds. What is not honest is a Sync Now that has nothing to sync
+   * over, which promises an action IGA cannot take and returns a toast saying it queued.
+   */
+  canSync?: boolean;
 }) {
   const toast = useToast();
   const summary = reconciliationSummary(applicationId);
   const runs = listSyncRuns(applicationId);
+  /*
+    Present exactly when this connection fronts other systems. One source for the card,
+    the history column and the drawer, so they cannot disagree about whether this
+    application has applications inside it.
+  */
+  const apps = summary.applications;
 
   // Which run's change list is open. The run is kept after `open` goes false so
   // the drawer has something to render while it slides out.
@@ -115,6 +143,27 @@ export function ReconciliationTab({
         />
       ),
     },
+    ...(apps
+      ? [
+          {
+            id: 'applications',
+            header: 'Applications',
+            sortable: true,
+            width: 150,
+            value: (r: SyncRun) => r.applications?.total ?? 0,
+            render: (r: SyncRun) =>
+              r.applications ? (
+                <Delta
+                  total={r.applications.total}
+                  added={r.applications.added}
+                  removed={r.applications.removed}
+                  noun="application"
+                  onClick={() => inspect(r, 'applications')}
+                />
+              ) : null,
+          } satisfies Column<SyncRun>,
+        ]
+      : []),
     {
       id: 'outcome',
       header: 'Status',
@@ -133,22 +182,55 @@ export function ReconciliationTab({
   return (
     <div className="ds-scroll h-full overflow-y-auto pr-0.5">
       <div className="space-y-5">
-        <div className="flex justify-end">
-          <Button
-            variant="secondary"
-            onClick={syncNow}
-            startIcon={
-              syncing ? <CircularProgress size={16} color="inherit" thickness={5} /> : <Sync sx={{ fontSize: 18 }} />
-            }
-          >
-            {syncing ? 'Syncing…' : 'Sync Now'}
-          </Button>
-        </div>
+        {/* The row goes with the button rather than sitting empty above the cards. */}
+        {canSync && (
+          <div className="flex justify-end">
+            <Button
+              variant="secondary"
+              onClick={syncNow}
+              startIcon={
+                syncing ? <CircularProgress size={16} color="inherit" thickness={5} /> : <Sync sx={{ fontSize: 18 }} />
+              }
+            >
+              {syncing ? 'Syncing…' : 'Sync Now'}
+            </Button>
+          </div>
+        )}
 
         {/* Two up before 1280px: three columns squeeze the label/value rows to
             the point where "Modifications in last sync" and a timestamp both
-            truncate, and a card whose value is cut off states nothing. */}
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            truncate, and a card whose value is cut off states nothing. Four
+            cards stay two up at every width for the same reason — a 2x2 block
+            reads as one group, where three-and-one reads as a card left over. */}
+        <div className={`grid gap-5 md:grid-cols-2 ${apps ? '' : 'xl:grid-cols-3'}`}>
+          {/* `Widgets`, not `Apps`: MUI draws `Apps` identically filled or outlined, and a
+              Card header is forced to 15px where an outlined glyph smudges. The shared
+              `infoIcon.application` mark stays on the rows inside, at a size that can
+              carry a 1px stroke. */}
+          {apps && (
+            <Card title="Applications" icon={<Widgets />} padding="none">
+              <InfoRowGroup>
+                <InfoRow
+                  icon={infoIcon.application}
+                  label="Applications Discovered"
+                  value={String(apps.total)}
+                />
+                <InfoRow
+                  icon={infoIcon.sync}
+                  label="Modifications in last sync"
+                  value={
+                    <Delta
+                      added={apps.added}
+                      removed={apps.removed}
+                      noun="application"
+                      onClick={runs[0]?.applications ? () => inspect(runs[0], 'applications') : undefined}
+                    />
+                  }
+                />
+              </InfoRowGroup>
+            </Card>
+          )}
+
           <Card title="Accounts" icon={<People />} padding="none">
             <InfoRowGroup>
               <InfoRow icon={infoIcon.account} label="Total Accounts" value={String(summary.accounts.total)} />

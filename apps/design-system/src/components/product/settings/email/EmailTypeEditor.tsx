@@ -2,10 +2,8 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import HeadsetMicOutlined from '@mui/icons-material/HeadsetMicOutlined';
-import { color } from '@ds/tokens/tokens';
 import { BlockEditor, Button, Input, Menu, StatusChip, useToast, type StatusIntent } from '@ds/components';
-import { MINIORANGE_LOGO_SRC } from '@/components/product/email-templates/BaseEmailTemplatePreview';
+import { BaseEmailTemplateShell } from '@/components/product/email-templates';
 import {
   getEmailType,
   updateEmailType,
@@ -13,11 +11,18 @@ import {
   type EmailType,
   type EmailTypeStatus,
 } from '@/data/email-types';
+import { getEmailTemplate } from '@/data/email-templates';
 import { getSystemSettingsSection } from '@/data/system-settings-catalog';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import { SettingsDenied, SettingsLoading, useAdminSettings } from '../SettingsChrome';
 
 const SECTION = getSystemSettingsSection('email')!;
+
+/**
+ * The greeting and sign-off every email carries, read from the `base` template rather
+ * than retyped — so the words a tenant cannot edit have exactly one source.
+ */
+const BASE_CONTENT = getEmailTemplate('base')!.content;
 
 const STATUS_INTENT: Record<EmailTypeStatus, StatusIntent> = {
   draft: 'caution',
@@ -175,79 +180,28 @@ export function EmailTypeEditor({ id }: { id: string }) {
             />
           </div>
 
-          {/* The real frame, at the real width. Everything outside the editable block is
-              the base layout and is rendered, not edited. */}
-          <div
-            className="flex w-full flex-col items-center rounded-xl px-3 py-6"
-            style={{ backgroundColor: color.background.emailPreview }}
+          {/* The real envelope, from the base template itself rather than a copy of it —
+              greeting, logo, sign-off and legal footer all come from `BaseEmailTemplateShell`,
+              and the fixed copy inside it from the `base` template's own content. A second
+              copy here is what let the footer's help line and a sentence of the disclaimer
+              drift away from the email this actually sends. */}
+          <BaseEmailTemplateShell
+            greetingName={BASE_CONTENT.greetingName}
+            greetingLine={BASE_CONTENT.greetingLine}
+            signOff={BASE_CONTENT.signOff}
+            teamName={BASE_CONTENT.teamName}
+            ariaLabel={`${row.name} body`}
           >
-            <div className="w-full max-w-[650px] rounded-[17px] border-2 border-white/80 bg-white/30 p-3 backdrop-blur-sm">
-              <article
-                className="flex w-full min-w-0 flex-col overflow-hidden rounded-xl bg-surface shadow-md"
-                aria-label="Email body"
-              >
-                <header className="flex flex-col gap-3 border-b border-border px-6 py-6 sm:flex-row sm:items-center sm:gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-h5 text-text-primary">Hello User</span>
-                      <span className="text-body-lg leading-none" aria-hidden>
-                        👋
-                      </span>
-                    </div>
-                    <p className="mt-0.5 text-body-sm text-text-secondary">
-                      Hope you are having a good day!
-                    </p>
-                  </div>
-                  <img
-                    src={MINIORANGE_LOGO_SRC}
-                    alt="miniOrange"
-                    className="h-7 w-auto shrink-0 self-center"
-                  />
-                </header>
-
-                <div className="flex flex-col gap-6 px-6 py-6">
-                  <BlockEditor
-                    value={body}
-                    onChange={(html) => {
-                      setBody(html);
-                      setDirty(true);
-                    }}
-                    ariaLabel={`Body of ${row.name}`}
-                    placeholder="Write the message, or press '/' for headings, lists and more"
-                  />
-
-                  <div className="flex flex-col gap-1">
-                    <p className="text-h5 text-text-secondary">Thank You,</p>
-                    <p className="text-body-strong text-text-primary">miniOrange IGA Team</p>
-                  </div>
-                </div>
-
-                <footer className="border-t border-border px-6 py-6">
-                  <div className="flex flex-col gap-3 rounded-xl bg-subtle p-4">
-                    <div className="flex flex-col gap-2">
-                      <p className="text-body-sm text-text-primary">
-                        <span className="font-emphasis">Disclaimer:</span> This email and any
-                        attachments are confidential and intended only for the designated recipient.
-                      </p>
-                      <p className="text-body-sm text-text-primary">
-                        This is an automated email. Please do not reply to this message
-                      </p>
-                    </div>
-                    <div className="h-px bg-border" role="separator" />
-                    <div className="flex flex-wrap items-center justify-center gap-1.5">
-                      <HeadsetMicOutlined
-                        sx={{ fontSize: 16, color: 'var(--ds-color-icon-default)' }}
-                        aria-hidden
-                      />
-                      <p className="text-body-sm text-text-primary">
-                        Need help? Write to us at info@xecurify.com
-                      </p>
-                    </div>
-                  </div>
-                </footer>
-              </article>
-            </div>
-          </div>
+            <BlockEditor
+              value={body}
+              onChange={(html) => {
+                setBody(html);
+                setDirty(true);
+              }}
+              ariaLabel={`Body of ${row.name}`}
+              placeholder="Write the message, or press '/' for headings, lists and more"
+            />
+          </BaseEmailTemplateShell>
 
           <p className="mt-3 text-caption text-text-tertiary">
             The greeting, sign-off and footer come from the base template and are the same on every

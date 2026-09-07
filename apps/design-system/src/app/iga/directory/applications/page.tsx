@@ -4,8 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AddOutlined from '@mui/icons-material/AddOutlined';
-import ManageAccountsOutlined from '@mui/icons-material/ManageAccountsOutlined';
-import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
+import ScheduleOutlined from '@mui/icons-material/ScheduleOutlined';
 import {
   Avatar,
   Button,
@@ -13,7 +12,6 @@ import {
   Menu,
   OverflowChips,
   StatusChip,
-  Tooltip,
   useToast,
   type Column,
   type FilterGroup,
@@ -27,6 +25,8 @@ import {
   type ApplicationRow,
 } from '@/data/directory';
 import { APPLICATION_LIFECYCLE_CHIP, DirectoryListPage, EntityAvatar } from '@/components/product/directory';
+import { lastSyncAt } from '@/data/reconciliation';
+import { formatDateTime } from '@/components/product/sod/labels';
 
 const AUTH_CHIP = {
   authorized: { label: 'Authorized', intent: 'success' as const },
@@ -56,35 +56,71 @@ function OwnerChip({ name }: { name: string }) {
   );
 }
 
-function ReconciliationCounts({
+/**
+ * A count in its own column: the number, and a link to the tab that holds the things being
+ * counted.
+ *
+ * No icon and no tooltip. Both were carrying the label when two counts shared one cell and
+ * neither had a header of its own to name it; a column headed `Active Accounts` says it
+ * already, and a mark repeating the header is decoration the eye has to step over on every
+ * row to reach the number it came for.
+ */
+function CountCell({
+  count,
+  href,
+  ariaLabel,
+}: {
+  count: number;
+  href: string;
+  ariaLabel: string;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={(e) => e.stopPropagation()}
+      aria-label={ariaLabel}
+      className="tabular-nums text-body-sm text-text-primary hover:text-text-link"
+    >
+      {count}
+    </Link>
+  );
+}
+
+/**
+ * When the connector last looked at this application.
+ *
+ * `Never synced` is stated rather than dashed, because for a freshly onboarded application
+ * it is the whole story rather than a missing value — and it is set in tertiary, since an
+ * absence should not read as loudly as a date.
+ *
+ * Formatted with the same `formatDateTime` the Reconciliation tab uses, so the same fact
+ * reads identically in the list and on the page the cell links to.
+ */
+function LastSyncedCell({
   name,
-  accounts,
-  entitlements,
+  lastSync,
   href,
 }: {
   name: string;
-  accounts: number;
-  entitlements: number;
+  /** ISO instant, or null when the application has never synced. */
+  lastSync: string | null;
   href: string;
 }) {
+  const when = lastSync ? formatDateTime(lastSync) : 'Never synced';
   return (
-    <Tooltip title={`${accounts} accounts · ${entitlements} entitlements`} describeChild>
-      <Link
-        href={href}
-        onClick={(e) => e.stopPropagation()}
-        aria-label={`Open reconciliation for ${name}: ${accounts} accounts, ${entitlements} entitlements`}
-        className="inline-flex items-center gap-3 text-text-primary hover:text-text-link"
+    <Link
+      href={href}
+      onClick={(e) => e.stopPropagation()}
+      aria-label={`Open reconciliation for ${name}: ${lastSync ? `last synced ${when}` : 'never synced'}`}
+      className="inline-flex min-w-0 items-center gap-1.5 text-text-primary hover:text-text-link"
+    >
+      <ScheduleOutlined sx={METRIC_ICON} className="shrink-0 text-icon-subtle" aria-hidden />
+      <span
+        className={['truncate tabular-nums text-body-sm', lastSync ? '' : 'text-text-tertiary'].join(' ')}
       >
-        <span className="inline-flex items-center gap-1">
-          <ManageAccountsOutlined sx={METRIC_ICON} className="shrink-0 text-icon-subtle" aria-hidden />
-          <span className="tabular-nums text-body-sm">{accounts}</span>
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <ShieldOutlined sx={METRIC_ICON} className="shrink-0 text-icon-subtle" aria-hidden />
-          <span className="tabular-nums text-body-sm">{entitlements}</span>
-        </span>
-      </Link>
-    </Tooltip>
+        {when}
+      </span>
+    </Link>
   );
 }
 
@@ -212,16 +248,34 @@ export default function ApplicationsListPage() {
       },
     },
     {
-      id: 'reconciliation',
-      header: 'Reconciliation',
+      id: 'accounts',
+      header: 'Active Accounts',
       sortable: true,
-      width: 148,
-      value: (r) => r.accountCount + r.entitlementCount,
+      width: 152,
+      value: (r) => r.accountCount,
       render: (r) => (
-        <ReconciliationCounts
+        <CountCell
+          count={r.accountCount}
+          href={`/iga/directory/applications/${r.id}?tab=accounts`}
+          ariaLabel={`Open accounts for ${r.name}: ${r.accountCount} active`}
+        />
+      ),
+    },
+    {
+      id: 'reconciliation',
+      header: 'Last Synced',
+      sortable: true,
+      width: 176,
+      /*
+        Sorted ascending, a never-synced application comes first: the question this column
+        gets sorted for is "what has IGA not looked at lately", and never is the extreme of
+        that rather than a value to shuffle in among the recent ones.
+      */
+      value: (r) => lastSyncAt(r.id) ?? '',
+      render: (r) => (
+        <LastSyncedCell
           name={r.name}
-          accounts={r.accountCount}
-          entitlements={r.entitlementCount}
+          lastSync={lastSyncAt(r.id)}
           href={`/iga/directory/applications/${r.id}?tab=reconciliation`}
         />
       ),
