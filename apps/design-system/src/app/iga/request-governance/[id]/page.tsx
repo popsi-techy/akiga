@@ -20,13 +20,12 @@ import {
 } from '@/data/request-governance';
 import { DetailShell } from '@/components/product/directory';
 import {
-  AuditTrail,
   ForceApproveDialog,
-  LifecycleTrail,
   NudgeDialog,
   ProvisioningFailureModal,
   ReassignDialog,
   RequestSummary,
+  RequestTimeline,
   ResourceTypeAvatar,
   SlaStatusChip,
   requestSubtitle,
@@ -88,15 +87,14 @@ export default function RequestGovernanceDetailPage() {
     centred column: mark, reference, what it is for, its state, and the actions — then
     tabs for the three things there are to read about a request.
 
-    Stacked, these were one long scroll where the summary you came for sat above two
-    trails you mostly did not. As tabs, Overview answers "what is this and how risky",
-    Lifecycle "where has it got to", Audit trail "who touched it" — three questions, one
-    click each, and the header stays put while you move between them.
+    Two tabs, not three. Overview answers "what is this and how risky"; Timeline answers
+    "what has happened to it". Lifecycle and Audit Trail were both the second question at
+    two grains, and splitting them hid the one thing they were jointly for — the order
+    events happened in. See `RequestTimeline` for how the two streams merge.
   */
   const tabs: TabItem[] = [
     { value: 'overview', label: 'Overview' },
-    { value: 'lifecycle', label: 'Lifecycle' },
-    { value: 'audit', label: 'Audit Trail' },
+    { value: 'timeline', label: 'Timeline' },
   ];
 
   return (
@@ -144,8 +142,7 @@ export default function RequestGovernanceDetailPage() {
           <div className="max-w-4xl pb-8">
             {/* The identity band above already carries the SLA chip, on every tab. */}
             {tab === 'overview' && <RequestSummary row={row} hideSlaStatus />}
-            {tab === 'lifecycle' && <LifecycleTrail row={row} />}
-            {tab === 'audit' && <AuditTrail row={row} />}
+            {tab === 'timeline' && <RequestTimeline row={row} />}
           </div>
         </div>
       </DetailShell>

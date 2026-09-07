@@ -10,7 +10,7 @@ import {
   type GovernanceRequest,
 } from '@/data/request-governance';
 import { ResourceTypeMark } from './labels';
-import { AuditTrail, LifecycleTrail } from './LifecycleTrail';
+import { RequestTimeline } from './RequestTimeline';
 import { SlaTimer } from './SlaTimer';
 
 /**
@@ -103,13 +103,21 @@ export function RequestSummary({
   );
 }
 
-/** All three parts stacked — for the drawer, where one scrolling column is right. */
+/** Summary then history, stacked — for the drawer, where one scrolling column is right. */
 export function RequestDetailBody({ row }: { row: GovernanceRequest }) {
   return (
     <div className="space-y-8">
       <RequestSummary row={row} />
-      <LifecycleTrail row={row} />
-      <AuditTrail row={row} />
+      {/* Headed here, unlike on the detail page, where the tab already names it. */}
+      <section>
+        <h2 className="text-body-strong text-text-primary">Timeline</h2>
+        <p className="mt-1 text-caption text-text-secondary">
+          Submission through provisioning, with everything that happened inside each stage.
+        </p>
+        <div className="mt-4">
+          <RequestTimeline row={row} />
+        </div>
+      </section>
     </div>
   );
 }
