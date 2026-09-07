@@ -176,7 +176,10 @@ export function ConnectionEventDrawer({
     if (!kind) return;
     const taken = new Set(rows.map((e) => e.name));
     const base = eventKindMeta(kind).label;
-    let name = base;
+    // Annotated, because `base` is one of the literal event-kind labels and inference
+    // would pin `name` to that union — leaving the de-duplicating "Account Create 2"
+    // below unassignable to the variable that is meant to hold it.
+    let name: string = base;
     let n = 2;
     while (taken.has(name)) {
       name = `${base} ${n}`;
@@ -267,6 +270,13 @@ export function ConnectionEventDrawer({
       }
     >
       <div className="flex min-h-0 flex-1 overflow-hidden">
+      {/* The rail appears with the first call.
+
+          It is a switcher between calls, and there is nothing to switch between until one
+          exists — empty, it was a 240px column saying "No calls yet" beside an empty state
+          saying the same thing, and an Add event button under a list with nothing in it.
+          Gone, the empty state gets the whole pane and says it once. */}
+      {rows.length > 0 && (
         <aside className="flex h-full w-[240px] shrink-0 flex-col self-stretch border-r border-border bg-subtle">
           <div className="ds-scroll min-h-0 flex-1 overflow-y-auto p-1">
             <div role="tablist" aria-label={`${meta?.label ?? 'Event'} calls`} className="flex flex-col gap-1">
@@ -287,11 +297,6 @@ export function ConnectionEventDrawer({
                   }}
                 />
               ))}
-              {rows.length === 0 && (
-                <p className="px-2.5 py-6 text-center text-caption text-text-secondary">
-                  No calls yet
-                </p>
-              )}
             </div>
           </div>
           <div className="shrink-0 border-t border-border p-3">
@@ -300,6 +305,7 @@ export function ConnectionEventDrawer({
             </Button>
           </div>
         </aside>
+      )}
 
         <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
           {hasDraft ? (

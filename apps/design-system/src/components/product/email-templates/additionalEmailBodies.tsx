@@ -1,13 +1,19 @@
 'use client';
 
+import AssignmentOutlined from '@mui/icons-material/AssignmentOutlined';
+import BarChartOutlined from '@mui/icons-material/BarChartOutlined';
+import CampaignOutlined from '@mui/icons-material/CampaignOutlined';
 import EventOutlined from '@mui/icons-material/EventOutlined';
+import FolderOffOutlined from '@mui/icons-material/FolderOffOutlined';
 import FolderOutlined from '@mui/icons-material/FolderOutlined';
 import HourglassEmptyOutlined from '@mui/icons-material/HourglassEmptyOutlined';
 import LabelOutlined from '@mui/icons-material/LabelOutlined';
 import MailOutlineOutlined from '@mui/icons-material/MailOutlineOutlined';
+import PersonOffOutlined from '@mui/icons-material/PersonOffOutlined';
 import PersonOutlineOutlined from '@mui/icons-material/PersonOutlineOutlined';
 import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
 import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined';
+import type { StatusIntent } from '@ds/components';
 import type {
   AccessDeprovisionedBody,
   CampaignReviewNewBody,
@@ -24,11 +30,9 @@ import type {
 import {
   CtaWithFallback,
   DetailField,
-  DualMetricCard,
   EmailBodyStack,
   EmailDetailCard,
   ExpiryNote,
-  FallbackLinkBlock,
   InfoCallout,
   ResourceListCard,
   TempPasswordCard,
@@ -37,12 +41,20 @@ import {
 function ProvisioningTaskCard({
   details,
   ariaLabel,
+  status,
 }: {
   details: ProvisioningActionRequiredBody | ProvisioningOutcomeBody;
   ariaLabel: string;
+  status?: { intent: StatusIntent; label: string };
 }) {
   return (
-    <EmailDetailCard title="Operation" hero={details.operation} ariaLabel={ariaLabel}>
+    <EmailDetailCard
+      title="Request details"
+      icon={<AssignmentOutlined sx={{ fontSize: 18 }} />}
+      status={status}
+      ariaLabel={ariaLabel}
+    >
+      <DetailField icon={<LabelOutlined sx={{ fontSize: 16 }} />} label="Operation" value={details.operation} />
       <DetailField
         icon={<PersonOutlineOutlined sx={{ fontSize: 16 }} />}
         label="Account"
@@ -69,12 +81,18 @@ export function ReviewInactivityReminderBody({ details }: { details: ReviewInact
         your reviews to stay on track.
       </p>
       <EmailDetailCard
-        title="Inactivity period"
-        hero={`${details.daysInactive} ${dayWord}`}
+        title="Review inactivity"
+        icon={<HourglassEmptyOutlined sx={{ fontSize: 18 }} />}
         ariaLabel="Review inactivity"
       >
         <DetailField
           icon={<HourglassEmptyOutlined sx={{ fontSize: 16 }} />}
+          label="Period"
+          value={`${details.daysInactive} ${dayWord}`}
+          valueClassName="tabular-nums"
+        />
+        <DetailField
+          icon={<WarningAmberOutlined sx={{ fontSize: 16 }} />}
           label="Status"
           value={`No activity on assigned review items for ${details.daysInactive} ${dayWord}`}
         />
@@ -88,12 +106,12 @@ export function WelcomeOrganizationBody({ details }: { details: WelcomeOrganizat
   return (
     <EmailBodyStack>
       <p className="text-body text-text-secondary">
-        Hi <span className="font-semibold text-text-primary">{details.fullName}</span>, your account has been
+        Hi <span className="font-emphasis text-text-primary">{details.fullName}</span>, your account has been
         provisioned. You now have access to the resources below.
       </p>
       <ResourceListCard
         title="Access granted"
-        hero={`${details.resourceNames.length} resources`}
+        icon={<FolderOutlined sx={{ fontSize: 18 }} />}
         items={details.resourceNames}
         ariaLabel="Granted resources"
       />
@@ -120,7 +138,16 @@ export function AccessDeprovisionedBody({ details }: { details: AccessDeprovisio
         The following employee has been offboarded and their access has been revoked in the identity governance
         system.
       </p>
-      <EmailDetailCard title="Offboarded employee" hero={details.employeeName} ariaLabel="Offboarded employee">
+      <EmailDetailCard
+        title="Offboarded employee"
+        icon={<PersonOffOutlined sx={{ fontSize: 18 }} />}
+        ariaLabel="Offboarded employee"
+      >
+        <DetailField
+          icon={<PersonOutlineOutlined sx={{ fontSize: 16 }} />}
+          label="Name"
+          value={details.employeeName}
+        />
         <DetailField
           icon={<MailOutlineOutlined sx={{ fontSize: 16 }} />}
           label="Email"
@@ -130,7 +157,7 @@ export function AccessDeprovisionedBody({ details }: { details: AccessDeprovisio
       </EmailDetailCard>
       <ResourceListCard
         title="What was deprovisioned"
-        hero="Summary"
+        icon={<FolderOffOutlined sx={{ fontSize: 18 }} />}
         items={details.deprovisionedResources}
         ariaLabel="Deprovisioned resources"
       />
@@ -147,7 +174,7 @@ export function ProvisioningActionRequiredBody({ details }: { details: Provision
     <EmailBodyStack>
       <p className="text-body text-text-secondary">
         A provisioning request related to{' '}
-        <span className="font-semibold text-text-primary">{details.sourceName}</span> requires your action. Please
+        <span className="font-emphasis text-text-primary">{details.sourceName}</span> requires your action. Please
         review and take the appropriate next step.
       </p>
       <ProvisioningTaskCard details={details} ariaLabel="Provisioning request details" />
@@ -162,7 +189,7 @@ export function ReviewerAttentionRequiredBody({ details }: { details: ReviewerAt
     <EmailBodyStack>
       <p className="text-body text-text-secondary">
         One or more reviewers on your team have unreviewed items in the campaign{' '}
-        <span className="font-semibold text-text-primary">{details.campaignName}</span>. Please follow up so the
+        <span className="font-emphasis text-text-primary">{details.campaignName}</span>. Please follow up so the
         campaign can stay on schedule.
       </p>
       <CtaWithFallback buttonLabel="View Campaign Review" url={details.reviewUrl} />
@@ -177,7 +204,18 @@ export function ReviewOverdueBody({ details }: { details: ReviewOverdueBody }) {
       <p className="text-body text-text-secondary">
         You have missed the deadline for completing your assigned review items in the campaign.
       </p>
-      <EmailDetailCard title="Overdue" hero={`${details.daysOverdue} ${dayWord}`} ariaLabel="Review overdue status">
+      <EmailDetailCard
+        title="Review overdue"
+        icon={<WarningAmberOutlined sx={{ fontSize: 18 }} />}
+        status={{ intent: 'warning', label: 'Overdue' }}
+        ariaLabel="Review overdue status"
+      >
+        <DetailField
+          icon={<HourglassEmptyOutlined sx={{ fontSize: 16 }} />}
+          label="Overdue by"
+          value={`${details.daysOverdue} ${dayWord}`}
+          valueClassName="tabular-nums"
+        />
         <DetailField
           icon={<WarningAmberOutlined sx={{ fontSize: 16, color: 'var(--ds-color-status-warning-fg)' }} />}
           label="Status"
@@ -198,10 +236,18 @@ export function ProvisioningOutcomeBody({ details }: { details: ProvisioningOutc
   return (
     <EmailBodyStack>
       <p className="text-body text-text-secondary">
-        Your request related to <span className="font-semibold text-text-primary">{details.sourceName}</span> has been{' '}
-        <span className="font-semibold text-text-primary">{actionLabel.toLowerCase()}</span>.
+        Your request related to <span className="font-emphasis text-text-primary">{details.sourceName}</span> has been{' '}
+        <span className="font-emphasis text-text-primary">{actionLabel.toLowerCase()}</span>.
       </p>
-      <ProvisioningTaskCard details={details} ariaLabel="Provisioning request outcome" />
+      <ProvisioningTaskCard
+        details={details}
+        ariaLabel="Provisioning request outcome"
+        status={
+          details.reviewerAction === 'approved'
+            ? { intent: 'success', label: 'Approved' }
+            : { intent: 'danger', label: 'Rejected' }
+        }
+      />
       <p className="text-body-sm text-text-secondary">
         If you have any questions, please contact your administrator.
       </p>
@@ -218,10 +264,17 @@ export function ReviewDurationExtendedBody({ details }: { details: ReviewDuratio
         assigned items.
       </p>
       <EmailDetailCard
-        title="Extended by"
-        hero={`${details.extendedByDays} ${dayWord}`}
+        title="Review extension"
+        icon={<EventOutlined sx={{ fontSize: 18 }} />}
         ariaLabel="Review extension"
-      />
+      >
+        <DetailField
+          icon={<EventOutlined sx={{ fontSize: 16 }} />}
+          label="Extended by"
+          value={`${details.extendedByDays} ${dayWord}`}
+          valueClassName="tabular-nums"
+        />
+      </EmailDetailCard>
       <p className="text-body-sm text-text-secondary">You can continue the review using the button below.</p>
       <CtaWithFallback buttonLabel="Continue Review" url={details.reviewUrl} />
     </EmailBodyStack>
@@ -235,7 +288,16 @@ export function CampaignReviewNewBody({ details }: { details: CampaignReviewNewB
         A new review request has been generated for your campaign. Your approval is required to move forward with the
         next steps.
       </p>
-      <EmailDetailCard title="Campaign" hero={details.campaignName} ariaLabel="Campaign review details">
+      <EmailDetailCard
+        title="Campaign review"
+        icon={<CampaignOutlined sx={{ fontSize: 18 }} />}
+        ariaLabel="Campaign review details"
+      >
+        <DetailField
+          icon={<CampaignOutlined sx={{ fontSize: 16 }} />}
+          label="Campaign"
+          value={details.campaignName}
+        />
         <DetailField
           icon={<EventOutlined sx={{ fontSize: 16 }} />}
           label="Due date"
@@ -256,20 +318,40 @@ export function RoleMiningResultsBody({ details }: { details: RoleMiningResultsB
     <EmailBodyStack>
       <p className="text-body text-text-secondary">
         A role mining session has completed for{' '}
-        <span className="font-semibold text-text-primary">{details.sourceName}</span>. The results are ready for your
+        <span className="font-emphasis text-text-primary">{details.sourceName}</span>. The results are ready for your
         review — you can accept or reject the proposed roles.
       </p>
-      <DualMetricCard
+      <EmailDetailCard
+        title="Role mining summary"
+        icon={<BarChartOutlined sx={{ fontSize: 18 }} />}
         ariaLabel="Role mining summary"
-        metrics={[
-          { label: 'Mined roles discovered', value: String(details.minedRolesCount) },
-          {
-            label: 'Outlier accounts',
-            value: String(details.outlierAccountsCount),
-            intent: details.outlierAccountsCount > 0 ? 'warning' : 'default',
-          },
-        ]}
-      />
+      >
+        <DetailField
+          icon={<BarChartOutlined sx={{ fontSize: 16 }} />}
+          label="Mined roles"
+          value={String(details.minedRolesCount)}
+          valueClassName="tabular-nums"
+        />
+        <DetailField
+          icon={
+            <WarningAmberOutlined
+              sx={{
+                fontSize: 16,
+                ...(details.outlierAccountsCount > 0
+                  ? { color: 'var(--ds-color-status-warning-fg)' }
+                  : {}),
+              }}
+            />
+          }
+          label="Outlier accounts"
+          value={String(details.outlierAccountsCount)}
+          valueClassName={
+            details.outlierAccountsCount > 0
+              ? 'tabular-nums text-[var(--ds-color-status-warning-fg)]'
+              : 'tabular-nums'
+          }
+        />
+      </EmailDetailCard>
       <p className="text-body-sm text-text-secondary">
         Review the discovered roles and outlier accounts. Accepted roles can be added to your organization&apos;s role
         inventory.
@@ -284,17 +366,17 @@ export function WelcomeApplicationBody({ details }: { details: WelcomeApplicatio
   return (
     <EmailBodyStack>
       <p className="text-body text-text-secondary">
-        Hi <span className="font-semibold text-text-primary">{fullName}</span>, your account has been created and you
-        have been granted access to <span className="font-semibold text-text-primary">{details.applicationName}</span>.
+        Hi <span className="font-emphasis text-text-primary">{fullName}</span>, your account has been created and you
+        have been granted access to <span className="font-emphasis text-text-primary">{details.applicationName}</span>.
         Use the credentials below to sign in for the first time.
       </p>
-      <TempPasswordCard password={details.tempPassword} hero={details.applicationName} />
+      <TempPasswordCard password={details.tempPassword} applicationName={details.applicationName} />
       <div
         className="rounded-lg px-3 py-3 ring-1 ring-[var(--ds-color-status-warning-border)] sm:px-4"
         style={{ backgroundColor: 'var(--ds-color-status-warning-subtle)' }}
       >
         <p className="text-body-sm text-text-primary">
-          <span className="font-semibold">Important:</span> This is a one-time generated password. Change it
+          <span className="font-emphasis">Important:</span> This is a one-time generated password. Change it
           immediately after your first login to keep your account secure.
         </p>
       </div>

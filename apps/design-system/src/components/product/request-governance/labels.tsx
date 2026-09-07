@@ -24,6 +24,39 @@ const TYPE_TILE: Record<
   },
 };
 
+/**
+ * The mark for a requested resource, on its own.
+ *
+ * Split out of `ResourceTypeMark` so the page header and the body row show the same
+ * thing at two sizes — a request whose title mark disagreed with its own resource row
+ * would look like two different requests.
+ */
+export function ResourceTypeAvatar({
+  type,
+  name,
+  appType,
+  size = 'sm',
+}: {
+  type: ResourceType;
+  name: string;
+  appType?: string;
+  size?: 'sm' | 'md';
+}) {
+  if (type === 'application') {
+    return <EntityAvatar kind="application" name={name} appType={appType} size={size} />;
+  }
+  const box = size === 'md' ? 'h-9 w-9' : 'h-7 w-7';
+  return (
+    <span
+      className={`flex ${box} shrink-0 items-center justify-center rounded-md`}
+      style={{ background: TYPE_TILE[type].bg, color: TYPE_TILE[type].fg }}
+      aria-hidden
+    >
+      {TYPE_TILE[type].icon}
+    </span>
+  );
+}
+
 export function ResourceTypeMark({
   type,
   name,
@@ -35,17 +68,7 @@ export function ResourceTypeMark({
 }) {
   return (
     <div className="flex min-w-0 items-center gap-2.5">
-      {type === 'application' ? (
-        <EntityAvatar kind="application" name={name} appType={appType} />
-      ) : (
-        <span
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
-          style={{ background: TYPE_TILE[type].bg, color: TYPE_TILE[type].fg }}
-          aria-hidden
-        >
-          {TYPE_TILE[type].icon}
-        </span>
-      )}
+      <ResourceTypeAvatar type={type} name={name} appType={appType} />
       <span className="truncate text-body-sm-strong text-text-primary" title={name}>
         {name}
       </span>

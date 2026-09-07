@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { TimelineItem, type TimelineTone } from '@/components/product/TimelineRail';
 import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import PersonAddOutlined from '@mui/icons-material/PersonAddOutlined';
@@ -47,30 +48,19 @@ export function DecisionHistoryTimeline({
         const last = i === timeline.length - 1;
         const node = timelineNodeMeta(item);
         return (
-          <li key={timelineKey(item, i)} className="relative flex gap-3.5">
-            <div className="relative flex w-9 shrink-0 justify-center self-stretch">
-              {!first && <TimelineDash className="top-0 h-9" />}
-              {!last && <TimelineDash className="bottom-0 top-9" />}
-              <span
-                className={[
-                  'relative z-[1] grid h-9 w-9 shrink-0 place-items-center rounded-full border ring-4 ring-surface',
-                  node.borderClassName,
-                  node.className,
-                ].join(' ')}
-                style={node.style}
-                aria-hidden
-              >
-                {node.icon}
-              </span>
-            </div>
-            <div className={['min-w-0 flex-1', last ? 'pb-0' : 'pb-4'].join(' ')}>
-              {item.kind === 'setup' ? (
-                <SetupAuditCard entry={item.entry} />
-              ) : (
-                <SubmittedDecisionCard item={item} />
-              )}
-            </div>
-          </li>
+          <TimelineItem
+            key={timelineKey(item, i)}
+            icon={node.icon}
+            tone={node.tone}
+            first={first}
+            last={last}
+          >
+            {item.kind === 'setup' ? (
+              <SetupAuditCard entry={item.entry} />
+            ) : (
+              <SubmittedDecisionCard item={item} />
+            )}
+          </TimelineItem>
         );
       })}
     </ol>
@@ -84,46 +74,15 @@ function timelineKey(item: AuditTimelineItem, i: number): string {
 
 function timelineNodeMeta(item: AuditTimelineItem): {
   icon: React.ReactNode;
-  className: string;
-  borderClassName: string;
-  style: React.CSSProperties;
+  tone: TimelineTone;
 } {
   if (item.kind === 'submitted') {
-    return {
-      icon: <CheckCircleOutlined sx={{ fontSize: 18 }} />,
-      className: 'text-[var(--ds-color-status-success-fg)]',
-      borderClassName: 'border-[var(--ds-color-status-success-border)]',
-      style: { backgroundColor: 'var(--ds-color-status-success-subtle)' },
-    };
+    return { icon: <CheckCircleOutlined sx={{ fontSize: 18 }} />, tone: 'success' };
   }
   if (item.entry.action === 'Violation detected') {
-    return {
-      icon: <ReportProblemOutlined sx={{ fontSize: 18 }} />,
-      className: 'text-[var(--ds-color-status-warning-fg)]',
-      borderClassName: 'border-[var(--ds-color-status-warning-border)]',
-      style: { backgroundColor: 'var(--ds-color-status-warning-subtle)' },
-    };
+    return { icon: <ReportProblemOutlined sx={{ fontSize: 18 }} />, tone: 'warning' };
   }
-  return {
-    icon: <PersonAddOutlined sx={{ fontSize: 18 }} />,
-    className: 'text-[var(--ds-color-status-info-fg)]',
-    borderClassName: 'border-[var(--ds-color-status-info-border)]',
-    style: { backgroundColor: 'var(--ds-color-status-info-subtle)' },
-  };
-}
-
-/** Vertical timeline connector — solid light grey, 6px dash / 2px gap. */
-function TimelineDash({ className }: { className: string }) {
-  return (
-    <div
-      aria-hidden
-      className={['absolute left-1/2 w-px -translate-x-1/2', className].join(' ')}
-      style={{
-        backgroundImage:
-          'repeating-linear-gradient(to bottom, var(--ds-color-border-default) 0, var(--ds-color-border-default) 6px, transparent 6px, transparent 8px)',
-      }}
-    />
-  );
+  return { icon: <PersonAddOutlined sx={{ fontSize: 18 }} />, tone: 'info' };
 }
 
 function AuditTimestamp({ at, className }: { at: string; className?: string }) {

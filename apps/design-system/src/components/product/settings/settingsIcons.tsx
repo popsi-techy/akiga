@@ -9,6 +9,7 @@ import InsightsOutlined from '@mui/icons-material/InsightsOutlined';
 import PlaylistAddCheckOutlined from '@mui/icons-material/PlaylistAddCheckOutlined';
 import LoginOutlined from '@mui/icons-material/LoginOutlined';
 import LanguageOutlined from '@mui/icons-material/LanguageOutlined';
+import MailOutlineOutlined from '@mui/icons-material/MailOutline';
 
 /** Outlined glyphs for the System Settings hub. Entitlement destinations use shield. */
 export const SYSTEM_SETTINGS_ICONS: Record<string, React.ReactNode> = {
@@ -22,4 +23,5 @@ export const SYSTEM_SETTINGS_ICONS: Record<string, React.ReactNode> = {
   'provisioning-task': <PlaylistAddCheckOutlined />,
   'sso-oauth': <LoginOutlined />,
   'locale-regional': <LanguageOutlined />,
+  email: <MailOutlineOutlined />,
 };

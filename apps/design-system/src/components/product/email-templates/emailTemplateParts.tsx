@@ -3,9 +3,10 @@
 import type { ReactNode } from 'react';
 
 import AccessTimeOutlined from '@mui/icons-material/AccessTimeOutlined';
+import AppsOutlined from '@mui/icons-material/AppsOutlined';
 import ErrorOutlineOutlined from '@mui/icons-material/ErrorOutlineOutlined';
 import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
-import { Button } from '@ds/components';
+import { Button, StatusChip, type StatusIntent } from '@ds/components';
 
 export function DetailField({
   icon,
@@ -37,15 +38,17 @@ export function DetailField({
   );
 }
 
-export function EmailDetailCard({
+function EmailCardShell({
   title,
-  hero,
+  icon,
+  status,
   ariaLabel,
   children,
   footer,
 }: {
   title: string;
-  hero: string;
+  icon: ReactNode;
+  status?: { intent: StatusIntent; label: string };
   ariaLabel: string;
   children?: ReactNode;
   footer?: ReactNode;
@@ -55,15 +58,42 @@ export function EmailDetailCard({
       className="overflow-hidden rounded-xl bg-surface ring-1 ring-border-subtle"
       aria-label={ariaLabel}
     >
-      <div className="border-b border-border-subtle bg-subtle px-4 py-4 sm:px-5 sm:py-5">
-        <p className="text-caption-medium text-text-secondary">{title}</p>
-        <p className="mt-1.5 break-words text-h5 text-text-primary">{hero}</p>
+      <div className="flex items-center justify-between gap-3 border-b border-border-subtle bg-subtle px-4 py-3.5 sm:px-5">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="grid shrink-0 place-items-center text-icon" aria-hidden>
+            {icon}
+          </span>
+          <p className="text-body-sm-strong text-text-primary">{title}</p>
+        </div>
+        {status ? <StatusChip intent={status.intent} label={status.label} dot /> : null}
       </div>
+      {children}
+      {footer}
+    </section>
+  );
+}
+
+export function EmailDetailCard({
+  title,
+  icon,
+  status,
+  ariaLabel,
+  children,
+  footer,
+}: {
+  title: string;
+  icon: ReactNode;
+  status?: { intent: StatusIntent; label: string };
+  ariaLabel: string;
+  children?: ReactNode;
+  footer?: ReactNode;
+}) {
+  return (
+    <EmailCardShell title={title} icon={icon} status={status} ariaLabel={ariaLabel} footer={footer}>
       {children ? (
         <dl className="divide-y divide-border-subtle bg-surface px-4 sm:px-5">{children}</dl>
       ) : null}
-      {footer}
-    </section>
+    </EmailCardShell>
   );
 }
 
@@ -145,24 +175,17 @@ export function InfoCallout({ title, body }: { title: string; body: string }) {
 
 export function ResourceListCard({
   title,
-  hero,
+  icon,
   items,
   ariaLabel,
 }: {
   title: string;
-  hero: string;
+  icon: ReactNode;
   items: string[];
   ariaLabel: string;
 }) {
   return (
-    <section
-      className="overflow-hidden rounded-xl bg-surface ring-1 ring-border-subtle"
-      aria-label={ariaLabel}
-    >
-      <div className="border-b border-border-subtle bg-subtle px-4 py-4 sm:px-5 sm:py-5">
-        <p className="text-caption-medium text-text-secondary">{title}</p>
-        <p className="mt-1.5 text-h5 text-text-primary">{hero}</p>
-      </div>
+    <EmailCardShell title={title} icon={icon} ariaLabel={ariaLabel}>
       <ul className="divide-y divide-border-subtle bg-surface px-4 py-1 sm:px-5">
         {items.map((item) => (
           <li key={item} className="py-3 text-body-sm-strong text-text-primary">
@@ -170,53 +193,30 @@ export function ResourceListCard({
           </li>
         ))}
       </ul>
-    </section>
-  );
-}
-
-export function DualMetricCard({
-  metrics,
-  ariaLabel,
-}: {
-  metrics: { label: string; value: string; intent?: 'default' | 'warning' }[];
-  ariaLabel: string;
-}) {
-  return (
-    <section
-      className="grid grid-cols-1 gap-3 sm:grid-cols-2"
-      aria-label={ariaLabel}
-    >
-      {metrics.map((m) => (
-        <div
-          key={m.label}
-          className="rounded-xl bg-surface px-4 py-4 ring-1 ring-border-subtle sm:px-5 sm:py-5"
-        >
-          <p className="text-caption-medium text-text-secondary">{m.label}</p>
-          <p
-            className={[
-              'mt-1.5 tabular-nums text-h5',
-              m.intent === 'warning' ? 'text-[var(--ds-color-status-warning-fg)]' : 'text-text-primary',
-            ].join(' ')}
-          >
-            {m.value}
-          </p>
-        </div>
-      ))}
-    </section>
+    </EmailCardShell>
   );
 }
 
 export function TempPasswordCard({
   password,
-  hero,
-  title = 'Your login credentials',
+  applicationName,
+  title = 'Login credentials',
 }: {
   password: string;
-  hero: string;
+  applicationName: string;
   title?: string;
 }) {
   return (
-    <EmailDetailCard title={title} hero={hero} ariaLabel="Login credentials">
+    <EmailDetailCard
+      title={title}
+      icon={<VpnKeyOutlined sx={{ fontSize: 18 }} />}
+      ariaLabel="Login credentials"
+    >
+      <DetailField
+        icon={<AppsOutlined sx={{ fontSize: 16 }} />}
+        label="Application"
+        value={applicationName}
+      />
       <DetailField
         icon={<VpnKeyOutlined sx={{ fontSize: 16 }} />}
         label="Password"

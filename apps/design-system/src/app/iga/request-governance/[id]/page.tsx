@@ -2,14 +2,14 @@
 
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import ArrowBack from '@mui/icons-material/ArrowBack';
-import { Button, useToast } from '@ds/components';
+import { Button, useToast, type TabItem } from '@ds/components';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import {
   canInterveneApproval,
   convertToTicket,
   forceApprove,
   getGovernanceRequest,
+  slaStatusOf,
   isProvisioningFailed,
   markManuallyCompleted,
   nudgeApprover,
@@ -18,12 +18,17 @@ import {
   setAutoEscalate,
   type GovernanceRequest,
 } from '@/data/request-governance';
+import { DetailShell } from '@/components/product/directory';
 import {
+  AuditTrail,
   ForceApproveDialog,
+  LifecycleTrail,
   NudgeDialog,
   ProvisioningFailureModal,
   ReassignDialog,
-  RequestDetailBody,
+  RequestSummary,
+  ResourceTypeAvatar,
+  SlaStatusChip,
   requestSubtitle,
 } from '@/components/product/request-governance';
 
@@ -35,6 +40,7 @@ export default function RequestGovernanceDetailPage() {
   const toast = useToast();
   const [row, setRow] = React.useState<GovernanceRequest | null | undefined>(undefined);
   const [dialog, setDialog] = React.useState<DialogKind>(null);
+  const [tab, setTab] = React.useState('overview');
 
   const refresh = React.useCallback(() => {
     setRow(getGovernanceRequest(params.id) ?? null);
@@ -77,46 +83,72 @@ export default function RequestGovernanceDetailPage() {
   const failed = isProvisioningFailed(row);
   const intervene = canInterveneApproval(row);
 
-  return (
-    <div className="mx-auto max-w-4xl pb-16">
-      <button
-        type="button"
-        onClick={() => router.push('/iga/request-governance')}
-        className="mb-4 inline-flex items-center gap-1 text-body-sm-strong text-text-link hover:underline"
-      >
-        <ArrowBack sx={{ fontSize: 16 }} />
-        Request Governance
-      </button>
+  /*
+    The same identity band every other detail screen uses, rather than a bare h1 in a
+    centred column: mark, reference, what it is for, its state, and the actions — then
+    tabs for the three things there are to read about a request.
 
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-h2 text-text-primary">{row.reference}</h1>
-          <p className="mt-1 text-body text-text-secondary">{requestSubtitle(row)}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {intervene && (
-            <>
-              <Button variant="tertiary" onClick={() => setDialog('nudge')}>
-                Nudge approver
-              </Button>
-              <Button variant="tertiary" onClick={() => setDialog('reassign')}>
-                Reassign
-              </Button>
+    Stacked, these were one long scroll where the summary you came for sat above two
+    trails you mostly did not. As tabs, Overview answers "what is this and how risky",
+    Lifecycle "where has it got to", Audit trail "who touched it" — three questions, one
+    click each, and the header stays put while you move between them.
+  */
+  const tabs: TabItem[] = [
+    { value: 'overview', label: 'Overview' },
+    { value: 'lifecycle', label: 'Lifecycle' },
+    { value: 'audit', label: 'Audit Trail' },
+  ];
+
+  return (
+    <>
+      <DetailShell
+        avatar={
+          <ResourceTypeAvatar
+            type={row.resourceType}
+            name={row.resourceName}
+            appType={row.appType ?? row.appName}
+            size="md"
+          />
+        }
+        title={row.reference}
+        description={requestSubtitle(row)}
+        chips={<SlaStatusChip status={slaStatusOf(row)} />}
+        actions={
+          <>
+            {intervene && (
+              <>
+                <Button variant="tertiary" onClick={() => setDialog('nudge')}>
+                  Nudge approver
+                </Button>
+                <Button variant="tertiary" onClick={() => setDialog('reassign')}>
+                  Reassign
+                </Button>
+                <Button variant="secondary" onClick={() => setDialog('override')}>
+                  Force approve
+                </Button>
+              </>
+            )}
+            {failed && <Button onClick={() => setDialog('failure')}>Handle failure</Button>}
+            {!row.closedAt && !failed && !intervene && (
               <Button variant="secondary" onClick={() => setDialog('override')}>
                 Force approve
               </Button>
-            </>
-          )}
-          {failed && <Button onClick={() => setDialog('failure')}>Handle failure</Button>}
-          {!row.closedAt && !failed && !intervene && (
-            <Button variant="secondary" onClick={() => setDialog('override')}>
-              Force approve
-            </Button>
-          )}
+            )}
+          </>
+        }
+        tabs={tabs}
+        tab={tab}
+        onTab={setTab}
+      >
+        <div className="ds-scroll h-full overflow-y-auto pr-0.5">
+          <div className="max-w-4xl pb-8">
+            {/* The identity band above already carries the SLA chip, on every tab. */}
+            {tab === 'overview' && <RequestSummary row={row} hideSlaStatus />}
+            {tab === 'lifecycle' && <LifecycleTrail row={row} />}
+            {tab === 'audit' && <AuditTrail row={row} />}
+          </div>
         </div>
-      </div>
-
-      <RequestDetailBody row={row} />
+      </DetailShell>
 
       <NudgeDialog
         row={row}
@@ -179,6 +211,6 @@ export default function RequestGovernanceDetailPage() {
           toast.success(`${row.reference} marked complete.`);
         }}
       />
-    </div>
+    </>
   );
 }

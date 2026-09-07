@@ -1,7 +1,13 @@
 'use client';
 
 import * as React from 'react';
+import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
+import AutorenewOutlined from '@mui/icons-material/AutorenewOutlined';
+import ErrorOutlineOutlined from '@mui/icons-material/ErrorOutlineOutlined';
+import RemoveCircleOutlineOutlined from '@mui/icons-material/RemoveCircleOutlineOutlined';
+import ScheduleOutlined from '@mui/icons-material/ScheduleOutlined';
 import { Avatar, StatusChip, type StatusIntent } from '@ds/components';
+import { TimelineItem, type TimelineTone } from '@/components/product/TimelineRail';
 import {
   STAGE_LABEL,
   formatGovDateTime,
@@ -18,34 +24,40 @@ const STATE_CHIP: Record<StageState, { label: string; intent: StatusIntent }> = 
   skipped: { label: 'Skipped', intent: 'warning' },
 };
 
-function markerClass(state: StageState): string {
-  if (state === 'done') return 'bg-[var(--ds-color-status-success-fill)] text-white';
-  if (state === 'current') return 'bg-brand text-brand-on';
-  if (state === 'failed') return 'bg-[var(--ds-color-status-danger-fill)] text-white';
-  if (state === 'skipped') return 'bg-[var(--ds-color-status-warning-fill)] text-white';
-  return 'border border-border bg-surface text-text-tertiary';
+/**
+ * The node for a stage: its icon and tone come from the state, so the marker, the chip
+ * and the connector can never tell three different stories about one stage.
+ *
+ * A number in the circle said only where the stage sat in the list, which the order
+ * already says. An icon says what happened to it.
+ */
+function stageNode(state: StageState): { icon: React.ReactNode; tone: TimelineTone } {
+  const sx = { fontSize: 18 } as const;
+  if (state === 'done') return { icon: <CheckCircleOutlined sx={sx} />, tone: 'success' };
+  if (state === 'current') return { icon: <AutorenewOutlined sx={sx} />, tone: 'info' };
+  if (state === 'failed') return { icon: <ErrorOutlineOutlined sx={sx} />, tone: 'danger' };
+  if (state === 'skipped') return { icon: <RemoveCircleOutlineOutlined sx={sx} />, tone: 'warning' };
+  return { icon: <ScheduleOutlined sx={sx} />, tone: 'neutral' };
 }
 
-function StageBlock({ stage, index }: { stage: LifecycleStage; index: number }) {
+function StageBlock({
+  stage,
+  first,
+  last,
+}: {
+  stage: LifecycleStage;
+  first: boolean;
+  last: boolean;
+}) {
   const chip = STATE_CHIP[stage.state];
   const hops = stage.hops ?? [];
+  const node = stageNode(stage.state);
   return (
-    <li className="relative flex gap-4 pb-6 last:pb-0">
-      {index < 3 && (
-        <span
-          aria-hidden
-          className="absolute left-[15px] top-8 bottom-0 w-px bg-border"
-        />
-      )}
-      <span
-        className={[
-          'relative z-10 grid h-8 w-8 shrink-0 place-items-center rounded-full text-caption-strong',
-          markerClass(stage.state),
-        ].join(' ')}
-      >
-        {index + 1}
-      </span>
-      <div className="min-w-0 flex-1">
+    <TimelineItem icon={node.icon} tone={node.tone} first={first} last={last}>
+      {/* Each stage is a card, as in the SoD review timeline — it groups the stage's
+          times, actor, note and approval hops into one object instead of leaving them as
+          loose lines that belong to whichever heading is nearest above. */}
+      <article className="rounded-xl bg-subtle p-4">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-body-sm-strong text-text-primary">{STAGE_LABEL[stage.id]}</h3>
           <StatusChip intent={chip.intent} dot={false} label={chip.label} />
@@ -56,12 +68,15 @@ function StageBlock({ stage, index }: { stage: LifecycleStage; index: number }) 
           {stage.actor ? ` · ${stage.actor.name}` : ''}
         </p>
         {stage.note && <p className="mt-2 text-body-sm text-text-secondary">{stage.note}</p>}
+        {/* Hops are white on the card's grey: they used to be a grey well on a white
+            page, and the stage card has taken that grey, which would have left them
+            invisible against their own container. */}
         {hops.length > 0 && (
           <ol className="mt-3 space-y-2">
             {hops.map((hop) => (
               <li
                 key={hop.id}
-                className="rounded-md border border-border bg-subtle px-3 py-2.5"
+                className="rounded-md border border-border bg-surface px-3 py-2.5"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-2.5">
@@ -104,8 +119,8 @@ function StageBlock({ stage, index }: { stage: LifecycleStage; index: number }) 
             ))}
           </ol>
         )}
-      </div>
-    </li>
+      </article>
+    </TimelineItem>
   );
 }
 
@@ -118,7 +133,12 @@ export function LifecycleTrail({ row }: { row: GovernanceRequest }) {
       </p>
       <ol className="mt-4">
         {row.stages.map((stage, i) => (
-          <StageBlock key={stage.id} stage={stage} index={i} />
+          <StageBlock
+            key={stage.id}
+            stage={stage}
+            first={i === 0}
+            last={i === row.stages.length - 1}
+          />
         ))}
       </ol>
     </section>

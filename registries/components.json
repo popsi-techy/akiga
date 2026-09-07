@@ -705,6 +705,25 @@
       "notes": "Peek and remove on a table row. Both icons sit on the surface — a kebab for one or two actions is a defect. Details first, remove last; neither is coloured at rest; remove goes danger on hover. Each control needs an aria-label that names the row. Pair onInfo with PeekPanel. Promoted from product. See the two-pane-collection pattern and ADR-0015."
     },
     {
+      "name": "BlockEditor",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/BlockEditor/BlockEditor.tsx",
+      "extends": "@tiptap/react (MIT)",
+      "variants": [
+        "editable",
+        "read-only"
+      ],
+      "states": [
+        "default",
+        "focus",
+        "empty",
+        "slash-menu-open",
+        "selection"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/block-editor/page.tsx",
+      "notes": "Block-style document editor: '/' opens a command menu, selecting text opens a formatting bar. Distinct from RichTextEditor, which is a form field for a short bounded run of text and has no document model — reach for that first. Uncontrolled: `value` seeds the document and is not written back per keystroke, because re-parsing HTML mid-typing drops the selection; remount with a key to replace content. `onChange` only fires when the document actually differs, so a re-serialisation of unchanged content never reads as an edit. MIT distribution of Tiptap only (ADR-0019) — a Pro extension would put a licence behind a component the docs tell people to reuse freely."
+    },
+    {
       "name": "SegmentedControl",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/SegmentedControl/SegmentedControl.tsx",

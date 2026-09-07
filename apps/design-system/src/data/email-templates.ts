@@ -247,7 +247,7 @@ const BASE_TEMPLATE: EmailTemplate = {
   description: 'Default layout for IGA notification emails — greeting, content slot, sign-off, and footer.',
   category: 'foundation',
   kind: 'base',
-  subjectLine: 'Your notification from miniOrange IGA',
+  subjectLine: 'A message from miniOrange IGA',
   updatedAt: '2026-03-03T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -263,7 +263,7 @@ const PASSWORD_RESET_TEMPLATE: EmailTemplate = {
   description: 'Notifies a user that a password reset was requested and links them to set a new password.',
   category: 'account-security',
   kind: 'password-reset',
-  subjectLine: 'Password Reset Request',
+  subjectLine: 'Reset your password — this link expires in 5 minutes',
   updatedAt: '2026-03-03T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -278,7 +278,7 @@ const VERIFICATION_OTP_TEMPLATE: EmailTemplate = {
   description: 'Delivers a one-time code for MFA verification during sign-in.',
   category: 'account-security',
   kind: 'security',
-  subjectLine: 'Your verification code',
+  subjectLine: 'Enter this code to finish signing in',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -297,7 +297,7 @@ const ACCESS_REQUEST_TEMPLATE: EmailTemplate = {
   description: 'Confirms an access request was filed and summarizes the key request details.',
   category: 'access-requests',
   kind: 'access-request',
-  subjectLine: 'Access Request Submitted',
+  subjectLine: "We've received your access request — REQ-2026-0042",
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -317,7 +317,7 @@ const REVIEW_REQUEST_TEMPLATE: EmailTemplate = {
   description: 'Alerts an approver that a request is waiting for their review with key details and a direct link.',
   category: 'reviews-certification',
   kind: 'review-request',
-  subjectLine: 'Action required: New review request',
+  subjectLine: 'Please review access to Finance Approver',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -340,7 +340,7 @@ const CSV_EXPORT_FAILED_TEMPLATE: EmailTemplate = {
   description: 'Notifies a user that a scheduled or on-demand CSV export could not be completed.',
   category: 'imports-exports',
   kind: 'export',
-  subjectLine: 'CSV export could not be completed',
+  subjectLine: "We couldn't finish your CSV export",
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -361,7 +361,7 @@ const CSV_PROCESSING_COMPLETED_TEMPLATE: EmailTemplate = {
   description: 'Summarizes the outcome of a CSV upload — success counts, failures, and warnings.',
   category: 'imports-exports',
   kind: 'export',
-  subjectLine: 'CSV processing completed',
+  subjectLine: 'Your CSV upload finished processing',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -387,7 +387,7 @@ const CSV_PROCESSING_FAILED_TEMPLATE: EmailTemplate = {
   description: 'Notifies a user that a CSV upload could not be processed, with file context and the error details.',
   category: 'imports-exports',
   kind: 'export',
-  subjectLine: 'CSV processing could not be completed',
+  subjectLine: "We couldn't process your CSV upload",
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -409,7 +409,7 @@ const REVIEW_DUE_APPROACHING_TEMPLATE: EmailTemplate = {
   description: 'Reminds an approver that pending reviews are due soon and links them to their review dashboard.',
   category: 'reviews-certification',
   kind: 'review-request',
-  subjectLine: 'Reminder: Reviews due in 3 days',
+  subjectLine: '4 reviews due in 3 days',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -430,7 +430,7 @@ const EMERGENCY_ACCESS_ASSIGNED_TEMPLATE: EmailTemplate = {
   description: 'Notifies stakeholders that break-glass emergency access was granted to a user.',
   category: 'provisioning-lifecycle',
   kind: 'emergency',
-  subjectLine: 'Emergency access assigned',
+  subjectLine: 'Emergency access granted to Scott William',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -451,7 +451,7 @@ const REVIEW_INACTIVITY_TEMPLATE: EmailTemplate = {
   description: 'Nudges a reviewer who has not updated assigned review items for several days.',
   category: 'reviews-certification',
   kind: 'review-request',
-  subjectLine: 'Reminder: Complete your pending reviews',
+  subjectLine: 'Your reviews have been idle for 3 days',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -470,7 +470,7 @@ const WELCOME_ORGANIZATION_TEMPLATE: EmailTemplate = {
   description: 'Welcomes a new employee, lists granted resources, and links them to set a password.',
   category: 'onboarding',
   kind: 'onboarding',
-  subjectLine: 'Welcome to the organization',
+  subjectLine: 'Welcome, Jessica — set up your account',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -492,7 +492,7 @@ const ACCESS_DEPROVISIONED_TEMPLATE: EmailTemplate = {
   description: 'Confirms offboarding access revocation for an employee and summarizes what was removed.',
   category: 'provisioning-lifecycle',
   kind: 'offboarding',
-  subjectLine: 'Access deprovisioned — employee offboarded',
+  subjectLine: 'Access revoked for Alex Morgan',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -512,7 +512,7 @@ const PROVISIONING_ACTION_TEMPLATE: EmailTemplate = {
   description: 'Alerts an approver that a provisioning task needs their review.',
   category: 'provisioning-lifecycle',
   kind: 'provisioning',
-  subjectLine: 'Action required: Provisioning request',
+  subjectLine: 'Review a Workday entitlement grant',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -535,7 +535,7 @@ const REVIEWER_ATTENTION_TEMPLATE: EmailTemplate = {
   description: 'Asks a campaign owner to follow up with reviewers who still have open items.',
   category: 'reviews-certification',
   kind: 'review-request',
-  subjectLine: 'Reviewer attention required',
+  subjectLine: 'Reviewers still have open items on Q1 2026',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -554,7 +554,7 @@ const REVIEW_OVERDUE_TEMPLATE: EmailTemplate = {
   description: 'Informs a reviewer they missed a campaign review deadline.',
   category: 'reviews-certification',
   kind: 'review-request',
-  subjectLine: 'Your review is overdue',
+  subjectLine: 'Your review is 3 days past due',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -570,7 +570,7 @@ const PROVISIONING_OUTCOME_TEMPLATE: EmailTemplate = {
   description: 'Notifies the requester when a provisioning task was approved or rejected.',
   category: 'provisioning-lifecycle',
   kind: 'provisioning',
-  subjectLine: 'Your provisioning request was approved',
+  subjectLine: 'Your request for Finance Approver was approved',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -593,7 +593,7 @@ const REVIEW_DURATION_EXTENDED_TEMPLATE: EmailTemplate = {
   description: 'Tells a reviewer their campaign deadline was extended.',
   category: 'reviews-certification',
   kind: 'review-request',
-  subjectLine: 'Review duration extended',
+  subjectLine: 'You have 3 more days to finish your reviews',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -612,7 +612,7 @@ const CAMPAIGN_REVIEW_NEW_TEMPLATE: EmailTemplate = {
   description: 'Alerts a reviewer to a new certification campaign review with due date.',
   category: 'reviews-certification',
   kind: 'review-request',
-  subjectLine: 'New campaign review request',
+  subjectLine: 'Q1 2026 Access Certification needs your review',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -632,7 +632,7 @@ const ROLE_MINING_RESULTS_TEMPLATE: EmailTemplate = {
   description: 'Summarizes completed role mining results for reviewer acceptance.',
   category: 'reviews-certification',
   kind: 'review-request',
-  subjectLine: 'Role mining results ready for review',
+  subjectLine: 'Active Directory role mining is ready to review',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -653,7 +653,7 @@ const WELCOME_APPLICATION_TEMPLATE: EmailTemplate = {
   description: 'Delivers first-time application credentials to a newly provisioned user.',
   category: 'onboarding',
   kind: 'onboarding',
-  subjectLine: 'Welcome — your account is ready',
+  subjectLine: 'Your Salesforce account is ready',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,

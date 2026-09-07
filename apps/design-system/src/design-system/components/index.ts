@@ -197,3 +197,6 @@ export type {
   FlowSimulation,
   SimNodeState,
 } from './FlowCanvas/FlowCanvas';
+
+export { BlockEditor } from './BlockEditor/BlockEditor';
+export type { BlockEditorProps } from './BlockEditor/BlockEditor';

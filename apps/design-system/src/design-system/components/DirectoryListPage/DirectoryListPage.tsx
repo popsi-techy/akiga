@@ -30,6 +30,17 @@ export interface DirectoryListPageProps<Row extends { id: string }> {
   onOpen: (id: string) => void;
   emptyTitle: string;
   emptyMessage: string;
+  /**
+   * A control inside the empty state — the way *into* a list nobody has filled yet.
+   *
+   * Distinct from `actions`, which lives in the toolbar and is there whether the list has
+   * rows or not. On a first run the toolbar button is a long way from where the reader is
+   * looking, which is the middle of an empty table telling them there is nothing here;
+   * this puts the answer where the question was asked. Pass both — the same action in
+   * both places is not a duplicate when one of them is only visible while the list is
+   * empty.
+   */
+  emptyAction?: React.ReactNode;
   /** Show a bordered download button in the toolbar (demo: simulates an export). */
   downloadable?: boolean;
   /** Primary action for the module, right-aligned in the toolbar beside Download. */
@@ -61,6 +72,7 @@ export function DirectoryListPage<Row extends { id: string }>({
   onOpen,
   emptyTitle,
   emptyMessage,
+  emptyAction,
   downloadable = false,
   actions,
   summary,
@@ -153,6 +165,7 @@ export function DirectoryListPage<Row extends { id: string }>({
           fillHeight
           emptyTitle={emptyTitle}
           emptyMessage={emptyMessage}
+          emptyAction={emptyAction}
         />
       </div>
 

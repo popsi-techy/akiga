@@ -56,7 +56,7 @@ export function BaseEmailTemplatePreview({ content }: { content: EmailTemplateCo
             <div className="flex flex-col gap-3 rounded-xl bg-subtle p-3 sm:p-4">
               <div className="flex flex-col gap-2">
                 <p className="text-body-sm text-text-primary">
-                  <span className="font-semibold">Disclaimer:</span> This email and any attachments are confidential
+                  <span className="font-emphasis">Disclaimer:</span> This email and any attachments are confidential
                   and intended only for the designated recipient. If you are not the intended recipient, please do not
                   read, copy or distribute this message.
                 </p>
@@ -68,7 +68,7 @@ export function BaseEmailTemplatePreview({ content }: { content: EmailTemplateCo
               <div className="flex flex-wrap items-center justify-center gap-1.5 text-center sm:text-left">
                 <HeadsetMicOutlined sx={{ fontSize: 16, color: 'var(--ds-color-icon-default)' }} aria-hidden />
                 <p className="text-body-sm text-text-primary">
-                  <span className="font-medium">For assistance,</span>{' '}
+                  <span className="font-emphasis">For assistance,</span>{' '}
                   <span className="text-brand">contact support</span>
                 </p>
               </div>

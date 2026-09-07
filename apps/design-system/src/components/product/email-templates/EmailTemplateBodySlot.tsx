@@ -4,16 +4,18 @@ import EventOutlined from '@mui/icons-material/EventOutlined';
 import PersonOutlineOutlined from '@mui/icons-material/PersonOutlineOutlined';
 import AccessTimeOutlined from '@mui/icons-material/AccessTimeOutlined';
 import AssignmentLateOutlined from '@mui/icons-material/AssignmentLateOutlined';
+import AssignmentOutlined from '@mui/icons-material/AssignmentOutlined';
 import BarChartOutlined from '@mui/icons-material/BarChartOutlined';
 import InsertDriveFileOutlined from '@mui/icons-material/InsertDriveFileOutlined';
 import LabelOutlined from '@mui/icons-material/LabelOutlined';
 import LockOutlined from '@mui/icons-material/LockOutlined';
 import MailOutlineOutlined from '@mui/icons-material/MailOutlineOutlined';
 import PersonOffOutlined from '@mui/icons-material/PersonOffOutlined';
+import SecurityOutlined from '@mui/icons-material/SecurityOutlined';
 import TagOutlined from '@mui/icons-material/TagOutlined';
 import VpnKeyOutlined from '@mui/icons-material/VpnKeyOutlined';
 import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined';
-import { Button, StatusChip } from '@ds/components';
+import { Button } from '@ds/components';
 import type {
   AccessRequestSubmittedBody,
   CsvExportFailedBody,
@@ -46,7 +48,12 @@ function formatOtpDisplay(code: string): string {
 
 function RequestDetailsCard({ details }: { details: ReviewRequestNewBody }) {
   return (
-    <EmailDetailCard title="Request details" hero={details.requestNumber} ariaLabel="Request details">
+    <EmailDetailCard
+      title="Request details"
+      icon={<AssignmentOutlined sx={{ fontSize: 18 }} />}
+      ariaLabel="Request details"
+    >
+      <DetailField icon={<TagOutlined sx={{ fontSize: 16 }} />} label="Request" value={details.requestNumber} />
       <DetailField icon={<VpnKeyOutlined sx={{ fontSize: 16 }} />} label="Item" value={details.itemName} />
       <DetailField icon={<LabelOutlined sx={{ fontSize: 16 }} />} label="Type" value={details.itemTypeLabel} />
       <DetailField
@@ -67,7 +74,12 @@ function RequestDetailsCard({ details }: { details: ReviewRequestNewBody }) {
 
 function AccessRequestReferenceCard({ details }: { details: AccessRequestSubmittedBody }) {
   return (
-    <EmailDetailCard title="Reference" hero={details.requestNumber} ariaLabel="Access request reference">
+    <EmailDetailCard
+      title="Request reference"
+      icon={<TagOutlined sx={{ fontSize: 18 }} />}
+      ariaLabel="Access request reference"
+    >
+      <DetailField icon={<TagOutlined sx={{ fontSize: 16 }} />} label="Request" value={details.requestNumber} />
       <DetailField
         icon={<MailOutlineOutlined sx={{ fontSize: 16 }} />}
         label="Requested by"
@@ -152,7 +164,7 @@ function NewReviewRequestBody({ details }: { details: ReviewRequestNewBody }) {
     <div className="flex flex-col gap-4 sm:gap-5">
       <p className="text-body text-text-secondary">
         A request has been submitted for access to{' '}
-        <span className="font-semibold text-text-primary">{details.itemName}</span>. Please review it and submit your
+        <span className="font-emphasis text-text-primary">{details.itemName}</span>. Please review it and submit your
         decision before the due date.
       </p>
 
@@ -226,89 +238,70 @@ function ProcessingMetricTile({
 
 function CsvProcessingSummaryCard({ details }: { details: CsvProcessingCompletedBody }) {
   return (
-    <section
-      className="overflow-hidden rounded-xl bg-surface ring-1 ring-border-subtle"
-      aria-label="CSV processing summary"
-    >
-      <div className="flex items-center justify-between gap-3 border-b border-border-subtle bg-subtle px-4 py-3.5 sm:px-5">
-        <div className="flex min-w-0 items-center gap-2">
-          <BarChartOutlined sx={{ fontSize: 18, color: 'var(--ds-color-icon-default)' }} aria-hidden />
-          <p className="text-body-sm-strong text-text-primary">Processing summary</p>
+    <EmailDetailCard
+      title="Processing summary"
+      icon={<BarChartOutlined sx={{ fontSize: 18 }} />}
+      status={{ intent: 'success', label: 'Completed' }}
+      ariaLabel="CSV processing summary"
+      footer={
+        <div className="grid grid-cols-1 gap-3 border-t border-border-subtle bg-surface px-4 py-4 sm:grid-cols-3 sm:px-5">
+          <ProcessingMetricTile label="Success" value={String(details.successCount)} intent="success" />
+          <ProcessingMetricTile label="Failed" value={String(details.failedCount)} intent="danger" />
+          <ProcessingMetricTile label="Success rate" value={details.successRate} intent="info" />
         </div>
-        <StatusChip intent="success" label="Completed" dot />
-      </div>
-
-      <dl className="divide-y divide-border-subtle bg-surface px-4 sm:px-5">
-        <DetailField
-          icon={<InsertDriveFileOutlined sx={{ fontSize: 16 }} />}
-          label="File name"
-          value={details.fileName}
-          valueClassName="break-all"
-        />
-        <DetailField
-          icon={<LabelOutlined sx={{ fontSize: 16 }} />}
-          label="CSV type"
-          value={details.csvType}
-        />
-        <DetailField
-          icon={<TagOutlined sx={{ fontSize: 16 }} />}
-          label="Total records"
-          value={String(details.totalRecords)}
-          valueClassName="tabular-nums"
-        />
-        <DetailField
-          icon={<WarningAmberOutlined sx={{ fontSize: 16, color: 'var(--ds-color-status-warning-fg)' }} />}
-          label="Entitlement warnings"
-          value={String(details.entitlementWarnings)}
-          valueClassName="tabular-nums text-[var(--ds-color-status-warning-fg)]"
-        />
-        <DetailField
-          icon={<PersonOffOutlined sx={{ fontSize: 16 }} />}
-          label="Users disabled"
-          value={String(details.usersDisabled)}
-          valueClassName="tabular-nums"
-        />
-        <DetailField
-          icon={<LockOutlined sx={{ fontSize: 16 }} />}
-          label="Entitlements revoked"
-          value={String(details.entitlementsRevoked)}
-          valueClassName="tabular-nums"
-        />
-      </dl>
-
-      <div className="grid grid-cols-1 gap-3 border-t border-border-subtle bg-surface px-4 py-4 sm:grid-cols-3 sm:px-5">
-        <ProcessingMetricTile label="Success" value={String(details.successCount)} intent="success" />
-        <ProcessingMetricTile label="Failed" value={String(details.failedCount)} intent="danger" />
-        <ProcessingMetricTile label="Success rate" value={details.successRate} intent="info" />
-      </div>
-    </section>
+      }
+    >
+      <DetailField
+        icon={<InsertDriveFileOutlined sx={{ fontSize: 16 }} />}
+        label="File name"
+        value={details.fileName}
+        valueClassName="break-all"
+      />
+      <DetailField icon={<LabelOutlined sx={{ fontSize: 16 }} />} label="CSV type" value={details.csvType} />
+      <DetailField
+        icon={<TagOutlined sx={{ fontSize: 16 }} />}
+        label="Total records"
+        value={String(details.totalRecords)}
+        valueClassName="tabular-nums"
+      />
+      <DetailField
+        icon={<WarningAmberOutlined sx={{ fontSize: 16, color: 'var(--ds-color-status-warning-fg)' }} />}
+        label="Entitlement warnings"
+        value={String(details.entitlementWarnings)}
+        valueClassName="tabular-nums text-[var(--ds-color-status-warning-fg)]"
+      />
+      <DetailField
+        icon={<PersonOffOutlined sx={{ fontSize: 16 }} />}
+        label="Users disabled"
+        value={String(details.usersDisabled)}
+        valueClassName="tabular-nums"
+      />
+      <DetailField
+        icon={<LockOutlined sx={{ fontSize: 16 }} />}
+        label="Entitlements revoked"
+        value={String(details.entitlementsRevoked)}
+        valueClassName="tabular-nums"
+      />
+    </EmailDetailCard>
   );
 }
 
 function CsvProcessingFailedSummaryCard({ details }: { details: CsvProcessingFailedBody }) {
   return (
-    <section
-      className="overflow-hidden rounded-xl bg-surface ring-1 ring-border-subtle"
-      aria-label="CSV processing summary"
+    <EmailDetailCard
+      title="Processing summary"
+      icon={<BarChartOutlined sx={{ fontSize: 18 }} />}
+      status={{ intent: 'danger', label: 'Failed' }}
+      ariaLabel="CSV processing summary"
     >
-      <div className="flex items-center justify-between gap-3 border-b border-border-subtle bg-subtle px-4 py-3.5 sm:px-5">
-        <div className="flex min-w-0 items-center gap-2">
-          <BarChartOutlined sx={{ fontSize: 18, color: 'var(--ds-color-icon-default)' }} aria-hidden />
-          <p className="text-body-sm-strong text-text-primary">Processing summary</p>
-        </div>
-        <StatusChip intent="danger" label="Failed" dot />
-      </div>
-
-      <dl className="divide-y divide-border-subtle bg-surface px-4 sm:px-5">
-        <DetailField
-          icon={<InsertDriveFileOutlined sx={{ fontSize: 16 }} />}
-          label="File name"
-          value={details.fileName}
-          valueClassName="break-all"
-        />
-        <DetailField icon={<LabelOutlined sx={{ fontSize: 16 }} />} label="CSV type" value={details.csvType} />
-      </dl>
-    </section>
+      <DetailField
+        icon={<InsertDriveFileOutlined sx={{ fontSize: 16 }} />}
+        label="File name"
+        value={details.fileName}
+        valueClassName="break-all"
+      />
+      <DetailField icon={<LabelOutlined sx={{ fontSize: 16 }} />} label="CSV type" value={details.csvType} />
+    </EmailDetailCard>
   );
 }
 
@@ -325,7 +318,7 @@ function CsvProcessingFailedBody({ details }: { details: CsvProcessingFailedBody
 
       <p className="text-body-sm text-text-secondary">
         Correct the issue above and re-upload the file. If the problem persists,{' '}
-        <span className="font-medium text-brand">contact support</span> and include the file name.
+        <span className="font-emphasis text-brand">contact support</span> and include the file name.
       </p>
 
       {details.retryUrl ? (
@@ -357,14 +350,14 @@ function CsvProcessingCompletedBody({ details }: { details: CsvProcessingComplet
 
       <p className="text-body-sm text-text-secondary">
         The attached report includes specifics on{' '}
-        <span className="font-medium text-text-primary">
+        <span className="font-emphasis text-text-primary">
           {details.failedCount} failed record{details.failedCount === 1 ? '' : 's'}
         </span>
         {details.entitlementWarnings > 0 ? (
           <>
             {' '}
             and{' '}
-            <span className="font-medium text-text-primary">
+            <span className="font-emphasis text-text-primary">
               {details.entitlementWarnings} entitlement{details.entitlementWarnings === 1 ? '' : 's'}
             </span>{' '}
             that could not be matched and were skipped
@@ -388,10 +381,16 @@ function ReviewDueApproachingBody({ details }: { details: ReviewDueApproachingBo
       </p>
 
       <EmailDetailCard
-        title="Time remaining"
-        hero={`${details.daysRemaining} ${dayWord} left`}
+        title="Review deadline"
+        icon={<AccessTimeOutlined sx={{ fontSize: 18 }} />}
         ariaLabel="Review deadline"
       >
+        <DetailField
+          icon={<AccessTimeOutlined sx={{ fontSize: 16 }} />}
+          label="Time remaining"
+          value={`${details.daysRemaining} ${dayWord} left`}
+          valueClassName="tabular-nums"
+        />
         <DetailField
           icon={<AssignmentLateOutlined sx={{ fontSize: 16 }} />}
           label="Pending"
@@ -440,12 +439,17 @@ function ReviewDueApproachingBody({ details }: { details: ReviewDueApproachingBo
 function EmergencyAccessAssignedCard({ details }: { details: EmergencyAccessAssignedBody }) {
   return (
     <EmailDetailCard
-      title="Subject user"
-      hero={details.subjectUserName}
+      title="Emergency access"
+      icon={<SecurityOutlined sx={{ fontSize: 18 }} />}
       ariaLabel="Emergency access assignment"
     >
       <DetailField
         icon={<PersonOutlineOutlined sx={{ fontSize: 16 }} />}
+        label="Subject user"
+        value={details.subjectUserName}
+      />
+      <DetailField
+        icon={<MailOutlineOutlined sx={{ fontSize: 16 }} />}
         label="Email"
         value={details.subjectUserEmail}
         valueClassName="break-all text-brand"
@@ -524,33 +528,25 @@ function CsvExportFailedBody({ details }: { details: CsvExportFailedBody }) {
         this keeps happening.
       </p>
 
-      <section
-        className="overflow-hidden rounded-xl bg-surface ring-1 ring-border-subtle"
-        aria-label="Export summary"
+      <EmailDetailCard
+        title="Export summary"
+        icon={<BarChartOutlined sx={{ fontSize: 18 }} />}
+        status={{ intent: 'danger', label: 'Failed' }}
+        ariaLabel="Export summary"
       >
-        <div className="flex items-center justify-between gap-3 border-b border-border-subtle bg-subtle px-4 py-3.5 sm:px-5">
-          <div className="flex min-w-0 items-center gap-2">
-            <BarChartOutlined sx={{ fontSize: 18, color: 'var(--ds-color-icon-default)' }} aria-hidden />
-            <p className="text-body-sm-strong text-text-primary">Export summary</p>
-          </div>
-          <StatusChip intent="danger" label="Failed" dot />
-        </div>
-
-        <dl className="divide-y divide-border-subtle bg-surface px-4 sm:px-5">
-          <DetailField
-            icon={<LabelOutlined sx={{ fontSize: 16 }} />}
-            label="Export type"
-            value={details.exportType}
-            valueClassName="break-words"
-          />
-        </dl>
-      </section>
+        <DetailField
+          icon={<LabelOutlined sx={{ fontSize: 16 }} />}
+          label="Export type"
+          value={details.exportType}
+          valueClassName="break-words"
+        />
+      </EmailDetailCard>
 
       <ErrorMessageAlert message={details.errorMessage} />
 
       <p className="text-body-sm text-text-secondary">
         Try again with a smaller date range or fewer filters. If the problem persists,{' '}
-        <span className="font-medium text-brand">contact support</span> and include the export type above.
+        <span className="font-emphasis text-brand">contact support</span> and include the export type above.
       </p>
 
       {details.retryUrl ? (

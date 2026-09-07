@@ -107,7 +107,10 @@ export function AddEntitlementDrawer({
             required
             placeholder="e.g entitlement_Name"
             value={name}
-            maxLength={100}
+            // `maxLength` is a native input attribute, not a TextField prop — it has to
+            // go through `inputProps` to reach the element, which is also why the counter
+            // below it was the only thing enforcing the limit.
+            inputProps={{ maxLength: 100 }}
             onChange={(e) => setName(e.target.value)}
             error={nameError}
           />

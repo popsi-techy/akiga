@@ -164,6 +164,28 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
     implemented: true,
   },
   {
+    id: 'email',
+    href: '/iga/configurations/email',
+    title: 'Email',
+    group: 'general',
+    description: 'Compose the notification emails this tenant sends, and control which ones are live.',
+    actionLabel: 'Manage',
+    pageDescription:
+      'The emails this tenant sends. Start from a template or write your own, then activate it when the wording is right.',
+    keywords: [
+      'email',
+      'notification',
+      'template',
+      'message',
+      'compose',
+      'smtp',
+      'mail',
+      'subject',
+      'body',
+    ],
+    implemented: true,
+  },
+  {
     id: 'locale-regional',
     href: '/iga/configurations/locale-regional',
     title: 'General Settings',

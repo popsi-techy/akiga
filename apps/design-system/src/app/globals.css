@@ -275,3 +275,113 @@ a {
     break-inside: avoid;
   }
 }
+
+
+/* ------------------------------------------------------------------ *
+ * BLOCK EDITOR (Tiptap / ProseMirror)
+ *
+ * ProseMirror renders the document into a contenteditable of its own, so the blocks
+ * inside it are out of reach of a React className. These rules are that document's type
+ * scale and spacing.
+ *
+ * Typography goes through `@apply` and the named type classes rather than raw font-size
+ * declarations: a `text-*` class is the complete style (size, line-height, weight,
+ * tracking), and typography is deliberately not exposed as CSS variables — so a
+ * hand-written `font-size` here would be a second, drifting definition of `h4`.
+ * Colour, spacing and radius are tokens, which are.
+ *
+ * Scoped to `.ds-editor-content` so none of it can leak into ordinary prose.
+ * ------------------------------------------------------------------ */
+.ds-editor-content {
+  @apply text-body text-text-primary;
+}
+.ds-editor-content > * + * {
+  margin-top: var(--ds-space-3);
+}
+.ds-editor-content h1 {
+  @apply text-h4;
+  margin-top: var(--ds-space-5);
+}
+.ds-editor-content h2 {
+  @apply text-h5;
+  margin-top: var(--ds-space-5);
+}
+.ds-editor-content h3 {
+  @apply text-body-lg;
+  font-weight: 600;
+  margin-top: var(--ds-space-4);
+}
+.ds-editor-content ul,
+.ds-editor-content ol {
+  padding-left: var(--ds-space-5);
+}
+.ds-editor-content ul {
+  list-style: disc;
+}
+.ds-editor-content ol {
+  list-style: decimal;
+}
+.ds-editor-content li + li {
+  margin-top: var(--ds-space-1);
+}
+.ds-editor-content blockquote {
+  @apply text-text-secondary;
+  border-left: 2px solid var(--ds-color-border-strong);
+  padding-left: var(--ds-space-3);
+}
+.ds-editor-content hr {
+  border: 0;
+  border-top: 1px solid var(--ds-color-border-default);
+}
+.ds-editor-content code {
+  @apply text-caption;
+  font-family: var(--ds-font-mono);
+  background: var(--ds-color-background-sunken);
+  border-radius: var(--ds-radius-xs);
+  padding: 0.1em 0.35em;
+}
+.ds-editor-content pre {
+  @apply text-caption;
+  font-family: var(--ds-font-mono);
+  background: var(--ds-color-background-sunken);
+  border-radius: var(--ds-radius-sm);
+  padding: var(--ds-space-3);
+  overflow-x: auto;
+}
+.ds-editor-content pre code {
+  background: none;
+  padding: 0;
+}
+.ds-editor-content a.ds-editor-link {
+  @apply text-text-link;
+  text-decoration: underline;
+}
+
+/* Task lists: the marker is a real checkbox, so each row is a label + content pair. */
+.ds-editor-content ul[data-type='taskList'] {
+  list-style: none;
+  padding-left: 0;
+}
+.ds-editor-content ul[data-type='taskList'] li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ds-space-2);
+}
+.ds-editor-content ul[data-type='taskList'] li > label {
+  margin-top: 0.15em;
+  user-select: none;
+}
+.ds-editor-content ul[data-type='taskList'] li > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Placeholder — ProseMirror exposes it as a data attribute on the empty block. */
+.ds-editor-content p.is-editor-empty:first-child::before,
+.ds-editor-content .is-empty::before {
+  @apply text-text-tertiary;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

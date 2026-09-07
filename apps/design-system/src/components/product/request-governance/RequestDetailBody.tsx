@@ -13,7 +13,22 @@ import { ResourceTypeMark } from './labels';
 import { AuditTrail, LifecycleTrail } from './LifecycleTrail';
 import { SlaTimer } from './SlaTimer';
 
-export function RequestDetailBody({ row }: { row: GovernanceRequest }) {
+/**
+ * Who asked, for whom, for what — and how risky it is.
+ *
+ * Split out of `RequestDetailBody` so the detail page can show it as its Overview tab
+ * while the drawer keeps all three parts stacked. The drawer is a peek: scrolling one
+ * column is the right shape there, and tabs inside a drawer would be navigation inside
+ * navigation.
+ */
+export function RequestSummary({
+  row,
+  hideSlaStatus = false,
+}: {
+  row: GovernanceRequest;
+  /** The surface already shows the SLA status elsewhere — leave the clock, drop the chip. */
+  hideSlaStatus?: boolean;
+}) {
   const self = row.requester.id === row.target.id;
   return (
     <div className="space-y-8">
@@ -74,7 +89,7 @@ export function RequestDetailBody({ row }: { row: GovernanceRequest }) {
               Origin · {ORIGIN_LABEL[row.origin]}
               <span className="text-text-tertiary"> · Submitted {formatGovDateTime(row.submittedAt)}</span>
             </div>
-            <SlaTimer row={row} />
+            <SlaTimer row={row} showStatus={!hideSlaStatus} />
           </div>
         </div>
       </section>
@@ -84,7 +99,15 @@ export function RequestDetailBody({ row }: { row: GovernanceRequest }) {
           Manual ticket {row.ticketRef} is open for the target IT app team.
         </p>
       )}
+    </div>
+  );
+}
 
+/** All three parts stacked — for the drawer, where one scrolling column is right. */
+export function RequestDetailBody({ row }: { row: GovernanceRequest }) {
+  return (
+    <div className="space-y-8">
+      <RequestSummary row={row} />
       <LifecycleTrail row={row} />
       <AuditTrail row={row} />
     </div>
