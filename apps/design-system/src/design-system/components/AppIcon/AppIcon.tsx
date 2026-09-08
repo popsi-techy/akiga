@@ -26,9 +26,11 @@ export interface AppIconProps {
   size?: number;
   /**
    * Tile fill. `subtle` on canvas, `surface` inside a tinted chip, `wash` the
-   * same grey tile with a smaller mark so the logo has air.
+   * same grey tile with a smaller mark so the logo has air, `outlined` a white
+   * tile with a hairline — the treatment when a vendor mark sits on a tinted
+   * strip and needs a clear edge.
    */
-  variant?: 'subtle' | 'surface' | 'wash';
+  variant?: 'subtle' | 'surface' | 'wash' | 'outlined';
 }
 
 /**
@@ -79,15 +81,26 @@ export function AppIcon({ app, logoFrom, size = 24, variant = 'subtle' }: AppIco
   React.useEffect(() => setFailed(false), [logo?.domain]);
 
   const wash = variant === 'wash';
+  const outlined = variant === 'outlined';
   const tile = [
     'inline-flex shrink-0 items-center justify-center',
     wash ? 'rounded-sm' : 'rounded-md',
-    variant === 'surface' ? 'bg-surface' : 'bg-subtle',
+    outlined
+      ? 'border border-border-subtle bg-surface'
+      : variant === 'surface'
+        ? 'bg-surface'
+        : 'bg-subtle',
   ]
     .filter(Boolean)
     .join(' ');
   const letter = app?.trim().charAt(0).toUpperCase() || '?';
-  const mark = Math.round(size * (wash ? 0.5 : 0.72));
+  // Outlined keeps a medium (24px) mark in a 32–40 tile so the logo has air
+  // inside the hairline; wash is tighter; everything else fills most of the tile.
+  const mark = outlined
+    ? size >= 32
+      ? 24
+      : Math.round(size * 0.6)
+    : Math.round(size * (wash ? 0.5 : 0.72));
   const tileStyle: React.CSSProperties = { width: size, height: size };
 
   if (!logo || failed) {

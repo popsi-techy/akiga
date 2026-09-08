@@ -9,14 +9,16 @@
       "extends": null,
       "variants": [
         "subtle",
-        "surface"
+        "surface",
+        "wash",
+        "outlined"
       ],
       "states": [
         "logo",
         "letter-fallback"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/app-icon/page.tsx",
-      "notes": "Live vendor logos fetched from the web (Google favicon service, 128px) when the app name or `logoFrom` (typically the app type) matches a known domain — Google Workspace, Adobe, Salesforce, AWS, Entra, Active Directory, Okta, GitHub, Slack, ServiceNow, CyberArk, HashiCorp, SAP, Workday, Jira, Snowflake, NetSuite, Freshdesk. Unknown names fall back to a first-letter tile. Product AppBadge appearance=\"logo\" and Directory EntityAvatar consume this."
+      "notes": "Live vendor logos fetched from the web (Google favicon service, 128px) when the app name or `logoFrom` (typically the app type) matches a known domain — Google Workspace, Adobe, Salesforce, AWS, Entra, Active Directory, Okta, GitHub, Slack, ServiceNow, CyberArk, HashiCorp, SAP, Workday, Jira, Snowflake, NetSuite, Freshdesk. Unknown names fall back to a first-letter tile. `outlined` is the white hairlined tile with a 24px mark when a logo sits on a tinted strip. Product AppBadge appearance=\"logo\" and Directory EntityAvatar consume this."
     },
     {
       "name": "Avatar",

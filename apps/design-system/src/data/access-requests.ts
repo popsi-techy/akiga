@@ -15,7 +15,7 @@ import type {
 import { riskTier } from '@/lib/risk';
 
 const STORE_KEY = 'iga.accessRequests.v1';
-const SEED_VERSION = 3;
+const SEED_VERSION = 4;
 
 /** The signed-in end user — same prototype account as the top bar. */
 export const CURRENT_END_USER = {

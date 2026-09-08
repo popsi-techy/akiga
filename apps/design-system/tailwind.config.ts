@@ -70,6 +70,7 @@ const config: Config = {
           inverse: 'var(--ds-color-surface-inverse)',
         },
         border: {
+          faint: 'var(--ds-color-border-faint)',
           subtle: 'var(--ds-color-border-subtle)',
           DEFAULT: 'var(--ds-color-border-default)',
           strong: 'var(--ds-color-border-strong)',

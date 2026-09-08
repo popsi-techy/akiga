@@ -35,6 +35,9 @@ export const color = {
   },
   // Borders & dividers
   border: {
+    // Quieter than `subtle` — a frame on a filled well (`bg-subtle`) where a
+    // hairline would double the edge. Decorative only; never a control boundary.
+    faint: p.neutral[300], //    #F3F4F5 inset frames
     subtle: p.neutral[400], //   #E6E8EC hairlines
     default: p.neutral[500], //  #E1E4E8 default control border
     // Boundary of an interactive control that carries no fill of its own — an

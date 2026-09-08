@@ -64,7 +64,7 @@ export default function AppIconDocs() {
 
       <Section
         title="Size and variant"
-        description="variant sets the tile fill: subtle on a canvas or surface, surface when the icon sits inside an already-tinted chip, wash for the same grey tile with a tighter radius and a smaller mark."
+        description="variant sets the tile fill: subtle on a canvas or surface, surface when the icon sits inside an already-tinted chip, wash for the same grey tile with a tighter radius and a smaller mark, outlined a white tile with a hairline and a medium mark — the treatment when a vendor logo sits on a tinted strip."
       >
         <Example label="Sizes">
           {[20, 24, 28, 32, 40].map((s) => (
@@ -88,6 +88,12 @@ export default function AppIconDocs() {
             </span>
           ))}
         </Example>
+        <Example label="variant=outlined — white tile, hairline, medium mark">
+          <span className="inline-flex items-center gap-2 rounded-md bg-subtle px-3 py-2">
+            <AppIcon app="Google Workspace" size={40} variant="outlined" />
+            <span className="text-body-sm text-text-secondary">Google Workspace</span>
+          </span>
+        </Example>
       </Section>
 
       <Section
@@ -99,7 +105,7 @@ export default function AppIconDocs() {
             { name: 'app', type: 'string', description: 'Application display name. Matched against the catalog by pattern. Used for the tooltip and the letter fallback.' },
             { name: 'logoFrom', type: 'string', description: 'Optional extra catalog key, tried before `app`. Pass the app type when the instance name is custom.' },
             { name: 'size', type: 'number', default: '24', description: 'Tile edge in px. The mark is 72% of it, or 50% on wash so the tile has air.' },
-            { name: 'variant', type: "'subtle' | 'surface' | 'wash'", default: "'subtle'", description: 'Tile fill — subtle on canvas, surface inside tinted chips, wash the same grey tile with a tighter radius and inset mark.' },
+            { name: 'variant', type: "'subtle' | 'surface' | 'wash' | 'outlined'", default: "'subtle'", description: 'Tile fill — subtle on canvas, surface inside tinted chips, wash the same grey tile with a tighter radius and inset mark, outlined a white hairlined tile with a 24px mark.' },
           ]}
         />
         <p className="mt-3 text-body-sm text-text-secondary">
@@ -113,6 +119,7 @@ export default function AppIconDocs() {
             'Pass the application’s real display name; the component does the matching.',
             'When the instance name is custom, pass logoFrom with the app type so the vendor mark still resolves.',
             'Use variant="surface" when the icon sits on a tinted chip or row.',
+            'Use variant="outlined" when a vendor logo sits on a tinted strip and needs a white tile and a hairline.',
             'Keep one size per list so rows align.',
             'Treat the letter fallback as a first-class state — unknown apps will use it.',
           ]}

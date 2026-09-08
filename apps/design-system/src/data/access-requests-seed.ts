@@ -11,11 +11,11 @@ export const accessRequestSeed: AccessRequest[] = [
     type: 'entitlement',
     status: 'pending',
     itemName: 'WRITE_ACCESS',
-    itemDescription: 'Create, edit, and publish content on managed system pages.',
-    appId: 'app-cms',
-    appName: 'Content Hub',
+    itemDescription: 'Create, edit, and publish files in Drive and Sites.',
+    appId: 'app-google-workspace',
+    appName: 'Google Workspace',
     entitlementCode: 'WRITE_ACCESS',
-    resourceContext: 'Manage System Page',
+    resourceContext: 'Google Sites',
     requestedForId: 'u-jessica',
     requestedForName: 'Jessica Liu',
     requestedForEmail: 'jessica.liu@acme.com',
@@ -33,7 +33,7 @@ export const accessRequestSeed: AccessRequest[] = [
     accessDurationKind: 'temporary',
     accessDurationUntil: '2026-08-31T23:59:59.000Z',
     businessJustification:
-      'Need write access to update the customer onboarding page before the August release. Content is already reviewed by Marketing.',
+      'Need write access to update the customer onboarding site before the August release. Content is already reviewed by Marketing.',
     attachments: [
       {
         id: 'att-ar-001-pdf',

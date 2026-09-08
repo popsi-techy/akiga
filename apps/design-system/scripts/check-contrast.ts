@@ -247,6 +247,22 @@ for (const [k, s] of Object.entries(color.status)) {
     waiver: BORDER_WAIVERS[k],
   });
 }
+// `border.faint` is a decorative inset frame — quieter than `subtle`, never a
+// control boundary. 1.4.11 does not apply; reported so a remapping is visible.
+checks.push({
+  label: 'border.faint on surface (decorative)',
+  fg: color.border.faint,
+  bg: color.surface.default,
+  min: VISIBLE_MIN,
+  exempt: true,
+});
+checks.push({
+  label: 'border.faint on subtle (decorative)',
+  fg: color.border.faint,
+  bg: color.background.subtle,
+  min: VISIBLE_MIN,
+  exempt: true,
+});
 
 // --- Evaluate ---
 type Status = 'PASS' | 'FAIL' | 'EXEMPT' | 'WAIVED';

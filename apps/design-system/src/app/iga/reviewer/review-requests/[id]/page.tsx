@@ -2,7 +2,9 @@
 
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import PersonOutline from '@mui/icons-material/PersonOutline';
+import Person from '@mui/icons-material/Person';
+import Shield from '@mui/icons-material/Shield';
+import Badge from '@mui/icons-material/Badge';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import BadgeOutlined from '@mui/icons-material/BadgeOutlined';
 import ScheduleOutlined from '@mui/icons-material/ScheduleOutlined';
@@ -189,9 +191,9 @@ export default function ReviewRequestDetailPage() {
  * a white one. The reference has a single frame, which is also the honest count: there is
  * one object here, not two.
  *
- * The icon is outlined at 18px. Filled is reserved for a `Card` header, where the glyph is
- * forced to 15px and a 1px stroke stops reading — at 18px on a bare line the outlined mark
- * is the right weight and matches every other inline icon on the page.
+ * Section marks are filled. Outlined is the product default at 16–20px, but these
+ * headings sit next to a card title and the filled glyph is the one that reads as a
+ * mark rather than a caption.
  */
 function DetailSection({
   title,
@@ -245,7 +247,7 @@ function SectionDash({ edge }: { edge: 'top' | 'bottom' }) {
 
 function RequestedForSection({ request }: { request: AccessRequest }) {
   return (
-    <DetailSection title="Requested For" icon={<PersonOutline sx={{ fontSize: 18 }} />}>
+    <DetailSection title="Requested For" icon={<Person sx={{ fontSize: 18 }} />}>
       <div className="flex items-center gap-3 p-4">
         <Avatar name={request.requestedForName} initials={request.requestedForName.charAt(0)} size="md" kind="person" />
         <div className="min-w-0 flex-1">
@@ -280,7 +282,7 @@ function RequestedForSection({ request }: { request: AccessRequest }) {
 
 function RequestedItemSection({ request }: { request: AccessRequest }) {
   const sectionIcon =
-    request.type === 'role' ? <BadgeOutlined sx={{ fontSize: 20 }} /> : <ShieldOutlined sx={{ fontSize: 20 }} />;
+    request.type === 'role' ? <Badge sx={{ fontSize: 18 }} /> : <Shield sx={{ fontSize: 18 }} />;
   const riskLabel = request.type === 'entitlement' ? 'Entitlement Risk:' : 'Access Risk:';
   const appDescription = applicationDescription(request.appId, request.appName);
 
@@ -291,7 +293,7 @@ function RequestedItemSection({ request }: { request: AccessRequest }) {
            which is the entitlement and already sits on the row below. */
         <div className="relative flex items-center gap-3 bg-subtle p-4">
           <SectionDash edge="bottom" />
-          <AppIcon app={request.appName} size={40} variant="surface" />
+          <AppIcon app={request.appName} size={40} variant="outlined" />
           <div className="min-w-0">
             <div className="truncate text-h5 text-text-primary">{request.appName}</div>
             {appDescription && (
@@ -336,7 +338,7 @@ function ItemPrimaryRow({ request }: { request: AccessRequest }) {
   if (request.type === 'application' && request.appName) {
     return (
       <div className="flex items-start gap-3">
-        <AppIcon app={request.appName} size={36} variant="surface" />
+        <AppIcon app={request.appName} size={40} variant="outlined" />
         <div className="min-w-0">
           <div className="text-h5 text-text-primary">{request.itemName}</div>
           {request.itemDescription && (
@@ -375,7 +377,7 @@ function ItemPrimaryRow({ request }: { request: AccessRequest }) {
 
 function MetaInset({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-md border border-border-subtle bg-subtle px-2.5 py-2">
+    <div className="flex flex-wrap items-center gap-3 rounded-md border border-border-faint bg-subtle px-2.5 py-2">
       <span className="text-body-sm text-text-secondary">{label}</span>
       {children}
     </div>
@@ -388,7 +390,7 @@ function JustificationInset({ text }: { text: string }) {
   const shown = long && !expanded ? `${text.slice(0, 220).trim()}…` : text;
 
   return (
-    <div className="rounded-md border border-border-subtle bg-subtle px-2.5 py-2">
+    <div className="rounded-md border border-border-faint bg-subtle px-2.5 py-2">
       {/* `text-overline`, not `text-micro`: at 10px the label was smaller than anything
           else on the page and read as a caption on the paragraph rather than a heading
           over it. */}

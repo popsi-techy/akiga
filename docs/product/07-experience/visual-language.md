@@ -84,6 +84,8 @@ The most common mistake in this codebase's history: boxing everything.
 
 - **Divide with a hairline** (`border.default` `#E1E4E8`) when items are peers in a sequence — table
   rows, list rows, columns of a browser, sections of a rail.
+- **Frame a filled well** (`border.faint` `#F3F4F5`) when a `background.subtle` inset already
+  carries the tone and `border.subtle` would double the edge. Decorative only — never a control.
 - **Lift onto a card** (`surface.default` + 1px `border.default` + `radius.lg` 12px) when a thing is
   a self-contained object you could move elsewhere and it would still make sense.
 - **Never nest a card inside a card.** If you need grouping inside a card, use a heading and space,
