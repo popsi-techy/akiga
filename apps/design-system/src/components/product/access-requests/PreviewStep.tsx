@@ -7,7 +7,6 @@ import {
   DataTable,
   FileAttachmentField,
   Input,
-  OverflowChips,
   Select,
   StatusChip,
   Tooltip,
@@ -82,15 +81,9 @@ export function PreviewStep({ request }: { request: AccessRequest }) {
     <div className="min-h-0 min-w-0">
       <div className="mb-5">
         <h2 className="text-h3 text-text-primary">Preview & Submit</h2>
-        <p className="mt-1 text-body text-text-secondary">
-          Review your selections before submitting the access request.
-        </p>
       </div>
-      <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="mb-3">
         <h3 className="text-h5 text-text-primary">Requested entitlements</h3>
-        {items.length > 0 && (
-          <OverflowChips items={items.map((i) => ({ id: i.entitlementId, name: i.entitlementName }))} max={2} />
-        )}
       </div>
       <DataTable<AccessRequestItem & { id: string }>
         columns={columns}
@@ -193,6 +186,7 @@ export function PreviewJustificationDock({
           />
         </div>
         <FileAttachmentField
+          label="Attach files"
           fill
           /*
             Ten is the cap. Past that the dock stops being a list of evidence and becomes a
