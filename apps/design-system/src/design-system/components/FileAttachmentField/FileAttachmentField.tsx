@@ -765,6 +765,21 @@ function FileRow({
       >
         {copy}
       </div>
+      {!readOnly && (
+        <Tooltip title={status === 'uploading' ? `Cancel ${file.name}` : `Remove ${file.name}`}>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+            aria-label={status === 'uploading' ? `Cancel ${file.name}` : `Remove ${file.name}`}
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-sm text-icon-subtle transition-colors hover:bg-surface-hover hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+          >
+            <DeleteOutline sx={{ fontSize: 16 }} />
+          </button>
+        </Tooltip>
+      )}
       {ready && (
         <span className="shrink-0" onDoubleClick={(e) => e.stopPropagation()}>
           <Menu
@@ -793,21 +808,6 @@ function FileRow({
             }
           />
         </span>
-      )}
-      {!readOnly && (
-        <Tooltip title={status === 'uploading' ? `Cancel ${file.name}` : `Remove ${file.name}`}>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-            aria-label={status === 'uploading' ? `Cancel ${file.name}` : `Remove ${file.name}`}
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-sm text-icon-subtle transition-colors hover:bg-surface-hover hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-          >
-            <DeleteOutline sx={{ fontSize: 16 }} />
-          </button>
-        </Tooltip>
       )}
     </div>
   );

@@ -76,9 +76,6 @@ export function PreviewStep({ request }: { request: AccessRequest }) {
       <div className="mb-5">
         <h2 className="text-h3 text-text-primary">Preview & Submit</h2>
       </div>
-      <div className="mb-3">
-        <h3 className="text-h5 text-text-primary">Requested entitlements</h3>
-      </div>
       <DataTable<AccessRequestItem & { id: string }>
         columns={columns}
         rows={items.map((r) => ({ ...r, id: r.entitlementId }))}

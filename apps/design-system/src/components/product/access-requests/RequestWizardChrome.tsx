@@ -66,7 +66,7 @@ export function RequestWizardChrome({
               <ArrowBackOutlined sx={{ fontSize: 20 }} />
             </Button>
           </Tooltip>
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand-subtle text-icon-brand">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-sm bg-brand-subtle text-icon-brand">
             <Assignment sx={{ fontSize: 18 }} />
           </span>
           <h1 className="truncate text-h4 text-text-primary">Request “{reference}”</h1>
