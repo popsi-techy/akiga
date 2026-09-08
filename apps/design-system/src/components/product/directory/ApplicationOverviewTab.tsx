@@ -10,7 +10,7 @@ import { eventStatus, listConnectionEvents } from '@/data/connection-events';
 import { reconciliationSummary } from '@/data/reconciliation';
 import { listBaselines } from '@/data/baselines';
 import { getGovEntity, explorerRow, displayName } from '@/data/governance';
-import { applicationOwners, type AppAccountRow, type EntitlementRow } from '@/data/directory';
+import { applicationAccountable, type AccountableParty, type AppAccountRow, type EntitlementRow } from '@/data/directory';
 
 interface CatalogApp {
   id: string;
@@ -93,7 +93,7 @@ export function ApplicationOverviewTab({
     lastSync: { at: string; ok: boolean } | null;
     applications: number | null;
     baseline: { name: string; size: number } | null;
-    owners: string[];
+    owners: AccountableParty[];
   } | null>(null);
 
   React.useEffect(() => {
@@ -110,7 +110,11 @@ export function ApplicationOverviewTab({
       // Present only on an IAM or a vault — see `reconcilesApplications`.
       applications: summary.applications ? summary.applications.total : null,
       baseline: primary ? { name: primary.name, size: primary.entitlementIds.length } : null,
-      owners: applicationOwners(app.id).map((o) => o.name),
+      /*
+        Individuals and Governance Teams together. Asking only for individuals said
+        "Nobody owns this application" about one a team had just taken on.
+      */
+      owners: applicationAccountable(app.id),
     });
   }, [app.id]);
 
@@ -162,8 +166,12 @@ export function ApplicationOverviewTab({
     } else if (!live.lastSync.ok) {
       out.push({ id: 'sync', text: 'The last sync failed', tone: 'danger', tab: 'reconciliation', cta: 'See why' });
     }
-    // Ownership is the one gap that is a real governance hole rather than unfinished
-    // wiring: with nobody named, an access request has no one to answer it.
+    /*
+      Ownership is the one gap that is a real governance hole rather than unfinished
+      wiring: with nobody accountable, an access request has no one to answer it. A
+      Governance Team counts — a body answering for an application is real accountability,
+      so this fires only when neither half has anyone in it.
+    */
     if (live.owners.length === 0) {
       out.push({ id: 'owners', text: 'Nobody owns this application', tone: 'danger', tab: 'owners', cta: 'Add an owner' });
     }
@@ -246,13 +254,17 @@ export function ApplicationOverviewTab({
 
           <section>
             <SectionLabel>Governance</SectionLabel>
+            {/* Named people and accountable bodies in one row, because "who answers for
+                this" is one question. A team is marked as a team rather than listed
+                separately: which kind of party it is matters less here than that
+                somebody is named at all. */}
             <Row
               label="Owners"
               value={
                 !live ? (
                   <Pending />
                 ) : live.owners.length ? (
-                  live.owners.join(', ')
+                  live.owners.map((o) => (o.kind === 'team' ? `${o.name} (team)` : o.name)).join(', ')
                 ) : (
                   <StatusChip intent="warning" label="None" />
                 )

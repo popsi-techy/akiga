@@ -18,7 +18,7 @@ import { controlHeight as CONTROL_HEIGHT } from '../../tokens/tokens';
  * swallowed, and a wrapping Tooltip can open on focus. `loading` still uses
  * native `disabled` — a spinner is not something to inspect.
  */
-export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'danger' | 'success';
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
 export interface ButtonProps
@@ -50,38 +50,45 @@ const sizeMap: Record<ButtonSize, MuiButtonProps['size']> = {
   lg: 'large',
 };
 
-/** Shared unavailable look — receded fill, AA text, no extra outline. */
-const unavailableSx = {
-  color: 'var(--ds-color-text-tertiary)',
-  backgroundColor: 'var(--ds-color-surface-disabled)',
-  borderColor: 'transparent',
-  boxShadow: 'none',
-  outline: 'none',
-  cursor: 'not-allowed',
-  '&:hover': {
-    color: 'var(--ds-color-text-tertiary)',
-    backgroundColor: 'var(--ds-color-surface-disabled)',
-    borderColor: 'transparent',
-    boxShadow: 'none',
-  },
-};
+/*
+  There is no local "unavailable" style here on purpose.
 
-export function Button({
-  variant = 'primary',
-  size = 'sm',
-  loading = false,
-  disabled = false,
-  iconOnly = false,
-  startIcon,
-  children,
-  sx,
-  onClick,
-  className,
-  ...rest
-}: ButtonProps) {
+  Every variant's gated look — the fill, the hairline, the label colour, the not-allowed
+  cursor, the focus ring — lives in one place, `muiTheme`'s `MuiButton` overrides, which
+  already branch on `.MuiButton-outlined` and `.MuiButton-text`. This file used to carry a
+  near-copy that only `secondary` and `tertiary` applied on top, and the two drifted: an
+  edit to the copy changed nothing for the contained primary, because the primary never
+  read it.
+*/
+/**
+ * `forwardRef` is load-bearing, not boilerplate.
+ *
+ * `Tooltip` anchors its popper to the child's DOM node, so a Button that swallows the ref
+ * gets no tooltip at all — React logs "Function components cannot be given refs" and the
+ * popper never renders. That had been true of every `<Tooltip><Button/></Tooltip>` in the
+ * product, including the one explaining *why* a gated button is unavailable, which is the
+ * entire reason `disabled` maps to `aria-disabled` here rather than the native attribute.
+ */
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  {
+    variant = 'primary',
+    size = 'sm',
+    loading = false,
+    disabled = false,
+    iconOnly = false,
+    startIcon,
+    children,
+    sx,
+    onClick,
+    className,
+    ...rest
+  },
+  ref,
+) {
   const muiVariant: MuiButtonProps['variant'] =
     variant === 'secondary' ? 'outlined' : variant === 'tertiary' ? 'text' : 'contained';
-  const color: MuiButtonProps['color'] = variant === 'danger' ? 'error' : 'primary';
+  const color: MuiButtonProps['color'] =
+    variant === 'danger' ? 'error' : variant === 'success' ? 'success' : 'primary';
   const unavailable = Boolean(disabled) && !loading;
 
   // Secondary is a neutral-bordered button (matches the product's white "Filter"/"Deactivate").
@@ -95,14 +102,6 @@ export function Button({
             borderColor: 'var(--ds-color-border-strong)',
             backgroundColor: 'var(--ds-color-surface-hover)',
           },
-          '&.Mui-disabled, &[aria-disabled="true"]': {
-            ...unavailableSx,
-            borderColor: 'var(--ds-color-border-default)',
-            '&:hover': {
-              ...unavailableSx['&:hover'],
-              borderColor: 'var(--ds-color-border-default)',
-            },
-          },
         }
       : {};
 
@@ -111,12 +110,6 @@ export function Button({
       ? {
           color: 'var(--ds-color-text-secondary)',
           '&:hover': { backgroundColor: 'var(--ds-color-surface-hover)' },
-          '&.Mui-disabled, &[aria-disabled="true"]': {
-            ...unavailableSx,
-            backgroundColor: 'transparent',
-            boxShadow: 'none',
-            '&:hover': { backgroundColor: 'transparent' },
-          },
         }
       : {};
 
@@ -143,6 +136,7 @@ export function Button({
 
   return (
     <MuiButton
+      ref={ref}
       variant={muiVariant}
       color={color}
       size={sizeMap[size]}
@@ -157,6 +151,6 @@ export function Button({
       {children}
     </MuiButton>
   );
-}
+});
 
 export default Button;

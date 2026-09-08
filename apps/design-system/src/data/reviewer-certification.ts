@@ -3,6 +3,8 @@
  * review. Admin campaign setup lives in `certifications.ts`; this is the inbox
  * a reviewer actually works.
  */
+import { formatDateTime } from '@/lib/datetime';
+
 const STORE_KEY = 'iga.reviewer-certification.v1';
 const SEED_VERSION = 2;
 
@@ -179,14 +181,12 @@ export function formatReviewDate(iso: string): string {
   return `${MONTHS[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2, '0')}, ${d.getUTCFullYear()}`;
 }
 
-export function formatReviewDateTime(iso: string): string {
-  const d = new Date(iso);
-  const h = d.getUTCHours();
-  const m = String(d.getUTCMinutes()).padStart(2, '0');
-  const hour = h % 12 || 12;
-  const ap = h >= 12 ? 'PM' : 'AM';
-  return `${formatReviewDate(iso)} ${hour}:${m} ${ap}`;
-}
+/**
+ * A review timestamp, in the house format. Its own build joined the date and the time with
+ * a bare space and zero-padded the day — "Mar 04, 2026 2:32 PM" — so it read as neither
+ * the comma form nor the middot one.
+ */
+export const formatReviewDateTime = formatDateTime;
 
 export function verifiedCount(campaign: ReviewCampaign): number {
   return campaign.accounts.filter((a) => a.ownership !== null).length;

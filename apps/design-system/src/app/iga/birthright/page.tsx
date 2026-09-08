@@ -94,7 +94,7 @@ export default function BirthrightPoliciesPage() {
       // column is decoration, and the letter at least varies by row.
       render: (r) => (
         <div className="flex items-center gap-3">
-          <Avatar name={r.name} size="sm" />
+          <Avatar name={r.name} size="s" />
           <div className="min-w-0">
             <div className="truncate text-body-sm-strong text-text-primary">{r.name}</div>
             <div className="truncate text-caption text-text-secondary">{r.description || 'No description'}</div>

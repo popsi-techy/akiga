@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Person from '@mui/icons-material/Person';
+import PersonOutline from '@mui/icons-material/PersonOutline';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import BadgeOutlined from '@mui/icons-material/BadgeOutlined';
 import ScheduleOutlined from '@mui/icons-material/ScheduleOutlined';
@@ -21,6 +21,7 @@ import {
   useToast,
 } from '@ds/components';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
+import { applicationDescription } from '@/data/directory';
 import {
   decideReviewRequest,
   formatRequestDate,
@@ -160,7 +161,7 @@ export default function ReviewRequestDetailPage() {
                 />
               </div>
               <div className="flex shrink-0 gap-3">
-                <Button startIcon={<CheckCircleOutline />} className="!flex-1" onClick={() => decide('approved')}>
+                <Button variant="success" startIcon={<CheckCircleOutline />} className="!flex-1" onClick={() => decide('approved')}>
                   Approve
                 </Button>
                 <Button variant="danger" startIcon={<CancelOutlined />} className="!flex-1" onClick={() => decide('rejected')}>
@@ -179,33 +180,101 @@ export default function ReviewRequestDetailPage() {
   );
 }
 
+/**
+ * A titled section: one header line, then one bordered panel.
+ *
+ * Not `Card`. `Card` paints a grey tray around a white inner panel, and each of these
+ * sections already needs a bordered panel of its own to hold a two-tone body — so the
+ * page was rendering two nested frames per section, a grey one around a white one around
+ * a white one. The reference has a single frame, which is also the honest count: there is
+ * one object here, not two.
+ *
+ * The icon is outlined at 18px. Filled is reserved for a `Card` header, where the glyph is
+ * forced to 15px and a 1px stroke stops reading — at 18px on a bare line the outlined mark
+ * is the right weight and matches every other inline icon on the page.
+ */
+function DetailSection({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="flex flex-col gap-2">
+      <div className="flex items-center gap-2 px-1">
+        <span className="grid h-[18px] w-[18px] shrink-0 place-items-center text-icon" aria-hidden>
+          {icon}
+        </span>
+        <h2 className="text-card-title text-text-primary">{title}</h2>
+      </div>
+      <div className="overflow-hidden rounded-xl border border-border-subtle bg-surface">{children}</div>
+    </section>
+  );
+}
+
+/**
+ * A 1px hairline, 6px dash / 2px gap.
+ *
+ * A filled 1px strip with a repeating gradient smears to ~2px on fractional
+ * device ratios (this screen is 1.25). An SVG stroke at y=0.5 stays one pixel.
+ * Subtle, not default: these sit on the card, whose own edge is `border-subtle`.
+ */
+function SectionDash({ edge }: { edge: 'top' | 'bottom' }) {
+  return (
+    <svg
+      aria-hidden
+      className={`pointer-events-none absolute inset-x-0 h-px w-full ${edge === 'top' ? 'top-0' : 'bottom-0'}`}
+      preserveAspectRatio="none"
+    >
+      <line
+        x1="0"
+        y1="0.5"
+        x2="100%"
+        y2="0.5"
+        stroke="var(--ds-color-border-subtle)"
+        strokeWidth="1"
+        strokeDasharray="6 2"
+        shapeRendering="crispEdges"
+      />
+    </svg>
+  );
+}
+
 function RequestedForSection({ request }: { request: AccessRequest }) {
   return (
-    <Card title="Requested For" icon={<Person />} padding="none">
-      <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface">
-        <div className="flex items-center gap-3 px-4 py-4">
-          <Avatar name={request.requestedForName} initials={request.requestedForName.charAt(0)} size="md" kind="person" />
-          <div className="min-w-0 flex-1">
-            <div className="text-body-strong text-text-primary">{request.requestedForName}</div>
-            <div className="text-body-sm text-text-secondary">{request.requestedForEmail}</div>
-          </div>
-          <button type="button" className="shrink-0 text-body-sm-strong text-text-link hover:underline">
-            User Details
-          </button>
+    <DetailSection title="Requested For" icon={<PersonOutline sx={{ fontSize: 18 }} />}>
+      <div className="flex items-center gap-3 p-4">
+        <Avatar name={request.requestedForName} initials={request.requestedForName.charAt(0)} size="md" kind="person" />
+        <div className="min-w-0 flex-1">
+          {/* 16px, not 14: the subject of the whole page reads a step above the fields
+              describing it. */}
+          <div className="truncate text-h5 text-text-primary">{request.requestedForName}</div>
+          <div className="truncate text-body-sm text-text-secondary">{request.requestedForEmail}</div>
         </div>
-        <div className="flex flex-wrap items-center gap-2 border-t border-border bg-subtle px-4 py-3 text-body-sm">
-          <span className="text-text-secondary">Requested By:</span>
-          <Avatar name={request.requestedByName} initials={request.requestedByName.charAt(0)} size="sm" kind="person" />
-          <span className="font-emphasis text-text-primary">{request.requestedByName}</span>
-          {request.requestedByTitle && (
-            <>
-              <span className="text-text-tertiary">·</span>
-              <span className="text-text-secondary">{request.requestedByTitle}</span>
-            </>
-          )}
-        </div>
+        <button type="button" className="shrink-0 rounded-sm text-body text-text-link hover:underline">
+          User Details
+        </button>
       </div>
-    </Card>
+      <div className="relative flex flex-wrap items-center gap-2 bg-subtle px-4 py-3">
+        <SectionDash edge="top" />
+        <span className="text-body-sm text-text-secondary">Requested By:</span>
+        {/* The mark and the name are one fact — a person — so they keep their own tighter
+            gap than the row's, which is what groups them without a container. */}
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <Avatar name={request.requestedByName} initials={request.requestedByName.charAt(0)} size="xs" kind="person" />
+          <span className="truncate text-body-sm-medium text-text-primary">{request.requestedByName}</span>
+        </span>
+        {request.requestedByTitle && (
+          <>
+            <span aria-hidden className="h-1 w-1 shrink-0 rounded-pill bg-[var(--ds-color-text-tertiary)]" />
+            <span className="min-w-0 truncate text-body-sm text-text-secondary">{request.requestedByTitle}</span>
+          </>
+        )}
+      </div>
+    </DetailSection>
   );
 }
 
@@ -213,50 +282,53 @@ function RequestedItemSection({ request }: { request: AccessRequest }) {
   const sectionIcon =
     request.type === 'role' ? <BadgeOutlined sx={{ fontSize: 20 }} /> : <ShieldOutlined sx={{ fontSize: 20 }} />;
   const riskLabel = request.type === 'entitlement' ? 'Entitlement Risk:' : 'Access Risk:';
+  const appDescription = applicationDescription(request.appId, request.appName);
 
   return (
-    <Card title={itemSectionTitle(request.type)} icon={sectionIcon} padding="none">
-      <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface">
-        {request.type === 'entitlement' && request.appName && (
-          <div className="flex items-center gap-3 border-b border-border bg-subtle px-4 py-4">
-            <AppIcon app={request.appName} size={40} variant="surface" />
-            <div className="min-w-0">
-              <div className="text-body-strong text-text-primary">{request.appName}</div>
-              {request.itemDescription && (
-                <div className="text-body-sm text-text-secondary">{request.itemDescription}</div>
-              )}
-            </div>
-          </div>
-        )}
-
-        <div className="p-4">
-          <div className="rounded-[10px] border border-border-subtle p-3">
-            <ItemPrimaryRow request={request} />
-
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {request.itemRiskScore != null && request.itemRiskSeverity && (
-                <MetaInset label={riskLabel}>
-                  <SeverityChip severity={request.itemRiskSeverity} score={request.itemRiskScore} />
-                </MetaInset>
-              )}
-              <MetaInset label="Access Duration:">
-                <span className="inline-flex items-center gap-1 text-body-sm-strong text-text-primary">
-                  <ScheduleOutlined sx={{ fontSize: 18 }} className="text-icon" />
-                  {durationLabel(request)}
-                </span>
-              </MetaInset>
-            </div>
-
-            <JustificationInset text={request.businessJustification} />
-            {(request.attachments?.length ?? 0) > 0 && (
-              <div className="mt-3">
-                <FileAttachmentField files={request.attachments ?? []} readOnly />
-              </div>
+    <DetailSection title={itemSectionTitle(request.type)} icon={sectionIcon}>
+      {request.type === 'entitlement' && request.appName && (
+        /* The application's own description, from the Directory — not `itemDescription`,
+           which is the entitlement and already sits on the row below. */
+        <div className="relative flex items-center gap-3 bg-subtle p-4">
+          <SectionDash edge="bottom" />
+          <AppIcon app={request.appName} size={40} variant="surface" />
+          <div className="min-w-0">
+            <div className="truncate text-h5 text-text-primary">{request.appName}</div>
+            {appDescription && (
+              <p className="mt-0.5 truncate text-body-sm text-text-secondary">{appDescription}</p>
             )}
           </div>
         </div>
+      )}
+
+      <div className="p-4">
+        {/* One inset box, its blocks on a single 16px rhythm rather than a stack of
+            hand-picked margins. */}
+        <div className="flex flex-col gap-4 rounded-[10px] border border-border-subtle p-3">
+          <ItemPrimaryRow request={request} />
+
+          {/* `items-stretch`, so the two chips match height when one wraps to two lines. */}
+          <div className="grid items-stretch gap-4 sm:grid-cols-2">
+            {request.itemRiskScore != null && request.itemRiskSeverity && (
+              <MetaInset label={riskLabel}>
+                <SeverityChip severity={request.itemRiskSeverity} score={request.itemRiskScore} />
+              </MetaInset>
+            )}
+            <MetaInset label="Access Duration:">
+              <span className="inline-flex items-center gap-1 text-body-medium text-text-primary">
+                <ScheduleOutlined sx={{ fontSize: 18 }} className="shrink-0 text-icon" />
+                {durationLabel(request)}
+              </span>
+            </MetaInset>
+          </div>
+
+          <JustificationInset text={request.businessJustification} />
+          {(request.attachments?.length ?? 0) > 0 && (
+            <FileAttachmentField label="Attachments" files={request.attachments ?? []} readOnly />
+          )}
+        </div>
       </div>
-    </Card>
+    </DetailSection>
   );
 }
 
@@ -266,7 +338,7 @@ function ItemPrimaryRow({ request }: { request: AccessRequest }) {
       <div className="flex items-start gap-3">
         <AppIcon app={request.appName} size={36} variant="surface" />
         <div className="min-w-0">
-          <div className="text-body-strong text-text-primary">{request.itemName}</div>
+          <div className="text-h5 text-text-primary">{request.itemName}</div>
           {request.itemDescription && (
             <p className="mt-1 text-body-sm text-text-secondary">{request.itemDescription}</p>
           )}
@@ -287,9 +359,9 @@ function ItemPrimaryRow({ request }: { request: AccessRequest }) {
         <Icon sx={{ fontSize: 18 }} />
       </span>
       <div className="min-w-0">
-        <div className="text-body-strong text-text-primary">{request.itemName}</div>
+        <div className="text-h5 text-text-primary">{request.itemName}</div>
         {request.itemDescription && (
-          <p className="mt-1 text-body-sm text-text-secondary">{request.itemDescription}</p>
+          <p className="mt-0.5 text-body-sm text-text-secondary">{request.itemDescription}</p>
         )}
         {request.roleCode && (
           <span className="mt-1 inline-block rounded-md bg-subtle px-2 py-0.5 text-caption-strong text-text-secondary">
@@ -316,14 +388,17 @@ function JustificationInset({ text }: { text: string }) {
   const shown = long && !expanded ? `${text.slice(0, 220).trim()}…` : text;
 
   return (
-    <div className="mt-4 rounded-md border border-border-subtle bg-subtle px-2.5 py-2">
-      <div className="text-micro uppercase tracking-wide text-text-secondary">Justification</div>
-      <p className="mt-1 text-body-sm leading-relaxed text-text-primary">{shown}</p>
+    <div className="rounded-md border border-border-subtle bg-subtle px-2.5 py-2">
+      {/* `text-overline`, not `text-micro`: at 10px the label was smaller than anything
+          else on the page and read as a caption on the paragraph rather than a heading
+          over it. */}
+      <div className="text-overline uppercase text-text-secondary">Justification</div>
+      <p className="mt-1 text-body leading-relaxed text-text-primary">{shown}</p>
       {long && (
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="mt-1 text-caption-strong text-text-link hover:underline"
+          className="mt-1 rounded-sm text-body-sm text-text-link hover:underline"
         >
           {expanded ? 'Show less' : 'Read more'}
         </button>

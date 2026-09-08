@@ -41,6 +41,7 @@ import {
 } from './applications-store';
 import { DIRECTORY_LIST_ID_SET } from './application-directory-list';
 import { getOwners, type OwnedEntityType } from './entity-owners';
+import { getTeamCharter, setTeamCharter, type TeamCharterField } from './team-charter';
 import { listAuthorizations } from './provisioning-auth';
 import { listStoredEntitlements } from './entitlements-store';
 
@@ -208,6 +209,54 @@ export function applicationOwners(id: string): { id: string; name: string }[] {
   return resolvePeople(getOwners('application', id, seed)).map((p) => ({ id: p.id, name: p.name }));
 }
 
+/** Someone accountable for an entity, and which of the two kinds they are. */
+export interface AccountableParty {
+  id: string;
+  name: string;
+  kind: 'person' | 'team';
+}
+
+/**
+ * Everyone accountable for an entity: the named individuals and the Governance Teams whose
+ * charter covers it.
+ *
+ * One function because "who owns this" has to have one answer, and it did not. Every
+ * surface asked only for individuals — the applications list's Owners column, the
+ * application Overview's Owners row and its "nobody owns this" warning, and the Owners
+ * count on the entitlement, technical-role and business-role pages. So an entity a team
+ * had just taken on still showed "+ Add owner" in the list and "Nobody owns this
+ * application" on its own overview, and the three counts additionally ignored the owner
+ * store, reporting the seed however many owners had since been added or removed.
+ *
+ * Individuals first: a named person is the more specific accountability, and the order is
+ * what a truncated cell keeps.
+ *
+ * Store-backed on both halves, so callers must read it after mount.
+ */
+export function entityAccountable(
+  entityType: OwnedEntityType,
+  entityId: string,
+  seedOwnerIds: string[],
+): AccountableParty[] {
+  return [
+    ...resolvePeople(getOwners(entityType, entityId, seedOwnerIds)).map((p) => ({
+      id: p.id,
+      name: p.name,
+      kind: 'person' as const,
+    })),
+    ...listGoverningTeams(entityType, entityId).map((t) => ({
+      id: t.id,
+      name: t.name,
+      kind: 'team' as const,
+    })),
+  ];
+}
+
+/** `entityAccountable` for an application, which knows its own seed owners. */
+export function applicationAccountable(id: string): AccountableParty[] {
+  return entityAccountable('application', id, catalogApps.find((a) => a.id === id)?.ownerIds ?? []);
+}
+
 /**
  * The Governance Teams that own a given entity — the team side of ownership,
  * alongside the individual owners in the entity-owners store.
@@ -248,15 +297,70 @@ export function canGovernanceTeamsOwn(entityType: OwnedEntityType): boolean {
   return TEAM_OWNED_FIELD[entityType] !== null;
 }
 
+const toTeamRow = (g: (typeof governanceTeams)[number]): GovernanceTeamRow => ({
+  id: g.id,
+  name: g.name,
+  description: g.description,
+  reviewerCount: g.reviewerIds.length,
+});
+
+/** This team's effective charter for one kind of entity — store over seed. */
+export function teamCharterIds(teamId: string, field: TeamCharterField): string[] {
+  const team = govTeamById.get(teamId);
+  if (!team) return [];
+  return getTeamCharter(teamId, field, team[field]);
+}
+
+/**
+ * The teams accountable for this entity.
+ *
+ * Derived by asking every team's charter rather than storing a list on the entity, so the
+ * relation has one representation — the team page reads the same charter, and the two
+ * pages cannot disagree about who owns what.
+ *
+ * Store-backed, so callers must read it after mount.
+ */
 export function listGoverningTeams(
   entityType: OwnedEntityType,
   entityId: string,
 ): GovernanceTeamRow[] {
   const field = TEAM_OWNED_FIELD[entityType];
   if (!field) return [];
-  return governanceTeams
-    .filter((g) => g[field].includes(entityId))
-    .map((g) => ({ id: g.id, name: g.name, description: g.description, reviewerCount: g.reviewerIds.length }));
+  return governanceTeams.filter((g) => teamCharterIds(g.id, field).includes(entityId)).map(toTeamRow);
+}
+
+/** Teams that could take this entity on, for an add picker. */
+export function listTeamsNotGoverning(
+  entityType: OwnedEntityType,
+  entityId: string,
+): GovernanceTeamRow[] {
+  const field = TEAM_OWNED_FIELD[entityType];
+  if (!field) return [];
+  return governanceTeams.filter((g) => !teamCharterIds(g.id, field).includes(entityId)).map(toTeamRow);
+}
+
+/**
+ * Put this entity into each team's charter.
+ *
+ * The write goes to the team record even though it is triggered from the entity, because
+ * the charter is where the relation lives. Callers pass entity + teams and never touch the
+ * field mapping, so a new governable entity kind is one line in `TEAM_OWNED_FIELD`.
+ */
+export function addGoverningTeams(entityType: OwnedEntityType, entityId: string, teamIds: string[]): void {
+  const field = TEAM_OWNED_FIELD[entityType];
+  if (!field) return;
+  for (const teamId of teamIds) {
+    const current = teamCharterIds(teamId, field);
+    if (current.includes(entityId)) continue;
+    setTeamCharter(teamId, field, [...current, entityId]);
+  }
+}
+
+/** Take this entity out of one team's charter. */
+export function removeGoverningTeam(entityType: OwnedEntityType, entityId: string, teamId: string): void {
+  const field = TEAM_OWNED_FIELD[entityType];
+  if (!field) return;
+  setTeamCharter(teamId, field, teamCharterIds(teamId, field).filter((x) => x !== entityId));
 }
 export function resolveEntitlements(ids: string[]): EntitlementRow[] {
   return ids.map((id) => entitlementById(id)).filter(Boolean).map((e) => toEntRow(e as FlatEntitlement));
@@ -381,6 +485,34 @@ function toCatalogRow(app: CatalogApp): ApplicationRow {
     lifecycle: applicationLifecycle(app.id),
     ...appProfileFor(app.id),
   };
+}
+
+/**
+ * One application row by id, whichever half of the Directory holds it.
+ *
+ * The catalog is seeded and onboarded applications live in the session store, and a
+ * relation that can point at either — a team's charter, say — has to resolve both or it
+ * silently drops rows. Filtering through `appById` alone is what let a team own an
+ * onboarded application on the application's page and not on the team's.
+ */
+export function applicationRowById(id: string): ApplicationRow | null {
+  const onboarded = getOnboardedApplication(id);
+  if (onboarded) return onboardedRow(onboarded);
+  const app = appById.get(id);
+  return app ? toCatalogRow(app) : null;
+}
+
+/** What an application is, resolved from the Directory rather than restated on a request. */
+export function applicationDescription(id?: string, name?: string): string | undefined {
+  if (id) {
+    const byId = applicationRowById(id);
+    if (byId?.description) return byId.description;
+  }
+  if (name) {
+    const byName = listApplications().find((a) => a.name === name);
+    if (byName?.description) return byName.description;
+  }
+  return undefined;
 }
 
 export function listCataloguedApplications(): ApplicationRow[] {
@@ -580,12 +712,17 @@ export function getGovernanceTeamDetail(id: string) {
   return {
     team,
     reviewers: resolvePeople(team.reviewerIds),
-    ownedApplications: team.ownedApplicationIds
-      .map((aid) => appById.get(aid))
-      .filter((a): a is CatalogApp => Boolean(a))
-      .map(toCatalogRow),
-    ownedEntitlements: resolveEntitlements(team.ownedEntitlementIds),
-    ownedTechnicalRoles: team.ownedTechnicalRoleIds.map((tid) => techRoleById.get(tid)).filter(Boolean).map((r) => toRoleRow(r!)),
-    ownedBusinessRoles: team.ownedBusinessRoleIds.map((bid) => bizRoleById.get(bid)).filter(Boolean).map((r) => toRoleRow(r!)),
+    /*
+      Read through `teamCharterIds`, not off the seed record. An application whose Owners
+      tab has just added this team has to appear here too — the charter is one relation
+      seen from two ends, and reading the raw seed here is what would let them disagree.
+      Store-backed, so this whole detail is read after mount.
+    */
+    ownedApplications: teamCharterIds(team.id, 'ownedApplicationIds')
+      .map(applicationRowById)
+      .filter((a): a is ApplicationRow => Boolean(a)),
+    ownedEntitlements: resolveEntitlements(teamCharterIds(team.id, 'ownedEntitlementIds')),
+    ownedTechnicalRoles: teamCharterIds(team.id, 'ownedTechnicalRoleIds').map((tid) => techRoleById.get(tid)).filter(Boolean).map((r) => toRoleRow(r!)),
+    ownedBusinessRoles: teamCharterIds(team.id, 'ownedBusinessRoleIds').map((bid) => bizRoleById.get(bid)).filter(Boolean).map((r) => toRoleRow(r!)),
   };
 }

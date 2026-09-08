@@ -8,10 +8,11 @@ import ScheduleOutlined from '@mui/icons-material/ScheduleOutlined';
 import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlined from '@mui/icons-material/CancelOutlined';
 import {
-  Avatar,
   Button,
   DataTable,
+  IdentityCell,
   Input,
+  StatusChip,
   Tabs,
   useToast,
   type Column,
@@ -97,42 +98,39 @@ export default function ReviewRequestsPage() {
     {
       id: 'duration',
       header: 'Access Duration',
-      render: (r) => (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            router.push(`/iga/reviewer/review-requests/${r.id}`);
-          }}
-          className="text-body-sm-strong text-text-link hover:underline"
-        >
-          {r.accessDurationLabel}
-        </button>
-      ),
+      sortable: true,
+      value: (r) => r.accessDurationLabel,
+      /*
+        A pill, and not a control.
+
+        It was a blue text button that navigated to the request — which the row click
+        already does, so the only thing the link added was colouring the value the reader
+        came to read. "A value is not a control": an underlined blue date promises
+        somewhere else to go, and here it went where the row was going anyway.
+
+        Tinted through `StatusChip intent="info" dot={false}`, the taxonomy-tag form, so it
+        inherits the chip's shape, type step and verified contrast rather than becoming a
+        local pill. No dot: a dot reads as state, and how long access lasts is a property
+        of the request, not a stage it is in.
+      */
+      render: (r) => <StatusChip intent="info" dot={false} label={r.accessDurationLabel} />,
     },
     {
       id: 'requestedFor',
       header: 'Requested For',
       sortable: true,
       value: (r) => r.requestedForName,
-      render: (r) => (
-        <div className="flex items-center gap-2.5">
-          <Avatar name={r.requestedForName} initials={r.requestedForName.charAt(0)} size="sm" kind="person" />
-          <span className="truncate text-text-primary">{r.requestedForName}</span>
-        </div>
-      ),
+      // `IdentityCell`, not a hand-rolled avatar + name: it is the table treatment for a
+      // person and it pins the 28px `s` mark, which is how this cell had drifted to the
+      // 32px form size in the first place. No `email` — the queue shows names only.
+      render: (r) => <IdentityCell name={r.requestedForName} />,
     },
     {
       id: 'requestedBy',
       header: 'Requested By',
       sortable: true,
       value: (r) => r.requestedByName,
-      render: (r) => (
-        <div className="flex items-center gap-2.5">
-          <Avatar name={r.requestedByName} initials={r.requestedByName.charAt(0)} size="sm" kind="person" />
-          <span className="truncate text-text-primary">{r.requestedByName}</span>
-        </div>
-      ),
+      render: (r) => <IdentityCell name={r.requestedByName} />,
     },
     {
       id: 'submitted',

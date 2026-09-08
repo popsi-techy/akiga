@@ -323,6 +323,9 @@ const integrationCatalogApps: { id: string; name: string; description: string; o
     { id: 'ent-jira-project', name: 'Project Admin', description: 'Configure workflows and boards for a project.', risk: 38, ownerIds: ['o-sofia'] },
     { id: 'ent-jira-contrib', name: 'Contributor', description: 'Create, comment on, and transition issues.', risk: 12, ownerIds: ['o-sofia'] },
   ] },
+  { id: 'app-cms', name: 'Content Hub', description: 'Managed system pages for marketing and product content.', ownerIds: ['o-sofia'], entitlements: [
+    { id: 'ent-cms-write', name: 'WRITE_ACCESS', description: 'Create, edit, and publish content on managed system pages.', risk: 94, ownerIds: ['o-sofia'] },
+  ] },
 ];
 
 /** Integration fixtures plus the ten typed directory-list instances. */

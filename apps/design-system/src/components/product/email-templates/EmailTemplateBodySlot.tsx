@@ -46,14 +46,24 @@ function formatOtpDisplay(code: string): string {
   return code.replace(/\s/g, '').split('').join(' ');
 }
 
+/**
+ * The heading every "here are the request's particulars" card carries.
+ *
+ * Two templates render that card — a new review request and a submitted access request —
+ * and they had drifted to "Request details" with a clipboard and "Request reference" with
+ * a hash. Same card, same job, so one definition: a reader who sees both emails should
+ * recognise the second block from the first.
+ */
+const REQUEST_DETAILS_CARD = {
+  title: 'Request details',
+  icon: <AssignmentOutlined sx={{ fontSize: 18 }} />,
+  ariaLabel: 'Request details',
+} as const;
+
 function RequestDetailsCard({ details }: { details: ReviewRequestNewBody }) {
   return (
-    <EmailDetailCard
-      title="Request details"
-      icon={<AssignmentOutlined sx={{ fontSize: 18 }} />}
-      ariaLabel="Request details"
-    >
-      <DetailField icon={<TagOutlined sx={{ fontSize: 16 }} />} label="Request" value={details.requestNumber} />
+    <EmailDetailCard {...REQUEST_DETAILS_CARD}>
+      <DetailField icon={<TagOutlined sx={{ fontSize: 16 }} />} label="Request ID" value={details.requestNumber} />
       <DetailField icon={<VpnKeyOutlined sx={{ fontSize: 16 }} />} label="Item" value={details.itemName} />
       <DetailField icon={<LabelOutlined sx={{ fontSize: 16 }} />} label="Type" value={details.itemTypeLabel} />
       <DetailField
@@ -74,12 +84,8 @@ function RequestDetailsCard({ details }: { details: ReviewRequestNewBody }) {
 
 function AccessRequestReferenceCard({ details }: { details: AccessRequestSubmittedBody }) {
   return (
-    <EmailDetailCard
-      title="Request reference"
-      icon={<TagOutlined sx={{ fontSize: 18 }} />}
-      ariaLabel="Access request reference"
-    >
-      <DetailField icon={<TagOutlined sx={{ fontSize: 16 }} />} label="Request" value={details.requestNumber} />
+    <EmailDetailCard {...REQUEST_DETAILS_CARD}>
+      <DetailField icon={<TagOutlined sx={{ fontSize: 16 }} />} label="Request ID" value={details.requestNumber} />
       <DetailField
         icon={<MailOutlineOutlined sx={{ fontSize: 16 }} />}
         label="Requested by"

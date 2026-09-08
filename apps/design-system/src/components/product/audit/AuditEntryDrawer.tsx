@@ -280,7 +280,7 @@ export function AuditEntryDrawer({
                 </span>
               }
             />
-            <InfoRow className={ROW} icon={infoIcon.submitted} label="Request" value={entry.requestId} />
+            <InfoRow className={ROW} icon={infoIcon.submitted} label="Request ID" value={entry.requestId} />
             <InfoRow
               className={ROW}
               icon={infoIcon.outcome}

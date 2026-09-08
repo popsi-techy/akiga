@@ -452,7 +452,7 @@ export function EmergencyOwnersTab({
       // is decoration, and the letter at least varies by row.
       render: (t) => (
         <div className="flex items-center gap-3">
-          <Avatar name={t.name} size="sm" />
+          <Avatar name={t.name} size="s" />
           <div className="min-w-0">
             <div className="truncate text-body-sm-strong text-text-primary">{t.name}</div>
             {/* The description drops out while the panel is open, along with the

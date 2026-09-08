@@ -31,7 +31,14 @@ export default function GovernanceTeamDetailPage() {
   const id = String(useParams().id);
   const router = useRouter();
   const [tab, setTab] = React.useState('overview');
-  const detail = getGovernanceTeamDetail(id);
+  /*
+    The charter is store-backed, so it is re-read after mount and after the Reviewers tab
+    writes: an application whose Owners tab just added this team has to show up in the
+    owned lists here. The first paint uses the seed, which is what the server rendered.
+  */
+  const [detail, setDetail] = React.useState(() => getGovernanceTeamDetail(id));
+  const refresh = React.useCallback(() => setDetail(getGovernanceTeamDetail(id)), [id]);
+  React.useEffect(refresh, [refresh]);
 
   if (!detail) return <DetailNotFound title="Governance team not found" backHref="/iga/directory/governance-teams" backLabel="Back to Governance Teams" />;
   const { team, reviewers, ownedApplications, ownedEntitlements, ownedTechnicalRoles, ownedBusinessRoles } = detail;
@@ -59,7 +66,7 @@ export default function GovernanceTeamDetailPage() {
         </div>
       )}
       {tab === 'reviewers' && (
-        <EntityOwnersTab entityType="governance-team" entityId={team.id} seedOwnerIds={team.reviewerIds} label="Reviewer" emptyHint="Add people from the workforce as reviewers for this governance team." />
+        <EntityOwnersTab entityType="governance-team" entityId={team.id} seedOwnerIds={team.reviewerIds} label="Reviewer" emptyHint="Add people from the workforce as reviewers for this governance team." onChanged={refresh} />
       )}
       {tab === 'applications' && (
         <RelationTable

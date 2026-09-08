@@ -73,7 +73,7 @@ export default function CertificationsListPage() {
       // the column is decoration, and the letter at least varies by row.
       render: (c) => (
         <div className="flex items-center gap-3">
-          <Avatar name={c.name} size="sm" />
+          <Avatar name={c.name} size="s" />
           <div className="min-w-0">
             <div className="truncate text-body-sm-strong text-text-primary">{c.name}</div>
             <div className="truncate text-caption text-text-secondary">{TYPE_LABEL[c.type]} review</div>

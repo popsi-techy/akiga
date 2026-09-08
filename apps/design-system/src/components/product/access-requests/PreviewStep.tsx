@@ -10,6 +10,7 @@ import {
   OverflowChips,
   Select,
   StatusChip,
+  Tooltip,
   useToast,
   type Column,
 } from '@ds/components';
@@ -123,6 +124,23 @@ export function PreviewJustificationDock({
   const items = requestItems(request);
   const justificationOk = request.businessJustification.replace(/<[^>]*>/g, '').trim().length >= 10;
   const attachments = request.attachments ?? [];
+  /*
+    Why Submit is unavailable, in the order the reader would fix it — there is nothing to
+    justify until something is being asked for.
+
+    Naming the reason is not decoration here. `Button` maps `disabled` to `aria-disabled`
+    rather than the native attribute *specifically* so a gated control stays focusable and
+    the explanation stays reachable; a call site that gates without explaining takes the
+    whole cost of that choice — a focusable button that does nothing — and none of the
+    benefit, leaving a keyboard reader on "Submit Request, unavailable" with no way to
+    learn what is missing.
+  */
+  const blockedReason =
+    items.length === 0
+      ? 'Add at least one entitlement to submit this request.'
+      : !justificationOk
+        ? 'Add a justification of at least 10 characters.'
+        : null;
 
   return (
     <aside
@@ -166,13 +184,23 @@ export function PreviewJustificationDock({
               if (next) onChange(next);
             }}
             multiline
-            minRows={3}
+            // 5 rows = 100px at this type step. A floor, not a height — the field still
+            // grows as the reason gets longer, and the attachment dropzone below takes
+            // whatever the column has left.
+            minRows={5}
             disabled={readOnly}
             required
           />
         </div>
         <FileAttachmentField
           fill
+          /*
+            Ten is the cap. Past that the dock stops being a list of evidence and becomes a
+            folder — and an approver who has to open twelve files to answer one question
+            will open none of them. The field hides "Add more files" at the limit and says
+            so, rather than letting a picker take twelve and silently keeping ten.
+          */
+          maxFiles={10}
           files={attachments}
           onChange={(next) => {
             const saved = updateAccessRequest(request.id, { attachments: next });
@@ -182,20 +210,30 @@ export function PreviewJustificationDock({
             }
             onChange(saved);
           }}
+          // Without this the rejects are dropped in silence, and a reader who picked
+          // twelve files sees ten appear with no account of the other two.
+          onReject={(rejects) => toast.error(rejects[0]?.message ?? 'Some files were not attached.')}
           readOnly={readOnly}
         />
       </div>
       {onSubmit && !readOnly && (
         <div className="shrink-0 px-4 py-3">
-          <Button
-            variant="primary"
-            fullWidth
-            loading={submitting}
-            disabled={!justificationOk || items.length === 0}
-            onClick={onSubmit}
-          >
-            Submit Request
-          </Button>
+          {/* `describeChild`, so the reason lands on `aria-describedby` and explains the
+              button rather than renaming it — and the tooltip opens on focus, so a reader
+              who tabs here hears why. Same pattern the wizard chrome uses for its own
+              gated CTA. The gated button keeps `pointer-events: auto`, so no wrapper span
+              is needed for the hover to register. */}
+          {blockedReason ? (
+            <Tooltip title={blockedReason} describeChild>
+              <Button variant="primary" fullWidth loading={submitting} disabled onClick={onSubmit}>
+                Submit Request
+              </Button>
+            </Tooltip>
+          ) : (
+            <Button variant="primary" fullWidth loading={submitting} onClick={onSubmit}>
+              Submit Request
+            </Button>
+          )}
         </div>
       )}
     </aside>

@@ -105,16 +105,33 @@ export const muiTheme = createTheme({
           /**
            * Unavailable (gated) buttons. Not native-disabled — see Button.tsx.
            *
-           * Contrast: `text.tertiary` on `surface.disabled` is ≥4.5:1 (1.4.3). No
-           * extra outline — a contained primary already has a filled shape, and a
-           * second ring on a receded control looks like a focus state that never
-           * leaves. Keyboard focus still gets the brand ring (2.4.7).
+           * ## A fill *and* an edge
+           *
+           * "A contained primary already has a filled shape" was the previous reasoning
+           * for having no outline, and it was wrong twice over. `surface.disabled` was
+           * `neutral[100]` #F8F8FA — 1.06:1 off white and 1.01:1 off `background.subtle`,
+           * so the shape it was relying on did not exist on any surface in the system. In
+           * a justification dock, which is `subtle`, the Submit button was simply not
+           * there.
+           *
+           * The fill is now `neutral[1000]` #C4C9D2 (1.59:1 on `subtle`), and the button
+           * also carries a hairline. Both, because a component cannot know what it has
+           * been dropped on: a fill can only ever be tuned against one ground, an edge
+           * reads on all of them. `inset` box-shadow rather than a border, since a
+           * contained button has none and a real one would shift the label a pixel
+           * between states.
+           *
+           * Contrast: `text.secondary` on the darker fill is 4.60:1. It has to clear AA —
+           * these buttons are `aria-disabled` and stay focusable so the tooltip explaining
+           * *why* is reachable, and a focusable control is not "inactive" for 1.4.3.
+           * `text.tertiary` would be 3.24:1 and fail. Keyboard focus still gets the brand
+           * ring (2.4.7).
            */
           '&.Mui-disabled, &[aria-disabled="true"]': {
             backgroundColor: 'var(--ds-color-surface-disabled)',
-            color: 'var(--ds-color-text-tertiary)',
+            color: 'var(--ds-color-text-secondary)',
             borderColor: 'transparent',
-            boxShadow: 'none',
+            boxShadow: 'inset 0 0 0 1px var(--ds-color-border-default)',
             outline: 'none',
             opacity: 1,
             pointerEvents: 'auto',
@@ -122,16 +139,19 @@ export const muiTheme = createTheme({
             '&:hover': {
               backgroundColor: 'var(--ds-color-surface-disabled)',
               borderColor: 'transparent',
-              boxShadow: 'none',
+              boxShadow: 'inset 0 0 0 1px var(--ds-color-border-default)',
             },
             '&.Mui-focusVisible': {
               outline: '2px solid var(--ds-color-border-focus)',
               outlineOffset: '2px',
             },
           },
+          // Outlined carries a real border, so it drops the shared ring rather than
+          // wearing both — two edges a pixel apart read as a double border.
           '&.MuiButton-outlined.Mui-disabled, &.MuiButton-outlined[aria-disabled="true"]': {
             borderColor: 'var(--ds-color-border-default)',
-            '&:hover': { borderColor: 'var(--ds-color-border-default)' },
+            boxShadow: 'none',
+            '&:hover': { borderColor: 'var(--ds-color-border-default)', boxShadow: 'none' },
           },
           '&.MuiButton-text.Mui-disabled, &.MuiButton-text[aria-disabled="true"]': {
             backgroundColor: 'transparent',

@@ -41,6 +41,7 @@
     ]},
     { "group": "analytics", "label": "Analytics", "items": [
       { "id": "governance-analytics", "label": "Governance Analytics", "route": "/iga/governance-analytics", "icon": "assessment", "personas": ["administrator", "auditor"] },
+      { "id": "governance-analytics-v2", "label": "Governance Analytics V2", "route": "/iga/governance-analytics-v2", "icon": "insights", "personas": ["administrator", "auditor"] },
       { "id": "reports", "label": "Reports", "route": "/iga/reports", "icon": "assessment", "personas": ["auditor", "administrator"] },
       { "id": "audit-logs", "label": "Audit Logs", "route": "/iga/audit", "icon": "history", "personas": ["auditor", "administrator"] },
 

@@ -8,7 +8,6 @@ import GroupsOutlined from '@mui/icons-material/GroupsOutlined';
 import TuneOutlined from '@mui/icons-material/TuneOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import PersonAddAltOutlined from '@mui/icons-material/PersonAddAltOutlined';
-import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
 import {
   DataTable,
@@ -28,6 +27,9 @@ import {
 } from '@ds/components';
 import {
   listGoverningTeams,
+  listTeamsNotGoverning,
+  addGoverningTeams,
+  removeGoverningTeam,
   canGovernanceTeamsOwn,
   listUserIdentities,
   resolvePeople,
@@ -38,7 +40,19 @@ import { getOwners, setOwners, type OwnedEntityType } from '@/data/entity-owners
 import { PeekPanel, PeekSlot } from './PeekPanel';
 import { IdentityDetailsBody } from './IdentityDetailsBody';
 import { infoIcon } from './infoIcons';
-import { RowActions } from '@/components/product/RowActions';
+import { RowActions } from '@/components/product/RowActions';
+import { TableSelectDrawer } from '@/components/product/automation/TableSelectDrawer';
+
+/** How the empty copy names the thing being owned. */
+const ENTITY_NOUN: Record<OwnedEntityType, string> = {
+  application: 'application',
+  entitlement: 'entitlement',
+  'technical-role': 'technical role',
+  'business-role': 'business role',
+  'governance-team': 'governance team',
+  'sod-policy': 'SoD policy',
+};
+const entityNoun = (t: OwnedEntityType) => ENTITY_NOUN[t];
 
 /**
  * The "Assigned Owners" / "Reviewers" tab, shared by every governable Directory
@@ -90,7 +104,16 @@ export function EntityOwnersTab({
    * drop the rail rather than offer a view that is empty by definition.
    */
   const canHaveTeams = canGovernanceTeamsOwn(entityType);
-  const teams = listGoverningTeams(entityType, entityId);
+  /*
+    Team ownership is store-backed now, so it is read after mount like the individual
+    owners below it — read during render, the server would answer with the seed charter
+    and the client with the store.
+  */
+  const [teams, setTeams] = React.useState<GovernanceTeamRow[]>([]);
+  const refreshTeams = React.useCallback(() => {
+    setTeams(canGovernanceTeamsOwn(entityType) ? listGoverningTeams(entityType, entityId) : []);
+  }, [entityType, entityId]);
+  React.useEffect(refreshTeams, [refreshTeams]);
   // Render seed defaults on the server; sync from the store after mount (no hydration mismatch).
   const [ownerIds, setOwnerIds] = React.useState<string[]>(seedOwnerIds);
   React.useEffect(() => {
@@ -124,6 +147,25 @@ export function EntityOwnersTab({
     setSelected([]);
     setAddSearch('');
     setAddOpen(true);
+  };
+
+  /*
+    Adding a team writes the entity into that team's charter — the relation lives on the
+    team, and `addGoverningTeams` is what keeps that fact out of this component. What the
+    reader does here is the same gesture as adding a person, which is the whole point:
+    both halves of ownership are editable from the thing being owned.
+  */
+  const [addTeamsOpen, setAddTeamsOpen] = React.useState(false);
+  const teamCandidates = React.useMemo(
+    () => (addTeamsOpen ? listTeamsNotGoverning(entityType, entityId) : []),
+    [addTeamsOpen, entityType, entityId],
+  );
+  const applyAddTeams = (ids: string[]) => {
+    addGoverningTeams(entityType, entityId, ids);
+    refreshTeams();
+    setAddTeamsOpen(false);
+    onChanged?.();
+    toast.success(`${ids.length} governance team${ids.length > 1 ? 's' : ''} added`);
   };
   const applyAdd = () => {
     const n = selected.length;
@@ -186,7 +228,7 @@ export function EntityOwnersTab({
       // is decoration, and the letter at least varies by row.
       render: (t) => (
         <div className="flex items-center gap-3">
-          <Avatar name={t.name} size="sm" />
+          <Avatar name={t.name} size="s" />
           <div className="min-w-0">
             <div className="truncate text-body-sm-strong text-text-primary">{t.name}</div>
             {peek === null && (
@@ -216,22 +258,23 @@ export function EntityOwnersTab({
       header: 'Actions',
       align: 'right',
       width: 88,
+      // The same pair the individual rows carry. A team row that could only be
+      // inspected, next to person rows that could be removed, was the asymmetry that
+      // made this half look like a read-only report.
       render: (t) => (
-        <div className="flex items-center justify-end">
-          <Tooltip title="View details">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setPeek({ kind: 'team', row: t });
-              }}
-              aria-label={`View details for ${t.name}`}
-              className="rounded-md p-1 text-icon-subtle transition-colors hover:bg-surface-hover hover:text-text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-subtle"
-            >
-              <InfoOutlined sx={{ fontSize: 18 }} />
-            </button>
-          </Tooltip>
-        </div>
+        <RowActions
+          onInfo={() => setPeek({ kind: 'team', row: t })}
+          infoLabel={`View details for ${t.name}`}
+          onRemove={() => {
+            removeGoverningTeam(entityType, entityId, t.id);
+            refreshTeams();
+            if (peek?.kind === 'team' && peek.row.id === t.id) setPeek(null);
+            onChanged?.();
+            toast.success(`${t.name} removed`);
+          }}
+          removeLabel={`Remove ${t.name}`}
+          removeTooltip="Remove governance team"
+        />
       ),
     },
   ];
@@ -262,20 +305,16 @@ export function EntityOwnersTab({
         }
       : {
           title: 'No governance teams',
-          message: 'No Governance Team lists this entity in its charter. Team ownership is assigned on the team.',
           /*
-            No Add here, and that is the data model rather than an omission: a team's
-            charter lists the entities it governs, so this half of ownership is a
-            projection of team records (`listGoverningTeams` filters teams by whether
-            their charter includes this entity). There is nothing on this entity to write
-            to, and an Add button would be this screen editing a different entity's record.
-
-            What was missing is the way onward. The copy names where the job is done and
-            then left the reader to find it, which is the dead end this codebase forbids
-            elsewhere — so the sentence now comes with the door.
+            This used to read "Team ownership is assigned on the team" and send the reader
+            to the Governance Teams list. Both halves of that were wrong: the team's own
+            Owned Applications tab is a read-only table with no Add either, so the
+            sentence named a place where the job also could not be done — and there was no
+            reason for the asymmetry in the first place. The charter is a many-to-many
+            relation and this is one of its two legitimate ends.
           */
-          action: null,
-          link: { label: 'Browse Governance Teams', href: '/iga/directory/governance-teams' },
+          message: `No Governance Team is accountable for this ${entityNoun(entityType)} yet. A team answers for it as a body, alongside any named ${lower}s.`,
+          action: 'Add Governance Teams',
         };
 
   return (
@@ -295,26 +334,14 @@ export function EntityOwnersTab({
               <div className="flex max-w-md flex-col items-center px-6 py-10 text-center">
                 <h2 className="text-h5 text-text-primary">{emptyCopy.title}</h2>
                 <p className="mt-1.5 text-body-sm text-text-secondary">{emptyCopy.message}</p>
-                {emptyCopy.action ? (
-                  <div className="mt-5">
-                    <Button startIcon={<AddIcon />} onClick={openAdd}>
-                      {emptyCopy.action}
-                    </Button>
-                  </div>
-                ) : null}
-                {'link' in emptyCopy && emptyCopy.link ? (
-                  <div className="mt-5">
-                    {/* Secondary, not primary: this leaves the entity rather than acting
-                        on it, and nothing here is the one thing the reader must do. */}
-                    <Button
-                      variant="secondary"
-                      endIcon={<OpenInNewOutlined sx={{ fontSize: 18 }} />}
-                      onClick={() => router.push(emptyCopy.link.href)}
-                    >
-                      {emptyCopy.link.label}
-                    </Button>
-                  </div>
-                ) : null}
+                <div className="mt-5">
+                  <Button
+                    startIcon={<AddIcon />}
+                    onClick={view === 'individual' ? openAdd : () => setAddTeamsOpen(true)}
+                  >
+                    {emptyCopy.action}
+                  </Button>
+                </div>
               </div>
             </div>
           ) : (
@@ -338,13 +365,17 @@ export function EntityOwnersTab({
                     <TuneOutlined sx={{ fontSize: 20 }} />
                   </button>
                 </Tooltip>
-                {view === 'individual' && (
-                  <div className="ml-auto">
+                <div className="ml-auto">
+                  {view === 'individual' ? (
                     <Button startIcon={<AddIcon />} onClick={openAdd}>
                       Add {label}s
                     </Button>
-                  </div>
-                )}
+                  ) : (
+                    <Button startIcon={<AddIcon />} onClick={() => setAddTeamsOpen(true)}>
+                      Add Governance Teams
+                    </Button>
+                  )}
+                </div>
               </div>
 
               <div className="flex min-h-0 flex-1">
@@ -426,6 +457,24 @@ export function EntityOwnersTab({
           )}
         </div>
       </div>
+
+      {/* `TableSelectDrawer` rather than a second hand-rolled two-pane drawer: search,
+          pagination, the running selection and the footer are all identical to the people
+          picker, and only the rows differ. */}
+      <TableSelectDrawer
+        open={addTeamsOpen}
+        onClose={() => setAddTeamsOpen(false)}
+        title="Add Governance Teams"
+        subtitle={`A team answers for this ${entityNoun(entityType)} as a body at review.`}
+        icon={<GroupsOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
+        nameHeader="Governance Team"
+        entity="governance team"
+        entityPlural="governance teams"
+        rows={teamCandidates.map((t) => ({ id: t.id, name: t.name, description: t.description }))}
+        selectedIds={[]}
+        onApply={applyAddTeams}
+        showRisk={false}
+      />
 
       <Drawer
         open={addOpen}

@@ -87,7 +87,9 @@ export function RequestSummary({
             {row.sodSummary && <p className="text-caption text-text-secondary">{row.sodSummary}</p>}
             <div className="text-caption text-text-secondary">
               Origin · {ORIGIN_LABEL[row.origin]}
-              <span className="text-text-tertiary"> · Submitted {formatGovDateTime(row.submittedAt)}</span>
+              {/* En dash: the middot to its left labels a value, and the one inside the
+                  timestamp binds its date to its time. A third meaning would be too many. */}
+              <span className="text-text-tertiary"> – Submitted {formatGovDateTime(row.submittedAt)}</span>
             </div>
             <SlaTimer row={row} showStatus={!hideSlaStatus} />
           </div>

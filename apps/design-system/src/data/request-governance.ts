@@ -5,7 +5,8 @@
  * end-user inbox or the reviewer queue. Rows carry SLA, live stage, SoD, and
  * provisioning exceptions so an admin can monitor and intervene.
  */
-import { requestGovernanceSeed } from './request-governance-seed';
+import { requestGovernanceSeed } from './request-governance-seed';
+import { formatDateTime } from '@/lib/datetime';
 import type { FileAttachment } from '@ds/components';
 
 export type ResourceType = 'application' | 'entitlement' | 'role';
@@ -224,13 +225,16 @@ export function formatSlaClock(row: GovernanceRequest, now = Date.now()): string
   return due >= now ? `${clock} left` : `${clock} overdue`;
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export function formatGovDateTime(iso?: string): string {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}, ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-}
+/**
+ * When something happened on a request, in the house format.
+ *
+ * Was its own day-first 24-hour local-time build: "26 Aug 2026, 13:35" where the rest of
+ * the product said "Aug 26, 2026 · 8:05 AM" for the same instant. Local was also wrong
+ * rather than merely different — `getHours()` reads the host's zone on the server and the
+ * reader's in the browser, which is the mismatch `lib/datetime` exists to prevent.
+ */
+export const formatGovDateTime = formatDateTime;
 
 export function currentApproverOf(row: GovernanceRequest): GovernanceIdentity | undefined {
   const approval = row.stages.find((s) => s.id === 'approval');

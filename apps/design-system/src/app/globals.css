@@ -385,3 +385,101 @@ a {
   height: 0;
   pointer-events: none;
 }
+
+/*
+ * Converted .docx markup (see `docxToHtml`).
+ *
+ * The elements are the document's own — mammoth emits them from the OOXML, so we cannot
+ * put classes on them. Styled by tag instead, mapped onto our type scale so a reviewer
+ * reads the brief in the product's voice rather than in a browser's defaults. Deliberately
+ * plain: this is a document to read, not a surface to decorate.
+ */
+.ds-docx-preview > :first-child {
+  margin-top: 0;
+}
+
+.ds-docx-preview p {
+  @apply text-body text-text-primary;
+  margin: 0 0 var(--ds-space-3);
+  line-height: 1.6;
+}
+
+.ds-docx-preview h1 {
+  @apply text-h4 text-text-primary;
+  margin: var(--ds-space-5) 0 var(--ds-space-2);
+}
+
+.ds-docx-preview h2 {
+  @apply text-h5 text-text-primary;
+  margin: var(--ds-space-5) 0 var(--ds-space-2);
+}
+
+.ds-docx-preview h3,
+.ds-docx-preview h4,
+.ds-docx-preview h5,
+.ds-docx-preview h6 {
+  @apply text-body-strong text-text-primary;
+  margin: var(--ds-space-4) 0 var(--ds-space-1);
+}
+
+.ds-docx-preview ul,
+.ds-docx-preview ol {
+  @apply text-body text-text-primary;
+  margin: 0 0 var(--ds-space-3);
+  padding-left: var(--ds-space-5);
+  line-height: 1.6;
+}
+
+.ds-docx-preview ul {
+  list-style: disc;
+}
+
+.ds-docx-preview ol {
+  list-style: decimal;
+}
+
+.ds-docx-preview li {
+  margin-bottom: var(--ds-space-1);
+}
+
+.ds-docx-preview strong {
+  @apply font-emphasis;
+}
+
+.ds-docx-preview em {
+  font-style: italic;
+}
+
+.ds-docx-preview a {
+  @apply text-text-link;
+  text-decoration: underline;
+}
+
+/* A converted table has no widths of its own, so it gets hairlines and room to breathe. */
+.ds-docx-preview table {
+  @apply text-body-sm text-text-primary;
+  width: 100%;
+  margin: 0 0 var(--ds-space-4);
+  border-collapse: collapse;
+}
+
+.ds-docx-preview th,
+.ds-docx-preview td {
+  border: 1px solid var(--ds-color-border-subtle);
+  padding: var(--ds-space-2) var(--ds-space-3);
+  text-align: left;
+  vertical-align: top;
+}
+
+.ds-docx-preview th {
+  @apply font-emphasis;
+  background: var(--ds-color-background-subtle);
+}
+
+/* Embedded images arrive as data URLs and can be any size. */
+.ds-docx-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--ds-radius-md);
+  margin: var(--ds-space-2) 0 var(--ds-space-4);
+}

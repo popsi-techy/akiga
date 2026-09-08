@@ -73,10 +73,14 @@ function StageBlock({
           <h3 className="text-body-sm-strong text-text-primary">{STAGE_LABEL[stage.id]}</h3>
           <StatusChip intent={chip.intent} dot={false} label={chip.label} />
         </div>
+        {/* An en dash between the clauses, not a middot. The middot now binds a date to
+            its time, so using it here as well produced "Started Aug 26, 2026 · 8:05 AM ·
+            Finished Aug 26, 2026 · 8:05 AM · Noah Okonkwo" — five marks at two levels,
+            and no way to see which ones belonged to a timestamp. */}
         <p className="mt-1 text-caption text-text-secondary">
           {stage.startedAt ? `Started ${formatGovDateTime(stage.startedAt)}` : 'Not started'}
-          {stage.completedAt ? ` · Finished ${formatGovDateTime(stage.completedAt)}` : ''}
-          {stage.actor ? ` · ${stage.actor.name}` : ''}
+          {stage.completedAt ? ` – Finished ${formatGovDateTime(stage.completedAt)}` : ''}
+          {stage.actor ? ` – ${stage.actor.name}` : ''}
         </p>
         {stage.note && <p className="mt-2 text-body-sm text-text-secondary">{stage.note}</p>}
         {/* Hops are white on the card's grey: they used to be a grey well on a white

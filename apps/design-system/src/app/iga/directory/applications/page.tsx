@@ -17,11 +17,12 @@ import {
   type FilterGroup,
 } from '@ds/components';
 import {
-  applicationOwners,
+  applicationAccountable,
   deleteApplication,
   listDirectoryCatalogApplications,
   listOnboardedApplicationRows,
   listVisibleDirectoryApplications,
+  type AccountableParty,
   type ApplicationRow,
 } from '@/data/directory';
 import { APPLICATION_LIFECYCLE_CHIP, DirectoryListPage, EntityAvatar } from '@/components/product/directory';
@@ -36,21 +37,25 @@ const AUTH_CHIP = {
 const METRIC_ICON = { fontSize: 16 } as const;
 
 /**
- * An owner in the Owners cell: the round person mark, then the name.
+ * Someone accountable in the Owners cell: the mark, then the name.
  *
- * Not the default tinted chip. A pill around a name says "one of a set of
- * values"; these are people, and the round mark is what the rest of the product
- * uses to say so — the same thing `IdentityCell` does in a table whose subject
- * *is* the person. Passing it through `renderItem` also drops the group pill, so
- * the cell reads as a face and a name with the `+n` after it rather than a
- * capsule the eye has to open.
+ * Not the default tinted chip. A pill around a name says "one of a set of values"; these
+ * are parties, and the mark is what the rest of the product uses to say so — the same
+ * thing `IdentityCell` does in a table whose subject *is* the person. Passing it through
+ * `renderItem` also drops the group pill, so the cell reads as a face and a name with the
+ * `+n` after it rather than a capsule the eye has to open.
+ *
+ * The shape carries the kind, per the avatar rule: a person is round, a Governance Team is
+ * square. That distinction is the whole reason both belong in one cell — "who answers for
+ * this" is one question, and whether the answer is a human or a body is worth seeing at a
+ * glance rather than in a separate column.
  */
-function OwnerChip({ name }: { name: string }) {
+function OwnerChip({ party }: { party: AccountableParty }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-2">
-      <Avatar name={name} size="xs" kind="person" />
-      <span className="truncate text-body-sm text-text-primary" title={name}>
-        {name}
+      <Avatar name={party.name} size="xs" kind={party.kind === 'team' ? 'entity' : 'person'} />
+      <span className="truncate text-body-sm text-text-primary" title={party.name}>
+        {party.name}
       </span>
     </span>
   );
@@ -218,9 +223,9 @@ export default function ApplicationsListPage() {
       sortable: true,
       wrap: true,
       width: 200,
-      value: (r) => applicationOwners(r.id).map((o) => o.name).join(', '),
+      value: (r) => applicationAccountable(r.id).map((o) => o.name).join(', '),
       render: (r) => {
-        const owners = applicationOwners(r.id);
+        const owners = applicationAccountable(r.id);
         if (owners.length === 0) {
           // A dash says "nothing here" and leaves the gap. The row already
           // opens the application; this link is the next useful step — the
@@ -231,7 +236,7 @@ export default function ApplicationsListPage() {
             <Link
               href={`/iga/directory/applications/${r.id}?tab=owners`}
               onClick={(e) => e.stopPropagation()}
-              aria-label={`Add owner for ${r.name}`}
+              aria-label={`Add an owner for ${r.name}`}
               className="rounded-sm text-body-sm text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
             >
               + Add owner
@@ -242,7 +247,7 @@ export default function ApplicationsListPage() {
           <OverflowChips
             items={owners}
             max={1}
-            renderItem={(o) => <OwnerChip name={o.name} />}
+            renderItem={(o) => <OwnerChip party={o} />}
           />
         );
       },
@@ -312,7 +317,8 @@ export default function ApplicationsListPage() {
           r.appType.toLowerCase().includes(q) ||
           (r.description ?? '').toLowerCase().includes(q) ||
           r.discoverySource.toLowerCase().includes(q) ||
-          applicationOwners(r.id).some((o) => o.name.toLowerCase().includes(q))
+          // Teams too: searching "Compliance Team" should find what it answers for.
+          applicationAccountable(r.id).some((o) => o.name.toLowerCase().includes(q))
         }
         onOpen={open}
         emptyTitle="No applications found"

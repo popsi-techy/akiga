@@ -138,15 +138,29 @@ checks.push({ label: 'text.disabled on surface', fg: color.text.disabled, bg: co
 // Gated buttons (`aria-disabled`) are focusable, so the 1.4.3 inactive exemption
 // does not apply. The label must still meet AA on the sunken fill.
 checks.push({
-  label: 'text.tertiary on surface.disabled (unavailable button)',
-  fg: color.text.tertiary,
+  label: 'text.secondary on surface.disabled (unavailable button)',
+  fg: color.text.secondary,
   bg: color.surface.disabled,
   min: AA_TEXT,
+});
+// The fill itself is not a WCAG matter — 1.4.11 exempts a disabled control's boundary —
+// but a fill that matches the panel behind it is a usability defect, and this one did:
+// `neutral[100]` sat 1.01:1 off `background.subtle`. Reported so a future change to either
+// token has to look at the number rather than discover it on a screen.
+checks.push({
+  label: 'surface.disabled on subtle (unavailable button fill)',
+  fg: color.surface.disabled,
+  bg: color.background.subtle,
+  min: 1.3,
+  exempt: true,
 });
 
 // --- Status: fg on subtle, onSolid on solid (AA) ---
 for (const [k, s] of Object.entries(color.status)) {
   checks.push({ label: `status.${k}.fg on subtle`, fg: s.fg, bg: s.subtle, min: AA_TEXT });
+  // A status foreground is also read on plain surface — the drop overlay's pill, a chip
+  // label on a white card — so both grounds are enforced, not just the tinted one.
+  checks.push({ label: `status.${k}.fg on surface`, fg: s.fg, bg: color.surface.default, min: AA_TEXT });
   checks.push({ label: `status.${k}.onSolid on solid`, fg: s.onSolid, bg: s.solid, min: AA_TEXT });
 }
 // `fill` is the graphical-block role, and where a block carries a numeral — the
@@ -177,6 +191,17 @@ checks.push({ label: 'icon.default on surface', fg: color.icon.default, bg: colo
 checks.push({ label: 'icon.subtle on surface', fg: color.icon.subtle, bg: color.surface.default, min: AA_UI });
 checks.push({ label: 'icon.subtle on canvas', fg: color.icon.subtle, bg: color.background.canvas, min: AA_UI });
 checks.push({ label: 'border.focus on canvas', fg: color.border.focus, bg: color.background.canvas, min: AA_UI });
+// A file-format mark is a glyph on its own tint — graphical, so 3:1. All four are
+// checked: the tile is the only thing telling a reader a PDF from a spreadsheet once the
+// name has truncated.
+for (const kind of ['pdf', 'word', 'image', 'other'] as const) {
+  checks.push({
+    label: `file.${kind}.fg on its subtle`,
+    fg: color.file[kind].fg,
+    bg: color.file[kind].subtle,
+    min: AA_UI,
+  });
+}
 // An unchecked control outlines against whichever surface it sits on — plain
 // rows (surface) and striped/selected ones (subtle) — so both must clear 3:1.
 checks.push({ label: 'border.control on surface', fg: color.border.control, bg: color.surface.default, min: AA_UI });

@@ -95,7 +95,7 @@ export function ReviewRequestQuickDrawer({
         </InfoRowGroup>
 
         {(request.attachments?.length ?? 0) > 0 && (
-          <FileAttachmentField files={request.attachments ?? []} readOnly />
+          <FileAttachmentField label="Attachments" files={request.attachments ?? []} readOnly />
         )}
 
         <div

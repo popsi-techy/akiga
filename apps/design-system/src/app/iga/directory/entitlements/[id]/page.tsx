@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useParams } from 'next/navigation';
 import { Card, type TabItem } from '@ds/components';
-import { getEntitlementDetail } from '@/data/directory';
+import { getEntitlementDetail, entityAccountable, type AccountableParty } from '@/data/directory';
 import {
   DetailShell,
   DetailNotFound,
@@ -25,6 +25,17 @@ const TABS: TabItem[] = [
 export default function EntitlementDetailPage() {
   const id = String(useParams().id);
   const [tab, setTab] = React.useState('overview');
+  /*
+    Individuals and Governance Teams both, read after mount: the owner store and the team
+    charter are session state, and the count here has to be the same number the Owners tab
+    shows. Reading `entitlement.ownerIds` was the seed — it ignored every owner added since, and
+    every team accountable for this entitlement.
+  */
+  const [accountable, setAccountable] = React.useState<AccountableParty[]>([]);
+  React.useEffect(() => {
+    const d = getEntitlementDetail(id);
+    setAccountable(d ? entityAccountable('entitlement', d.entitlement.id, d.entitlement.ownerIds) : []);
+  }, [id]);
   const detail = getEntitlementDetail(id);
 
   if (!detail) return <DetailNotFound title="Entitlement not found" backHref="/iga/directory/entitlements" backLabel="Back to Entitlements" />;
@@ -46,7 +57,7 @@ export default function EntitlementDetailPage() {
             <InfoRowGroup>
               <InfoRow icon={infoIcon.application} label="Application" value={entitlement.applicationName} />
               <InfoRow icon={infoIcon.risk} label="Risk Score" value={<RiskScoreChip score={entitlement.risk} />} />
-              <InfoRow icon={infoIcon.owner} label="Owners" value={entitlement.ownerIds.length} />
+              <InfoRow icon={infoIcon.owner} label="Owners" value={accountable.length} />
               <InfoRow icon={infoIcon.account} label="App Accounts" value={accounts.length} />
               <InfoRow icon={infoIcon.technicalRole} label="Technical Roles" value={technicalRoles.length} />
               <InfoRow icon={infoIcon.businessRole} label="Business Roles" value={businessRoles.length} />

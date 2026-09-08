@@ -78,9 +78,43 @@ export function fileAttachmentKindLabel(kind: FileAttachmentKind): string {
   return 'Image';
 }
 
-/** Browser can preview these in-place. Word still downloads. */
-export function fileAttachmentCanPreview(kind: FileAttachmentKind): boolean {
-  return kind === 'image' || kind === 'pdf';
+/**
+ * Every kind can be previewed in place.
+ *
+ * Images and PDFs the browser renders itself. Word goes through `docxToHtml`, which
+ * converts the package to semantic HTML in the tab — see ADR-0020 for why that route and
+ * not an Office/Google embed.
+ */
+export function fileAttachmentCanPreview(_kind: FileAttachmentKind): boolean {
+  return true;
+}
+
+/**
+ * A `.docx` data URL as readable HTML.
+ *
+ * `mammoth` is imported here and only here, dynamically, so ~150KB of OOXML parsing stays
+ * out of every bundle that merely renders an attachment list. Throws for a package it
+ * cannot read; the caller falls back to a download rather than showing an empty frame.
+ */
+export async function docxToHtml(dataUrl: string): Promise<string> {
+  const [{ convertToHtml }, buffer] = await Promise.all([
+    import('mammoth'),
+    Promise.resolve(arrayBufferFromDataUrl(dataUrl)),
+  ]);
+  const { value } = await convertToHtml({ arrayBuffer: buffer });
+  const html = value.trim();
+  if (!html) throw new Error('empty document');
+  return html;
+}
+
+/** The bytes behind a data URL. */
+export function arrayBufferFromDataUrl(dataUrl: string): ArrayBuffer {
+  const comma = dataUrl.indexOf(',');
+  const payload = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+  const binary = atob(payload);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
 }
 
 /** Object URL for an iframe/embed. Revoke it when the preview closes. */

@@ -87,6 +87,31 @@ export default function ColorsPage() {
 
       </Section>
 
+      {/* File formats */}
+      <Section
+        title="File formats"
+        description="The tinted tile behind an attachment's glyph. A format is a kind, not a state, which is why it is not a reach into status — spending danger red on PDF would make red mean 'failed' in one place and 'PDF' four pixels away. One step off the matching status tints so the two never read as the same thing."
+      >
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {(['pdf', 'word', 'image', 'other'] as const).map((k) => {
+            const f = color.file[k];
+            return (
+              <Card key={k} className="overflow-hidden">
+                <div className="flex items-center gap-2.5 p-3">
+                  <span
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-body-strong"
+                    style={{ background: f.subtle, color: f.fg }}
+                  >
+                    {k === 'other' ? '?' : k.charAt(0).toUpperCase()}
+                  </span>
+                  <div className="font-mono text-caption text-text-secondary">file.{k}</div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </Section>
+
       {/* Primitives */}
       <Section
         title="Primitive palettes"

@@ -2,6 +2,7 @@
  * Access requests service — reviewer queue with localStorage persistence.
  */
 import { accessRequestSeed } from './access-requests-seed';
+import { formatDate, formatDateTime } from '@/lib/datetime';
 import type {
   AccessRequest,
   AccessRequestItem,
@@ -62,17 +63,21 @@ function hydrateSeedAttachments(store: Store): Store {
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export function formatRequestDate(iso?: string): string {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
-}
+/**
+ * A request date, in the house format.
+ *
+ * Was `1 Sep 26` — day-first, two-digit year, and read from local time. Beside a
+ * `formatDateTime` reading `Sep 1, 2026 · 10:15 AM` on the same screen it looked like a
+ * different product, and the two-digit year is a saving nobody asked for.
+ */
+export const formatRequestDate = formatDate;
 
-export function formatRequestDateTime(iso?: string): string {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}, ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-}
+/**
+ * When a request moved, in the house format. Same story as `formatGovDateTime`: this was a
+ * day-first 24-hour local-time copy, and local time is a hydration mismatch waiting for a
+ * reader in a different zone from the server.
+ */
+export const formatRequestDateTime = formatDateTime;
 
 export function accessDurationLabel(req: AccessRequest): string {
   if (req.accessDurationKind === 'permanent') return 'Permanent';

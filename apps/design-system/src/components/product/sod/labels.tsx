@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { AppIcon, StatusChip, type StatusIntent } from '@ds/components';
 import type { Severity, ReviewerStatus, AccessType } from '@/data/sod-types';
+import { DATE_TIME_SEP, MONTH_ABBR } from '@/lib/datetime';
 
 /** The DS union rather than a local copy — a duplicate silently misses new intents
  *  (it had no `caution`, so severity could not reach the orange step). */
@@ -151,14 +152,13 @@ export function AppBadge({
   );
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-export function formatDate(iso?: string): string {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
-}
+const MONTHS = MONTH_ABBR;
+
+// Re-exported rather than reimplemented: these are the house formats, and the copy that
+// used to live here is what let SoD drift a separator away from everywhere else.
+export { formatDate, formatDateTime } from '@/lib/datetime';
 /**
- * Risk-acceptance expiry, e.g. "Nov 4, 2026, 9:30 AM".
+ * Risk-acceptance expiry, e.g. "Nov 4, 2026 · 9:30 AM".
  *
  * `AcceptedRisk.untilAt` is a local wall-clock `YYYY-MM-DDTHH:MM`, so this parses
  * the parts directly rather than going through `Date` — no timezone shift, and the
@@ -172,14 +172,6 @@ export function formatUntil(untilAt?: string): string {
   if (!y || !m || !d || hhRaw === undefined) return '—';
   const hh = Number(hhRaw);
   const ampm = hh >= 12 ? 'PM' : 'AM';
-  return `${MONTHS[m - 1]} ${d}, ${y}, ${hh % 12 || 12}:${mm ?? '00'} ${ampm}`;
+  return `${MONTHS[m - 1]} ${d}, ${y}${DATE_TIME_SEP}${hh % 12 || 12}:${mm ?? '00'} ${ampm}`;
 }
-/** Date + time, e.g. "Jul 26, 2026, 11:04 PM" (UTC, deterministic). */
-export function formatDateTime(iso?: string): string {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  let h = d.getUTCHours();
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  h = h % 12 || 12;
-  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}, ${h}:${String(d.getUTCMinutes()).padStart(2, '0')} ${ampm}`;
-}
+

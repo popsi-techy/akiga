@@ -78,7 +78,13 @@ export function RequestWizardChrome({
           {requestedForName && (
             <div className="flex items-center gap-2">
               <span className="text-body-sm text-text-secondary">Requesting for:</span>
-              <span className="inline-flex items-center gap-2 rounded-pill border border-border bg-surface px-2 py-1">
+              {/* Asymmetric padding, because the contents are. A round 24px mark carries
+                  its own optical inset, so an equal `px-2` left and right left a visible
+                  gap before the avatar and none after the name — the pill read as sitting
+                  off its contents rather than around them. 4px of inset all round the mark
+                  against 10px after the text keeps the 1:2.5 ratio an avatar pill wants,
+                  and 4px is the grid step rather than a hairline. */}
+              <span className="inline-flex items-center gap-2 rounded-pill border border-border bg-surface py-1 pl-1 pr-2.5">
                 <Avatar name={requestedForName} size="xs" kind="person" />
                 <span className="text-body-sm text-text-primary">{requestedForName}</span>
               </span>

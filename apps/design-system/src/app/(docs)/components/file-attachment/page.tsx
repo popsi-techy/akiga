@@ -105,8 +105,10 @@ export default function FileAttachmentDocs() {
       </Section>
 
       <Section title="Read-only">
-        <Example label="after submit — open, don’t edit">
-          <div className="w-80">
+        <Example label="evidence on a review — no frame, no gutter, up to five across">
+          {/* Wide on purpose: the read-only list fills its container with as many 140px
+              cards as fit, so a 320px box would only ever show the two-column fallback. */}
+          <div className="w-full max-w-[760px]">
             <FileAttachmentField files={SAMPLE} readOnly />
           </div>
         </Example>
@@ -137,6 +139,7 @@ export default function FileAttachmentDocs() {
             'Keep files as hairline rows inside one well — a card per file boxes a list.',
             'Let the row carry uploading, success, and failed — don’t toast the same story a second time.',
             'Pass readOnly on submitted or reviewer surfaces so the list is evidence, not an editor.',
+            'Open a file from the kebab (Preview / Download) or by double-clicking the card.',
           ]}
           donts={[
             'Don’t make attachments required unless a policy actually requires evidence.',

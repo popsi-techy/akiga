@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, type TabItem } from '@ds/components';
-import { getBusinessRoleDetail } from '@/data/directory';
+import { getBusinessRoleDetail, entityAccountable, type AccountableParty } from '@/data/directory';
 import {
   DetailShell,
   DetailNotFound,
@@ -31,6 +31,17 @@ export default function BusinessRoleDetailPage() {
   const id = String(useParams().id);
   const router = useRouter();
   const [tab, setTab] = React.useState('overview');
+  /*
+    Individuals and Governance Teams both, read after mount: the owner store and the team
+    charter are session state, and the count here has to be the same number the Owners tab
+    shows. Reading `role.ownerIds` was the seed — it ignored every owner added since, and
+    every team accountable for this role.
+  */
+  const [accountable, setAccountable] = React.useState<AccountableParty[]>([]);
+  React.useEffect(() => {
+    const d = getBusinessRoleDetail(id);
+    setAccountable(d ? entityAccountable('business-role', d.role.id, d.role.ownerIds) : []);
+  }, [id]);
   const detail = getBusinessRoleDetail(id);
 
   if (!detail) return <DetailNotFound title="Business role not found" backHref="/iga/directory/business-roles" backLabel="Back to Business Roles" />;
@@ -54,7 +65,7 @@ export default function BusinessRoleDetailPage() {
               <InfoRow icon={infoIcon.technicalRole} label="Technical Roles" value={technicalRoles.length} />
               <InfoRow icon={infoIcon.entitlement} label="Direct Entitlements" value={entitlements.length} />
               <InfoRow icon={infoIcon.people} label="Assigned people" value={members.length} />
-              <InfoRow icon={infoIcon.owner} label="Owners" value={role.ownerIds.length} />
+              <InfoRow icon={infoIcon.owner} label="Owners" value={accountable.length} />
             </InfoRowGroup>
           </Card>
         </div>

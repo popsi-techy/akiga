@@ -23,7 +23,14 @@ export const color = {
     hover: p.neutral[50],
     selected: p.orange[50], //       #FFF4EE selected row / list pick
     selectedHover: p.orange[100], // #FFE5D8 selected + hover
-    disabled: p.neutral[100],
+    /*
+      An unavailable control's fill. `neutral[1000]`, not the [100] it was: at #F8F8FA it
+      sat 1.06:1 off white and 1.01:1 off `background.subtle`, so a disabled button was
+      invisible on every surface in the system — on a `subtle` panel it vanished entirely.
+      #C4C9D2 is 1.59:1 against that panel: a grey slab you can see, still receding from
+      anything enabled beside it.
+    */
+    disabled: p.neutral[1000],
     inverse: p.ink[800],
   },
   // Borders & dividers
@@ -119,6 +126,28 @@ export const color = {
     caution: { fg: p.orange[900], solid: p.orange[800], fill: p.orange[800], subtle: p.orange[50], border: p.orange[300], onSolid: p.white },
     danger: { fg: p.red[600], solid: p.red[600], fill: p.red[550], subtle: p.red[50], border: p.red[200], onSolid: p.white },
     neutral: { fg: p.ink[500], solid: p.neutral[1000], fill: p.ink[50], subtle: p.neutral[100], border: p.neutral[1000], onSolid: p.ink[800] },
+  },
+  /**
+   * File-format marks — the tinted tile behind an attachment's glyph.
+   *
+   * A *kind*, not a state, which is why this is its own group rather than a reach into
+   * `status`. Red-for-PDF and blue-for-Word are a filing convention every reader
+   * already has, and spending `danger` on it would make red mean "failed" in one place and
+   * "PDF" four pixels away.
+   *
+   * Deliberately one step off the matching status tints so the two never look identical:
+   * `[100]`-weight fills where status uses `[50]`, so a file tile reads as a solid little
+   * object rather than as a status wash.
+   *
+   * `fg` is a glyph on `subtle` — a graphical object, so the floor is WCAG 1.4.11's 3:1
+   * rather than 4.5:1. Enforced in check-contrast.ts.
+   */
+  file: {
+    pdf: { fg: p.red[600], subtle: p.red[100] },
+    word: { fg: p.blue[800], subtle: p.blue[300] },
+    image: { fg: p.green[500], subtle: p.green[100] },
+    /** Anything the field accepts but cannot name — stays greyscale. */
+    other: { fg: p.ink[500], subtle: p.neutral[100] },
   },
   // Risk-score tiers map onto the `status` roles above via RiskScoreChip — no separate
   // risk palette. One hue per level so severity reads as a ramp:

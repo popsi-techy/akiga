@@ -13,15 +13,16 @@ export default function ButtonDocs() {
       <PageHeader
         eyebrow="Components"
         title="Button"
-        description="Triggers an action. Extended from MUI Button and themed by our tokens. Four variants express intent and priority; only one primary button per view or section."
+        description="Triggers an action. Extended from MUI Button and themed by our tokens. Variants express intent and priority; only one primary button per view or section."
       />
 
-      <Section title="Variants" description="Priority descends primary → secondary → tertiary. Danger is for destructive actions.">
-        <Example label="primary · secondary · tertiary · danger">
+      <Section title="Variants" description="Priority descends primary → secondary → tertiary. Success confirms a constructive action; danger is for destructive ones.">
+        <Example label="primary · secondary · tertiary · success · danger">
           <Button variant="primary">Create Emergency Access</Button>
           <Button variant="secondary">Filter</Button>
           <Button variant="tertiary">Cancel</Button>
-          <Button variant="danger">Deactivate</Button>
+          <Button variant="success">Approve</Button>
+          <Button variant="danger">Reject</Button>
         </Example>
       </Section>
 
@@ -83,7 +84,7 @@ export default function ButtonDocs() {
       <Section title="Props">
         <PropsTable
           rows={[
-            { name: 'variant', type: "'primary' | 'secondary' | 'tertiary' | 'danger'", default: "'primary'", description: 'Visual role / priority.' },
+            { name: 'variant', type: "'primary' | 'secondary' | 'tertiary' | 'success' | 'danger'", default: "'primary'", description: 'Visual role / priority. Success is Approve; danger is Reject / destroy. Neither is a second primary.' },
             { name: 'size', type: "'xs' | 'sm' | 'md' | 'lg'", default: "'sm'", description: 'Control height: 32 / 36 / 40 / 48. xs is for dense clusters only.' },
             { name: 'loading', type: 'boolean', default: 'false', description: 'Shows a spinner and disables interaction.' },
             { name: 'disabled', type: 'boolean', default: 'false', description: 'Marks the action unavailable (aria-disabled). Stays focusable so a tooltip can explain why. Loading uses native disabled instead.' },
@@ -99,7 +100,7 @@ export default function ButtonDocs() {
           dos={[
             'Use one primary button per view/section.',
             'Lead with a verb: “Create Policy”, “Approve”.',
-            'Use danger only for destructive, irreversible actions.',
+            'Use success for a constructive confirm (Approve), danger for a destructive one.',
             'Keep gated actions (Activate until setup is done) on `disabled` — they stay keyboard-reachable and a Tooltip can name what is missing.',
           ]}
           donts={[
@@ -118,6 +119,7 @@ export default function ButtonDocs() {
           <div className="text-text-tertiary">{`// primary is the default`}</div>
           <div>{`<Button startIcon={<AddIcon />}>Create Emergency Access</Button>`}</div>
           <div>{`<Button variant="secondary">Filter</Button>`}</div>
+          <div>{`<Button variant="success">Approve</Button>`}</div>
           <div>{`<Button variant="danger" onClick={confirmDeactivate}>Deactivate</Button>`}</div>
         </div>
         <p className="mt-3 text-body-sm text-text-tertiary">

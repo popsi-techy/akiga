@@ -54,7 +54,7 @@ export function EmergencyAccessListView({
       value: (r) => r.name,
       render: (r) => (
         <div className="flex items-center gap-3">
-          <Avatar name={r.name} initials={r.initial} size="sm" />
+          <Avatar name={r.name} initials={r.initial} size="s" />
           <span className="text-body-sm-strong text-text-primary">{r.name}</span>
         </div>
       ),
