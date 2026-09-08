@@ -16,7 +16,6 @@ import {
 import { EntityAvatar, RiskScoreChip } from '@/components/product/directory';
 import type { AccessRequest, AccessRequestItem } from '@/data/access-request-types';
 import { requestItems, updateAccessRequest } from '@/data/access-requests';
-import { RequestTypeChip } from '@/components/product/review-requests/labels';
 
 const JUSTIFICATION_TEMPLATES = [
   {
@@ -55,11 +54,6 @@ export function PreviewStep({ request }: { request: AccessRequest }) {
           </div>
         </div>
       ),
-    },
-    {
-      id: 'type',
-      header: 'Type',
-      render: () => <RequestTypeChip type="entitlement" />,
     },
     {
       id: 'risk',

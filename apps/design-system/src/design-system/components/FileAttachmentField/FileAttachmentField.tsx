@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import Add from '@mui/icons-material/Add';
-import AttachFile from '@mui/icons-material/AttachFile';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import DescriptionOutlined from '@mui/icons-material/DescriptionOutlined';
 import FileDownloadOutlined from '@mui/icons-material/FileDownloadOutlined';
@@ -11,7 +10,6 @@ import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import MoreVert from '@mui/icons-material/MoreVert';
 import PictureAsPdfOutlined from '@mui/icons-material/PictureAsPdfOutlined';
 import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined';
-import { Avatar } from '../Avatar/Avatar';
 import { Button } from '../Button/Button';
 import { Menu } from '../Menu/Menu';
 import { Modal } from '../Modal/Modal';
@@ -530,11 +528,9 @@ export function FileAttachmentField({
                   : 'flex items-center gap-2.5 px-3 py-2.5 text-left',
               ].join(' ')}
             >
-              <Avatar
-                name="Drag and drop or browse files"
-                size={dropzone ? 'md' : 'sm'}
-                icon={<AttachFile />}
-              />
+              {/* Not Avatar: a brand-tint tile with a clip said "identity", not
+                  "drop files here". The inbox mark is the empty-state illustration. */}
+              <AttachInboxMark size={dropzone ? 40 : 32} />
               <span className={dropzone ? '' : 'min-w-0'}>
                 <span className="block text-body-sm-medium text-text-primary">
                   Drag and drop or <span className="text-text-link">browse</span> files
@@ -814,6 +810,21 @@ function FileRow({
         </Tooltip>
       )}
     </div>
+  );
+}
+
+/** Empty-drop illustration. Served from `public/illustrations/attach-inbox.png`. */
+function AttachInboxMark({ size }: { size: number }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- static illustration; not a layout image
+    <img
+      src="/illustrations/attach-inbox.png"
+      alt=""
+      width={size}
+      height={size}
+      draggable={false}
+      className="shrink-0 object-contain"
+    />
   );
 }
 
