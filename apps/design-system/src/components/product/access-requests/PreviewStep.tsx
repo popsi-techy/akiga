@@ -182,7 +182,7 @@ export function PreviewJustificationDock({
           /*
             Ten is the cap. Past that the dock stops being a list of evidence and becomes a
             folder — and an approver who has to open twelve files to answer one question
-            will open none of them. The field hides "Add more files" at the limit and says
+            will open none of them. The field hides "Drop or attach more files" at the limit and says
             so, rather than letting a picker take twelve and silently keeping ten.
           */
           maxFiles={10}

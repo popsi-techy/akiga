@@ -93,12 +93,10 @@ export interface FileAttachmentFieldProps {
   disabled?: boolean;
   readOnly?: boolean;
   /**
-   * Cap the field at the leftover height of a flex column, scrolling the file list once it
-   * runs out. Use on a rail with a pinned footer so cards never slip behind it.
-   *
-   * A *ceiling*, not a height: the well grows with the files in it and stops when the
-   * column does. It used to take the whole leftover space the moment a first file landed,
-   * so one attachment sat at the top of a box four times its height with nothing under it.
+   * Take the leftover height of a flex column. Empty, the prompt is centred in that
+   * well. With files, the list keeps the same height — cards at the top, open surface
+   * below them — and scrolls only when the cards run out of room. Use on a rail with
+   * a pinned footer so cards never slip behind it.
    */
   fill?: boolean;
   helperText?: React.ReactNode;
@@ -127,6 +125,10 @@ const KIND_ICON: Record<FileAttachmentKind, typeof PictureAsPdfOutlined> = {
   image: ImageOutlined,
 };
 
+function isFileDrag(e: DragEvent | React.DragEvent): boolean {
+  return Array.from(e.dataTransfer?.types ?? []).includes('Files');
+}
+
 export function FileAttachmentField({
   label = 'Supporting files',
   hint,
@@ -149,6 +151,8 @@ export function FileAttachmentField({
   const unpublishedRef = React.useRef<FileAttachment[]>([]);
   const retryRef = React.useRef(new Map<string, File>());
   const [dragging, setDragging] = React.useState(false);
+  const [pageDragging, setPageDragging] = React.useState(false);
+  const pageDragDepth = React.useRef(0);
   const [drafts, setDrafts] = React.useState<FileAttachment[]>([]);
   const [progressById, setProgressById] = React.useState<Record<string, number>>({});
   const [preview, setPreview] = React.useState<FileAttachment | null>(null);
@@ -336,31 +340,55 @@ export function FileAttachmentField({
   }, [preview]);
 
   const uploading = shown.some((f) => fileAttachmentStatus(f) === 'uploading');
-  /*
-    `fill` behaves differently either side of the first file, because the two states want
-    opposite things from the leftover height.
-
-    Empty, the well *is* the drop target, and a target should be as big as the column can
-    spare — so it takes `flex-1` and centres its prompt. Once files are in it, the well is
-    a list, and a list that claims the whole column leaves one card sitting at the top of a
-    box four times its height. So it switches to `flex-initial` (0 1 auto): the height its
-    files need, shrinking only when the column runs out, at which point the `min-h-0` chain
-    down to the list's `overflow-y-auto` turns the overflow into a scroll.
-  */
   const empty = shown.length === 0;
   const dropzone = fill && empty && !readOnly;
-  const grow = fill && !empty;
+
+  /*
+    A file held over the *page* should light this well before the cursor reaches it —
+    otherwise the reader has to discover the target by hovering. `pageDragging` is that
+    beckon: dashed blue + "Drop here to attach". Drop still only lands when `dragging`
+    is true (the cursor is inside this well). Document listeners, not the well's, because
+    the well cannot see a drag that has not entered it yet.
+  */
+  React.useEffect(() => {
+    if (!canAdd) {
+      pageDragDepth.current = 0;
+      setPageDragging(false);
+      return;
+    }
+    const enter = (e: DragEvent) => {
+      if (!isFileDrag(e)) return;
+      pageDragDepth.current += 1;
+      setPageDragging(true);
+    };
+    const leave = (e: DragEvent) => {
+      if (!isFileDrag(e)) return;
+      pageDragDepth.current -= 1;
+      if (pageDragDepth.current <= 0) {
+        pageDragDepth.current = 0;
+        setPageDragging(false);
+      }
+    };
+    const end = () => {
+      pageDragDepth.current = 0;
+      setPageDragging(false);
+    };
+    document.addEventListener('dragenter', enter);
+    document.addEventListener('dragleave', leave);
+    document.addEventListener('drop', end);
+    document.addEventListener('dragend', end);
+    return () => {
+      document.removeEventListener('dragenter', enter);
+      document.removeEventListener('dragleave', leave);
+      document.removeEventListener('drop', end);
+      document.removeEventListener('dragend', end);
+    };
+  }, [canAdd]);
+
+  const beckon = pageDragging && !dragging;
 
   return (
-    <div
-      className={
-        dropzone
-          ? 'flex min-h-0 min-w-0 flex-1 flex-col'
-          : grow
-            ? 'flex min-h-0 min-w-0 flex-initial flex-col'
-            : 'w-full'
-      }
-    >
+    <div className={fill ? 'flex min-h-0 min-w-0 flex-1 flex-col' : 'w-full'}>
       {label && (
         <div className="mb-1.5 flex shrink-0 items-baseline justify-between gap-2">
           <div className="flex items-center gap-1.5">
@@ -387,19 +415,24 @@ export function FileAttachmentField({
           {shown.length > 0 && !readOnly && (
             <span className="tabular-nums text-caption text-text-tertiary">{shown.length}</span>
           )}
+          {pageDragging && (
+            <span className="sr-only" role="status">
+              {dragging ? 'Drop to attach files' : 'Drop here to attach files'}
+            </span>
+          )}
         </div>
       )}
 
       {shown.length === 0 && readOnly ? null : (
         <div
           onDragEnter={(e) => {
-            if (!canAdd) return;
+            if (!canAdd || !isFileDrag(e)) return;
             e.preventDefault();
             dragDepth.current += 1;
             setDragging(true);
           }}
           onDragOver={(e) => {
-            if (!canAdd) return;
+            if (!canAdd || !isFileDrag(e)) return;
             e.preventDefault();
             e.dataTransfer.dropEffect = 'copy';
           }}
@@ -418,16 +451,21 @@ export function FileAttachmentField({
             void ingest(Array.from(e.dataTransfer.files));
           }}
           className={[
-            'relative flex min-h-0 flex-col overflow-hidden transition-colors',
+            // Border-color only: `transition-colors` also interpolates
+            // `background-color`, and `color-mix` as a to-value fails that
+            // interpolation — the well stayed surface-white.
+            'relative flex min-h-0 flex-col overflow-hidden transition-[border-color]',
             // The well is the drop target's affordance. With nothing to drop it is a box
             // around a list, and this list already sits inside a panel of its own.
             readOnly ? '' : 'rounded-md bg-surface',
             // A solid hairline everywhere except the dropzone, which draws its own dashed
-            // one below — two outlines on one edge would read as a double border.
+            // one below — two outlines on one edge would read as a double border. Keep
+            // the 1px box when a page-level drag is beckoning so swapping to dashed
+            // does not shift the well.
             readOnly || dropzone ? '' : 'border border-border',
-            // Empty and filling: the well takes the field's whole height, so the prompt
-            // has a target to be centred in.
-            dropzone ? 'flex-1' : '',
+            // Empty or filled: the well keeps the leftover column height so a first
+            // file does not collapse the drop target to one card.
+            fill ? 'flex-1' : '',
             /*
               Blue while a file is over it, the convention every file UI shares. It is a
               transient interaction state rather than a status — it exists only for the
@@ -442,18 +480,35 @@ export function FileAttachmentField({
             their order in Tailwind's output, not by the order in this array — and the grey
             was winning, leaving a blue ring inside a grey outline.
           */
-          style={dragging && !dropzone ? { borderColor: 'var(--ds-color-status-info-fill)' } : undefined}
+          style={{
+            ...(beckon && !dropzone
+              ? { borderColor: 'transparent' }
+              : dragging && !dropzone
+                ? { borderColor: 'var(--ds-color-status-info-fill)' }
+                : {}),
+            // Mix against the surface token, not transparent: a 20% veil over the
+            // list lost the stacking fight and read as the white well. An opaque
+            // mix is still a wash — 20% info fill, 80% surface — and the leftover
+            // list area is this colour because the `ul` itself has no fill.
+            ...(beckon
+              ? {
+                  backgroundColor:
+                    'color-mix(in srgb, var(--ds-color-status-info-fill) 20%, var(--ds-color-surface-default))',
+                }
+              : {}),
+          }}
         >
-          {/* The dropzone's outline. Blue while a file is over it, the same signal the
-              solid-bordered well gives. */}
-          {dropzone && (
+          {/* Dashed outline: idle empty well (hairline), or a file held anywhere on
+              the page (info blue) so the reader can see where to finish the drop. */}
+          {(dropzone || beckon) && (
             <span
               aria-hidden
               className="pointer-events-none absolute inset-0 z-[1]"
               style={{
-                backgroundColor: dragging
-                  ? 'var(--ds-color-status-info-fill)'
-                  : 'var(--ds-color-border-default)',
+                backgroundColor:
+                  dragging || pageDragging
+                    ? 'var(--ds-color-status-info-fill)'
+                    : 'var(--ds-color-border-default)',
                 maskImage: DASHED_OUTLINE_MASK,
                 WebkitMaskImage: DASHED_OUTLINE_MASK,
               }}
@@ -532,8 +587,19 @@ export function FileAttachmentField({
                   "drop files here". The inbox mark is the empty-state illustration. */}
               <AttachInboxMark size={dropzone ? 40 : 32} />
               <span className={dropzone ? '' : 'min-w-0'}>
-                <span className="block text-body-sm-medium text-text-primary">
-                  Drag and drop or <span className="text-text-link">browse</span> files
+                <span
+                  className={[
+                    'block text-body-sm-medium',
+                    pageDragging ? 'text-info' : 'text-text-primary',
+                  ].join(' ')}
+                >
+                  {pageDragging ? (
+                    'Drop here to attach'
+                  ) : (
+                    <>
+                      Drag and drop or <span className="text-text-link">browse</span> files
+                    </>
+                  )}
                 </span>
                 <span className="block text-caption text-text-tertiary">PDF, Word, or image</span>
               </span>
@@ -568,6 +634,19 @@ export function FileAttachmentField({
                     />
                   </li>
                 ))}
+                {beckon && (
+                  <li
+                    aria-hidden
+                    className={[
+                      'pointer-events-none flex items-center justify-center',
+                      fill ? 'min-h-0 flex-1' : 'py-6',
+                    ].join(' ')}
+                  >
+                    <span className="text-body-sm-medium text-info">
+                      Drop here to attach
+                    </span>
+                  </li>
+                )}
               </ul>
               {canAdd && (
                 <button
@@ -576,7 +655,7 @@ export function FileAttachmentField({
                   className="flex w-full shrink-0 items-center gap-2 border-t border-border px-3 py-2 text-left text-body-sm-medium text-text-link transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-subtle"
                 >
                   <Add sx={{ fontSize: 18 }} />
-                  {uploading ? 'Add another file' : 'Add more files'}
+                  {uploading ? 'Add another file' : 'Drop or attach more files'}
                 </button>
               )}
               {atLimit && !readOnly && (
