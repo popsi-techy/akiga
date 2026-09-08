@@ -111,7 +111,7 @@ export default function ReviewRequestDetailPage() {
   return (
     <div className="-mx-8 -my-6 flex h-[calc(100%+3rem)] flex-col bg-canvas">
       {/* Header — SoD Resolution V3 pattern */}
-      <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border bg-canvas px-5 py-4 shadow-xs">
+      <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border bg-canvas px-5 py-4">
         <div className="flex min-w-0 flex-wrap items-center gap-3">
           <Avatar name={request.reference} initials={request.reference.replace(/\D/g, '').slice(0, 2) || 'AR'} size="sm" />
           <span className="text-h5 text-text-primary">{request.reference}</span>
