@@ -269,7 +269,7 @@ function ReportRoute() {
           role="region"
           aria-label="Report configuration"
           aria-hidden={!dockOpen}
-          {...(!dockOpen ? { inert: '' } : {})}
+          inert={!dockOpen}
           className="flex h-full w-[400px] flex-col"
         >
           <header className="flex items-center justify-between gap-3 border-b border-border px-6 py-4">
