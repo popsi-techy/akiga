@@ -6,8 +6,8 @@ import { SlaStatusChip } from './labels';
 
 /**
  * @param showStatus Draw the status chip above the clock. Turn it off where the surface
- * already states the SLA — the detail page carries it in the identity band, and the same
- * word twice on one screen reads as two facts rather than one.
+ * already states the SLA — the list clock already says left/overdue, and the detail page
+ * carries the status in the identity band. The same word twice reads as two facts.
  */
 export function SlaTimer({
   row,

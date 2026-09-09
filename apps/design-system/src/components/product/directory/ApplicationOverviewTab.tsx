@@ -2,8 +2,15 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { StatusChip } from '@ds/components';
+import AccountBalance from '@mui/icons-material/AccountBalance';
+import Hub from '@mui/icons-material/Hub';
+import ManageAccountsOutlined from '@mui/icons-material/ManageAccountsOutlined';
+import PeopleOutlined from '@mui/icons-material/PeopleOutlined';
+import AppsOutlined from '@mui/icons-material/AppsOutlined';
+import VerifiedUserOutlined from '@mui/icons-material/VerifiedUserOutlined';
+import { Card, InfoRow, InfoRowGroup, StatTile, StatusChip } from '@ds/components';
 import { formatDateTime } from '../sod/labels';
+import { infoIcon } from './infoIcons';
 import { appProfileFor } from '@/data/seed';
 import { listAuthorizations } from '@/data/provisioning-auth';
 import { eventStatus, listConnectionEvents } from '@/data/connection-events';
@@ -31,39 +38,12 @@ interface Gap {
 /**
  * Application overview — is this application healthy and governed, and if not, what next.
  *
- * ## Why this is not four cards of label/value rows
+ * The counts use the same `StatTile` row as the dashboard. Connection and
+ * Governance use the framed Card + InfoRow pattern every other overview uses
+ * (Emergency Access, Request Governance). Needs-attention stays its own list:
+ * wrapping problems in the same card as facts would bury them again.
  *
- * It was, and the shape defeated the purpose. Eighteen rows in four framed cards, every
- * row the same size in the same weight, so nothing led and the reader had to read all of
- * it to learn anything. Worse, the rows that were actually *problems* — an unassigned
- * access review owner, an ungoverned application, a connector that had never synced —
- * were formatted identically to the rows that were merely facts, and buried in the fourth
- * card. The single most actionable statement on the page was the least visible thing on
- * it.
- *
- * ## Three levels, in this order
- *
- * 1. **What it holds**, as figures. Large numerals on the page's own ground, hairline
- *    separated, no tiles and no icons: a count is read by its magnitude, and wrapping four
- *    of them in tinted boxes spends the colour budget on decoration. Each links to the tab
- *    that lists the population, per `StatTile`'s rule that a number whose members can be
- *    listed should always say where.
- * 2. **What needs attention** — the protagonist, and the only framed thing on the page.
- *    It is the one region that can prompt an action, so it is the one region with a
- *    container. When there is nothing wrong it collapses to a single quiet line, which is
- *    the reward for having set the application up properly.
- * 3. **Reference detail**, in two unframed columns under quiet overline labels. Hairline
- *    rows rather than cards: this is material you consult, not material you scan, and
- *    boxing it made it compete with the part that needs you.
- *
- * Two things are deliberately absent. Risk, because `DetailShell`'s identity band above
- * already carries the `RiskScoreChip`, and a second copy four pixels below is the
- * duplication this page was full of. And what the last sync *moved*, because the
- * Reconciliation tab has three cards for it — here it was the busiest row on the page,
- * reading "No change accounts +1 −0 entitlements", to answer a question nobody asks of an
- * overview. That the last sync succeeded is the health fact; the deltas are the detail.
- *
- * Read-only throughout — every row's tab is where the corresponding work happens.
+ * Risk stays off this tab — the identity band already carries the chip.
  */
 export function ApplicationOverviewTab({
   app,
@@ -184,174 +164,178 @@ export function ApplicationOverviewTab({
     return out;
   }, [live, provisions, policyCount]);
 
-  return (
-    <div className="ds-scroll h-full overflow-y-auto pr-0.5">
-      <div className="max-w-5xl space-y-7 pb-8">
-        {/* Figures. `divide-x` rather than four boxes: the numerals carry the weight and
-            the hairlines only say where one ends.
+  const usersWithAccess = gov?.metrics.find((m) => m.label === 'Users')?.value ?? 0;
+  const tileCount = 3 + (live?.applications != null ? 1 : 0);
 
-            Breakpoints are `lg`, not `sm`/`md`. What has to fit is the content region, and
-            the sidebar takes ~200px off the viewport before this element sees any of it —
-            picked against the viewport, a four-across row at 768px clipped its last label
-            to "Appli". */}
-        <div className="grid grid-cols-2 gap-y-5 lg:flex lg:divide-x lg:divide-border-subtle">
-          <Figure value={accounts.length} label="App accounts" href={href('accounts')} first />
-          <Figure value={entitlements.length} label="Entitlements" href={href('entitlements')} />
-          <Figure value={gov?.metrics.find((m) => m.label === 'Users')?.value ?? 0} label="Users with access" />
+  return (
+    <div className="ds-scroll flex h-full min-h-0 flex-col gap-5 overflow-y-auto">
+        <div
+          className={`grid shrink-0 gap-4 sm:grid-cols-2 ${tileCount === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}
+        >
+          <StatTile
+            label="Active users"
+            value={accounts.length}
+            icon={<ManageAccountsOutlined sx={{ fontSize: 22 }} />}
+            tone="brand"
+            hoverElevate
+            href={href('accounts')}
+          />
+          <StatTile
+            label="Entitlements"
+            value={entitlements.length}
+            icon={<VerifiedUserOutlined sx={{ fontSize: 22 }} />}
+            tone="success"
+            hoverElevate
+            href={href('entitlements')}
+          />
+          <StatTile
+            label="Users with access"
+            value={usersWithAccess}
+            icon={<PeopleOutlined sx={{ fontSize: 22 }} />}
+            tone="info"
+            hoverElevate
+          />
           {live?.applications != null && (
-            <Figure value={live.applications} label="Applications discovered" href={href('reconciliation')} />
+            <StatTile
+              label="Applications discovered"
+              value={live.applications}
+              icon={<AppsOutlined sx={{ fontSize: 22 }} />}
+              tone="neutral"
+              hoverElevate
+              href={href('reconciliation')}
+            />
           )}
         </div>
 
-        {live && (gaps.length > 0 ? <NeedsAttention gaps={gaps} appId={app.id} /> : <AllClear />)}
+        <div className="shrink-0">
+          {live && (gaps.length > 0 ? <NeedsAttention gaps={gaps} appId={app.id} /> : <AllClear />)}
+        </div>
 
-        <div className="grid gap-x-12 gap-y-7 lg:grid-cols-2">
-          <section>
-            <SectionLabel>Connection</SectionLabel>
-            <Row label="Application type" value={profile.appType} />
-            <Row
-              label="Discovered via"
-              value={profile.discoverySource === 'IAM' ? 'An IAM integration' : 'Added directly'}
-            />
-            <Row
-              label="Provisioning"
-              value={
-                provisions ? `On · ${profile.provisioningType === 'auto' ? 'Automatic' : 'Manual'}` : 'Off · read only'
-              }
-            />
-            {provisions && (
-              <Row
-                label="Authorization"
+        <div className="grid min-h-0 flex-1 items-stretch gap-5 lg:grid-cols-2">
+          <Card title="Connection" icon={<Hub />} padding="none" className="h-full min-h-0">
+            <InfoRowGroup>
+              <InfoRow icon={infoIcon.type} label="Application type" value={profile.appType} />
+              <InfoRow
+                icon={infoIcon.discovery}
+                label="Discovered via"
+                value={profile.discoverySource === 'IAM' ? 'An IAM integration' : 'Added directly'}
+              />
+              <InfoRow
+                icon={infoIcon.sync}
+                label="Provisioning"
+                value={
+                  provisions
+                    ? `On · ${profile.provisioningType === 'auto' ? 'Automatic' : 'Manual'}`
+                    : 'Off · read only'
+                }
+              />
+              {provisions && (
+                <InfoRow
+                  icon={infoIcon.authorization}
+                  label="Authorization"
+                  value={
+                    !live ? (
+                      <Pending />
+                    ) : !live.hasAuth ? (
+                      <StatusChip intent="warning" label="None" />
+                    ) : live.connected ? (
+                      <StatusChip intent="success" label="Connected" />
+                    ) : (
+                      <StatusChip intent="warning" label="Not connected" />
+                    )
+                  }
+                  valueWrap
+                />
+              )}
+              <InfoRow
+                icon={infoIcon.updated}
+                label="Last sync"
                 value={
                   !live ? (
                     <Pending />
-                  ) : !live.hasAuth ? (
-                    <StatusChip intent="warning" label="None" />
-                  ) : live.connected ? (
-                    <StatusChip intent="success" label="Connected" />
+                  ) : !live.lastSync ? (
+                    <span className="text-text-tertiary">Never</span>
                   ) : (
-                    <StatusChip intent="warning" label="Not connected" />
+                    <span className="inline-flex items-center gap-2">
+                      {formatDateTime(live.lastSync.at)}
+                      {!live.lastSync.ok && <StatusChip intent="danger" label="Failed" />}
+                    </span>
                   )
                 }
+                valueWrap
               />
-            )}
-            <Row
-              label="Last sync"
-              value={
-                !live ? (
-                  <Pending />
-                ) : !live.lastSync ? (
-                  <span className="text-text-tertiary">Never</span>
-                ) : (
-                  <span className="inline-flex items-center gap-2">
-                    {formatDateTime(live.lastSync.at)}
-                    {!live.lastSync.ok && <StatusChip intent="danger" label="Failed" />}
-                  </span>
-                )
-              }
-            />
-          </section>
+            </InfoRowGroup>
+          </Card>
 
-          <section>
-            <SectionLabel>Governance</SectionLabel>
-            {/* Named people and accountable bodies in one row, because "who answers for
-                this" is one question. A team is marked as a team rather than listed
-                separately: which kind of party it is matters less here than that
-                somebody is named at all. */}
-            <Row
-              label="Owners"
-              value={
-                !live ? (
-                  <Pending />
-                ) : live.owners.length ? (
-                  live.owners.map((o) => (o.kind === 'team' ? `${o.name} (team)` : o.name)).join(', ')
-                ) : (
-                  <StatusChip intent="warning" label="None" />
-                )
-              }
-            />
-            <Row
-              label="Access review owner"
-              value={
-                reviewers.length ? (
-                  reviewers.map((p) => p.name).join(', ')
-                ) : (
-                  <StatusChip intent="danger" label="Unassigned" />
-                )
-              }
-            />
-            <Row
-              label="Default baseline"
-              value={
-                !live ? (
-                  <Pending />
-                ) : live.baseline ? (
-                  `${live.baseline.name} · ${live.baseline.size} entitlement${live.baseline.size === 1 ? '' : 's'}`
-                ) : (
-                  <StatusChip intent="warning" label="None" />
-                )
-              }
-            />
-            <Row
-              label="Governing policies"
-              value={
-                controls && policyCount > 0 ? (
-                  [
-                    controls.birthright && `${controls.birthright} birthright`,
-                    controls.approval && `${controls.approval} approval`,
-                    controls.sod && `${controls.sod} SoD`,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')
-                ) : (
-                  <StatusChip intent="warning" label="Ungoverned" />
-                )
-              }
-            />
-            <Row
-              label="Departments"
-              value={(gov?.departmentIds ?? []).map((id) => displayName(id)).join(', ') || '—'}
-            />
-          </section>
+          <Card title="Governance" icon={<AccountBalance />} padding="none" className="h-full min-h-0">
+            <InfoRowGroup>
+              <InfoRow
+                icon={infoIcon.owner}
+                label="Owners"
+                value={
+                  !live ? (
+                    <Pending />
+                  ) : live.owners.length ? (
+                    live.owners.map((o) => (o.kind === 'team' ? `${o.name} (team)` : o.name)).join(', ')
+                  ) : (
+                    <StatusChip intent="warning" label="None" />
+                  )
+                }
+                valueWrap
+              />
+              <InfoRow
+                icon={infoIcon.reviewer}
+                label="Access review owner"
+                value={
+                  reviewers.length ? (
+                    reviewers.map((p) => p.name).join(', ')
+                  ) : (
+                    <StatusChip intent="danger" label="Unassigned" />
+                  )
+                }
+                valueWrap
+              />
+              <InfoRow
+                icon={infoIcon.baseline}
+                label="Default baseline"
+                value={
+                  !live ? (
+                    <Pending />
+                  ) : live.baseline ? (
+                    `${live.baseline.name} · ${live.baseline.size} entitlement${live.baseline.size === 1 ? '' : 's'}`
+                  ) : (
+                    <StatusChip intent="warning" label="None" />
+                  )
+                }
+                valueWrap
+              />
+              <InfoRow
+                icon={infoIcon.policy}
+                label="Governing policies"
+                value={
+                  controls && policyCount > 0 ? (
+                    [
+                      controls.birthright && `${controls.birthright} birthright`,
+                      controls.approval && `${controls.approval} approval`,
+                      controls.sod && `${controls.sod} SoD`,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')
+                  ) : (
+                    <StatusChip intent="warning" label="Ungoverned" />
+                  )
+                }
+                valueWrap
+              />
+              <InfoRow
+                icon={infoIcon.department}
+                label="Departments"
+                value={(gov?.departmentIds ?? []).map((id) => displayName(id)).join(', ') || '—'}
+              />
+            </InfoRowGroup>
+          </Card>
         </div>
-      </div>
     </div>
-  );
-}
-
-/**
- * One count, at a size you can read without looking for it.
- *
- * A link when the population can be listed, and the whole figure is the target rather
- * than a small affordance beside it — the number is the thing being clicked.
- */
-function Figure({
-  value,
-  label,
-  href,
-  first = false,
-}: {
-  value: React.ReactNode;
-  label: string;
-  href?: string;
-  first?: boolean;
-}) {
-  const body = (
-    <>
-      <div className="text-stat text-text-primary">{value}</div>
-      <div className="mt-1 whitespace-nowrap text-caption text-text-secondary">{label}</div>
-    </>
-  );
-  const pad = first ? 'lg:pr-7' : 'lg:px-7';
-  if (!href) return <div className={pad}>{body}</div>;
-  return (
-    <Link
-      href={href}
-      className={`${pad} group rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle`}
-    >
-      <div className="text-stat text-text-primary transition-colors group-hover:text-text-link">{value}</div>
-      <div className="mt-1 whitespace-nowrap text-caption text-text-secondary">{label}</div>
-    </Link>
   );
 }
 
@@ -404,25 +388,6 @@ function AllClear() {
       <span className="font-emphasis text-text-primary">Nothing needs attention.</span> The connector is
       wired, the inventory is current, and this application is owned and governed.
     </p>
-  );
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <h3 className="mb-1 text-overline uppercase text-text-tertiary">{children}</h3>;
-}
-
-/**
- * Label left, value right, hairline under.
- *
- * The value is right-aligned so the column of values shares an edge — with ragged
- * left-aligned values the eye has to find each one after reading its label.
- */
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-4 border-b border-border-subtle py-2.5 last:border-b-0">
-      <span className="shrink-0 text-body-sm text-text-secondary">{label}</span>
-      <span className="min-w-0 truncate text-right text-body-sm text-text-primary">{value}</span>
-    </div>
   );
 }
 

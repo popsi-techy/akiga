@@ -206,8 +206,8 @@ function EventRow({ event }: { event: AuditEvent }) {
  * happened in. `buildRequestTimeline` drops the entries a stage card already states; see
  * `request-timeline.ts` for why that blocklist is shaped the way it is.
  *
- * Purely presentational, so both the tab and the drawer can host it. The `ring-surface`
- * on each node assumes a light container.
+ * Purely presentational, so the detail split and the drawer can host it. The
+ * `ring-surface` on each node assumes a light container.
  */
 export function RequestTimeline({ row }: { row: GovernanceRequest }) {
   const items = React.useMemo(() => buildRequestTimeline(row), [row]);

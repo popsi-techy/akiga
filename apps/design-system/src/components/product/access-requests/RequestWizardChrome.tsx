@@ -51,15 +51,19 @@ export function RequestWizardChrome({
     <div
       className={
         dock
-          ? // 100% is main's content box. The header already eats the top py-6
-            // (-mt-6); add the bottom py-6 back so the rail meets the viewport.
-            'flex h-[calc(100%+var(--ds-space-6))] min-h-0 flex-col'
+          ? // `main` is already `py-6`. 100% is its content box — the area
+            // *inside* that padding. Pull the chrome into both paddings with
+            // matching negative margins and grow by 2× space-6 so the rail
+            // meets the viewport. Putting `-mt-6` only on the header (the old
+            // shape) left the top padding in the scroll height, so `main`
+            // scrolled by exactly 24px.
+            'flex h-[calc(100%+2*var(--ds-space-6))] min-h-0 -mt-6 -mb-6 flex-col overflow-hidden'
           : 'flex h-full min-h-0 flex-col'
       }
     >
       {/* Docked identity band: bleeds to the topbar the way DetailShell does,
           then a hairline so the steps below read as the page, not more chrome. */}
-      <div className="-mx-8 -mt-6 flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border bg-canvas px-8 py-3">
+      <div className="-mx-8 flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border bg-canvas px-8 py-3">
         <div className="flex min-w-0 items-center gap-3">
           <Tooltip title="Back">
             <Button variant="tertiary" iconOnly aria-label="Back" onClick={onBack}>

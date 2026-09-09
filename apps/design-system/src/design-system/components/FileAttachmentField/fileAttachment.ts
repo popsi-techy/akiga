@@ -34,7 +34,9 @@ export interface FileAttachmentReject {
   message: string;
 }
 
-export const FILE_ATTACHMENT_MAX_BYTES = Math.round(1.5 * 1024 * 1024);
+/** Per-file cap. Ten megabytes is enough for a scan or a letter; past that the
+ *  attachment is a document store, not evidence on a request. */
+export const FILE_ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024;
 
 export const FILE_ATTACHMENT_ACCEPT = [
   '.pdf',
@@ -69,7 +71,8 @@ export function fileAttachmentKind(file: { name: string; type: string }): FileAt
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  const mb = bytes / (1024 * 1024);
+  return Number.isInteger(mb) ? `${mb} MB` : `${mb.toFixed(1)} MB`;
 }
 
 export function fileAttachmentKindLabel(kind: FileAttachmentKind): string {

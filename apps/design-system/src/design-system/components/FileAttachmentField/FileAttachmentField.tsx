@@ -129,6 +129,28 @@ function isFileDrag(e: DragEvent | React.DragEvent): boolean {
   return Array.from(e.dataTransfer?.types ?? []).includes('Files');
 }
 
+function AttachmentLimitsCaption({
+  maxFiles,
+  maxBytes,
+}: {
+  maxFiles?: number;
+  maxBytes: number;
+}) {
+  const size = formatFileSize(maxBytes).replace(' ', '');
+  return (
+    <span className="block text-caption text-text-tertiary">
+      {maxFiles != null ? (
+        <>
+          <span className="block">{`PDF, Word, or Image (up to ${maxFiles} files,`}</span>
+          <span className="block">{`max ${size} each)`}</span>
+        </>
+      ) : (
+        `PDF, Word, or Image (max ${size} each)`
+      )}
+    </span>
+  );
+}
+
 export function FileAttachmentField({
   label = 'Supporting files',
   hint,
@@ -565,45 +587,65 @@ export function FileAttachmentField({
           />
 
           {empty ? (
-            <button
-              type="button"
-              onClick={openPicker}
-              disabled={!canAdd}
-              aria-describedby={helperText || error ? `${inputId}-help` : undefined}
-              className={[
-                'w-full transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-subtle disabled:cursor-not-allowed disabled:opacity-50',
-                /*
-                  Two layouts for one prompt. Filling a column it is a dropzone — mark
-                  above the words, both centred, so the whole area reads as the place to
-                  let go. Sized to its content it is a row in a form, where a stacked and
-                  centred prompt would be three lines of chrome for one control.
-                */
-                dropzone
-                  ? 'flex h-full flex-col items-center justify-center gap-3 px-4 py-8 text-center'
-                  : 'flex items-center gap-2.5 px-3 py-2.5 text-left',
-              ].join(' ')}
-            >
-              {/* Not Avatar: a brand-tint tile with a clip said "identity", not
-                  "drop files here". The inbox mark is the empty-state illustration. */}
-              <AttachInboxMark size={dropzone ? 40 : 32} />
-              <span className={dropzone ? '' : 'min-w-0'}>
-                <span
-                  className={[
-                    'block text-body-sm-medium',
-                    pageDragging ? 'text-info' : 'text-text-primary',
-                  ].join(' ')}
-                >
-                  {pageDragging ? (
-                    'Drop here to attach'
-                  ) : (
-                    <>
-                      Drag and drop or <span className="text-text-link">browse</span> files
-                    </>
-                  )}
+            dropzone ? (
+              <div className="flex h-full flex-col items-center justify-center px-4 py-6 text-center">
+                {/* Action first: mark and Browse are one control, sized to each
+                    other (32px mark, xs button). The copy below is a caption
+                    block — one step of air, then body-sm over caption — so it
+                    does not compete with the button. Equal gap-3 on every
+                    child was why the stack read as five things of one weight. */}
+                <div className="flex flex-col items-center gap-2">
+                  <AttachInboxMark size={32} />
+                  <Button
+                    variant="secondary"
+                    size="xs"
+                    disabled={!canAdd}
+                    onClick={openPicker}
+                    aria-describedby={helperText || error ? `${inputId}-help` : undefined}
+                  >
+                    Browse
+                  </Button>
+                </div>
+                <div className="mt-3 flex flex-col items-center gap-1">
+                  <span
+                    className={[
+                      'text-body-sm',
+                      pageDragging ? 'text-info' : 'text-text-secondary',
+                    ].join(' ')}
+                  >
+                    {pageDragging ? 'Drop here to attach' : 'or drag and drop file here'}
+                  </span>
+                  <AttachmentLimitsCaption maxFiles={maxFiles} maxBytes={maxBytes} />
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={openPicker}
+                disabled={!canAdd}
+                aria-describedby={helperText || error ? `${inputId}-help` : undefined}
+                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-subtle disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <AttachInboxMark size={32} />
+                <span className="min-w-0">
+                  <span
+                    className={[
+                      'block text-body-sm-medium',
+                      pageDragging ? 'text-info' : 'text-text-primary',
+                    ].join(' ')}
+                  >
+                    {pageDragging ? (
+                      'Drop here to attach'
+                    ) : (
+                      <>
+                        Drag and drop or <span className="text-text-link">browse</span> files
+                      </>
+                    )}
+                  </span>
+                  <AttachmentLimitsCaption maxFiles={maxFiles} maxBytes={maxBytes} />
                 </span>
-                <span className="block text-caption text-text-tertiary">PDF, Word, or image</span>
-              </span>
-            </button>
+              </button>
+            )
           ) : (
             <>
               <ul

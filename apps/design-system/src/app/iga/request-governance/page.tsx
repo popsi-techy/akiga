@@ -27,14 +27,11 @@ import {
   isProvisioningFailed,
   listGovernanceRequests,
   RESOURCE_TYPE_LABEL,
+  describeCurrentStage,
   slaStatusOf,
   type GovernanceRequest,
 } from '@/data/request-governance';
-import {
-  LiveStageStepper,
-  ResourceTypeMark,
-  SlaTimer,
-} from '@/components/product/request-governance';
+import { ResourceTypeMark, SlaTimer } from '@/components/product/request-governance';
 
 export default function RequestGovernancePage() {
   useSetBreadcrumbs([{ label: 'Request Governance' }]);
@@ -151,12 +148,12 @@ export default function RequestGovernancePage() {
     },
     {
       id: 'stage',
-      header: 'Live stage',
+      header: 'Current stage',
       sortable: true,
-      width: 200,
+      width: 220,
       wrap: true,
-      value: (r) => r.currentStage,
-      render: (r) => <LiveStageStepper row={r} />,
+      value: (r) => describeCurrentStage(r),
+      render: (r) => <StatusChip intent="info" label={describeCurrentStage(r)} />,
     },
     {
       id: 'sla',
@@ -165,7 +162,7 @@ export default function RequestGovernancePage() {
       width: 132,
       wrap: true,
       value: (r) => r.slaDueAt,
-      render: (r) => <SlaTimer row={r} />,
+      render: (r) => <SlaTimer row={r} showStatus={false} />,
     },
   ];
 

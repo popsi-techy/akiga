@@ -123,7 +123,7 @@ export default function FileAttachmentDocs() {
             { name: 'label', type: 'string', default: "'Supporting files'", description: 'Visible field label.' },
             { name: 'hint', type: 'ReactNode', description: 'First-read explanation on the label’s info icon.' },
             { name: 'maxFiles', type: 'number', description: 'Optional count cap. Omit so the user can attach as many files as they need.' },
-            { name: 'maxBytes', type: 'number', default: '1.5 MB', description: 'Per-file size limit.' },
+            { name: 'maxBytes', type: 'number', default: '10 MB', description: 'Per-file size limit. Shown on the empty well with the file-count cap.' },
             { name: 'fill', type: 'boolean', description: 'Take leftover height in a flex column whether empty or filled, and scroll the list only when the cards run out of room — for a rail with a pinned footer.' },
             { name: 'readOnly', type: 'boolean', description: 'List only — no add or remove. Used on submitted requests.' },
             { name: 'disabled', type: 'boolean', description: 'Blocks interaction while still showing the current files.' },
@@ -141,6 +141,7 @@ export default function FileAttachmentDocs() {
             'Pass readOnly on submitted or reviewer surfaces so the list is evidence, not an editor.',
             'Open a file from the kebab (Preview / Download) or by double-clicking the card.',
             'A file held anywhere on the page dashes the well blue and says “Drop here to attach” — the drop still only lands inside the well.',
+            'On an empty fill well, put Browse under the inbox mark and print the count and size caps on the prompt — don’t hide the limit until a twelfth file is rejected.',
           ]}
           donts={[
             'Don’t make attachments required unless a policy actually requires evidence.',

@@ -16,10 +16,8 @@ import { SlaTimer } from './SlaTimer';
 /**
  * Who asked, for whom, for what — and how risky it is.
  *
- * Split out of `RequestDetailBody` so the detail page can show it as its Overview tab
- * while the drawer keeps all three parts stacked. The drawer is a peek: scrolling one
- * column is the right shape there, and tabs inside a drawer would be navigation inside
- * navigation.
+ * Stacked facts for the peek drawer. The detail page uses `RequestDetailSplit`
+ * instead — a two-column workflow + cards layout that would be cramped here.
  */
 export function RequestSummary({
   row,

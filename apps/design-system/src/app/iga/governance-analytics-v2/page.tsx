@@ -3,16 +3,68 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import AddIcon from '@mui/icons-material/Add';
-import { Avatar, Button, DataTable, Dialog, Menu, StatusChip, useToast, type Column } from '@ds/components';
+import FilterListOutlined from '@mui/icons-material/FilterListOutlined';
+import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import {
+  Avatar,
+  Button,
+  DataTable,
+  Dialog,
+  FilterDrawer,
+  Input,
+  Menu,
+  StatusChip,
+  useToast,
+  type Column,
+  type FilterGroup,
+  type FilterSelection,
+} from '@ds/components';
+import {
+  ORGANIZATION_NOUN,
+  TIMELINE_OPTIONS,
   deleteReportV2,
   describeOrganization,
   listReportsV2,
   timelineById,
+  type OrganizationScope,
   type ReportV2,
 } from '@/data/governance-analytics-v2';
 import { formatDate } from '@/lib/datetime';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
+
+const FILTER_GROUPS: FilterGroup[] = [
+  {
+    id: 'about',
+    label: 'About',
+    options: (Object.keys(ORGANIZATION_NOUN) as OrganizationScope[]).map((id) => ({
+      id,
+      label: ORGANIZATION_NOUN[id],
+    })),
+  },
+  {
+    id: 'period',
+    label: 'Period',
+    options: TIMELINE_OPTIONS.map((t) => ({ id: t.id, label: t.label })),
+  },
+  {
+    id: 'status',
+    label: 'Status',
+    options: [
+      { id: 'ready', label: 'Ready' },
+      { id: 'draft', label: 'Draft' },
+    ],
+  },
+];
+
+function matchesFilters(report: ReportV2, selection: FilterSelection) {
+  const about = selection.about;
+  const periods = selection.period;
+  const statuses = selection.status;
+  if (about?.length && !about.includes(report.organization.scope)) return false;
+  if (periods?.length && !periods.includes(report.timelineId)) return false;
+  if (statuses?.length && !statuses.includes(report.status)) return false;
+  return true;
+}
 
 /**
  * Governance Analytics V2 — the reports list.
@@ -34,9 +86,31 @@ export default function GovernanceAnalyticsV2Page() {
   // localStorage-backed, so read after mount — `null` keeps DataTable in its skeleton
   // rather than flashing an empty state the store would contradict.
   const [reports, setReports] = React.useState<ReportV2[] | null>(null);
+  const [query, setQuery] = React.useState('');
+  const [filterOpen, setFilterOpen] = React.useState(false);
+  const [filterSelection, setFilterSelection] = React.useState<FilterSelection>({});
   const [confirmDelete, setConfirmDelete] = React.useState<ReportV2 | null>(null);
   const reload = React.useCallback(() => setReports(listReportsV2()), []);
   React.useEffect(reload, [reload]);
+
+  const activeFilters = Object.values(filterSelection).reduce((n, ids) => n + ids.length, 0);
+
+  const filtered = React.useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return (reports ?? []).filter((r) => matchesFilters(r, filterSelection)).filter((r) => {
+      if (!q) return true;
+      const period = timelineById(r.timelineId)?.label ?? '';
+      return (
+        r.name.toLowerCase().includes(q) ||
+        r.description.toLowerCase().includes(q) ||
+        describeOrganization(r.organization).toLowerCase().includes(q) ||
+        period.toLowerCase().includes(q) ||
+        r.createdBy.toLowerCase().includes(q)
+      );
+    });
+  }, [reports, query, filterSelection]);
+
+  const narrowed = Boolean(query.trim() || activeFilters > 0);
 
   const open = (id: string) => router.push(`/iga/governance-analytics-v2/report/${id}`);
 
@@ -130,7 +204,19 @@ export default function GovernanceAnalyticsV2Page() {
         </p>
       </div>
 
-      <div className="mb-4 flex shrink-0 items-center">
+      <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
+        <div className="w-full max-w-sm">
+          <Input
+            placeholder="Search reports"
+            aria-label="Search reports"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
+          />
+        </div>
+        <Button variant="secondary" startIcon={<FilterListOutlined />} onClick={() => setFilterOpen(true)}>
+          Filter{activeFilters > 0 ? ` (${activeFilters})` : ''}
+        </Button>
         <div className="ml-auto">
           <Button
             startIcon={<AddIcon />}
@@ -145,14 +231,27 @@ export default function GovernanceAnalyticsV2Page() {
         <DataTable<ReportV2>
           layout="fixed"
           columns={columns}
-          rows={reports ?? []}
+          rows={filtered}
           loading={reports === null}
           fillHeight
           onRowClick={(r) => open(r.id)}
-          emptyTitle="No reports yet"
-          emptyMessage="Create a report to analyse a department, an application, a governance team, or the whole organisation."
+          emptyTitle={narrowed ? 'No reports match' : 'No reports yet'}
+          emptyMessage={
+            narrowed
+              ? 'Nothing here matches that search. Clear it to see every report.'
+              : 'Create a report to analyse a department, an application, a governance team, or the whole organisation.'
+          }
         />
       </div>
+
+      <FilterDrawer
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        groups={FILTER_GROUPS}
+        value={filterSelection}
+        onApply={setFilterSelection}
+        subtitle="Filter as per your requirement."
+      />
 
       <Dialog
         open={confirmDelete !== null}

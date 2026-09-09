@@ -1,5 +1,5 @@
 /**
- * Workflow execution history — seed only, no store.
+ * Workflow execution history — in-memory seed.
  *
  * A workflow run records the same facts as an approval run (when it started,
  * what it touched, step-by-step outcomes, what was provisioned), so it reuses
@@ -7,6 +7,9 @@
  * already carried by the shared enums: the outcome is `completed` rather than
  * `approved`, the trigger is a `Lifecycle event`, and steps `match` and `assign`
  * instead of approving.
+ *
+ * `retryWorkflowRun` appends a new running record so the failed one stays
+ * evidence. Session-only — a reload restores the seed.
  *
  * The `approver` field names whichever actor performed the step — for a workflow
  * that is usually the system, and occasionally an approval policy the workflow
@@ -95,6 +98,51 @@ const WORKFLOW_RUNS: ApprovalRun[] = [
 
 export function listWorkflowRuns(workflowId: string): ApprovalRun[] {
   return WORKFLOW_RUNS.filter((r) => r.policyId === workflowId).sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1));
+}
+
+/**
+ * Re-run a failed execution. The failed record stays; a new running one is
+ * queued for the same identity and targets so history still shows why the
+ * last attempt died.
+ */
+export function retryWorkflowRun(failedId: string): ApprovalRun | null {
+  const source = WORKFLOW_RUNS.find((r) => r.id === failedId);
+  if (!source || source.outcome !== 'failed') return null;
+
+  const seq =
+    WORKFLOW_RUNS.reduce((max, r) => {
+      const n = Number.parseInt(r.reference.replace(/\D/g, ''), 10);
+      return Number.isFinite(n) && n > max ? n : max;
+    }, 0) + 1;
+
+  const retry: ApprovalRun = {
+    ...source,
+    id: `wfrun-${seq}`,
+    reference: `WF-${seq}`,
+    startedAt: RUNS_AS_OF,
+    completedAt: null,
+    outcome: 'running',
+    duration: null,
+    slaBreached: false,
+    steps: source.steps.map((step, i, all) =>
+      i === all.length - 1
+        ? {
+            ...step,
+            decision: 'pending',
+            at: null,
+            duration: null,
+            note: 'Retrying after the previous failure',
+          }
+        : { ...step },
+    ),
+    grants: source.grants.map((g) => ({
+      ...g,
+      result: 'pending',
+      detail: 'Retry submitted to the connector',
+    })),
+  };
+  WORKFLOW_RUNS.push(retry);
+  return retry;
 }
 
 /** Same shape as approval stats; `approved` counts completed runs for a workflow. */

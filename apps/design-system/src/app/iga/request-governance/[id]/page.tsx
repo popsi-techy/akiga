@@ -2,13 +2,13 @@
 
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Button, useToast, type TabItem } from '@ds/components';
+import { Button, useToast } from '@ds/components';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import {
   canInterveneApproval,
   convertToTicket,
-  forceApprove,
   getGovernanceRequest,
+  formatSlaClock,
   slaStatusOf,
   isProvisioningFailed,
   markManuallyCompleted,
@@ -20,18 +20,16 @@ import {
 } from '@/data/request-governance';
 import { DetailShell } from '@/components/product/directory';
 import {
-  ForceApproveDialog,
   NudgeDialog,
   ProvisioningFailureModal,
   ReassignDialog,
-  RequestSummary,
-  RequestTimeline,
+  RequestDetailSplit,
   ResourceTypeAvatar,
   SlaStatusChip,
   requestSubtitle,
 } from '@/components/product/request-governance';
 
-type DialogKind = 'nudge' | 'reassign' | 'override' | 'failure' | null;
+type DialogKind = 'nudge' | 'reassign' | 'failure' | null;
 
 export default function RequestGovernanceDetailPage() {
   const params = useParams<{ id: string }>();
@@ -39,7 +37,6 @@ export default function RequestGovernanceDetailPage() {
   const toast = useToast();
   const [row, setRow] = React.useState<GovernanceRequest | null | undefined>(undefined);
   const [dialog, setDialog] = React.useState<DialogKind>(null);
-  const [tab, setTab] = React.useState('overview');
 
   const refresh = React.useCallback(() => {
     setRow(getGovernanceRequest(params.id) ?? null);
@@ -83,19 +80,9 @@ export default function RequestGovernanceDetailPage() {
   const intervene = canInterveneApproval(row);
 
   /*
-    The same identity band every other detail screen uses, rather than a bare h1 in a
-    centred column: mark, reference, what it is for, its state, and the actions — then
-    tabs for the three things there are to read about a request.
-
-    Two tabs, not three. Overview answers "what is this and how risky"; Timeline answers
-    "what has happened to it". Lifecycle and Audit Trail were both the second question at
-    two grains, and splitting them hid the one thing they were jointly for — the order
-    events happened in. See `RequestTimeline` for how the two streams merge.
+    Identity band stays. Below it, workflow and facts sit side by side so neither
+    is a tab the other hides. See `RequestDetailSplit`.
   */
-  const tabs: TabItem[] = [
-    { value: 'overview', label: 'Overview' },
-    { value: 'timeline', label: 'Timeline' },
-  ];
 
   return (
     <>
@@ -110,41 +97,26 @@ export default function RequestGovernanceDetailPage() {
         }
         title={row.reference}
         description={requestSubtitle(row)}
-        chips={<SlaStatusChip status={slaStatusOf(row)} />}
+        chips={<SlaStatusChip status={slaStatusOf(row)} label={formatSlaClock(row)} />}
         actions={
-          <>
-            {intervene && (
-              <>
-                <Button variant="tertiary" onClick={() => setDialog('nudge')}>
-                  Nudge approver
-                </Button>
-                <Button variant="tertiary" onClick={() => setDialog('reassign')}>
-                  Reassign
-                </Button>
-                <Button variant="secondary" onClick={() => setDialog('override')}>
-                  Force approve
-                </Button>
-              </>
-            )}
-            {failed && <Button onClick={() => setDialog('failure')}>Handle failure</Button>}
-            {!row.closedAt && !failed && !intervene && (
-              <Button variant="secondary" onClick={() => setDialog('override')}>
-                Force approve
-              </Button>
-            )}
-          </>
+          intervene || failed ? (
+            <>
+              {intervene && (
+                <>
+                  <Button variant="tertiary" onClick={() => setDialog('nudge')}>
+                    Nudge approver
+                  </Button>
+                  <Button variant="tertiary" onClick={() => setDialog('reassign')}>
+                    Reassign
+                  </Button>
+                </>
+              )}
+              {failed && <Button onClick={() => setDialog('failure')}>Handle failure</Button>}
+            </>
+          ) : undefined
         }
-        tabs={tabs}
-        tab={tab}
-        onTab={setTab}
       >
-        <div className="ds-scroll h-full overflow-y-auto pr-0.5">
-          <div className="max-w-4xl pb-8">
-            {/* The identity band above already carries the SLA chip, on every tab. */}
-            {tab === 'overview' && <RequestSummary row={row} hideSlaStatus />}
-            {tab === 'timeline' && <RequestTimeline row={row} />}
-          </div>
-        </div>
+        <RequestDetailSplit row={row} />
       </DetailShell>
 
       <NudgeDialog
@@ -167,17 +139,6 @@ export default function RequestGovernanceDetailPage() {
           refresh();
           setDialog(null);
           toast.success('Approver reassigned.');
-        }}
-      />
-      <ForceApproveDialog
-        row={row}
-        open={dialog === 'override'}
-        onClose={() => setDialog(null)}
-        onConfirm={(reason) => {
-          forceApprove(row.id, reason);
-          refresh();
-          setDialog(null);
-          toast.success(`${row.reference} sent to provisioning.`);
         }}
       />
       <ProvisioningFailureModal

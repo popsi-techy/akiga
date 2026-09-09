@@ -38,9 +38,13 @@ export function DetailShell({
    * anything more belongs on the tab that owns it.
    */
   actions?: React.ReactNode;
-  tabs: TabItem[];
-  tab: string;
-  onTab: (v: string) => void;
+  /**
+   * Omit the strip when the page is one surface — Request Governance puts
+   * workflow and facts side by side, so a tab would hide one of them.
+   */
+  tabs?: TabItem[];
+  tab?: string;
+  onTab?: (v: string) => void;
   /**
    * Emergency Access frame: full-bleed, tabs on their own rule, room for a
    * right-hand checklist. Stays on while the dock is closed so hiding it does
@@ -56,11 +60,12 @@ export function DetailShell({
   return (
     <div
       className={
+        // 100% is main's content box. Cancel `px-8` / `py-6` so the shell
+        // meets the viewport edges — otherwise `overflow-hidden` clips the
+        // tab rule 32px short of the right edge.
         withDock
-          ? // 100% is main's content box; add the frame's py-6 back so the dock
-            // meets the viewport bottom. Negative margin-bottom cannot stretch it.
-            'flex h-[calc(100%+var(--ds-space-12))] min-h-0 -mx-8 -mt-6'
-          : 'flex h-full min-h-0 flex-col'
+          ? 'flex h-[calc(100%+2*var(--ds-space-6))] min-h-0 -mx-8 -mt-6 -mb-6 overflow-hidden'
+          : 'flex h-[calc(100%+2*var(--ds-space-6))] min-h-0 flex-col -mx-8 -mt-6 -mb-6 overflow-hidden'
       }
     >
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -71,7 +76,7 @@ export function DetailShell({
           className={
             withDock
               ? 'shrink-0 bg-canvas px-8 pt-3'
-              : 'shrink-0 -mx-8 -mt-6 border-b border-border bg-canvas px-8 pt-3'
+              : 'shrink-0 border-b border-border bg-canvas px-8 pt-3'
           }
         >
           {/* items-center, not items-start: the identity block is two lines (~45px) and the
@@ -92,11 +97,11 @@ export function DetailShell({
               <div className={`flex shrink-0 items-center ${withDock ? 'gap-3' : 'gap-2'}`}>{actions}</div>
             )}
           </div>
-          {!withDock && (
+          {!withDock && tabs && tab != null && onTab && (
             <Tabs items={tabs} value={tab} onChange={onTab} noBorder aria-label={`${title} details`} />
           )}
         </div>
-        {withDock && (
+        {withDock && tabs && tab != null && onTab && (
           <div className="shrink-0 border-b border-border px-8">
             <Tabs items={tabs} value={tab} onChange={onTab} noBorder aria-label={`${title} details`} />
           </div>
@@ -106,7 +111,7 @@ export function DetailShell({
           className={
             withDock
               ? 'flex min-h-0 min-w-0 flex-1 flex-col px-8 py-5'
-              : 'flex min-h-0 flex-1 flex-col pt-5'
+              : 'flex min-h-0 flex-1 flex-col px-8 pt-5'
           }
         >
           {children}

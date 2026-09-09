@@ -83,7 +83,14 @@ const SLA_META: Record<SlaStatus, { label: string; intent: StatusIntent }> = {
   closed: { label: 'Closed', intent: 'neutral' },
 };
 
-export function SlaStatusChip({ status }: { status: SlaStatus }) {
+export function SlaStatusChip({
+  status,
+  label,
+}: {
+  status: SlaStatus;
+  /** Overrides the status word. The identity band prints the clock here. */
+  label?: string;
+}) {
   const m = SLA_META[status];
-  return <StatusChip intent={m.intent} label={m.label} />;
+  return <StatusChip intent={m.intent} label={label ?? m.label} />;
 }

@@ -5,7 +5,7 @@
  * end-user inbox or the reviewer queue. Rows carry SLA, live stage, SoD, and
  * provisioning exceptions so an admin can monitor and intervene.
  */
-import { requestGovernanceSeed } from './request-governance-seed';
+import { requestGovernanceSeed } from './request-governance-seed';
 import { formatDateTime } from '@/lib/datetime';
 import type { FileAttachment } from '@ds/components';
 
@@ -123,6 +123,34 @@ export const LIFECYCLE_ORDER: LifecycleStageId[] = [
   'approval',
   'provisioning',
 ];
+
+/** The noun printed in the list chip — shorter than `STAGE_LABEL`, not a verb. */
+const STAGE_CHIP_NAME: Record<LifecycleStageId, string> = {
+  submission: 'Submission',
+  policy: 'Policy',
+  approval: 'Approval',
+  provisioning: 'Provisioning',
+};
+
+function approvalHopName(label: string): string {
+  if (/approval$/i.test(label)) return label;
+  if (label === 'Application owner') return 'Owner Approval';
+  return `${label} Approval`;
+}
+
+/**
+ * `Stage 2: Policy` — the lifecycle index plus the name a reader can act on.
+ *
+ * When approval is current and a hop is waiting, the hop is the name
+ * (`Stage 3: Owner Approval`) because "Approval" alone does not say who.
+ */
+export function describeCurrentStage(row: GovernanceRequest): string {
+  const n = LIFECYCLE_ORDER.indexOf(row.currentStage) + 1;
+  const stage = row.stages.find((s) => s.id === row.currentStage);
+  const hop = stage?.hops?.find((h) => h.state === 'current');
+  const name = hop ? approvalHopName(hop.label) : STAGE_CHIP_NAME[row.currentStage];
+  return `Stage ${n}: ${name}`;
+}
 
 export const ORIGIN_LABEL: Record<RequestOrigin, string> = {
   end_user: 'End-user portal',

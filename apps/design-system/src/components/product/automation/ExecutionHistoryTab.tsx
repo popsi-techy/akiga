@@ -14,7 +14,8 @@ import Person from '@mui/icons-material/Person';
 import CheckCircle from '@mui/icons-material/CheckCircle';
 import History from '@mui/icons-material/History';
 import HistoryOutlined from '@mui/icons-material/HistoryOutlined';
-import { Avatar, Card, InfoRow, InfoRowGroup, StatusChip } from '@ds/components';
+import ReplayOutlined from '@mui/icons-material/ReplayOutlined';
+import { Avatar, Button, Card, InfoRow, InfoRowGroup, StatusChip, useToast } from '@ds/components';
 import { infoIcon } from '@/components/product/directory';
 import {
   listRuns,
@@ -27,7 +28,7 @@ import {
   type RunStep,
   type StepDecision,
 } from '@/data/approval-runs';
-import { listWorkflowRuns, workflowRunStats } from '@/data/workflow-runs';
+import { listWorkflowRuns, retryWorkflowRun, workflowRunStats } from '@/data/workflow-runs';
 
 /** Neither id supplied — render the empty state rather than throwing. */
 const EMPTY_STATS = { total: 0, approved: 0, rejected: 0, running: 0, breached: 0, approvalRate: 0 };
@@ -247,8 +248,17 @@ function GrantsList({ grants }: { grants: RunGrant[] }) {
   );
 }
 
-function RunDetail({ run, isWorkflow }: { run: ApprovalRun; isWorkflow: boolean }) {
+function RunDetail({
+  run,
+  isWorkflow,
+  onRetry,
+}: {
+  run: ApprovalRun;
+  isWorkflow: boolean;
+  onRetry?: () => void;
+}) {
   const o = OUTCOME[run.outcome];
+  const canRetry = Boolean(onRetry) && run.outcome === 'failed';
   return (
     <div className="ds-scroll h-full overflow-y-auto pr-0.5">
       {/* Identity of the run */}
@@ -261,11 +271,18 @@ function RunDetail({ run, isWorkflow }: { run: ApprovalRun; isWorkflow: boolean 
           </div>
           <p className="mt-1 text-body-sm text-text-secondary">{run.request}</p>
         </div>
-        <div className="shrink-0 text-right">
-          <div className="text-body-sm-strong tabular-nums text-text-primary">
-            {formatDate(run.startedAt)} · {formatTime(run.startedAt)}
+        <div className="flex shrink-0 items-start gap-3">
+          {canRetry && (
+            <Button variant="secondary" size="sm" startIcon={<ReplayOutlined />} onClick={onRetry}>
+              Retry
+            </Button>
+          )}
+          <div className="text-right">
+            <div className="text-body-sm-strong tabular-nums text-text-primary">
+              {formatDate(run.startedAt)} · {formatTime(run.startedAt)}
+            </div>
+            <div className="text-caption text-text-tertiary">{relative(run.startedAt)}</div>
           </div>
-          <div className="text-caption text-text-tertiary">{relative(run.startedAt)}</div>
         </div>
       </div>
 
@@ -323,16 +340,30 @@ export function ExecutionHistoryTab({
   // workflow completes rather than being approved, and its steps are an
   // execution path, not an approval path.
   const isWorkflow = Boolean(workflowId);
+  const toast = useToast();
+  const [rev, setRev] = React.useState(0);
   const runs = React.useMemo(
     () => (workflowId ? listWorkflowRuns(workflowId) : policyId ? listRuns(policyId) : []),
-    [policyId, workflowId],
+    [policyId, workflowId, rev],
   );
   const stats = React.useMemo(
     () => (workflowId ? workflowRunStats(workflowId) : policyId ? runStats(policyId) : EMPTY_STATS),
-    [policyId, workflowId],
+    [policyId, workflowId, rev],
   );
   const [selectedId, setSelectedId] = React.useState<string | null>(runs[0]?.id ?? null);
   React.useEffect(() => setSelectedId(runs[0]?.id ?? null), [runs]);
+
+  const retrySelected = () => {
+    if (!selectedId) return;
+    const next = retryWorkflowRun(selectedId);
+    if (!next) {
+      toast.error('This run cannot be retried.');
+      return;
+    }
+    setRev((n) => n + 1);
+    setSelectedId(next.id);
+    toast.success(`${next.reference} is running again.`);
+  };
 
   const selected = runs.find((r) => r.id === selectedId) ?? null;
 
@@ -386,7 +417,15 @@ export function ExecutionHistoryTab({
       </Card>
 
       {/* Right: the selected run */}
-      <div className="min-h-0 min-w-0">{selected && <RunDetail run={selected} isWorkflow={isWorkflow} />}</div>
+      <div className="min-h-0 min-w-0">
+        {selected && (
+          <RunDetail
+            run={selected}
+            isWorkflow={isWorkflow}
+            onRetry={isWorkflow ? retrySelected : undefined}
+          />
+        )}
+      </div>
     </div>
   );
 }
