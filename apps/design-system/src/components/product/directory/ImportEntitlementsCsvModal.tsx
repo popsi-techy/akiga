@@ -17,10 +17,13 @@ export function ImportEntitlementsCsvModal({
   open,
   onClose,
   onImported,
+  lockedApplicationId,
 }: {
   open: boolean;
   onClose: () => void;
   onImported: (count: number) => void;
+  /** When set, every imported row is created on this application. */
+  lockedApplicationId?: string;
 }) {
   const [file, setFile] = React.useState<File | null>(null);
   const [rowCount, setRowCount] = React.useState<number | null>(null);
@@ -37,11 +40,11 @@ export function ImportEntitlementsCsvModal({
     if (!open) return;
     setFile(null);
     setRowCount(null);
-    setApplicationId('');
+    setApplicationId(lockedApplicationId ?? '');
     setEntitlementTypeId('');
     setTouched(false);
     setDragOver(false);
-  }, [open]);
+  }, [open, lockedApplicationId]);
 
   const appError = touched && !applicationId ? 'Select an application.' : undefined;
   const typeError = touched && !entitlementTypeId ? 'Select an entitlement type.' : undefined;
@@ -209,17 +212,19 @@ export function ImportEntitlementsCsvModal({
           <p className="text-caption text-danger">{formatError ?? fileError}</p>
         )}
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Select
-            label="Application"
-            required
-            size="xs"
-            placeholder="Select application"
-            value={applicationId}
-            onChange={setApplicationId}
-            error={appError}
-            options={apps.map((a) => ({ value: a.id, label: a.name }))}
-          />
+        <div className={lockedApplicationId ? '' : 'grid gap-3 sm:grid-cols-2'}>
+          {lockedApplicationId ? null : (
+            <Select
+              label="Application"
+              required
+              size="xs"
+              placeholder="Select application"
+              value={applicationId}
+              onChange={setApplicationId}
+              error={appError}
+              options={apps.map((a) => ({ value: a.id, label: a.name }))}
+            />
+          )}
           <Select
             label="Entitlement type"
             required

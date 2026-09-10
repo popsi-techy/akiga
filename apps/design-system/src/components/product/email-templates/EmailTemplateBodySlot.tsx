@@ -24,6 +24,7 @@ import type {
   EmailTemplateContent,
   EmergencyAccessAssignedBody,
   ReviewDueApproachingBody,
+  PasswordResetBody,
   ReviewRequestNewBody,
   VerificationOtpBody,
 } from '@/data/email-templates';
@@ -40,7 +41,14 @@ import {
   WelcomeApplicationBody as WelcomeApplicationBodyView,
   WelcomeOrganizationBody as WelcomeOrganizationBodyView,
 } from './additionalEmailBodies';
-import { DetailField, EmailDetailCard, ErrorMessageAlert } from './emailTemplateParts';
+import {
+  CtaWithFallback,
+  DetailField,
+  EmailDetailCard,
+  ErrorMessageAlert,
+  ExpiryNote,
+  FallbackLinkBlock,
+} from './emailTemplateParts';
 
 function formatOtpDisplay(code: string): string {
   return code.replace(/\s/g, '').split('').join(' ');
@@ -112,27 +120,14 @@ function PlaceholderBody({ label }: { label: string }) {
   );
 }
 
-function PasswordResetBody() {
+function PasswordResetBody({ details }: { details: PasswordResetBody }) {
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       <p className="text-body text-text-primary">
         We received a request to reset the password for your account. Click the button below to set a new password.
       </p>
-      <div className="w-full sm:w-fit">
-        <Button
-          variant="primary"
-          size="md"
-          className="!w-full sm:!w-auto"
-          tabIndex={-1}
-          onClick={(e) => e.preventDefault()}
-        >
-          Reset Now
-        </Button>
-      </div>
-      <div className="flex items-center gap-1.5 text-body-sm text-warning">
-        <AccessTimeOutlined sx={{ fontSize: 16 }} aria-hidden />
-        <span>Link expires in 5 minutes</span>
-      </div>
+      <ExpiryNote label={`Link expires in ${details.expiresInLabel}`} />
+      <CtaWithFallback buttonLabel="Reset Now" url={details.resetUrl} />
       <p className="text-body text-text-primary">
         If you didn&apos;t request a password reset, you can safely ignore this email. Your password will remain
         unchanged.
@@ -193,21 +188,7 @@ function NewReviewRequestBody({ details }: { details: ReviewRequestNewBody }) {
         </Button>
       </div>
 
-      <div className="rounded-xl bg-subtle px-4 py-4 ring-1 ring-border-subtle sm:px-5 sm:py-4">
-        <p className="text-body-sm text-text-secondary">
-          If the button doesn&apos;t work, copy and paste this link into your browser:
-        </p>
-        <p className="mt-2.5 break-all text-body-sm">
-          <a
-            href={details.reviewUrl}
-            className="text-brand underline underline-offset-2"
-            tabIndex={-1}
-            onClick={(e) => e.preventDefault()}
-          >
-            {details.reviewUrl}
-          </a>
-        </p>
-      </div>
+      <FallbackLinkBlock url={details.reviewUrl} />
     </div>
   );
 }
@@ -423,21 +404,7 @@ function ReviewDueApproachingBody({ details }: { details: ReviewDueApproachingBo
         </Button>
       </div>
 
-      <div className="rounded-xl bg-subtle px-4 py-4 ring-1 ring-border-subtle sm:px-5 sm:py-4">
-        <p className="text-body-sm text-text-secondary">
-          If the button doesn&apos;t work, copy and paste this link into your browser:
-        </p>
-        <p className="mt-2.5 break-all text-body-sm">
-          <a
-            href={details.dashboardUrl}
-            className="text-brand underline underline-offset-2"
-            tabIndex={-1}
-            onClick={(e) => e.preventDefault()}
-          >
-            {details.dashboardUrl}
-          </a>
-        </p>
-      </div>
+      <FallbackLinkBlock url={details.dashboardUrl} />
     </div>
   );
 }
@@ -575,7 +542,9 @@ function CsvExportFailedBody({ details }: { details: CsvExportFailedBody }) {
 export function EmailTemplateBodySlot({ content }: { content: EmailTemplateContent }) {
   const { bodyVariant, bodyPlaceholder } = content;
 
-  if (bodyVariant === 'password-reset') return <PasswordResetBody />;
+  if (bodyVariant === 'password-reset' && content.passwordReset) {
+    return <PasswordResetBody details={content.passwordReset} />;
+  }
   if (bodyVariant === 'access-request-submitted' && content.accessRequest) {
     return <AccessRequestSubmittedBody details={content.accessRequest} />;
   }

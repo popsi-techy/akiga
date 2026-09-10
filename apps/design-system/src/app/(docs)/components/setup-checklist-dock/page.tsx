@@ -121,7 +121,7 @@ export default function SetupChecklistDockDocs() {
           dos={[
             'A draft object whose editors already live on the page (tabs).',
             'Mark existence-only steps `seedDone` so a new draft does not prompt.',
-            'Pass `gateVerb="connect"` when the header action is Connect, not Activate.',
+            'Pass `gateVerb="connect"` when the header action is Connect, or `setup` when nothing in the header waits on the list.',
           ]}
           donts={[
             'SetupBar. That floating strip has no product caller; this is the live pattern.',
@@ -141,7 +141,7 @@ export default function SetupChecklistDockDocs() {
             { name: 'currentTab', type: 'string', description: 'The open section. The matching row is current; it does not get a Next CTA.' },
             { name: 'onClose', type: '() => void', description: 'Hides the dock.' },
             { name: 'onGoTo', type: '(step) => void', description: 'Opens the step’s tab or drawer.' },
-            { name: 'gateVerb', type: "'activate' | 'connect'", default: "'activate'", description: 'Copy for the header and group headings.' },
+            { name: 'gateVerb', type: "'activate' | 'connect' | 'setup'", default: "'activate'", description: 'Copy for the header and group headings.' },
           ]}
         />
       </Section>

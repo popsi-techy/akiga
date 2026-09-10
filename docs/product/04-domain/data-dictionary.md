@@ -44,7 +44,7 @@ canonical; relationship tabs list related entities and each row cross-navigates 
 
 | Entity | Tabs |
 |--------|------|
-| Application | Overview · Assigned Owners · App Accounts · Entitlements |
+| Application | Overview · Configure · Reconciliation · App Accounts · Entitlements · Owners · Baseline Access · Approval Policy |
 | Entitlement | Overview · Assigned Owners · App Accounts · Technical Roles · Business Roles |
 | Technical Role | Overview · Assigned Owners · User Identities · Entitlements |
 | Business Role | Overview · Assigned Owners · User Identities · Technical Roles · Entitlements |

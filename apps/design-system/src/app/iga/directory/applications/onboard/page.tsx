@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import TuneOutlined from '@mui/icons-material/TuneOutlined';
 import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
+import CableOutlined from '@mui/icons-material/CableOutlined';
 import {
   AppIcon,
   Button,
@@ -167,7 +168,7 @@ export default function OnboardApplicationPage() {
             />
           </div>
           <p className="mt-2.5 text-body-sm text-text-secondary">
-            Have a system we don&apos;t list?{' '}
+            Have an application we don&apos;t list?{' '}
             <button
               type="button"
               className="text-body-sm-medium text-text-link hover:underline"
@@ -257,7 +258,15 @@ export default function OnboardApplicationPage() {
         onClose={() => setPreview(null)}
         title={preview?.name ?? ''}
         subtitle={preview?.summary}
-        width={640}
+        leading={preview ? <TypeMark name={preview.name} size={36} /> : undefined}
+        // The split owns its own insets so its divider can meet the header and footer
+        // rules instead of stopping short of them in the body's gutter.
+        disablePadding
+        width={880}
+        // Fixed, so every type opens the same window and the reader is not re-finding
+        // the same headings at a different size each time. `height` hands the scrolling
+        // to the body, which is what the content column does with it.
+        height="min(560px, 82vh)"
         footer={
           <>
             <Button variant="tertiary" onClick={() => setPreview(null)}>
@@ -291,7 +300,7 @@ export default function OnboardApplicationPage() {
 
 /**
  * Same frame as a workflow template card: mark where the audience chip sits,
- * title and summary, then protocol tags where Global sits, Preview + Proceed.
+ * title and summary, then the protocols where Global sits, Guide + Proceed.
  */
 function AppTypeTile({
   appType,
@@ -321,10 +330,19 @@ function AppTypeTile({
         {appType.summary}
       </p>
       <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
-        <div className={`flex min-w-0 flex-wrap gap-1 ${soon ? 'opacity-50' : ''}`}>
-          {appType.protocols.map((p) => (
-            <StatusChip key={p} intent={soon ? 'neutral' : 'info'} label={p} dot={false} />
-          ))}
+        {/* An icon and a line, the way the workflow template card carries its scope —
+            not chips. A chip is for something with a state; a protocol list is a
+            property, and two blue pills read as two things the reader can act on. The
+            icon carries the category so the line does not have to start with the word
+            "Protocols". */}
+        <div
+          aria-label={`Protocols: ${appType.protocols.join(', ')}`}
+          className={`flex min-w-0 items-center gap-1 text-caption ${
+            soon ? 'text-text-tertiary' : 'text-text-secondary'
+          }`}
+        >
+          <CableOutlined sx={{ fontSize: 16 }} className="shrink-0 text-icon-subtle" aria-hidden />
+          <span className="truncate">{appType.protocols.join(' · ')}</span>
         </div>
         <div className="flex shrink-0 items-center gap-3">
           <button
@@ -336,7 +354,7 @@ function AppTypeTile({
             }`}
             onClick={onPreview}
           >
-            Preview
+            Guide
           </button>
           {!soon && (
             <button
@@ -353,31 +371,87 @@ function AppTypeTile({
   );
 }
 
-function AppTypePreview({ appType }: { appType: AppTypeOption }) {
+/** One labelled property in the preview's meta rail. */
+function MetaFact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-6">
-      <section>
-        <h3 className="text-body-sm-strong text-text-primary">Capabilities supported</h3>
-        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-          {appType.capabilities.map((item) => (
-            <li key={item} className="flex items-start gap-2 text-body-sm text-text-primary">
-              <CheckCircleOutlined sx={{ fontSize: 18 }} className="mt-0.5 shrink-0 text-success" aria-hidden />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section>
-        <h3 className="text-body-sm-strong text-text-primary">Prerequisites required</h3>
-        <ul className="mt-3 flex flex-col gap-2">
-          {appType.prerequisites.map((item) => (
-            <li key={item} className="flex items-start gap-2 text-body-sm text-text-primary">
-              <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-text-secondary" aria-hidden />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+    <div>
+      <p className="text-overline uppercase text-text-tertiary">{label}</p>
+      <div className="mt-1 text-body-sm text-text-primary">{children}</div>
+    </div>
+  );
+}
+
+/**
+ * What a type is, before you commit to it.
+ *
+ * A fixed-height panel split the way a connector page is: the identity and the
+ * properties down a narrow rail, the content beside it, and the content — not the
+ * panel — is what scrolls. A modal that grows with its content is fine for a form;
+ * it is wrong for a catalogue entry, because every type then opens a differently
+ * shaped window and the reader re-finds the same three headings each time.
+ *
+ * The rail carries only what this model actually knows. The reference this borrows
+ * its shape from lists languages, a developer and a privacy policy; inventing those
+ * would make the panel look authoritative about facts nobody has entered.
+ *
+ * The logo is in the modal header, not at the top of the rail: the header already names
+ * the type, and a mark repeated four pixels below its own title is the same identity
+ * stated twice.
+ */
+function AppTypePreview({ appType }: { appType: AppTypeOption }) {
+  const category = appTypeCategories.find((c) => c.id === appType.category);
+  return (
+    <div className="flex h-full min-h-0">
+      {/* Below `sm` the rail would leave the content about 200px; it stacks into the
+          scrolling column instead of squeezing it. */}
+      <aside className="hidden w-[208px] shrink-0 flex-col gap-5 border-r border-border px-5 py-4 sm:flex">
+        {category && <MetaFact label="Category">{category.label}</MetaFact>}
+        <MetaFact label="Protocols">
+          <div className="flex flex-col gap-1">
+            {appType.protocols.map((p) => (
+              <span key={p} className="flex items-center gap-1.5">
+                <CableOutlined sx={{ fontSize: 15 }} className="shrink-0 text-icon-subtle" aria-hidden />
+                {p}
+              </span>
+            ))}
+          </div>
+        </MetaFact>
+        <MetaFact label="Inbound SCIM">
+          {appType.inboundScim ? 'Supported' : 'Not supported'}
+        </MetaFact>
+        <MetaFact label="Availability">
+          {appType.status === 'coming-soon' ? (
+            <StatusChip intent="neutral" label="Coming soon" />
+          ) : (
+            <StatusChip intent="success" label="Available" />
+          )}
+        </MetaFact>
+      </aside>
+
+      <div className="ds-scroll flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-y-auto px-5 py-4">
+        <section>
+          <h3 className="text-body-sm-strong text-text-primary">Capabilities supported</h3>
+          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+            {appType.capabilities.map((item) => (
+              <li key={item} className="flex items-start gap-2 text-body-sm text-text-primary">
+                <CheckCircleOutlined sx={{ fontSize: 18 }} className="mt-0.5 shrink-0 text-success" aria-hidden />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section>
+          <h3 className="text-body-sm-strong text-text-primary">Prerequisites required</h3>
+          <ul className="mt-3 flex flex-col gap-2">
+            {appType.prerequisites.map((item) => (
+              <li key={item} className="flex items-start gap-2 text-body-sm text-text-primary">
+                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-text-secondary" aria-hidden />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
     </div>
   );
 }

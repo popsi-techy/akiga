@@ -115,11 +115,11 @@ export function PrimaryCtaButton({ label }: { label: string }) {
 
 export function FallbackLinkBlock({ url }: { url: string }) {
   return (
-    <div className="rounded-xl bg-subtle px-4 py-4 ring-1 ring-border-subtle sm:px-5 sm:py-4">
-      <p className="text-body-sm text-text-secondary">
+    <div className="rounded-md bg-subtle px-3 py-2.5 ring-1 ring-border-subtle">
+      <p className="text-caption text-text-secondary">
         If the button doesn&apos;t work, copy and paste this link into your browser:
       </p>
-      <p className="mt-2.5 break-all text-body-sm">
+      <p className="mt-1 break-all text-body-sm">
         <a
           href={url}
           className="text-brand underline underline-offset-2"

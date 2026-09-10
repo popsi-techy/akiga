@@ -301,7 +301,7 @@ export function ConnectionEventDrawer({
           </div>
           <div className="shrink-0 border-t border-border p-3">
             <Button className="w-full" variant="secondary" startIcon={<AddOutlined />} onClick={addEvent}>
-              Add event
+              Add more event
             </Button>
           </div>
         </aside>
@@ -621,7 +621,7 @@ function RailItem({
   return (
     <div
       className={[
-        'flex w-full items-start gap-0.5 rounded-md border bg-surface py-1.5 pl-2 pr-0.5',
+        'flex w-full items-center gap-0.5 rounded-md border bg-surface py-1.5 pl-2 pr-0.5',
         active ? 'border-brand' : 'border-border hover:border-border-strong',
       ].join(' ')}
     >
@@ -632,8 +632,8 @@ function RailItem({
         onClick={onSelect}
         className="min-w-0 flex-1 py-0.5 text-left"
       >
-        <span className="block truncate text-body-sm-medium text-text-primary">{label}</span>
-        <span className="mt-1.5 block">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="min-w-0 truncate text-body-sm-medium text-text-primary">{label}</span>
           <StatusChip intent={status.intent} label={status.label} />
         </span>
       </button>

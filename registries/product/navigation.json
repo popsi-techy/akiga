@@ -69,6 +69,7 @@
         { "id": "access-certification", "label": "Access Certification", "route": "/iga/reviewer/access-certification", "icon": "campaign" },
         { "id": "access-certification-v2", "label": "Access Certification V2", "route": "/iga/reviewer/access-certification-v2", "icon": "campaign" },
         { "id": "access-certification-v3", "label": "Access Certification V3", "route": "/iga/reviewer/access-certification-v3", "icon": "campaign" },
+        { "id": "access-certification-v4", "label": "Access Certification V4", "route": "/iga/reviewer/access-certification-v4", "icon": "campaign" },
         { "id": "sod-resolution-v3", "label": "SoD Policy Violation V3", "route": "/iga/reviewer/sod-resolution-v3", "icon": "policy" }
       ]
     },

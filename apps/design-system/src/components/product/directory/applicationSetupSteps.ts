@@ -73,6 +73,11 @@ export function applicationSetupSteps(app: OnboardedApplication): ApplicationSet
   );
 }
 
+/** Whether any setup step for this application is still open. */
+export function appSetupIncomplete(app: OnboardedApplication): boolean {
+  return applicationSetupSteps(app).some((s) => !s.done);
+}
+
 /** First unfinished setup tab, or the last one once everything is in place. */
 export function firstUnfinishedAppTab(app: OnboardedApplication): string {
   const steps = applicationSetupSteps(app);

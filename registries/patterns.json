@@ -133,6 +133,19 @@
         "DataTable"
       ],
       "docs": "apps/design-system/src/app/iga/reviewer/access-certification-v3/page.tsx"
+    },
+    {
+      "id": "bulk-selection-bar",
+      "name": "bulk-selection-bar",
+      "status": "experimental",
+      "problem": "Bulk work on a selectable table without floating over rows or hiding actions in a menu.",
+      "useWhen": "Count, Select all, and labelled bulk actions should stay visible together above the table, and the table should shift down when a selection exists.",
+      "avoidWhen": "The reader needs a draggable pill (bulk-selection-dock header) or a bottom inverse dock, or actions belong in the page toolbar menu.",
+      "components": [
+        "Button",
+        "DataTable"
+      ],
+      "docs": "apps/design-system/src/app/iga/reviewer/access-certification-v4/page.tsx"
     }
   ]
 }

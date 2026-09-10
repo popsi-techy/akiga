@@ -43,7 +43,7 @@ export default function SelectionDockDocs() {
             </SelectionDock>
           </div>
           <p className="mt-3 text-body-sm text-text-secondary">
-            Demo count: {count} of {total}. Click Select all (it becomes Deselect all), an action, or the close control.
+            Demo count: {count} of {total}. Click Select all (it becomes Deselect all) or an action.
           </p>
         </Example>
         <Example label="on the table header">

@@ -1,11 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import InfoOutlined from '@mui/icons-material/InfoOutlined';
-import { AppIcon, Button, Drawer, Input, Switch, Tooltip } from '@ds/components';
+import { AppIcon, Button, Drawer, Input } from '@ds/components';
 import type { AppTypeOption } from '@/data/app-types';
 import { onboardApplication } from '@/data/applications-store';
 import { suggestedApplicationName } from '@/data/directory';
+import { ApplicationUseCasesFields } from './ApplicationUseCasesFields';
 
 /** Short name for “Onboard {name} Application” — Google Workspace reads as Google. */
 function onboardAppLabel(name: string): string {
@@ -121,83 +121,20 @@ export function AddApplicationDrawer({
           onChange={(e) => setAccessUrl(e.target.value)}
         />
 
-        <div className="space-y-3">
-          <ToggleRow
-            label="Enable Provisioning"
-            hint="Push access changes back to the application, instead of only reading from it."
-            checked={enableProvisioning}
-            onChange={setEnableProvisioning}
-          />
-          <ToggleRow
-            label="Mark as Identity Source"
-            hint="Treat this application's accounts as authoritative identities for the organisation."
-            checked={identitySource}
-            onChange={setIdentitySource}
-          />
-          <ToggleRow
-            label="Mark as Requestable"
-            hint="Let users request access to this application from the access catalog."
-            checked={requestable}
-            onChange={(v) => {
-              setRequestable(v);
-              // The child claim cannot outlive its parent: entitlements of an
-              // application nobody can request are not requestable either.
-              if (!v) setAllEntitlements(false);
-            }}
-          />
-          <ToggleRow
-            label="Make all entitlements requestable"
-            hint="Every entitlement becomes requestable at once, instead of opening them one by one."
-            checked={allEntitlements}
-            onChange={setAllEntitlements}
-            disabled={!requestable}
-          />
-        </div>
+        <ApplicationUseCasesFields
+          enableProvisioning={enableProvisioning}
+          onEnableProvisioning={setEnableProvisioning}
+          identitySource={identitySource}
+          onIdentitySource={setIdentitySource}
+          requestable={requestable}
+          onRequestable={(on) => {
+            setRequestable(on);
+            if (!on) setAllEntitlements(false);
+          }}
+          allEntitlements={allEntitlements}
+          onAllEntitlements={setAllEntitlements}
+        />
       </div>
     </Drawer>
-  );
-}
-
-/**
- * A setting on a sunken row rather than a bare checkbox line: these four are
- * decisions about the application, not fields of the form above them, and the
- * fill is what separates the two groups without a heading.
- */
-function ToggleRow({
-  label,
-  hint,
-  checked,
-  onChange,
-  disabled = false,
-}: {
-  label: string;
-  hint: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  disabled?: boolean;
-}) {
-  const id = React.useId();
-  return (
-    <div
-      className={`flex items-center justify-between gap-3 rounded-lg bg-subtle px-4 py-3.5 ${
-        disabled ? 'opacity-60' : ''
-      }`}
-    >
-      <label htmlFor={id} className="flex items-center gap-1.5 text-body-sm-strong text-text-primary">
-        {label}
-        <Tooltip title={hint}>
-          <span tabIndex={0} aria-label={hint} className="inline-flex shrink-0 text-icon-subtle">
-            <InfoOutlined sx={{ fontSize: 15 }} />
-          </span>
-        </Tooltip>
-      </label>
-      <Switch
-        id={id}
-        checked={checked}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-        inputProps={{ 'aria-label': label }}
-      />
-    </div>
   );
 }

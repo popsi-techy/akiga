@@ -12,26 +12,29 @@ import { InfoRow, InfoRowGroup } from './DetailShell';
 import { infoIcon } from './infoIcons';
 import { SyncChangesDrawer, type SyncChangeKind } from './SyncChangesDrawer';
 import { formatDateTime } from '../sod/labels';
-import { listSyncRuns, reconciliationSummary, type SyncRun } from '@/data/reconciliation';
+import {
+  listSyncRuns,
+  reconciliationSummary,
+  type ReconciliationSummary,
+  type SyncRun,
+} from '@/data/reconciliation';
 
 /**
  * Reconciliation — what the connector last brought in, and every time it ran.
  *
- * Cards state the position (how many, what moved, did it work), and the history
- * below explains how that position was reached. Only the outcome is chipped: it
+ * Cards state the inventory position (how many, what moved); last-sync status sits
+ * inline on the Sync Now row. The history below explains how that position was reached.
+ * Only the outcome is chipped: it
  * is the one column where a value means someone has to act. Trigger and event
  * are facts about a run, not states of one, so they stay as text — chipping them
  * would put four pills on every row and bury the failure.
  *
- * ## An IAM or a vault reconciles a third thing
+ * App Accounts and Entitlements are their own tabs, to the right of this one.
+ * The cards here are the last-sync reading of those collections, not the lists.
  *
- * A direct application is a leaf: it has accounts and entitlements and nothing
- * underneath. An IAM federates applications and a vault holds credentials for
- * them, so its inventory has a third collection — and for an IAM that collection
- * is the reason the connection was made, which is why it leads the cards rather
- * than trailing them. `summary.applications` is present exactly when it applies,
- * so the card, the history column and the drawer all appear or stay away
- * together; there is no separate flag for a caller to get wrong.
+ * An IAM or a vault reconciles a third thing. `summary.applications` is present
+ * exactly when it applies, so the card, the history column and the drawer all
+ * appear or stay away together.
  */
 export function ReconciliationTab({
   applicationId,
@@ -54,15 +57,8 @@ export function ReconciliationTab({
   const toast = useToast();
   const summary = reconciliationSummary(applicationId);
   const runs = listSyncRuns(applicationId);
-  /*
-    Present exactly when this connection fronts other systems. One source for the card,
-    the history column and the drawer, so they cannot disagree about whether this
-    application has applications inside it.
-  */
   const apps = summary.applications;
 
-  // Which run's change list is open. The run is kept after `open` goes false so
-  // the drawer has something to render while it slides out.
   const [inspecting, setInspecting] = React.useState<{ run: SyncRun; kind: SyncChangeKind } | null>(null);
   const [changesOpen, setChangesOpen] = React.useState(false);
   const inspect = (run: SyncRun, kind: SyncChangeKind) => {
@@ -70,8 +66,6 @@ export function ReconciliationTab({
     setChangesOpen(true);
   };
 
-  // Demo sync: spinner, then a result. No run is written — the history stays
-  // deterministic, which is what makes the totals above add up.
   const [syncing, setSyncing] = React.useState(false);
   const timer = React.useRef<ReturnType<typeof setTimeout>>();
   React.useEffect(() => () => clearTimeout(timer.current), []);
@@ -182,9 +176,9 @@ export function ReconciliationTab({
   return (
     <div className="ds-scroll h-full overflow-y-auto pr-0.5">
       <div className="space-y-5">
-        {/* The row goes with the button rather than sitting empty above the cards. */}
-        {canSync && (
-          <div className="flex justify-end">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+          <LastSyncStatus summary={summary} />
+          {canSync ? (
             <Button
               variant="secondary"
               onClick={syncNow}
@@ -194,19 +188,10 @@ export function ReconciliationTab({
             >
               {syncing ? 'Syncing…' : 'Sync Now'}
             </Button>
-          </div>
-        )}
+          ) : null}
+        </div>
 
-        {/* Two up before 1280px: three columns squeeze the label/value rows to
-            the point where "Modifications in last sync" and a timestamp both
-            truncate, and a card whose value is cut off states nothing. Four
-            cards stay two up at every width for the same reason — a 2x2 block
-            reads as one group, where three-and-one reads as a card left over. */}
-        <div className={`grid gap-5 md:grid-cols-2 ${apps ? '' : 'xl:grid-cols-3'}`}>
-          {/* `Widgets`, not `Apps`: MUI draws `Apps` identically filled or outlined, and a
-              Card header is forced to 15px where an outlined glyph smudges. The shared
-              `infoIcon.application` mark stays on the rows inside, at a size that can
-              carry a 1px stroke. */}
+        <div className={`grid gap-5 md:grid-cols-2 ${apps ? 'xl:grid-cols-3' : ''}`}>
           {apps && (
             <Card title="Applications" icon={<Widgets />} padding="none">
               <InfoRowGroup>
@@ -270,30 +255,6 @@ export function ReconciliationTab({
               />
             </InfoRowGroup>
           </Card>
-
-          <Card title="Last Sync Status" icon={<WatchLater />} padding="none">
-            <InfoRowGroup>
-              <InfoRow
-                icon={infoIcon.status}
-                label="Status"
-                value={
-                  summary.lastSync ? (
-                    <StatusChip
-                      intent={summary.lastSync.outcome === 'success' ? 'success' : 'danger'}
-                      label={summary.lastSync.outcome === 'success' ? 'Success' : 'Failed'}
-                    />
-                  ) : (
-                    <StatusChip intent="neutral" label="Never synced" />
-                  )
-                }
-              />
-              <InfoRow
-                icon={infoIcon.completed}
-                label="Date & Time"
-                value={summary.lastSync ? formatDateTime(summary.lastSync.at) : '—'}
-              />
-            </InfoRowGroup>
-          </Card>
         </div>
 
         <div>
@@ -319,13 +280,57 @@ export function ReconciliationTab({
 }
 
 /**
+ * Last sync — a compact status band on the Sync Now row.
+ *
+ * Label, outcome and timestamp read as one object: a labelled panel on the left,
+ * the reading on the right, separated by a border rather than loose punctuation.
+ * That keeps the chip and the time on one baseline and stops the row from reading
+ * like a sentence broken across unrelated marks.
+ */
+function LastSyncStatus({ summary }: { summary: ReconciliationSummary }) {
+  const lastSync = summary.lastSync;
+  const ariaLabel = lastSync
+    ? `Last sync ${lastSync.outcome === 'success' ? 'succeeded' : 'failed'} on ${formatDateTime(lastSync.at)}`
+    : 'No sync has run yet';
+
+  return (
+    <div
+      className="inline-flex min-w-0 max-w-full items-stretch overflow-hidden rounded-xl border border-border bg-surface"
+      role="status"
+      aria-label={ariaLabel}
+    >
+      <div className="flex shrink-0 items-center gap-2 border-r border-border bg-subtle px-3 py-2.5">
+        <WatchLater sx={{ fontSize: 18 }} className="text-icon" aria-hidden />
+        <span className="text-caption-medium text-text-secondary">Last sync</span>
+      </div>
+      <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 px-3 py-2.5">
+        {lastSync ? (
+          <>
+            <StatusChip
+              intent={lastSync.outcome === 'success' ? 'success' : 'danger'}
+              label={lastSync.outcome === 'success' ? 'Success' : 'Failed'}
+            />
+            <span className="hidden h-3.5 w-px shrink-0 bg-border sm:block" aria-hidden />
+            <time dateTime={lastSync.at} className="text-body-sm tabular-nums text-text-primary">
+              {formatDateTime(lastSync.at)}
+            </time>
+          </>
+        ) : (
+          <StatusChip intent="neutral" label="Never synced" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
  * A count and what moved it, as one chip.
  *
  * Chipped rather than loose text because the total and its two signed parts are
  * a single reading — one cell, one mark — and the neutral fill keeps them from
  * being mistaken for the status column beside them. The signs carry the meaning,
- * so they carry the colour; the total stays neutral. A run that changed nothing
- * says so, instead of showing two zeroes that compete with the number.
+ * so they carry the colour; the total stays neutral. A quiet run still shows
+ * +0 −0, so every chip is the same three-part reading.
  *
  * Geometry matches `StatusChip` (rounded-pill, px-2 py-0.5, caption-medium), so
  * a row of chips sits on one baseline whichever column it is in.
@@ -346,23 +351,15 @@ export function Delta({
   added: number;
   removed: number;
   onClick?: () => void;
-  /** Singular, for the button's accessible name — "account", "entitlement". */
   noun?: string;
 }) {
-  const still = added === 0 && removed === 0;
   const chrome =
     'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border border-border bg-subtle px-2 py-0.5 text-caption-medium';
   const body = (
     <>
       {total !== undefined && <span className="text-text-primary">{total}</span>}
-      {still ? (
-        <span className="text-text-tertiary">No change</span>
-      ) : (
-        <>
-          <span className="text-success">+{added}</span>
-          <span className="text-danger">−{removed}</span>
-        </>
-      )}
+      <span className="text-success">+{added}</span>
+      <span className="text-danger">−{removed}</span>
     </>
   );
 
@@ -372,8 +369,6 @@ export function Delta({
     <button
       type="button"
       onClick={onClick}
-      // The chip's own glyphs are shorthand a screen reader cannot expand, so
-      // the button says what it is and what opening it gets you.
       aria-label={`${added} ${noun ?? 'item'}${added === 1 ? '' : 's'} added, ${removed} removed. Show which ones.`}
       className={`${chrome} transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle`}
     >

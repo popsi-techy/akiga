@@ -118,6 +118,11 @@ export interface VerificationOtpBody {
   expiresInLabel: string;
 }
 
+export interface PasswordResetBody {
+  resetUrl: string;
+  expiresInLabel: string;
+}
+
 export interface EmergencyAccessAssignedBody {
   subjectUserName: string;
   subjectUserEmail: string;
@@ -207,6 +212,7 @@ export interface EmailTemplateContent {
   csvProcessingCompleted?: CsvProcessingCompletedBody;
   csvProcessingFailed?: CsvProcessingFailedBody;
   verificationOtp?: VerificationOtpBody;
+  passwordReset?: PasswordResetBody;
   emergencyAccessAssigned?: EmergencyAccessAssignedBody;
   reviewInactivityReminder?: ReviewInactivityReminderBody;
   welcomeOrganization?: WelcomeOrganizationBody;
@@ -269,6 +275,10 @@ const PASSWORD_RESET_TEMPLATE: EmailTemplate = {
     ...SHARED_SHELL,
     heading: 'Password Reset Request!',
     bodyVariant: 'password-reset',
+    passwordReset: {
+      resetUrl: 'https://iga.example.com/reset-password/token-abc123',
+      expiresInLabel: '5 minutes',
+    },
   },
 };
 

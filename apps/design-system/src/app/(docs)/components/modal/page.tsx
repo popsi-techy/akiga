@@ -79,9 +79,11 @@ export default function ModalDocs() {
             { name: 'title', type: 'ReactNode', description: 'Heading, rendered at h5 and wired to aria-labelledby.' },
             { name: 'subtitle', type: 'ReactNode', description: 'One supporting line under the title.' },
             { name: 'icon', type: 'ReactNode', description: 'Leading icon in a brand-tint tile.' },
+            { name: 'leading', type: 'ReactNode', description: 'Leading mark *without* the tile — an AppIcon logo, a product mark. The tile grounds a generic glyph; it washes a logo orange. Same slot as `Drawer.leading`.' },
             { name: 'footer', type: 'ReactNode', description: 'Right-aligned actions — secondary first, primary last.' },
             { name: 'width', type: 'number', default: '480', description: 'Panel width in px; caps at 94vw.' },
-            { name: 'height', type: 'number | string', description: 'Fixed panel height. Body fills the leftover and does not scroll — for a canvas that pans itself. Omit for short forms (content-sized, cap 85vh, body scrolls).' },
+            { name: 'height', type: 'number | string', description: 'Fixed panel height. Body fills the leftover and does not scroll — for a canvas that pans itself. Omit for short forms (content-sized, cap 85vh, body scrolls). Setting it also closes the header with a rule: a filled panel is a shell of regions, so the footer’s rule gets a partner.' },
+            { name: 'disablePadding', type: 'boolean', default: 'false', description: 'Drop the body gutter so content runs edge to edge — for a split whose divider has to meet the header and footer rules. The body then owns its insets. Same prop as `Drawer`’s.' },
             { name: 'showClose', type: 'boolean', default: 'true', description: 'Set false when the decision must be made in the footer.' },
             { name: 'children', type: 'ReactNode', description: 'Body content. Scrolls internally; the panel caps at 85vh.' },
           ]}

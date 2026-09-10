@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import CloseOutlined from '@mui/icons-material/CloseOutlined';
 import DoneAllOutlined from '@mui/icons-material/DoneAllOutlined';
 import DragIndicator from '@mui/icons-material/DragIndicator';
 import RemoveDoneOutlined from '@mui/icons-material/RemoveDoneOutlined';
@@ -40,7 +39,7 @@ function boundsFor(node: HTMLElement): HTMLElement {
  * `bottom` (default) — inverse toolbar, bottom-center. Access Certification V2.
  * `header` — Notion-style: a light pill that overlays the table header, a
  * drag handle, count, Select all N (Clear all when the set is full) as a
- * link, icon actions, and a close. Access Certification V1. The handle moves
+ * link, and icon actions. Access Certification V1. The handle moves
  * the pill anywhere on the page area it can be seen — it starts over the table
  * header, where it is in the way of the rows you are about to act on, so it has
  * to be able to leave the table (see {@link boundsFor}).
@@ -233,25 +232,6 @@ export function SelectionDock({
     applyOffset({ x: offsetRef.current.x + delta.x, y: offsetRef.current.y + delta.y });
   };
 
-  React.useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: PointerEvent) => {
-      const node = event.target;
-      if (!(node instanceof Element)) return;
-      if (rootRef.current?.contains(node)) return;
-      if (
-        node.closest(
-          'table, [role="checkbox"], .MuiModal-root, .MuiDrawer-root, .MuiMenu-root, [role="menu"], [role="dialog"]',
-        )
-      ) {
-        return;
-      }
-      onClear();
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    return () => document.removeEventListener('pointerdown', onPointerDown);
-  }, [open, onClear]);
-
   if (!open) return null;
 
   return (
@@ -329,19 +309,6 @@ export function SelectionDock({
             </div>
           </>
         )}
-        <Separator onInverse={!header} />
-        <button
-          type="button"
-          onClick={onClear}
-          aria-label="Clear selection"
-          className={
-            header
-              ? 'grid h-8 w-8 shrink-0 place-items-center rounded-sm text-icon hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle'
-              : 'grid h-8 w-8 shrink-0 place-items-center rounded-md text-icon-inverse hover:bg-surface-inverse focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle'
-          }
-        >
-          <CloseOutlined sx={{ fontSize: 16 }} aria-hidden />
-        </button>
       </div>
     </div>
   );

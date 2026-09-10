@@ -136,8 +136,11 @@ function HeaderAction({
  *   something to act on, so an empty selection does not advertise a disabled
  *   control. Select all sits next to it so the header checkbox is not the only
  *   way to reach every matching row.
+ * - `bar` (V4) — a selection band above the table, in document flow. Count,
+ *   Select all, and labelled bulk actions sit on one row; the table moves down
+ *   when the band appears. Nothing overlays the header or the rows.
  */
-export type BulkSurface = 'row' | 'dock' | 'toolbar';
+export type BulkSurface = 'row' | 'dock' | 'toolbar' | 'bar';
 
 export function AccessCertificationReview({
   bulkSurface = 'row',
@@ -438,6 +441,8 @@ export function AccessCertificationReview({
   ];
 
   const noun = step === 0 ? 'account' : 'entitlement';
+  const selectionShown = allMatchingSelected ? visibleIds.length : actionableIds.length;
+  const selectionLabel = selectionShown === 1 ? noun : `${noun}s`;
 
   /**
    * The same two decisions the rows offer, named identically so the menu is
@@ -499,6 +504,88 @@ export function AccessCertificationReview({
       ]}
     />
   );
+
+  const barBulkActions =
+    step === 0 ? (
+      <>
+        <Button
+          variant="secondary"
+          size="sm"
+          startIcon={<HowToRegOutlined />}
+          onClick={() => applyOwnershipBulk(actionableIds, 'mine')}
+        >
+          Belongs to me
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          startIcon={<PersonOffOutlined />}
+          onClick={() => setBulkPending({ kind: 'not-mine', ids: actionableIds })}
+        >
+          Does not belong
+        </Button>
+      </>
+    ) : (
+      <>
+        <Button
+          variant="secondary"
+          size="sm"
+          startIcon={<CheckCircleOutline />}
+          onClick={() => applyEntitlementBulk(actionableIds, 'certify')}
+        >
+          Certify
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          startIcon={<CancelOutlined />}
+          onClick={() => setBulkPending({ kind: 'revoke', ids: actionableIds })}
+        >
+          Revoke
+        </Button>
+      </>
+    );
+
+  const dockBulkActions =
+    step === 0 ? (
+      <>
+        <Button
+          variant="tertiary"
+          size="xs"
+          startIcon={<HowToRegOutlined />}
+          onClick={() => applyOwnershipBulk(actionableIds, 'mine')}
+        >
+          Belongs to me
+        </Button>
+        <Button
+          variant="tertiary"
+          size="xs"
+          startIcon={<PersonOffOutlined />}
+          onClick={() => setBulkPending({ kind: 'not-mine', ids: actionableIds })}
+        >
+          Does not belong
+        </Button>
+      </>
+    ) : (
+      <>
+        <Button
+          variant="tertiary"
+          size="xs"
+          startIcon={<CheckCircleOutline />}
+          onClick={() => applyEntitlementBulk(actionableIds, 'certify')}
+        >
+          Certify
+        </Button>
+        <Button
+          variant="tertiary"
+          size="xs"
+          startIcon={<CancelOutlined />}
+          onClick={() => setBulkPending({ kind: 'revoke', ids: actionableIds })}
+        >
+          Revoke
+        </Button>
+      </>
+    );
 
   const headerActions =
     step === 0 ? (
@@ -691,7 +778,39 @@ export function AccessCertificationReview({
           )}
         </div>
 
-        <div className="relative min-h-0 flex-1 pb-4">
+        <div className="relative flex min-h-0 flex-1 flex-col pb-4">
+          {bulkSurface === 'bar' && actionableIds.length > 0 && (
+            <div
+              role="region"
+              aria-label={`${selectionShown} ${selectionLabel} selected`}
+              className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border border-border-strong bg-surface px-4 py-2.5"
+            >
+              <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1" role="status">
+                <span className="inline-flex min-h-5 items-center justify-center rounded-sm bg-subtle px-2 text-caption-strong text-text-primary tabular-nums">
+                  {selectionShown}
+                </span>
+                <span className="text-body-sm text-text-primary">{selectionLabel} selected</span>
+                {visibleIds.length > 0 && (
+                  <>
+                    <span className="text-text-tertiary" aria-hidden>
+                      ·
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        allMatchingSelected ? setSelectedIds([]) : setSelectedIds(visibleIds)
+                      }
+                      className="text-body-sm-medium text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+                    >
+                      {allMatchingSelected ? 'Clear all' : `Select all ${visibleIds.length}`}
+                    </button>
+                  </>
+                )}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">{barBulkActions}</div>
+            </div>
+          )}
+
           {step === 0 ? (
             <DataTable<ReviewAccount>
               columns={ownershipColumns}
@@ -753,45 +872,7 @@ export function AccessCertificationReview({
               onSelectAll={() => setSelectedIds(visibleIds)}
               onClear={() => setSelectedIds([])}
             >
-              {step === 0 ? (
-                <>
-                  <Button
-                    variant="tertiary"
-                    size="xs"
-                    startIcon={<HowToRegOutlined />}
-                    onClick={() => applyOwnershipBulk(actionableIds, 'mine')}
-                  >
-                    Belongs to me
-                  </Button>
-                  <Button
-                    variant="tertiary"
-                    size="xs"
-                    startIcon={<PersonOffOutlined />}
-                    onClick={() => setBulkPending({ kind: 'not-mine', ids: actionableIds })}
-                  >
-                    Does not belong
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    variant="tertiary"
-                    size="xs"
-                    startIcon={<CheckCircleOutline />}
-                    onClick={() => applyEntitlementBulk(actionableIds, 'certify')}
-                  >
-                    Certify
-                  </Button>
-                  <Button
-                    variant="tertiary"
-                    size="xs"
-                    startIcon={<CancelOutlined />}
-                    onClick={() => setBulkPending({ kind: 'revoke', ids: actionableIds })}
-                  >
-                    Revoke
-                  </Button>
-                </>
-              )}
+              {dockBulkActions}
             </SelectionDock>
           )}
         </div>

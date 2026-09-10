@@ -2,8 +2,9 @@
 
 import * as React from 'react';
 import PeopleOutlined from '@mui/icons-material/PeopleOutlined';
-import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
+import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import AppsOutlined from '@mui/icons-material/AppsOutlined';
+import ErrorOutline from '@mui/icons-material/ErrorOutline';
 import { DataTable, Drawer, Tabs, type Column } from '@ds/components';
 import { formatDateTime } from '../sod/labels';
 import type { SyncCollection, SyncItem, SyncRun } from '@/data/reconciliation';
@@ -160,31 +161,38 @@ export function SyncChangesDrawer({
           : undefined
       }
       width={520}
-      subheader={
-        run?.outcome === 'failed' ? (
-          // Above the tabs, not inside one: it explains why two of the three are
-          // empty, which is not a fact about whichever tab is open. Stated
-          // plainly rather than in a red banner — the row that opened this
-          // drawer already carries the Failed chip, and repeating the alarm
-          // here would imply a second, separate problem.
-          <p className="text-body-sm text-text-secondary">
-            This sync failed, so nothing was added or removed. {applicationName} still holds the{' '}
-            {plural(delta?.total ?? 0, meta.noun)} it held before it ran.
-          </p>
-        ) : undefined
-      }
       toolbar={
         delta ? (
-          <Tabs
-            aria-label={`${meta.title} changed by this sync`}
-            value={group}
-            onChange={(v) => setGroup(v as Group)}
-            items={[
-              { value: 'added', label: 'Added', count: delta.added },
-              { value: 'removed', label: 'Removed', count: delta.removed },
-              { value: 'unchanged', label: 'Untouched', count: delta.unchangedItems.length },
-            ]}
-          />
+          <div>
+            {run?.outcome === 'failed' ? (
+              // Same anatomy as SettingsInfoBanner — container, icon, caption —
+              // in danger tokens. Above the tabs: it explains why two of them
+              // are empty, which is not a fact about whichever tab is open.
+              <div
+                role="alert"
+                className="mb-2 flex items-start gap-2 rounded-md border border-[var(--ds-color-status-danger-border)] bg-[var(--ds-color-status-danger-subtle)] px-3 py-2.5"
+              >
+                <ErrorOutline
+                  sx={{ fontSize: 18, color: 'var(--ds-color-status-danger-fg)', marginTop: '1px' }}
+                  aria-hidden
+                />
+                <p className="text-caption leading-5 text-[var(--ds-color-status-danger-fg)]">
+                  This sync failed, so nothing was added or removed. {applicationName} still holds
+                  the {plural(delta.total, meta.noun)} it held before it ran.
+                </p>
+              </div>
+            ) : null}
+            <Tabs
+              aria-label={`${meta.title} changed by this sync`}
+              value={group}
+              onChange={(v) => setGroup(v as Group)}
+              items={[
+                { value: 'added', label: 'Added', count: delta.added },
+                { value: 'removed', label: 'Removed', count: delta.removed },
+                { value: 'unchanged', label: 'All', count: delta.unchangedItems.length },
+              ]}
+            />
+          </div>
         ) : undefined
       }
     >

@@ -23,10 +23,13 @@ export function AddEntitlementDrawer({
   open,
   onClose,
   onCreated,
+  lockedApplicationId,
 }: {
   open: boolean;
   onClose: () => void;
   onCreated: (id: string) => void;
+  /** When set, the entitlement is created on this application and the picker is hidden. */
+  lockedApplicationId?: string;
 }) {
   const [name, setName] = React.useState('');
   const [value, setValue] = React.useState('');
@@ -48,9 +51,9 @@ export function AddEntitlementDrawer({
     setEntitlementTypeId('');
     setRisk('1');
     setRequestable(false);
-    setApplicationId('');
+    setApplicationId(lockedApplicationId ?? '');
     setTouched(false);
-  }, [open]);
+  }, [open, lockedApplicationId]);
 
   const trimmedName = name.trim();
   const trimmedValue = value.trim();
@@ -62,12 +65,13 @@ export function AddEntitlementDrawer({
   const valueError = touched && !trimmedValue ? 'Value is required.' : undefined;
   const descriptionError = touched && !trimmedDescription ? 'Description is required.' : undefined;
   const typeError = touched && !entitlementTypeId ? 'Select an entitlement type.' : undefined;
-  const appError = touched && !applicationId ? 'Select an application.' : undefined;
+  const resolvedAppId = lockedApplicationId || applicationId;
+  const appError = !lockedApplicationId && touched && !applicationId ? 'Select an application.' : undefined;
   const riskError = touched && !riskValid ? 'Enter a risk score from 0 to 100.' : undefined;
 
   const save = () => {
     setTouched(true);
-    if (!trimmedName || !trimmedValue || !trimmedDescription || !entitlementTypeId || !applicationId || !riskValid) {
+    if (!trimmedName || !trimmedValue || !trimmedDescription || !entitlementTypeId || !resolvedAppId || !riskValid) {
       return;
     }
     const input: CreateEntitlementInput = {
@@ -77,7 +81,7 @@ export function AddEntitlementDrawer({
       entitlementTypeId,
       risk: riskNum,
       requestable,
-      applicationId,
+      applicationId: resolvedAppId,
     };
     const created = createEntitlement(input);
     onCreated(created.id);
@@ -185,16 +189,18 @@ export function AddEntitlementDrawer({
           />
         </div>
 
-        <Select
-          label="Application"
-          required
-          placeholder="Select Application"
-          value={applicationId}
-          onChange={setApplicationId}
-          error={appError}
-          helperText="The application this entitlement belongs to."
-          options={apps.map((a) => ({ value: a.id, label: a.name }))}
-        />
+        {lockedApplicationId ? null : (
+          <Select
+            label="Application"
+            required
+            placeholder="Select Application"
+            value={applicationId}
+            onChange={setApplicationId}
+            error={appError}
+            helperText="The application this entitlement belongs to."
+            options={apps.map((a) => ({ value: a.id, label: a.name }))}
+          />
+        )}
       </div>
     </Drawer>
   );

@@ -83,6 +83,9 @@ function normalizeOnboarded(raw: OnboardedApplication): OnboardedApplication {
     description: raw.description ?? '',
     accessUrl: raw.accessUrl ?? '',
     enableProvisioning: Boolean(raw.enableProvisioning),
+    identitySource: Boolean(raw.identitySource),
+    requestable: Boolean(raw.requestable),
+    allEntitlementsRequestable: Boolean(raw.allEntitlementsRequestable),
     appType: raw.appType ?? '',
   };
 }
@@ -158,7 +161,14 @@ export function hideCatalogApplication(id: string): void {
 
 export function updateApplicationBasics(
   id: string,
-  basics: { name: string; description: string },
+  basics: {
+    name: string;
+    description: string;
+    accessUrl: string;
+    identitySource: boolean;
+    requestable: boolean;
+    allEntitlementsRequestable: boolean;
+  },
 ): OnboardedApplication | null {
   const store = readStore();
   const app = store.applications[id];
@@ -168,6 +178,10 @@ export function updateApplicationBasics(
     ...app,
     name: basics.name.trim() || app.name,
     description: basics.description.trim(),
+    accessUrl: basics.accessUrl.trim(),
+    identitySource: basics.identitySource,
+    requestable: basics.requestable,
+    allEntitlementsRequestable: basics.requestable && basics.allEntitlementsRequestable,
     updatedAt: now,
   });
   store.applications[id] = next;

@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { AppIcon, Button, Drawer, Input } from '@ds/components';
 import { updateApplicationBasics, type OnboardedApplication } from '@/data/applications-store';
+import { ApplicationUseCasesFields } from './ApplicationUseCasesFields';
 
 /** Short name for the drawer title — Google Workspace reads as Google. */
 function onboardAppLabel(name: string): string {
@@ -23,19 +24,33 @@ export function ApplicationBasicDetailsDrawer({
 }) {
   const [name, setName] = React.useState(app.name);
   const [description, setDescription] = React.useState(app.description);
+  const [accessUrl, setAccessUrl] = React.useState(app.accessUrl);
+  const [identitySource, setIdentitySource] = React.useState(app.identitySource);
+  const [requestable, setRequestable] = React.useState(app.requestable);
+  const [allEntitlements, setAllEntitlements] = React.useState(app.allEntitlementsRequestable);
 
   React.useEffect(() => {
-    if (open) {
-      setName(app.name);
-      setDescription(app.description);
-    }
-  }, [open, app.name, app.description]);
+    if (!open) return;
+    setName(app.name);
+    setDescription(app.description);
+    setAccessUrl(app.accessUrl);
+    setIdentitySource(app.identitySource);
+    setRequestable(app.requestable);
+    setAllEntitlements(app.allEntitlementsRequestable);
+  }, [open, app]);
 
   const valid = name.trim() !== '' && description.trim() !== '';
 
   const save = () => {
     if (!valid) return;
-    updateApplicationBasics(app.id, { name, description });
+    updateApplicationBasics(app.id, {
+      name,
+      description,
+      accessUrl,
+      identitySource,
+      requestable,
+      allEntitlementsRequestable: requestable && allEntitlements,
+    });
     onSaved();
     onClose();
   };
@@ -78,6 +93,26 @@ export function ApplicationBasicDetailsDrawer({
           placeholder="What this application is for"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+        />
+        <Input
+          label="Application Access URL"
+          hint="Where users are sent when they open this application from IGA."
+          placeholder="https://app.example.com"
+          value={accessUrl}
+          onChange={(e) => setAccessUrl(e.target.value)}
+        />
+        <ApplicationUseCasesFields
+          enableProvisioning={app.enableProvisioning}
+          provisioningLocked
+          identitySource={identitySource}
+          onIdentitySource={setIdentitySource}
+          requestable={requestable}
+          onRequestable={(on) => {
+            setRequestable(on);
+            if (!on) setAllEntitlements(false);
+          }}
+          allEntitlements={allEntitlements}
+          onAllEntitlements={setAllEntitlements}
         />
       </div>
     </Drawer>

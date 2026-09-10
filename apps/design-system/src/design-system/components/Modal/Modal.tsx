@@ -17,6 +17,13 @@ export interface ModalProps {
   subtitle?: React.ReactNode;
   /** Leading icon rendered in a brand-tint tile. */
   icon?: React.ReactNode;
+  /**
+   * Leading mark *without* the brand tile — an {@link AppIcon} logo, a product mark.
+   * The tile is right for a generic MUI glyph, which needs a ground to sit on; it is
+   * wrong for a logo, which arrives with its own colour and would be washed orange by
+   * it. Same slot and same reasoning as `Drawer.leading` and `PeekPanel.leading`.
+   */
+  leading?: React.ReactNode;
   /** Right-aligned footer actions (e.g. Cancel + primary Button). */
   footer?: React.ReactNode;
   /** Panel width in px. @default 480 */
@@ -28,6 +35,12 @@ export interface ModalProps {
    * the body scrolls.
    */
   height?: number | string;
+  /**
+   * Drop the body's padding so content can run edge to edge — a split whose divider has
+   * to meet the header and footer rules, rather than stopping short of them in the
+   * gutter. The body then owns its own insets. Same prop, same job, as `Drawer`'s.
+   */
+  disablePadding?: boolean;
   /** Show the header close (✕) button. @default true */
   showClose?: boolean;
   /**
@@ -55,9 +68,11 @@ export function Modal({
   title,
   subtitle,
   icon,
+  leading,
   footer,
   width = 480,
   height,
+  disablePadding = false,
   showClose = true,
   closePlacement = 'header',
   scrollBody = true,
@@ -66,6 +81,15 @@ export function Modal({
   const titleId = React.useId();
   const filled = height != null;
   const floating = closePlacement === 'floating';
+  /**
+   * A filled panel is a shell of regions — a header, a body that may be split, a footer —
+   * so its header closes with a rule, giving the footer's rule a partner and any divider
+   * inside the body something to meet at the top. A content-sized modal is one block and
+   * needs no such seam.
+   */
+  const headerClass = `flex items-start gap-3 px-5 pt-4 ${
+    filled ? 'shrink-0 border-b border-border pb-4' : 'pb-1'
+  }`;
   const shellClass = filled
     ? 'flex h-full flex-col'
     : scrollBody
@@ -104,11 +128,15 @@ export function Modal({
             )}
           </>
         ) : (
-          <header className="flex items-start gap-3 px-5 pb-1 pt-4">
-            {icon && (
-              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-subtle text-icon-brand">
-                {icon}
-              </span>
+          <header className={headerClass}>
+            {leading ? (
+              <span className="mt-0.5 shrink-0">{leading}</span>
+            ) : (
+              icon && (
+                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-subtle text-icon-brand">
+                  {icon}
+                </span>
+              )
             )}
             <div className="min-w-0 flex-1">
               <h2 id={titleId} className="text-h5 leading-tight text-text-primary">
@@ -125,13 +153,14 @@ export function Modal({
         )}
 
         <div
-          className={
+          className={[
             filled
-              ? `min-h-0 flex-1 overflow-hidden px-5 py-4${floating ? ' pt-4' : ''}`
+              ? 'min-h-0 flex-1 overflow-hidden'
               : scrollBody
-                ? `ds-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4${floating ? ' pt-4' : ''}`
-                : `shrink-0 px-5 py-4${floating ? ' pt-4' : ''}`
-          }
+                ? 'ds-scroll min-h-0 flex-1 overflow-y-auto'
+                : 'shrink-0',
+            disablePadding ? '' : 'px-5 py-4',
+          ].join(' ')}
         >
           {children}
         </div>

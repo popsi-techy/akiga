@@ -18,6 +18,10 @@ function provisioningReady(app: OnboardedApplication) {
 }
 
 function reconciliationReady(app: OnboardedApplication) {
+  // Nothing to pull is only a finished state after IGA can reach the system.
+  // An empty inventory before Configure is done is not reconciliation — it is
+  // the connector still being missing.
+  if (app.enableProvisioning && !provisioningReady(app)) return false;
   const summary = reconciliationSummary(app.id);
   if (summary.lastSync) return true;
   return summary.accounts.total === 0 && summary.entitlements.total === 0;
@@ -48,7 +52,7 @@ const APP_REQUIRED_CHECKS: {
     id: 'provisioning',
     label: 'configure',
     // Configure is the connector. Off means IGA will not push access, so there
-    // is no authorization or event work to finish before Activate.
+    // is no authorization or event work to finish in Configure.
     applies: (app) => app.enableProvisioning,
     satisfied: (app) => provisioningReady(app),
   },
@@ -58,7 +62,7 @@ function requiredChecks(app: OnboardedApplication) {
   return APP_REQUIRED_CHECKS.filter((c) => c.applies(app));
 }
 
-/** How many things must be configured before this application can be activated. */
+/** How many required setup checks apply to this application. */
 export function requiredAppSetupCount(app: OnboardedApplication): number {
   return requiredChecks(app).length;
 }
@@ -74,7 +78,7 @@ export function appBlockingSteps(app: OnboardedApplication): string[] {
 /**
  * Connector surfaces exist only when this application will push access.
  * Off means no Configure tab and no Reconciliation tab — IGA is not going
- * to talk to the system. Activate is still available.
+ * to talk to the system.
  */
 export function applicationShowsConfigure(app: OnboardedApplication): boolean {
   return app.enableProvisioning;
@@ -85,9 +89,8 @@ export function isAppSetupStepDone(id: AppSetupStepId, app: OnboardedApplication
     case 'provisioning':
       return provisioningReady(app);
     case 'reconciliation':
-      // A freshly onboarded application has nothing to pull yet — that empty
-      // state is finished, not missing. Once there is inventory, a sync must
-      // have run.
+      // Empty inventory is finished only after Configure is done. Before that
+      // there is nothing to pull because the connector is not there yet.
       return reconciliationReady(app);
     case 'owners':
       return getOwners('application', app.id, []).length > 0;

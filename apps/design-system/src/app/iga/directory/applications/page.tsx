@@ -4,11 +4,11 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AddOutlined from '@mui/icons-material/AddOutlined';
+import EditOutlined from '@mui/icons-material/EditOutlined';
 import ScheduleOutlined from '@mui/icons-material/ScheduleOutlined';
 import {
   Avatar,
   Button,
-  Dialog,
   Menu,
   OverflowChips,
   StatusChip,
@@ -18,14 +18,14 @@ import {
 } from '@ds/components';
 import {
   applicationAccountable,
-  deleteApplication,
   listDirectoryCatalogApplications,
   listOnboardedApplicationRows,
   listVisibleDirectoryApplications,
   type AccountableParty,
   type ApplicationRow,
 } from '@/data/directory';
-import { APPLICATION_LIFECYCLE_CHIP, DirectoryListPage, EntityAvatar } from '@/components/product/directory';
+import { getOnboardedApplication, type OnboardedApplication } from '@/data/applications-store';
+import { ApplicationBasicDetailsDrawer, DirectoryListPage, EntityAvatar } from '@/components/product/directory';
 import { lastSyncAt } from '@/data/reconciliation';
 import { formatDateTime } from '@/components/product/sod/labels';
 
@@ -58,36 +58,6 @@ function OwnerChip({ party }: { party: AccountableParty }) {
         {party.name}
       </span>
     </span>
-  );
-}
-
-/**
- * A count in its own column: the number, and a link to the tab that holds the things being
- * counted.
- *
- * No icon and no tooltip. Both were carrying the label when two counts shared one cell and
- * neither had a header of its own to name it; a column headed `Active Accounts` says it
- * already, and a mark repeating the header is decoration the eye has to step over on every
- * row to reach the number it came for.
- */
-function CountCell({
-  count,
-  href,
-  ariaLabel,
-}: {
-  count: number;
-  href: string;
-  ariaLabel: string;
-}) {
-  return (
-    <Link
-      href={href}
-      onClick={(e) => e.stopPropagation()}
-      aria-label={ariaLabel}
-      className="tabular-nums text-body-sm text-text-primary hover:text-text-link"
-    >
-      {count}
-    </Link>
   );
 }
 
@@ -138,7 +108,7 @@ export default function ApplicationsListPage() {
   // another.
   const [onboarded, setOnboarded] = React.useState<ApplicationRow[]>([]);
   const [catalog, setCatalog] = React.useState<ApplicationRow[]>(() => listDirectoryCatalogApplications());
-  const [pendingDelete, setPendingDelete] = React.useState<ApplicationRow | null>(null);
+  const [editing, setEditing] = React.useState<OnboardedApplication | null>(null);
 
   const refresh = React.useCallback(() => {
     setOnboarded(listOnboardedApplicationRows());
@@ -150,7 +120,7 @@ export default function ApplicationsListPage() {
 
   /**
    * One category today. The modal is built for several, so the shape is here
-   * ready for Status / Owner / Risk once those exist on the row.
+   * ready for Owner / Risk once those exist as filters.
    */
   const filterGroups: FilterGroup[] = [
     {
@@ -186,17 +156,6 @@ export default function ApplicationsListPage() {
           </div>
         </div>
       ),
-    },
-    {
-      id: 'lifecycle',
-      header: 'Status',
-      sortable: true,
-      width: 120,
-      value: (r) => r.lifecycle,
-      render: (r) => {
-        const chip = APPLICATION_LIFECYCLE_CHIP[r.lifecycle];
-        return <StatusChip intent={chip.intent} label={chip.label} />;
-      },
     },
     {
       id: 'discoverySource',
@@ -253,20 +212,6 @@ export default function ApplicationsListPage() {
       },
     },
     {
-      id: 'accounts',
-      header: 'Active Accounts',
-      sortable: true,
-      width: 152,
-      value: (r) => r.accountCount,
-      render: (r) => (
-        <CountCell
-          count={r.accountCount}
-          href={`/iga/directory/applications/${r.id}?tab=accounts`}
-          ariaLabel={`Open accounts for ${r.name}: ${r.accountCount} active`}
-        />
-      ),
-    },
-    {
       id: 'reconciliation',
       header: 'Last Synced',
       sortable: true,
@@ -295,9 +240,16 @@ export default function ApplicationsListPage() {
           ariaLabel={`Actions for ${r.name}`}
           items={[
             {
-              label: 'Delete',
-              danger: true,
-              onClick: () => setPendingDelete(r),
+              label: 'Edit Basic Details',
+              icon: <EditOutlined sx={{ fontSize: 18 }} />,
+              onClick: () => {
+                const app = getOnboardedApplication(r.id);
+                if (app) {
+                  setEditing(app);
+                  return;
+                }
+                toast.info('Edit basic details');
+              },
             },
           ]}
         />
@@ -335,27 +287,17 @@ export default function ApplicationsListPage() {
         }}
       />
 
-      <Dialog
-        open={Boolean(pendingDelete)}
-        onClose={() => setPendingDelete(null)}
-        title={pendingDelete ? `Delete ${pendingDelete.name}?` : 'Delete application?'}
-        tone="danger"
-        confirmLabel="Delete"
-        onConfirm={() => {
-          if (!pendingDelete) return;
-          const { id, name } = pendingDelete;
-          const ok = deleteApplication(id);
-          setPendingDelete(null);
-          if (ok) {
+      {editing ? (
+        <ApplicationBasicDetailsDrawer
+          open
+          app={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
             refresh();
-            toast.success(`“${name}” was deleted.`);
-          } else {
-            toast.error('Could not delete this application.');
-          }
-        }}
-      >
-        This removes the application from the catalog. This cannot be undone.
-      </Dialog>
+            toast.success('Basic details saved.');
+          }}
+        />
+      ) : null}
     </>
   );
 }

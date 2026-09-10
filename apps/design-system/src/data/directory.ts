@@ -44,6 +44,7 @@ import { getOwners, type OwnedEntityType } from './entity-owners';
 import { getTeamCharter, setTeamCharter, type TeamCharterField } from './team-charter';
 import { listAuthorizations } from './provisioning-auth';
 import { listStoredEntitlements } from './entitlements-store';
+import { getStoredAppAccount, listStoredAppAccounts, type StoredAppAccount } from './app-accounts-store';
 
 // ---- back-compat (consumed by automation approver pickers) ------------
 export interface DirUser {
@@ -178,12 +179,44 @@ export interface GovernanceTeamRow {
 }
 
 const toUserRow = (u: SeedUserIdentity): UserIdentityRow => ({ ...u });
+const storedAccountAsSeed = (a: StoredAppAccount): SeedAppAccount => ({
+  id: a.id,
+  accountName: a.accountName,
+  email: a.email,
+  applicationId: a.applicationId,
+  identityId: a.identityId,
+  entitlementIds: a.entitlementIds,
+});
+
+function allSeedAccounts(): SeedAppAccount[] {
+  return [...appAccounts, ...listStoredAppAccounts().map(storedAccountAsSeed)];
+}
+
+function resolveAccount(id: string): SeedAppAccount | undefined {
+  const seed = accountById.get(id);
+  if (seed) return seed;
+  const stored = getStoredAppAccount(id);
+  return stored ? storedAccountAsSeed(stored) : undefined;
+}
+
+function accountsForApplication(id: string): AppAccountRow[] {
+  return allSeedAccounts()
+    .filter((a) => a.applicationId === id)
+    .map(toAccountRow);
+}
+
+function entitlementsForApplication(id: string): EntitlementRow[] {
+  return allFlatEntitlements()
+    .filter((e) => e.applicationId === id)
+    .map(toEntRow);
+}
+
 const toAccountRow = (a: SeedAppAccount): AppAccountRow => ({
   id: a.id,
   accountName: a.accountName,
   email: a.email,
   applicationId: a.applicationId,
-  applicationName: appById.get(a.applicationId)?.name ?? a.applicationId,
+  applicationName: applicationNameFor(a.applicationId),
   identityId: a.identityId,
   identityName: a.identityId ? identityById.get(a.identityId)?.name ?? null : null,
   orphan: a.identityId === null,
@@ -404,7 +437,7 @@ export function accessExpired(row: UserIdentityRow, today = '2026-08-18'): boole
 export function getUserIdentityDetail(id: string) {
   const identity = identityById.get(id);
   if (!identity) return null;
-  const accounts = appAccounts.filter((a) => a.identityId === id).map(toAccountRow);
+  const accounts = allSeedAccounts().filter((a) => a.identityId === id).map(toAccountRow);
   const technicalRolesFor = technicalRoles.filter((r) => r.memberIds.includes(id)).map(toRoleRow);
   const businessRolesFor = businessRoles.filter((r) => r.memberIds.includes(id)).map(toRoleRow);
   return { identity, accounts, technicalRoles: technicalRolesFor, businessRoles: businessRolesFor };
@@ -412,14 +445,14 @@ export function getUserIdentityDetail(id: string) {
 
 // ---- App Account -----------------------------------------------------
 export function listAppAccounts(): AppAccountRow[] {
-  return appAccounts.map(toAccountRow);
+  return allSeedAccounts().map(toAccountRow);
 }
 export function getAppAccountDetail(id: string) {
-  const account = accountById.get(id);
+  const account = resolveAccount(id);
   if (!account) return null;
   return {
     account,
-    applicationName: appById.get(account.applicationId)?.name ?? account.applicationId,
+    applicationName: applicationNameFor(account.applicationId),
     identityName: account.identityId ? identityById.get(account.identityId)?.name ?? null : null,
     entitlements: resolveEntitlements(account.entitlementIds),
   };
@@ -456,9 +489,9 @@ const onboardedRow = (a: OnboardedApplication): ApplicationRow => ({
   id: a.id,
   name: a.name,
   description: onboardedDescription(a),
-  ownerCount: 0,
-  accountCount: 0,
-  entitlementCount: 0,
+    ownerCount: 0,
+    accountCount: accountsForApplication(a.id).length,
+    entitlementCount: entitlementsForApplication(a.id).length,
   lifecycle: applicationLifecycle(a.id),
   appType: a.appType,
   discoverySource: onboardedDiscoverySource(a),
@@ -480,8 +513,8 @@ function toCatalogRow(app: CatalogApp): ApplicationRow {
     name: app.name,
     description: app.description,
     ownerCount: app.ownerIds.length,
-    accountCount: appAccounts.filter((a) => a.applicationId === app.id).length,
-    entitlementCount: app.entitlements.length,
+    accountCount: accountsForApplication(app.id).length,
+    entitlementCount: entitlementsForApplication(app.id).length,
     lifecycle: applicationLifecycle(app.id),
     ...appProfileFor(app.id),
   };
@@ -589,8 +622,8 @@ export function getApplicationDetail(id: string) {
     // union that callers have to narrow before they can sort or filter.
     return {
       app: onboardedApp(onboarded),
-      accounts: [] as AppAccountRow[],
-      entitlements: [] as EntitlementRow[],
+      accounts: accountsForApplication(id),
+      entitlements: entitlementsForApplication(id),
       onboarded,
     };
   }
@@ -599,8 +632,8 @@ export function getApplicationDetail(id: string) {
   if (!app) return null;
   return {
     app,
-    accounts: appAccounts.filter((a) => a.applicationId === id).map(toAccountRow),
-    entitlements: app.entitlements.map((e) => toEntRow({ ...e, applicationId: app.id, applicationName: app.name })),
+    accounts: accountsForApplication(id),
+    entitlements: entitlementsForApplication(id),
   };
 }
 
@@ -656,7 +689,7 @@ export function getEntitlementDetail(id: string) {
   if (!ent) return null;
   return {
     entitlement: ent,
-    accounts: appAccounts.filter((a) => a.entitlementIds.includes(id)).map(toAccountRow),
+    accounts: allSeedAccounts().filter((a) => a.entitlementIds.includes(id)).map(toAccountRow),
     technicalRoles: technicalRoles.filter((r) => r.entitlementIds.includes(id)).map(toRoleRow),
     businessRoles: businessRoles.filter((r) => r.entitlementIds.includes(id)).map(toRoleRow),
   };

@@ -6,7 +6,7 @@ import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import StarOutlineOutlined from '@mui/icons-material/StarOutlineOutlined';
-import { Button, DataTable, Dialog, Input, Menu, StatusChip, useToast, type Column } from '@ds/components';
+import { Button, DataTable, Dialog, Input, Menu, OverflowChips, StatusChip, useToast, type Column } from '@ds/components';
 import { BaselineDrawer } from './BaselineDrawer';
 import { EntityAvatar } from './EntityAvatar';
 import { formatDateTime } from '../sod/labels';
@@ -38,8 +38,20 @@ export function BaselineAccessTab({
   const refresh = React.useCallback(() => setRows(listBaselines(applicationId)), [applicationId]);
   React.useEffect(() => refresh(), [refresh]);
 
+  const namedEntitlements = (r: AccessBaseline) =>
+    r.entitlementIds.map((id) => ({
+      id,
+      name: entitlements.find((e) => e.id === id)?.name ?? id,
+    }));
+
   const q = search.trim().toLowerCase();
-  const filtered = q ? rows.filter((r) => r.name.toLowerCase().includes(q)) : rows;
+  const filtered = q
+    ? rows.filter(
+        (r) =>
+          r.name.toLowerCase().includes(q) ||
+          namedEntitlements(r).some((e) => e.name.toLowerCase().includes(q)),
+      )
+    : rows;
 
   const makeDefault = (r: AccessBaseline) => {
     setDefaultBaseline(r.id);
@@ -64,13 +76,18 @@ export function BaselineAccessTab({
       render: (r) => (
         <div className="flex items-center gap-3">
           <EntityAvatar kind="entitlement" name={r.name} />
-          <div className="min-w-0">
-            <div className="truncate text-body-sm-strong text-text-primary">{r.name}</div>
-            <div className="truncate text-caption text-text-secondary">
-              {r.entitlementIds.length} {r.entitlementIds.length === 1 ? 'entitlement' : 'entitlements'}
-            </div>
-          </div>
+          <span className="truncate text-body-sm-strong text-text-primary">{r.name}</span>
         </div>
+      ),
+    },
+    {
+      id: 'entitlements',
+      header: 'Entitlements',
+      sortable: true,
+      wrap: true,
+      value: (r) => namedEntitlements(r).map((e) => e.name).join(', '),
+      render: (r) => (
+        <OverflowChips items={namedEntitlements(r)} max={1} emptyLabel="None" />
       ),
     },
     {

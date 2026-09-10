@@ -60,8 +60,8 @@ export interface SetupChecklistDockProps {
   currentTab: string;
   onClose: () => void;
   onGoTo: (step: SetupChecklistStep) => void;
-  /** Header action this checklist unblocks — Activate or Connect. */
-  gateVerb?: 'activate' | 'connect';
+  /** Header action this checklist unblocks — or `setup` when there is no header gate. */
+  gateVerb?: 'activate' | 'connect' | 'setup';
 }
 
 function countsAsFinished(step: SetupChecklistStep): boolean {
@@ -88,7 +88,15 @@ export function SetupChecklistDock({
   // action in the dock. Secondary once required work is done, so the header
   // Activate stays the one primary.
   const ctaVariant = required.some((s) => !s.done) ? 'primary' : 'secondary';
-  const allRequiredDone = required.every((s) => s.done);
+  const allRequiredDone = required.length > 0 && required.every((s) => s.done);
+  const caption =
+    required.length === 0
+      ? undefined
+      : allRequiredDone
+        ? 'Required steps are complete.'
+        : gateVerb === 'setup'
+          ? 'Finish the required steps.'
+          : `Finish the required steps, then ${gateVerb}.`;
 
   return (
     <aside
@@ -98,11 +106,7 @@ export function SetupChecklistDock({
       <header className="flex shrink-0 items-start justify-between gap-3 px-4 py-4">
         <div className="min-w-0">
           <h2 className="text-h5 text-text-primary">Setup checklist</h2>
-          <p className="mt-0.5 text-caption text-text-secondary">
-            {allRequiredDone
-              ? 'Required steps are complete.'
-              : `Finish the required steps, then ${gateVerb}.`}
-          </p>
+          {caption ? <p className="mt-0.5 text-caption text-text-secondary">{caption}</p> : null}
         </div>
         <button
           type="button"
@@ -117,9 +121,19 @@ export function SetupChecklistDock({
       <div className="ds-scroll min-h-0 flex-1 space-y-3 overflow-y-auto px-3 pb-4">
         {required.length > 0 && (
           <StepGroup
-            heading={gateVerb === 'connect' ? 'Required to connect' : 'Required to activate'}
+            heading={
+              gateVerb === 'connect'
+                ? 'Required to connect'
+                : gateVerb === 'setup'
+                  ? 'Required'
+                  : 'Required to activate'
+            }
             hint={
-              gateVerb === 'connect' ? 'these steps gate connection' : 'these steps gate activation'
+              gateVerb === 'connect'
+                ? 'these steps gate connection'
+                : gateVerb === 'setup'
+                  ? 'these steps complete setup'
+                  : 'these steps gate activation'
             }
           >
             {required.map((step) => (
@@ -136,11 +150,15 @@ export function SetupChecklistDock({
         )}
         {additional.length > 0 && (
           <StepGroup
-            heading="Additional"
+            heading={required.length > 0 ? 'Additional' : undefined}
             hint={
-              gateVerb === 'connect'
-                ? 'optional, and does not block connection'
-                : 'optional, and does not block activation'
+              required.length === 0
+                ? undefined
+                : gateVerb === 'connect'
+                  ? 'optional, and does not block connection'
+                  : gateVerb === 'setup'
+                    ? 'optional'
+                    : 'optional, and does not block activation'
             }
           >
             {additional.map((step) => (
@@ -165,17 +183,19 @@ function StepGroup({
   hint,
   children,
 }: {
-  heading: string;
-  hint: string;
+  heading?: string;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
     <section className="rounded-xl bg-surface p-3">
-      <h3 className="px-1 text-overline uppercase text-text-tertiary">
-        {heading}
-        <span className="sr-only"> — {hint}</span>
-      </h3>
-      <ul className="mt-1.5 space-y-0.5">{children}</ul>
+      {heading ? (
+        <h3 className="px-1 text-overline uppercase text-text-tertiary">
+          {heading}
+          {hint ? <span className="sr-only"> — {hint}</span> : null}
+        </h3>
+      ) : null}
+      <ul className={heading ? 'mt-1.5 space-y-0.5' : 'space-y-0.5'}>{children}</ul>
     </section>
   );
 }
