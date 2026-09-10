@@ -819,7 +819,7 @@ export function AccessCertificationReview({
                     selectable
                     selectedIds={selectedIds}
                     onSelectionChange={setSelectedIds}
-                    highlightSelectedRows={bulkSurface !== 'dock'}
+                    highlightSelectedRows
                     fillHeight
                     defaultRowsPerPage={12}
                     rowsPerPageOptions={[12, 24]}
@@ -837,7 +837,7 @@ export function AccessCertificationReview({
                     selectable
                     selectedIds={selectedIds}
                     onSelectionChange={setSelectedIds}
-                    highlightSelectedRows={bulkSurface !== 'dock'}
+                    highlightSelectedRows
                     fillHeight
                     defaultRowsPerPage={12}
                     rowsPerPageOptions={[12, 24]}
