@@ -443,6 +443,7 @@ export function AccessCertificationReview({
   const noun = step === 0 ? 'account' : 'entitlement';
   const selectionShown = allMatchingSelected ? visibleIds.length : actionableIds.length;
   const selectionLabel = selectionShown === 1 ? noun : `${noun}s`;
+  const showSelectionBar = bulkSurface === 'bar' && actionableIds.length > 0;
 
   /**
    * The same two decisions the rows offer, named identically so the menu is
@@ -779,39 +780,78 @@ export function AccessCertificationReview({
         </div>
 
         <div className="relative flex min-h-0 flex-1 flex-col pb-4">
-          {bulkSurface === 'bar' && actionableIds.length > 0 && (
-            <div
-              role="region"
-              aria-label={`${selectionShown} ${selectionLabel} selected`}
-              className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border border-border-strong bg-surface px-4 py-2.5"
-            >
-              <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1" role="status">
-                <span className="inline-flex min-h-5 items-center justify-center rounded-sm bg-subtle px-2 text-caption-strong text-text-primary tabular-nums">
-                  {selectionShown}
-                </span>
-                <span className="text-body-sm text-text-primary">{selectionLabel} selected</span>
-                {visibleIds.length > 0 && (
-                  <>
-                    <span className="text-text-tertiary" aria-hidden>
-                      ·
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        allMatchingSelected ? setSelectedIds([]) : setSelectedIds(visibleIds)
-                      }
-                      className="text-body-sm-medium text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-                    >
-                      {allMatchingSelected ? 'Clear all' : `Select all ${visibleIds.length}`}
-                    </button>
-                  </>
+          {showSelectionBar ? (
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border-strong">
+              <div
+                role="region"
+                aria-label={`${selectionShown} ${selectionLabel} selected`}
+                className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border bg-surface px-4 py-2.5"
+              >
+                <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1" role="status">
+                  <span className="inline-flex min-h-5 items-center justify-center rounded-sm bg-subtle px-2 text-caption-strong text-text-primary tabular-nums">
+                    {selectionShown}
+                  </span>
+                  <span className="text-body-sm text-text-primary">{selectionLabel} selected</span>
+                  {visibleIds.length > 0 && (
+                    <>
+                      <span className="text-text-tertiary" aria-hidden>
+                        ·
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          allMatchingSelected ? setSelectedIds([]) : setSelectedIds(visibleIds)
+                        }
+                        className="text-body-sm-medium text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+                      >
+                        {allMatchingSelected ? 'Clear all' : `Select all ${visibleIds.length}`}
+                      </button>
+                    </>
+                  )}
+                </p>
+                <div className="flex flex-wrap items-center gap-2">{barBulkActions}</div>
+              </div>
+              <div className="min-h-0 flex-1 [&>div]:flex [&>div]:h-full [&>div]:min-h-0 [&>div]:flex-col [&>div>div]:min-h-0 [&>div>div]:flex-1 [&>div>div]:rounded-none [&>div>div]:border-0">
+                {step === 0 ? (
+                  <DataTable<ReviewAccount>
+                    columns={ownershipColumns}
+                    rows={ownershipRows}
+                    selectable
+                    selectedIds={selectedIds}
+                    onSelectionChange={setSelectedIds}
+                    highlightSelectedRows={bulkSurface !== 'dock'}
+                    fillHeight
+                    defaultRowsPerPage={12}
+                    rowsPerPageOptions={[12, 24]}
+                    emptyTitle={campaign.accounts.length === 0 ? 'No accounts to verify' : 'No matching accounts'}
+                    emptyMessage={
+                      campaign.accounts.length === 0
+                        ? 'Accounts in this certification will appear here.'
+                        : 'Try a different search or clear filters.'
+                    }
+                  />
+                ) : (
+                  <DataTable<ReviewAccount>
+                    columns={reviewColumns}
+                    rows={reviewRows}
+                    selectable
+                    selectedIds={selectedIds}
+                    onSelectionChange={setSelectedIds}
+                    highlightSelectedRows={bulkSurface !== 'dock'}
+                    fillHeight
+                    defaultRowsPerPage={12}
+                    rowsPerPageOptions={[12, 24]}
+                    emptyTitle={claimed.length === 0 ? 'Nothing to review' : 'No matching entitlements'}
+                    emptyMessage={
+                      claimed.length === 0
+                        ? 'None of these accounts belong to you, so there is nothing to certify.'
+                        : 'Try a different search or clear filters.'
+                    }
+                  />
                 )}
-              </p>
-              <div className="flex flex-wrap items-center gap-2">{barBulkActions}</div>
+              </div>
             </div>
-          )}
-
-          {step === 0 ? (
+          ) : step === 0 ? (
             <DataTable<ReviewAccount>
               columns={ownershipColumns}
               rows={ownershipRows}
