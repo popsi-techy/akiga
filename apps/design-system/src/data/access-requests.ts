@@ -8,6 +8,7 @@ import type {
   AccessRequestItem,
   AccessRequestRiskSeverity,
   AccessRequestStatus,
+  AccessRequestType,
   EndUserRequestRow,
   EndUserRequestStatus,
   ReviewRequestRow,
@@ -15,7 +16,7 @@ import type {
 import { riskTier } from '@/lib/risk';
 
 const STORE_KEY = 'iga.accessRequests.v1';
-const SEED_VERSION = 4;
+const SEED_VERSION = 5;
 
 /** The signed-in end user — same prototype account as the top bar. */
 export const CURRENT_END_USER = {
@@ -273,14 +274,14 @@ export function requestApplicationIds(req: AccessRequest): string[] {
   return [...new Set([...fromField, ...fromItems])];
 }
 
-export function createEntitlementDraft(by = CURRENT_END_USER): AccessRequest {
+export function createAccessRequestDraft(type: AccessRequestType, by = CURRENT_END_USER): AccessRequest {
   const store = readStore();
   const { id, reference } = nextDraftIds(store);
   const now = new Date().toISOString();
   const next: AccessRequest = {
     id,
     reference,
-    type: 'entitlement',
+    type,
     status: 'draft',
     itemName: '',
     requestedForId: by.id,
@@ -306,6 +307,10 @@ export function createEntitlementDraft(by = CURRENT_END_USER): AccessRequest {
   store.requests[id] = next;
   writeStore(store);
   return withDefaults(next);
+}
+
+export function createEntitlementDraft(by = CURRENT_END_USER): AccessRequest {
+  return createAccessRequestDraft('entitlement', by);
 }
 
 export function updateAccessRequest(id: string, patch: Partial<AccessRequest>): AccessRequest | null {
@@ -350,14 +355,16 @@ export function submitAccessRequest(
   due.setUTCDate(due.getUTCDate() + 7);
   const maxRisk = Math.max(0, ...items.map((i) => i.risk ?? 0));
   const first = items[0];
+  const noun = req.type === 'application' ? 'applications' : req.type === 'role' ? 'technical roles' : 'entitlements';
   const next: AccessRequest = {
     ...req,
     status: 'pending',
-    itemName: items.length === 1 ? first.entitlementName : `${items.length} entitlements`,
+    itemName: items.length === 1 ? first.entitlementName : `${items.length} ${noun}`,
     itemDescription: first.description,
-    appId: first.applicationId,
-    appName: first.applicationName,
-    entitlementCode: first.entitlementName,
+    appId: first.applicationId || undefined,
+    appName: first.applicationName || undefined,
+    entitlementCode: req.type === 'entitlement' ? first.entitlementName : undefined,
+    roleCode: req.type === 'role' ? first.entitlementId : req.roleCode,
     itemRiskScore: maxRisk,
     itemRiskSeverity: severityFromScore(maxRisk),
     sodViolationCount: 0,
@@ -370,7 +377,7 @@ export function submitAccessRequest(
     recommendation: maxRisk >= 75 ? 'review' : 'approve',
     recommendationSummary:
       maxRisk >= 75
-        ? 'High-risk entitlements are in this request. Review before approving.'
+        ? `High-risk ${noun} are in this request. Review before approving.`
         : `It is recommended to approve this request as there are ${req.sodViolationCount ?? 0} SoD violations.`,
     items,
     attachments: (req.attachments ?? []).filter((a) => (a.status ?? 'success') === 'success' && a.dataUrl),

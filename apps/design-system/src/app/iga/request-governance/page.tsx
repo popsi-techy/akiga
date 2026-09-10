@@ -4,40 +4,41 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import FilterListOutlined from '@mui/icons-material/FilterListOutlined';
-import FactCheckOutlined from '@mui/icons-material/FactCheckOutlined';
-import ErrorOutline from '@mui/icons-material/ErrorOutline';
-import TimerOutlined from '@mui/icons-material/TimerOutlined';
-import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined';
 import {
   Button,
   DataTable,
   FilterDrawer,
   IdentityCell,
   Input,
-  StatTile,
+  OverflowChips,
   StatusChip,
+  Tabs,
   type Column,
   type FilterGroup,
   type FilterSelection,
+  type TabItem,
 } from '@ds/components';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import {
+  cartStatusMeta,
+  cartStatusOf,
+  formatGovDateTime,
   governanceMatches,
-  isHighRisk,
-  isProvisioningFailed,
   listGovernanceRequests,
+  requestItems,
   RESOURCE_TYPE_LABEL,
-  describeCurrentStage,
-  slaStatusOf,
   type GovernanceRequest,
 } from '@/data/request-governance';
-import { ResourceTypeMark, SlaTimer } from '@/components/product/request-governance';
+import { ResourceTypeMark } from '@/components/product/request-governance';
+
+type QueueTab = 'pending' | 'completed';
 
 export default function RequestGovernancePage() {
   useSetBreadcrumbs([{ label: 'Request Governance' }]);
   const router = useRouter();
   const [rows, setRows] = React.useState<GovernanceRequest[]>([]);
   const [loaded, setLoaded] = React.useState(false);
+  const [tab, setTab] = React.useState<QueueTab>('pending');
   const [search, setSearch] = React.useState('');
   const [filterOpen, setFilterOpen] = React.useState(false);
   const [selection, setSelection] = React.useState<FilterSelection>({});
@@ -51,10 +52,14 @@ export default function RequestGovernancePage() {
     return () => window.clearTimeout(t);
   }, [refresh]);
 
-  const failedCount = rows.filter(isProvisioningFailed).length;
-  const breachedCount = rows.filter((r) => slaStatusOf(r) === 'breached').length;
-  const highRiskCount = rows.filter(isHighRisk).length;
-  const openCount = rows.filter((r) => !r.closedAt).length;
+  const pendingRows = rows.filter((r) => cartStatusOf(r).pending > 0);
+  const completedRows = rows.filter((r) => cartStatusOf(r).pending === 0);
+  const tabRows = tab === 'pending' ? pendingRows : completedRows;
+
+  const tabs: TabItem[] = [
+    { value: 'pending', label: 'Pending', count: pendingRows.length },
+    { value: 'completed', label: 'Completed', count: completedRows.length },
+  ];
 
   const filterGroups: FilterGroup[] = [
     {
@@ -89,10 +94,17 @@ export default function RequestGovernancePage() {
   ];
 
   const activeFilters = Object.values(selection).reduce((n, ids) => n + ids.length, 0);
-  const searched = rows.filter((r) => governanceMatches(r, search));
+  const searched = tabRows.filter((r) => governanceMatches(r, search));
   const filtered = searched.filter((r) => {
-    if (selection.type?.length && !selection.type.includes(r.resourceType)) return false;
-    if (selection.stage?.length && !selection.stage.includes(r.currentStage)) return false;
+    const items = requestItems(r);
+    if (selection.type?.length && !items.some((i) => selection.type.includes(i.resourceType))) return false;
+    if (
+      selection.stage?.length &&
+      !items.some((i) => selection.stage.includes(i.currentStage ?? r.currentStage)) &&
+      !selection.stage.includes(r.currentStage)
+    ) {
+      return false;
+    }
     if (selection.origin?.length && !selection.origin.includes(r.origin)) return false;
     return true;
   });
@@ -102,19 +114,19 @@ export default function RequestGovernancePage() {
       id: 'id',
       header: 'Request ID',
       sortable: true,
-      width: 220,
+      width: 248,
       wrap: true,
       value: (r) => r.reference,
       render: (r) => (
-        <span className="inline-flex min-w-0 items-center gap-2">
-          <span className="shrink-0 tabular-nums text-body-sm-strong text-text-primary">{r.reference}</span>
+        <div className="flex items-center gap-2">
+          <span className="tabular-nums text-body-sm-strong text-text-primary">{r.reference}</span>
           <StatusChip intent="neutral" dot={false} label={RESOURCE_TYPE_LABEL[r.resourceType]} />
-        </span>
+        </div>
       ),
     },
     {
       id: 'requester',
-      header: 'Requester',
+      header: 'Requested By',
       sortable: true,
       width: 200,
       wrap: true,
@@ -123,7 +135,7 @@ export default function RequestGovernancePage() {
     },
     {
       id: 'target',
-      header: 'Target user',
+      header: 'Requested For',
       sortable: true,
       width: 200,
       wrap: true,
@@ -136,64 +148,67 @@ export default function RequestGovernancePage() {
         ),
     },
     {
-      id: 'type',
-      header: 'Resource',
+      id: 'resources',
+      header: 'Resources',
       sortable: true,
-      width: 200,
+      width: 240,
       wrap: true,
-      value: (r) => r.resourceName,
+      value: (r) => requestItems(r).map((i) => i.resourceName).join(' '),
       render: (r) => (
-        <ResourceTypeMark type={r.resourceType} name={r.resourceName} appType={r.appType ?? r.appName} />
+        <OverflowChips
+          items={requestItems(r).map((i) => ({
+            id: i.id,
+            name: i.resourceName,
+            type: i.resourceType,
+            appType: i.appType ?? i.appName,
+          }))}
+          max={1}
+          emptyLabel="None"
+          renderItem={(i) => <ResourceTypeMark type={i.type} name={i.name} appType={i.appType} />}
+        />
       ),
     },
     {
-      id: 'stage',
-      header: 'Current stage',
+      id: 'status',
+      header: 'All status',
       sortable: true,
-      width: 220,
+      width: 160,
       wrap: true,
-      value: (r) => describeCurrentStage(r),
-      render: (r) => <StatusChip intent="info" label={describeCurrentStage(r)} />,
+      value: (r) => cartStatusMeta(r).label,
+      render: (r) => {
+        const status = cartStatusMeta(r);
+        return <StatusChip intent={status.intent} dot={false} label={status.label} />;
+      },
     },
     {
-      id: 'sla',
-      header: 'SLA',
+      id: 'submitted',
+      header: 'Submitted',
       sortable: true,
-      width: 132,
+      width: 180,
       wrap: true,
-      value: (r) => r.slaDueAt,
-      render: (r) => <SlaTimer row={r} showStatus={false} />,
+      value: (r) => r.submittedAt,
+      render: (r) => (
+        <span className="whitespace-nowrap text-body-sm text-text-secondary">{formatGovDateTime(r.submittedAt)}</span>
+      ),
     },
   ];
 
   return (
     <div className="flex h-full flex-col">
-      <h1 className="sr-only">Request Governance</h1>
+      <div className="mb-5 shrink-0">
+        <h1 className="text-h2 tracking-tight text-text-primary">Request Governance</h1>
+        <p className="mt-1 text-body text-text-secondary">
+          Monitor access requests across applications, entitlements, and technical roles. Open a
+          request to review each resource and intervene when a line is stuck.
+        </p>
+      </div>
 
-      <div className="mb-5 grid shrink-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatTile
-          label="Open requests"
-          value={loaded ? openCount : '—'}
-          tone="brand"
-          icon={<FactCheckOutlined />}
-        />
-        <StatTile
-          label="Provisioning failed"
-          value={loaded ? failedCount : '—'}
-          tone="danger"
-          icon={<ErrorOutline />}
-        />
-        <StatTile
-          label="SLA breached"
-          value={loaded ? breachedCount : '—'}
-          tone="warning"
-          icon={<TimerOutlined />}
-        />
-        <StatTile
-          label="High risk / SoD"
-          value={loaded ? highRiskCount : '—'}
-          tone="danger"
-          icon={<WarningAmberOutlined />}
+      <div className="mb-4 shrink-0">
+        <Tabs
+          items={tabs}
+          value={tab}
+          onChange={(v) => setTab(v as QueueTab)}
+          aria-label="Request status"
         />
       </div>
 
@@ -223,8 +238,12 @@ export default function RequestGovernancePage() {
           fillHeight
           loading={!loaded}
           onRowClick={(r) => router.push(`/iga/request-governance/${r.id}`)}
-          emptyTitle="No requests match"
-          emptyMessage="Clear the search or filters to see the operations queue again."
+          emptyTitle={tab === 'pending' ? 'No pending requests' : 'No completed requests'}
+          emptyMessage={
+            tab === 'pending'
+              ? 'Requests that still have work land here. Clear search or filters if you expected to see some.'
+              : 'Requests where every resource is done land here.'
+          }
         />
       </div>
 
@@ -239,8 +258,15 @@ export default function RequestGovernancePage() {
           const n = Object.values(staged).reduce((a, ids) => a + ids.length, 0);
           if (n === 0) return `${searched.length} available`;
           const kept = searched.filter((r) => {
-            if (staged.type?.length && !staged.type.includes(r.resourceType)) return false;
-            if (staged.stage?.length && !staged.stage.includes(r.currentStage)) return false;
+            const items = requestItems(r);
+            if (staged.type?.length && !items.some((i) => staged.type.includes(i.resourceType))) return false;
+            if (
+              staged.stage?.length &&
+              !items.some((i) => staged.stage.includes(i.currentStage ?? r.currentStage)) &&
+              !staged.stage.includes(r.currentStage)
+            ) {
+              return false;
+            }
             if (staged.origin?.length && !staged.origin.includes(r.origin)) return false;
             return true;
           }).length;

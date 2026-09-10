@@ -19,13 +19,22 @@ import CloseOutlined from '@mui/icons-material/CloseOutlined';
 export interface PeekSlotProps {
   open: boolean;
   width?: number;
+  /**
+   * Drop the gutter between the slot and what it opens beside.
+   *
+   * The default gutter is right on a page of cards, where the panel is another card. It
+   * is wrong inside a region that is already divided by hairlines — a docked split — where
+   * a floating card with 20px of air either side reads as a different kind of thing from
+   * the columns around it. Pair with {@link PeekPanelProps.docked}.
+   */
+  flush?: boolean;
   children: React.ReactNode;
 }
 
-export function PeekSlot({ open, width = 320, children }: PeekSlotProps) {
+export function PeekSlot({ open, width = 320, flush = false, children }: PeekSlotProps) {
   return (
     <div
-      className={`shrink-0 overflow-hidden transition-[width,margin] duration-200 ease-out ${open ? 'ml-5' : 'ml-0'}`}
+      className={`shrink-0 overflow-hidden transition-[width,margin] duration-200 ease-out ${open && !flush ? 'ml-5' : 'ml-0'}`}
       style={{ width: open ? width : 0 }}
       aria-hidden={!open}
     >
@@ -48,6 +57,22 @@ export function PeekSlot({ open, width = 320, children }: PeekSlotProps) {
  */
 export interface PeekPanelProps {
   avatar?: React.ReactNode;
+  /**
+   * A short line of context above the title — what this panel is a panel *of*.
+   *
+   * For a peek opened from a list the title is enough, because the list is still on
+   * screen saying what was picked. It is not enough where the same title repeats across
+   * parents ("Approval" on every request), so the eyebrow names the parent and the
+   * position: `PROD_DEPLOY · STAGE 2 OF 4`. Rendered as an overline; keep it to a few
+   * words, since it truncates before the title does.
+   */
+  eyebrow?: React.ReactNode;
+  /**
+   * Draw as a column of a divided region rather than as a card: no radius, and one
+   * hairline on the leading edge instead of a border all the way round. Pair with
+   * {@link PeekSlotProps.flush}.
+   */
+  docked?: boolean;
   title: string;
   subtitle?: string;
   onClose: () => void;
@@ -57,6 +82,8 @@ export interface PeekPanelProps {
 
 export function PeekPanel({
   avatar,
+  eyebrow,
+  docked = false,
   title,
   subtitle,
   onClose,
@@ -64,10 +91,18 @@ export function PeekPanel({
   children,
 }: PeekPanelProps) {
   return (
-    <div className="flex h-full flex-col rounded-xl border border-border bg-surface">
+    <div
+      className={[
+        'flex h-full flex-col bg-surface',
+        docked ? 'border-l border-border' : 'rounded-xl border border-border',
+      ].join(' ')}
+    >
       <header className="flex items-start gap-3 border-b border-border px-5 py-4">
         {avatar}
         <div className="min-w-0 flex-1">
+          {eyebrow && (
+            <p className="mb-0.5 truncate text-overline uppercase text-text-tertiary">{eyebrow}</p>
+          )}
           <h3 className="truncate text-h5 text-text-primary">{title}</h3>
           {subtitle && <p className="mt-0.5 text-caption text-text-secondary">{subtitle}</p>}
         </div>

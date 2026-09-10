@@ -11,7 +11,7 @@ type Intent = StatusIntent;
 export const REQUEST_TYPE_META: Record<AccessRequestType, { label: string; intent: Intent }> = {
   entitlement: { label: 'Entitlement', intent: 'info' },
   application: { label: 'Application', intent: 'info' },
-  role: { label: 'Role', intent: 'warning' },
+  role: { label: 'Technical Role', intent: 'warning' },
 };
 
 export function RequestTypeChip({ type }: { type: AccessRequestType }) {

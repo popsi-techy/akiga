@@ -32,7 +32,10 @@ export interface ApprovalHop {
   state: StageState;
   decidedAt?: string;
   decision?: 'approved' | 'rejected' | 'pending';
+  /** The justification the approver typed with the decision. */
   note?: string;
+  /** Evidence filed with the decision — a sign-off, a ticket export, a screenshot. */
+  attachments?: FileAttachment[];
 }
 
 export interface LifecycleStage {
@@ -63,6 +66,24 @@ export interface AuditEvent {
   detail: string;
 }
 
+/** One catalog thing inside a request — a cart can hold several. */
+export interface GovernanceRequestItem {
+  id: string;
+  resourceType: ResourceType;
+  resourceName: string;
+  resourceDetail?: string;
+  appName?: string;
+  appType?: string;
+  riskScore?: number;
+  sodConflict?: boolean;
+  sodSummary?: string;
+  currentStage?: LifecycleStageId;
+  stages?: LifecycleStage[];
+  failure?: ProvisioningFailure;
+  /** When omitted, the request SLA applies to this line. */
+  slaDueAt?: string;
+}
+
 export interface GovernanceRequest {
   id: string;
   reference: string;
@@ -88,6 +109,8 @@ export interface GovernanceRequest {
   ticketSystem?: TicketSystem;
   proof?: FileAttachment[];
   audit: AuditEvent[];
+  /** Cart of resources. When omitted, the top-level resource fields are the only item. */
+  items?: GovernanceRequestItem[];
 }
 
 export const GOVERNANCE_REVIEWERS: GovernanceIdentity[] = [
@@ -160,7 +183,7 @@ export const ORIGIN_LABEL: Record<RequestOrigin, string> = {
 };
 
 const STORE_KEY = 'iga.requestGovernance.v1';
-const SEED_VERSION = 1;
+const SEED_VERSION = 4;
 
 type Store = { version: number; requests: Record<string, GovernanceRequest> };
 
@@ -219,6 +242,100 @@ export function getGovernanceRequest(id: string): GovernanceRequest | undefined 
   return readStore().requests[id];
 }
 
+function legacyItem(row: GovernanceRequest): GovernanceRequestItem {
+  return {
+    id: `${row.id}-item`,
+    resourceType: row.resourceType,
+    resourceName: row.resourceName,
+    resourceDetail: row.resourceDetail,
+    appName: row.appName,
+    appType: row.appType,
+    riskScore: row.riskScore,
+    sodConflict: row.sodConflict,
+    sodSummary: row.sodSummary,
+    currentStage: row.currentStage,
+    stages: row.stages,
+    failure: row.failure,
+    slaDueAt: row.slaDueAt,
+  };
+}
+
+/** Every resource on the request — the cart, or the single legacy resource. */
+export function requestItems(row: GovernanceRequest): GovernanceRequestItem[] {
+  if (row.items && row.items.length > 0) return row.items;
+  return [legacyItem(row)];
+}
+
+/**
+ * The request's stage list, re-stated for a cart line that is at a different stage.
+ *
+ * A re-stated stage keeps its identity and its new state and **nothing else**. Everything
+ * recorded on the request's copy — the note, the actor, the timestamps, the approval hops
+ * — was recorded for the state that stage was in on the request, and for a line that is
+ * somewhere else it is not merely missing but wrong: carrying the policy stage's
+ * "evaluation in progress" onto a line that has already cleared policy prints "Cleared"
+ * over a sentence saying it is still running, and carrying decided hops onto a line that
+ * has not reached approval shows decisions nobody made.
+ *
+ * The cost is a bare stage — the canvas says nothing is recorded — which is the honest
+ * reading until the seed gives each cart line its own stage records.
+ */
+function stagesAlignedTo(row: GovernanceRequest, current: LifecycleStageId): LifecycleStage[] {
+  const idx = LIFECYCLE_ORDER.indexOf(current);
+  return row.stages.map((s) => {
+    const i = LIFECYCLE_ORDER.indexOf(s.id);
+    const state: StageState = i < idx ? 'done' : i === idx ? 'current' : 'pending';
+    return state === s.state ? s : { id: s.id, state };
+  });
+}
+
+/** Read the request as if this cart line were the only resource — drawer and stage copy. */
+export function viewForItem(row: GovernanceRequest, item: GovernanceRequestItem): GovernanceRequest {
+  const currentStage = item.currentStage ?? row.currentStage;
+  const sodConflict = item.sodConflict ?? row.sodConflict;
+  return {
+    ...row,
+    resourceType: item.resourceType,
+    resourceName: item.resourceName,
+    resourceDetail: item.resourceDetail,
+    appName: item.appName,
+    appType: item.appType,
+    riskScore: item.riskScore ?? row.riskScore,
+    sodConflict,
+    sodSummary: sodConflict ? item.sodSummary ?? row.sodSummary : undefined,
+    slaDueAt: item.slaDueAt ?? row.slaDueAt,
+    currentStage,
+    stages: item.stages ?? (item.currentStage ? stagesAlignedTo(row, currentStage) : row.stages),
+    failure: item.failure ?? (item.currentStage && item.currentStage !== row.currentStage ? undefined : row.failure),
+  };
+}
+
+export function getRequestItem(row: GovernanceRequest, itemId: string): GovernanceRequestItem | undefined {
+  return requestItems(row).find((i) => i.id === itemId);
+}
+
+function itemIsComplete(row: GovernanceRequest, item: GovernanceRequestItem): boolean {
+  if (row.closedAt) return true;
+  const view = viewForItem(row, item);
+  return view.stages.find((s) => s.id === 'provisioning')?.state === 'done';
+}
+
+/** How many cart lines are still open — the list “All status” column. */
+export function cartStatusOf(row: GovernanceRequest): { pending: number; total: number } {
+  const items = requestItems(row);
+  return { pending: items.filter((i) => !itemIsComplete(row, i)).length, total: items.length };
+}
+
+/** Label and chip intent for the cart — list column and detail header. */
+export function cartStatusMeta(row: GovernanceRequest): {
+  label: string;
+  intent: 'success' | 'warning';
+} {
+  const { pending } = cartStatusOf(row);
+  if (pending === 0) return { label: 'All completed', intent: 'success' };
+  return { label: pending === 1 ? '1 pending' : `${pending} pending`, intent: 'warning' };
+}
+
 export function slaStatusOf(row: GovernanceRequest, now = Date.now()): SlaStatus {
   if (row.closedAt) return 'closed';
   const due = new Date(row.slaDueAt).getTime();
@@ -255,6 +372,78 @@ export function formatSlaClock(row: GovernanceRequest, now = Date.now()): string
 
 
 /**
+ * Where one cart line has got to.
+ *
+ * The rail card, the flow canvas and the stage panel all read this rather than each
+ * recomputing "which stage, how far along, how long is left" from the stage array — three
+ * answers to one question is how a card ends up disagreeing with the canvas beside it.
+ */
+export interface ItemFlowProgress {
+  /** The request read as if this line were the only resource. */
+  view: GovernanceRequest;
+  stages: LifecycleStage[];
+  /** 1-based position of the stage in play; `null` once the flow has finished. */
+  currentStep: number | null;
+  doneCount: number;
+  total: number;
+  complete: boolean;
+  failed: boolean;
+  slaStatus: SlaStatus;
+  slaClock: string;
+}
+
+export function itemFlowProgress(
+  row: GovernanceRequest,
+  item: GovernanceRequestItem,
+  now = Date.now(),
+): ItemFlowProgress {
+  const view = viewForItem(row, item);
+  const stages = view.stages;
+  // A skipped stage counts as passed: the flow moved on, and a progress bar that stalls on
+  // a stage nothing will ever happen at reads as stuck rather than as finished early.
+  const doneCount = stages.filter((s) => s.state === 'done' || s.state === 'skipped').length;
+  const idx = stages.findIndex((s) => s.state === 'current' || s.state === 'failed');
+  return {
+    view,
+    stages,
+    currentStep: idx < 0 ? null : idx + 1,
+    doneCount,
+    total: stages.length,
+    complete: idx < 0 && doneCount === stages.length,
+    failed: stages.some((s) => s.state === 'failed'),
+    slaStatus: slaStatusOf(view, now),
+    slaClock: formatSlaClock(view, now),
+  };
+}
+
+/**
+ * How long something has been open — `45m`, `18h`, `2d 4h`.
+ *
+ * Coarse on purpose: a stage that opened yesterday is "1d 6h open", not "30h 12m open".
+ * The minute matters on an SLA clock, where the number is a deadline; it is noise on an
+ * age, where the number is context.
+ */
+export function formatElapsed(iso?: string, now = Date.now()): string {
+  if (!iso) return '';
+  const started = new Date(iso).getTime();
+  if (Number.isNaN(started)) return '';
+  const diff = Math.max(0, now - started);
+  const minutes = Math.floor(diff / 6e4);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d ${hours % 24}h`;
+}
+
+/** What share of the SLA window has already been spent, 0–100. */
+export function slaSpentPercent(row: GovernanceRequest, now = Date.now()): number {
+  const start = new Date(row.submittedAt).getTime();
+  const due = new Date(row.slaDueAt).getTime();
+  if (Number.isNaN(start) || Number.isNaN(due) || due <= start) return 100;
+  return Math.max(0, Math.min(100, ((now - start) / (due - start)) * 100));
+}
+
+/**
  * When something happened on a request, in the house format.
  *
  * Was its own day-first 24-hour local-time build: "26 Aug 2026, 13:35" where the rest of
@@ -263,6 +452,42 @@ export function formatSlaClock(row: GovernanceRequest, now = Date.now()): string
  * reader's in the browser, which is the mismatch `lib/datetime` exists to prevent.
  */
 export const formatGovDateTime = formatDateTime;
+
+/** Every approval level configured on this request, decided or not. */
+export function approvalLevels(row: GovernanceRequest): ApprovalHop[] {
+  return row.stages.find((s) => s.id === 'approval')?.hops ?? [];
+}
+
+/**
+ * The approval levels a reader may be shown.
+ *
+ * Every level that has already decided, plus the one deciding now — and nothing after it.
+ * A later level is not a fact yet: an approval chain branches on what the level before it
+ * decided (a rejection ends the flow, an SoD conflict inserts a security review, a
+ * delegation swaps the approver), so drawing the rest of the ladder would be drawing a
+ * route nobody has taken and may never take. The whole chain is only knowable in
+ * retrospect, which is exactly when {@link approvalFlowComplete} returns true.
+ */
+export function visibleApprovalLevels(row: GovernanceRequest): ApprovalHop[] {
+  const stage = row.stages.find((s) => s.id === 'approval');
+  // Nothing has been asked of anyone yet — the request is still in submission or policy.
+  if (!stage || stage.state === 'pending') return [];
+
+  const out: ApprovalHop[] = [];
+  for (const hop of stage.hops ?? []) {
+    out.push(hop);
+    if (hop.decision === 'rejected') break;
+    if (hop.decision !== 'approved') break;
+  }
+  return out;
+}
+
+/** True once every level has decided — the only time the whole chain is on the page. */
+export function approvalFlowComplete(row: GovernanceRequest): boolean {
+  const stage = row.stages.find((s) => s.id === 'approval');
+  if (!stage || stage.state !== 'done') return false;
+  return (stage.hops ?? []).every((h) => h.decision === 'approved' || h.decision === 'rejected');
+}
 
 export function currentApproverOf(row: GovernanceRequest): GovernanceIdentity | undefined {
   const approval = row.stages.find((s) => s.id === 'approval');
@@ -413,6 +638,7 @@ export function governanceMatches(row: GovernanceRequest, query: string): boolea
     row.resourceDetail,
     row.appName,
     RESOURCE_TYPE_LABEL[row.resourceType],
+    ...requestItems(row).flatMap((i) => [i.resourceName, i.resourceDetail, i.appName, RESOURCE_TYPE_LABEL[i.resourceType]]),
     row.requester.name,
     row.requester.email,
     row.target.name,

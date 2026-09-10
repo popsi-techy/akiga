@@ -69,6 +69,9 @@ export default function PeekPanelDocs() {
           rows={[
             { name: 'PeekSlot.open', type: 'boolean', description: 'Animates width to `width` or 0.' },
             { name: 'PeekSlot.width', type: 'number', default: '320', description: 'Fixed inner width while the slot is open.' },
+            { name: 'PeekSlot.flush', type: 'boolean', default: 'false', description: 'Drop the gutter. For a docked split, where a floating card with air either side reads as a different kind of thing from the hairline-divided columns around it. Pair with `docked`.' },
+            { name: 'docked', type: 'boolean', default: 'false', description: 'Draw as a column of a divided region: no radius, one hairline on the leading edge instead of a border all the way round. Pair with `PeekSlot.flush`.' },
+            { name: 'eyebrow', type: 'ReactNode', description: 'Overline above the title — the parent and position, for a panel whose title repeats across parents (`PROD_DEPLOY · STAGE 2 OF 4`). Truncates before the title does.' },
             { name: 'title', type: 'string', description: 'The row’s name. Truncates.' },
             { name: 'subtitle', type: 'string', description: 'What kind of thing this is.' },
             { name: 'avatar', type: 'ReactNode', description: 'Optional mark in the header.' },

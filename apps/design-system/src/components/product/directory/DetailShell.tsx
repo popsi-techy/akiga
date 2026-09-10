@@ -31,7 +31,8 @@ export function DetailShell({
   avatar: React.ReactNode;
   title: string;
   chips?: React.ReactNode;
-  description?: string;
+  /** One-line caption, or a compact fact row (requested by / for / when). */
+  description?: React.ReactNode;
   /**
    * Right-aligned header actions — buttons and a trailing Menu, the same slot the
    * Emergency Access detail carries. Keep it to one or two buttons plus the menu;
@@ -90,7 +91,9 @@ export function DetailShell({
                   <h1 className="text-h4 text-text-primary">{title}</h1>
                   {chips}
                 </div>
-                {description && <p className="mt-px max-w-2xl text-body-sm text-text-secondary">{description}</p>}
+                {description != null && description !== '' && (
+                  <div className="mt-px max-w-4xl text-body-sm text-text-secondary">{description}</div>
+                )}
               </div>
             </div>
             {actions != null && (

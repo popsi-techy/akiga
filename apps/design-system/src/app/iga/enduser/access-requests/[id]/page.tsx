@@ -11,6 +11,7 @@ import {
   PreviewStep,
   RequestWizardChrome,
   SelectItemsStep,
+  requestTypeCopy,
 } from '@/components/product/access-requests';
 import type { AccessRequest } from '@/data/access-request-types';
 import {
@@ -84,6 +85,7 @@ export default function EndUserAccessRequestWizardPage() {
 
   const draft = request.status === 'draft';
   const items = requestItems(request);
+  const copy = requestTypeCopy(request.type);
   const otherReady =
     request.beneficiaryKind !== 'other' ||
     (Boolean(request.requestedForId) && request.requestedForId !== CURRENT_END_USER.id);
@@ -103,7 +105,7 @@ export default function EndUserAccessRequestWizardPage() {
       const next = submitAccessRequest(request.id, request.businessJustification, request.justificationReason);
       setSubmitting(false);
       if (!next) {
-        toast.error('Add entitlements and a justification before submitting.');
+        toast.error(copy.submitBlocked);
         return;
       }
       setRequest(next);
@@ -121,7 +123,7 @@ export default function EndUserAccessRequestWizardPage() {
       primaryLabel={
         draft
           ? activeStep === 'for-whom'
-            ? 'Select entitlements'
+            ? copy.selectLabel
             : activeStep === 'items'
               ? 'Preview & Submit'
               : undefined
@@ -134,7 +136,7 @@ export default function EndUserAccessRequestWizardPage() {
         activeStep === 'for-whom' && !forWhomReady
           ? 'Choose who this request is for.'
           : activeStep === 'items' && items.length === 0
-            ? 'Add at least one entitlement to continue.'
+            ? copy.continueEmpty
             : undefined
       }
       onBack={back}

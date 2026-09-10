@@ -19,6 +19,7 @@ export function RequestGovernanceDrawer({
   onReassign,
   onForceApprove,
   onHandleFailure,
+  showFullPageLink = true,
 }: {
   row: GovernanceRequest | null;
   open: boolean;
@@ -27,6 +28,8 @@ export function RequestGovernanceDrawer({
   onReassign: () => void;
   onForceApprove: () => void;
   onHandleFailure: () => void;
+  /** Hide when the drawer already sits on the request overview. */
+  showFullPageLink?: boolean;
 }) {
   const failed = row ? isProvisioningFailed(row) : false;
   const intervene = row ? canInterveneApproval(row) : false;
@@ -37,8 +40,8 @@ export function RequestGovernanceDrawer({
       open={open}
       onClose={onClose}
       width={800}
-      title={row?.reference ?? 'Request'}
-      subtitle={row ? requestSubtitle(row) : undefined}
+      title={row?.resourceName ?? row?.reference ?? 'Request'}
+      subtitle={row ? `${row.reference} · ${requestSubtitle(row)}` : undefined}
       icon={<FactCheckOutlined sx={{ fontSize: 22 }} />}
       footer={
         row && (
@@ -73,14 +76,16 @@ export function RequestGovernanceDrawer({
     >
       {row && (
         <div>
-          <div className="mb-5">
-            <Link
-              href={`/iga/request-governance/${row.id}`}
-              className="text-body-sm-strong text-text-link hover:underline"
-            >
-              Open full page
-            </Link>
-          </div>
+          {showFullPageLink && (
+            <div className="mb-5">
+              <Link
+                href={`/iga/request-governance/${row.id}`}
+                className="text-body-sm-strong text-text-link hover:underline"
+              >
+                Open full page
+              </Link>
+            </div>
+          )}
           <RequestDetailBody row={row} />
         </div>
       )}

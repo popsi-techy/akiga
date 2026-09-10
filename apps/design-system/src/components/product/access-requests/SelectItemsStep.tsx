@@ -3,6 +3,7 @@
 import * as React from 'react';
 import AddOutlined from '@mui/icons-material/AddOutlined';
 import AppsOutlined from '@mui/icons-material/AppsOutlined';
+import BadgeOutlined from '@mui/icons-material/BadgeOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import {
   Button,
@@ -20,9 +21,12 @@ import { requestApplicationIds, requestItems, updateAccessRequest } from '@/data
 import {
   listCataloguedApplications,
   listEntitlementRows,
+  listTechnicalRoleRows,
   type ApplicationRow,
   type EntitlementRow,
+  type RoleRow,
 } from '@/data/directory';
+import { requestTypeCopy } from './requestTypeCopy';
 
 function persist(request: AccessRequest, items: AccessRequestItem[], applicationIds: string[]) {
   return updateAccessRequest(request.id, {
@@ -41,6 +45,10 @@ export function SelectItemsStep({
   request: AccessRequest;
   onChange: (next: AccessRequest) => void;
 }) {
+  if (request.type === 'application' || request.type === 'role') {
+    return <CatalogItemsStep request={request} onChange={onChange} />;
+  }
+
   const items = requestItems(request);
   const appIds = requestApplicationIds(request);
   const apps = React.useMemo(
@@ -301,6 +309,222 @@ export function SelectItemsStep({
       />
     </div>
   );
+}
+
+function CatalogItemsStep({
+  request,
+  onChange,
+}: {
+  request: AccessRequest;
+  onChange: (next: AccessRequest) => void;
+}) {
+  const copy = requestTypeCopy(request.type);
+  const items = requestItems(request);
+  const [drawer, setDrawer] = React.useState(false);
+  const [query, setQuery] = React.useState('');
+  const catalogApps = React.useMemo(() => listCataloguedApplications(), []);
+  const catalogRoles = React.useMemo(() => listTechnicalRoleRows(), []);
+  const isApp = request.type === 'application';
+
+  const q = query.trim().toLowerCase();
+  const visible = q
+    ? items.filter(
+        (i) =>
+          i.entitlementName.toLowerCase().includes(q) || (i.description ?? '').toLowerCase().includes(q),
+      )
+    : items;
+
+  const apply = (ids: string[]) => {
+    const nextItems = isApp
+      ? catalogApps.filter((a) => ids.includes(a.id)).map(appToItem)
+      : catalogRoles.filter((r) => ids.includes(r.id)).map(roleToItem);
+    const updated = persist(
+      request,
+      nextItems,
+      isApp ? nextItems.map((i) => i.applicationId) : [],
+    );
+    if (updated) onChange(updated);
+    setDrawer(false);
+  };
+
+  const remove = (id: string) => {
+    const nextItems = items.filter((i) => i.entitlementId !== id);
+    const updated = persist(
+      request,
+      nextItems,
+      isApp ? nextItems.map((i) => i.applicationId) : [],
+    );
+    if (updated) onChange(updated);
+  };
+
+  const setDuration = (id: string, kind: 'permanent' | 'temporary') => {
+    const updated = persist(
+      request,
+      items.map((i) => (i.entitlementId === id ? { ...i, accessDurationKind: kind } : i)),
+      isApp ? items.map((i) => i.applicationId) : [],
+    );
+    if (updated) onChange(updated);
+  };
+
+  const columns: Column<AccessRequestItem & { id: string }>[] = [
+    {
+      id: 'name',
+      header: copy.nameHeader,
+      sortable: true,
+      wrap: true,
+      value: (r) => r.entitlementName,
+      render: (r) => (
+        <div className="flex min-w-0 items-center gap-2.5">
+          <EntityAvatar kind={copy.avatarKind} name={r.entitlementName} />
+          <div className="min-w-0">
+            <div className="truncate text-body-sm-strong text-text-primary">{r.entitlementName}</div>
+            {r.description && (
+              <div className="truncate text-caption text-text-secondary">{r.description}</div>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'risk',
+      header: 'Risk',
+      sortable: true,
+      value: (r) => r.risk ?? 0,
+      render: (r) => (r.risk != null ? <RiskScoreChip score={r.risk} /> : <span className="text-text-secondary">—</span>),
+    },
+    {
+      id: 'duration',
+      header: 'Access duration',
+      render: (r) => (
+        <Select
+          size="sm"
+          ariaLabel={`Access duration for ${r.entitlementName}`}
+          value={r.accessDurationKind}
+          onChange={(v) => setDuration(r.entitlementId, v as 'permanent' | 'temporary')}
+          options={[
+            { value: 'permanent', label: 'Permanent Access' },
+            { value: 'temporary', label: 'Temporary Access' },
+          ]}
+        />
+      ),
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      align: 'right',
+      width: 88,
+      render: (r) => (
+        <Tooltip title={`Remove ${r.entitlementName}`}>
+          <button
+            type="button"
+            aria-label={`Remove ${r.entitlementName}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              remove(r.entitlementId);
+            }}
+            className="rounded-md p-1 text-icon-subtle transition-colors hover:bg-[var(--ds-color-status-danger-subtle)] hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+          >
+            <DeleteOutline sx={{ fontSize: 18 }} />
+          </button>
+        </Tooltip>
+      ),
+    },
+  ];
+
+  const picker = (
+    <TableSelectDrawer
+      open={drawer}
+      onClose={() => setDrawer(false)}
+      title={copy.drawerTitle}
+      subtitle={copy.drawerSubtitle}
+      nameHeader={copy.nameHeader}
+      entity={copy.entity}
+      entityPlural={copy.plural}
+      selectedIds={items.map((i) => i.entitlementId)}
+      rows={
+        isApp
+          ? catalogApps.map((a) => ({ id: a.id, name: a.name, description: a.description }))
+          : catalogRoles.map((r) => ({ id: r.id, name: r.name, description: r.description, risk: r.risk }))
+      }
+      showRisk={!isApp}
+      onApply={apply}
+    />
+  );
+
+  if (items.length === 0) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 py-16 text-center">
+        <span className="grid h-14 w-14 place-items-center rounded-2xl bg-subtle text-icon-brand">
+          {isApp ? <AppsOutlined sx={{ fontSize: 28 }} /> : <BadgeOutlined sx={{ fontSize: 28 }} />}
+        </span>
+        <h2 className="text-h4 text-text-primary">{copy.emptyTitle}</h2>
+        <p className="max-w-sm text-body-sm text-text-secondary">{copy.emptyMessage}</p>
+        <Button variant="secondary" startIcon={<AddOutlined />} onClick={() => setDrawer(true)}>
+          {copy.addLabel}
+        </Button>
+        {picker}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full min-h-0 flex-col rounded-xl border border-border bg-surface">
+      <div className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3">
+        <h2 className="truncate text-h5 text-text-primary">Selected {copy.plural}</h2>
+        <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2">
+          <div className="w-full max-w-xs">
+            <Input
+              placeholder={copy.searchPlaceholder}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              size="sm"
+            />
+          </div>
+          <Button variant="secondary" size="sm" startIcon={<AddOutlined />} onClick={() => setDrawer(true)}>
+            {copy.addLabel}
+          </Button>
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 p-3">
+        <DataTable<AccessRequestItem & { id: string }>
+          columns={columns}
+          rows={visible.map((r) => ({ ...r, id: r.entitlementId }))}
+          fillHeight
+          emptyTitle={copy.emptyTitle}
+          emptyMessage={copy.emptyMessage}
+          emptyAction={
+            <Button variant="secondary" startIcon={<AddOutlined />} onClick={() => setDrawer(true)}>
+              {copy.addLabel}
+            </Button>
+          }
+        />
+      </div>
+      {picker}
+    </div>
+  );
+}
+
+function appToItem(a: ApplicationRow): AccessRequestItem {
+  return {
+    entitlementId: a.id,
+    entitlementName: a.name,
+    applicationId: a.id,
+    applicationName: a.name,
+    description: a.description,
+    accessDurationKind: 'permanent',
+  };
+}
+
+function roleToItem(r: RoleRow): AccessRequestItem {
+  return {
+    entitlementId: r.id,
+    entitlementName: r.name,
+    applicationId: '',
+    applicationName: '',
+    description: r.description,
+    risk: r.risk,
+    accessDurationKind: 'permanent',
+  };
 }
 
 function toItem(e: EntitlementRow): AccessRequestItem {

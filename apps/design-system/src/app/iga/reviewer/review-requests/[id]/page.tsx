@@ -45,7 +45,7 @@ const LIST_HREF = '/iga/reviewer/review-requests';
 function itemSectionTitle(type: AccessRequestType): string {
   if (type === 'entitlement') return 'Requested Entitlement';
   if (type === 'application') return 'Requested Application';
-  return 'Requested Role';
+  return 'Requested Technical Role';
 }
 
 function durationLabel(request: AccessRequest): string {

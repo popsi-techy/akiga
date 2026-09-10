@@ -16,6 +16,7 @@ import {
 import { EntityAvatar, RiskScoreChip } from '@/components/product/directory';
 import type { AccessRequest, AccessRequestItem } from '@/data/access-request-types';
 import { requestItems, updateAccessRequest } from '@/data/access-requests';
+import { requestTypeCopy } from './requestTypeCopy';
 
 const JUSTIFICATION_TEMPLATES = [
   {
@@ -37,6 +38,7 @@ const JUSTIFICATION_TEMPLATES = [
 
 export function PreviewStep({ request }: { request: AccessRequest }) {
   const items = requestItems(request);
+  const copy = requestTypeCopy(request.type);
 
   const columns: Column<AccessRequestItem & { id: string }>[] = [
     {
@@ -47,10 +49,15 @@ export function PreviewStep({ request }: { request: AccessRequest }) {
       value: (r) => r.entitlementName,
       render: (r) => (
         <div className="flex min-w-0 items-center gap-2.5">
-          <EntityAvatar kind="entitlement" name={r.entitlementName} />
+          <EntityAvatar kind={copy.avatarKind} name={r.entitlementName} />
           <div className="min-w-0">
             <div className="truncate text-body-sm-strong text-text-primary">{r.entitlementName}</div>
-            <div className="truncate text-caption text-text-secondary">{r.applicationName}</div>
+            {request.type === 'entitlement' && r.applicationName && (
+              <div className="truncate text-caption text-text-secondary">{r.applicationName}</div>
+            )}
+            {request.type !== 'entitlement' && r.description && (
+              <div className="truncate text-caption text-text-secondary">{r.description}</div>
+            )}
           </div>
         </div>
       ),
@@ -79,8 +86,8 @@ export function PreviewStep({ request }: { request: AccessRequest }) {
       <DataTable<AccessRequestItem & { id: string }>
         columns={columns}
         rows={items.map((r) => ({ ...r, id: r.entitlementId }))}
-        emptyTitle="No entitlements selected"
-        emptyMessage="Go back and add at least one entitlement to submit this request."
+        emptyTitle={copy.emptyTitle}
+        emptyMessage={copy.submitEmpty}
       />
     </div>
   );
@@ -119,9 +126,10 @@ export function PreviewJustificationDock({
     benefit, leaving a keyboard reader on "Submit Request, unavailable" with no way to
     learn what is missing.
   */
+  const copy = requestTypeCopy(request.type);
   const blockedReason =
     items.length === 0
-      ? 'Add at least one entitlement to submit this request.'
+      ? copy.submitEmpty
       : !justificationOk
         ? 'Add a justification of at least 10 characters.'
         : null;

@@ -1,4 +1,25 @@
+import type { FileAttachment } from '@ds/components';
 import type { AuditEvent, GovernanceIdentity, GovernanceRequest, LifecycleStage } from './request-governance';
+
+/**
+ * Evidence filed with an approval decision.
+ *
+ * A real one-page PDF rather than a placeholder string: the attachment field can preview
+ * what it is given, and a decision whose "signed approval" opens to nothing is a worse
+ * demo than no attachment at all.
+ */
+const PDF_DATA_URL =
+  'data:application/pdf;base64,JVBERi0xLjEKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PmVuZG9iagoyIDAgb2JqCjw8L1R5cGUvUGFnZXMvS2lkc1szIDAgUl0vQ291bnQgMT4+ZW5kb2JqCjMgMCBvYmoKPDwvVHlwZS9QYWdlL01lZGlhQm94WzAgMCAzMDAgMTQ0XT4+ZW5kb2JqCnhyZWYKMCA0CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDAxMTUgMDAwMDAgbiAKdHJhaWxlcgo8PC9TaXplIDQvUm9vdCAxIDAgUj4+CnN0YXJ0eHJlZgoxNzYKJSVFT0Y=';
+
+const evidence = (id: string, name: string, size: number, addedAt: string): FileAttachment => ({
+  id,
+  name,
+  size,
+  mimeType: 'application/pdf',
+  kind: 'pdf',
+  dataUrl: PDF_DATA_URL,
+  addedAt,
+});
 
 const amelia: GovernanceIdentity = {
   id: 'u-amelia',
@@ -115,7 +136,8 @@ export const requestGovernanceSeed: GovernanceRequest[] = [
             state: 'done',
             decision: 'approved',
             decidedAt: '2026-09-01T10:02:00.000Z',
-            note: 'Needed for the onboarding page refresh.',
+            note: 'Needed for the onboarding page refresh. Scoped to the marketing repos only, reviewed with the content team this morning.',
+            attachments: [evidence('att-2401-1', 'onboarding-refresh-brief.pdf', 42800, '2026-09-01T10:01:00.000Z')],
           },
           {
             id: 'hop-2401-2',
@@ -189,7 +211,11 @@ export const requestGovernanceSeed: GovernanceRequest[] = [
             state: 'done',
             decision: 'approved',
             decidedAt: '2026-08-30T14:18:00.000Z',
-            note: 'Time-bound to 30 Sep. Monitor privileged objects.',
+            note: 'Time-bound to 30 Sep. Monitor privileged objects. Compensating control agreed with the platform team and logged against CHG-4471.',
+            attachments: [
+              evidence('att-2402-1', 'security-signoff.pdf', 61200, '2026-08-30T14:15:00.000Z'),
+              evidence('att-2402-2', 'CHG-4471-change-record.pdf', 28900, '2026-08-30T14:16:00.000Z'),
+            ],
           },
         ],
       },
@@ -266,7 +292,7 @@ export const requestGovernanceSeed: GovernanceRequest[] = [
             state: 'done',
             decision: 'approved',
             decidedAt: '2026-08-26T15:40:00.000Z',
-            note: 'Month-end coverage. Temporary until 15 Sep.',
+            note: 'Month-end coverage while Priya is on leave. Temporary until 15 Sep — please re-review before extending.',
           },
           {
             id: 'hop-2403-2',
@@ -322,7 +348,34 @@ export const requestGovernanceSeed: GovernanceRequest[] = [
     }),
     audit: [
       audit('a-2404-2', '2026-09-03T07:22:04.000Z', 'Policy engine', 'Policy started', 'Evaluating PROD_DEPLOY against SoD pack github-prod.'),
-      audit('a-2404-1', '2026-09-03T07:22:00.000Z', 'Jessica Liu', 'Request submitted', 'Entitlement PROD_DEPLOY on GitHub for Jessica Liu.'),
+      audit('a-2404-1', '2026-09-03T07:22:00.000Z', 'Jessica Liu', 'Request submitted', 'Entitlement PROD_DEPLOY and Write on GitHub for Jessica Liu.'),
+    ],
+    items: [
+      {
+        id: 'rg-2404-prod',
+        resourceType: 'entitlement',
+        resourceName: 'PROD_DEPLOY',
+        resourceDetail: 'Ship production releases',
+        appName: 'GitHub',
+        appType: 'GitHub',
+        riskScore: 67,
+        sodConflict: true,
+        sodSummary: 'Conflicts with existing PROD_APPROVE on the same repository.',
+        currentStage: 'policy',
+        slaDueAt: '2026-09-06T17:00:00.000Z',
+      },
+      {
+        id: 'rg-2404-write',
+        resourceType: 'entitlement',
+        resourceName: 'Write',
+        resourceDetail: 'Push to repositories and open PRs.',
+        appName: 'GitHub',
+        appType: 'GitHub',
+        riskScore: 45,
+        sodConflict: false,
+        currentStage: 'approval',
+        slaDueAt: '2026-09-10T17:00:00.000Z',
+      },
     ],
   },
   {
@@ -667,7 +720,33 @@ export const requestGovernanceSeed: GovernanceRequest[] = [
     }),
     audit: [
       audit('a-2410-2', '2026-09-02T19:10:14.000Z', 'Policy engine', 'SoD conflict', 'IAM Administrator conflicts with Audit Viewer.'),
-      audit('a-2410-1', '2026-09-02T19:10:00.000Z', 'Platform API', 'Request submitted', 'Technical role IAM Administrator for Marcus Webb.'),
+      audit('a-2410-1', '2026-09-02T19:10:00.000Z', 'Platform API', 'Request submitted', 'Technical roles IAM Administrator and Engineering Baseline for Marcus Webb.'),
+    ],
+    items: [
+      {
+        id: 'rg-2410-iam',
+        resourceType: 'role',
+        resourceName: 'IAM Administrator',
+        resourceDetail: 'Directory write and role assignment',
+        appName: 'Okta',
+        riskScore: 96,
+        sodConflict: true,
+        sodSummary: 'Conflicts with existing Audit Viewer — an administrator cannot also attest their own changes.',
+        currentStage: 'approval',
+        slaDueAt: '2026-09-04T17:00:00.000Z',
+      },
+      {
+        id: 'rg-2410-eng',
+        resourceType: 'role',
+        resourceName: 'Engineering Baseline',
+        resourceDetail: 'Standard tooling for engineers',
+        appName: 'GitHub',
+        appType: 'GitHub',
+        riskScore: 25,
+        sodConflict: false,
+        currentStage: 'policy',
+        slaDueAt: '2026-09-11T17:00:00.000Z',
+      },
     ],
   },
   {

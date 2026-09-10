@@ -7,6 +7,7 @@ import {
   ORIGIN_LABEL,
   RESOURCE_TYPE_LABEL,
   formatGovDateTime,
+  requestItems,
   type GovernanceRequest,
 } from '@/data/request-governance';
 import { ResourceTypeMark } from './labels';
@@ -123,5 +124,31 @@ export function RequestDetailBody({ row }: { row: GovernanceRequest }) {
 }
 
 export function requestSubtitle(row: GovernanceRequest): string {
-  return `${RESOURCE_TYPE_LABEL[row.resourceType]} · ${row.resourceName}`;
+  const items = requestItems(row);
+  if (items.length === 1) return `${RESOURCE_TYPE_LABEL[items[0].resourceType]} · ${items[0].resourceName}`;
+  return `${items.length} resources`;
+}
+
+/** Identity-band facts — who asked, for whom, and when. */
+export function RequestHeaderFacts({ row }: { row: GovernanceRequest }) {
+  const self = row.requester.id === row.target.id;
+  return (
+    <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+      <span>
+        Requested by <span className="text-text-primary">{row.requester.name}</span>
+      </span>
+      <span aria-hidden className="text-text-tertiary">
+        ·
+      </span>
+      <span>
+        Requested for <span className="text-text-primary">{self ? 'Self' : row.target.name}</span>
+      </span>
+      <span aria-hidden className="text-text-tertiary">
+        ·
+      </span>
+      <span>
+        Submitted <span className="text-text-primary">{formatGovDateTime(row.submittedAt)}</span>
+      </span>
+    </span>
+  );
 }
