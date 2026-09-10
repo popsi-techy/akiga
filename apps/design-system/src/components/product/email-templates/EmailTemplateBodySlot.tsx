@@ -42,12 +42,12 @@ import {
   WelcomeOrganizationBody as WelcomeOrganizationBodyView,
 } from './additionalEmailBodies';
 import {
-  CtaWithFallback,
   DetailField,
   EmailDetailCard,
   ErrorMessageAlert,
   ExpiryNote,
   FallbackLinkBlock,
+  PrimaryCtaButton,
 } from './emailTemplateParts';
 
 function formatOtpDisplay(code: string): string {
@@ -126,8 +126,9 @@ function PasswordResetBody({ details }: { details: PasswordResetBody }) {
       <p className="text-body text-text-primary">
         We received a request to reset the password for your account. Click the button below to set a new password.
       </p>
+      <PrimaryCtaButton label="Reset Now" />
       <ExpiryNote label={`Link expires in ${details.expiresInLabel}`} />
-      <CtaWithFallback buttonLabel="Reset Now" url={details.resetUrl} />
+      <FallbackLinkBlock url={details.resetUrl} />
       <p className="text-body text-text-primary">
         If you didn&apos;t request a password reset, you can safely ignore this email. Your password will remain
         unchanged.
