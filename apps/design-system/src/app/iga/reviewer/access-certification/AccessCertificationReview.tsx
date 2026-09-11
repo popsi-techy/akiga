@@ -546,7 +546,7 @@ export function AccessCertificationReview() {
               <div
                 role="region"
                 aria-label={`${selectionShown} ${selectionLabel} selected`}
-                className="flex shrink-0 items-center gap-2 border-b border-border bg-surface py-2 pl-3 pr-1"
+                className="flex shrink-0 items-center gap-2 border-b border-border bg-surface px-4 py-2"
               >
                 <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                   <p className="shrink-0 text-body-sm" role="status">
