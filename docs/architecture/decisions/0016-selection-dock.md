@@ -7,9 +7,9 @@
 
 ## Context
 
-Access Certification v1 puts “N selected / Select all / Clear” in DataTable’s
-first-row `selectionToolbar`, and the bulk verbs as icon buttons beside Filter.
-That banner steals a data row, disappears when the reader pages, and splits the
+Bulk table work often puts “N selected / Select all / Clear” in DataTable’s
+first-row `selectionToolbar`, with bulk verbs elsewhere on the page. That
+banner steals a data row, disappears when the reader pages, and splits the
 job across two places.
 
 ## Decision
@@ -18,15 +18,18 @@ We will own a **SelectionDock** in the Design System: a bottom-aligned floating
 card on the work surface. It holds the count in a badge, select-all and the
 bulk actions as tertiary (text) buttons separated by hairlines, and clear.
 
-New bulk-selection surfaces MUST use SelectionDock and MUST NOT also pass
-`selectionToolbar`. Access Certification V1 uses `placement="header"` (a
-Notion-style pill on the table header). V2 uses the default `bottom` dock.
+New bulk-selection surfaces that need a floating dock MUST use SelectionDock
+and MUST NOT also pass `selectionToolbar`. Use `placement="header"` for a
+Notion-style pill on the table header, or the default `bottom` dock.
+
+Access Certification uses the **bulk-selection-bar** pattern instead (see
+`registries/patterns.json`).
 
 This is not SetupBar. SetupBar walks a draft’s remaining steps and is parked.
 
 ## Consequences
 
-- Access Certification V1 uses `placement="header"`; V2 uses `bottom`.
+- SelectionDock supports `placement="header"` and `bottom`.
 - The dock’s ancestor MUST be `relative` so it does not cover the sidebar.
 - Icon-only bulk actions beside Filter are a defect on a dock screen.
 

@@ -11,9 +11,8 @@ import HowToRegOutlined from '@mui/icons-material/HowToRegOutlined';
 import PersonOffOutlined from '@mui/icons-material/PersonOffOutlined';
 import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlined from '@mui/icons-material/CancelOutlined';
+import CloseOutlined from '@mui/icons-material/CloseOutlined';
 import ChevronRight from '@mui/icons-material/ChevronRight';
-import ExpandMoreOutlined from '@mui/icons-material/ExpandMoreOutlined';
-import MoreVertOutlined from '@mui/icons-material/MoreVertOutlined';
 import {
   Avatar,
   Button,
@@ -22,18 +21,15 @@ import {
   Dialog,
   FilterDrawer,
   Input,
-  Menu,
   Meter,
   Select,
   StatusChip,
   Stepper,
   Tooltip,
   useToast,
-  SelectionDock,
   type Column,
   type FilterGroup,
   type FilterSelection,
-  type MenuActionItem,
 } from '@ds/components';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import {
@@ -83,70 +79,7 @@ function iconBtnClass(active: boolean, tone: 'success' | 'danger') {
   ].join(' ');
 }
 
-/**
- * Quiet icon on the Notion-style header dock — no boxed chrome.
- *
- * Carries the row buttons' green and red, since it is the same two decisions
- * applied to many rows instead of one, and an approve that is grey in the dock
- * and green in the row reads as a different action. Only the glyph is tinted:
- * the row buttons can afford a bordered box because they sit in whitespace,
- * while these sit shoulder to shoulder inside a pill that is already a box.
- */
-const HEADER_ACTION_TONE = {
-  neutral: 'text-icon hover:bg-subtle',
-  success:
-    'text-[var(--ds-color-status-success-fg)] hover:bg-[var(--ds-color-status-success-subtle)]',
-  danger: 'text-[var(--ds-color-status-danger-fg)] hover:bg-[var(--ds-color-status-danger-subtle)]',
-} as const;
-
-function HeaderAction({
-  label,
-  tone = 'neutral',
-  onClick,
-  children,
-}: {
-  label: string;
-  tone?: keyof typeof HEADER_ACTION_TONE;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <Tooltip title={label}>
-      <span className="inline-flex">
-        <button
-          type="button"
-          aria-label={label}
-          onClick={onClick}
-          className={`grid h-8 w-8 place-items-center rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle ${HEADER_ACTION_TONE[tone]}`}
-        >
-          {children}
-        </button>
-      </span>
-    </Tooltip>
-  );
-}
-
-/**
- * Where the bulk actions for a selection live.
- *
- * - `row` (V1) — a draggable pill over the table header, icon actions.
- * - `dock` (V2) — an inverse toolbar at the foot of the list, labelled actions.
- * - `toolbar` (V3) — a Bulk action menu that joins Filter once a row is
- *   selected. Nothing floats over the table; the menu is gone until there is
- *   something to act on, so an empty selection does not advertise a disabled
- *   control. Select all sits next to it so the header checkbox is not the only
- *   way to reach every matching row.
- * - `bar` (V4) — a selection band above the table, in document flow. Count,
- *   Select all, and labelled bulk actions sit on one row; the table moves down
- *   when the band appears. Nothing overlays the header or the rows.
- */
-export type BulkSurface = 'row' | 'dock' | 'toolbar' | 'bar';
-
-export function AccessCertificationReview({
-  bulkSurface = 'row',
-}: {
-  bulkSurface?: BulkSurface;
-}) {
+export function AccessCertificationReview() {
   const toast = useToast();
   const [campaign, setCampaign] = React.useState<ReviewCampaign | null>(null);
   const [loaded, setLoaded] = React.useState(false);
@@ -443,125 +376,23 @@ export function AccessCertificationReview({
   const noun = step === 0 ? 'account' : 'entitlement';
   const selectionShown = allMatchingSelected ? visibleIds.length : actionableIds.length;
   const selectionLabel = selectionShown === 1 ? noun : `${noun}s`;
-  const showSelectionBar = bulkSurface === 'bar' && actionableIds.length > 0;
-
-  /**
-   * The same two decisions the rows offer, named identically so the menu is
-   * recognisably "that, but to all of these". The destructive one routes
-   * through the confirm dialog; marking accounts as yours or certifying an
-   * entitlement is undoable from the row, so it applies straight away.
-   */
-  const bulkMenuItems: MenuActionItem[] =
-    step === 0
-      ? [
-          {
-            label: 'Belongs to me',
-            icon: <HowToRegOutlined sx={{ fontSize: 18 }} />,
-            onClick: () => applyOwnershipBulk(actionableIds, 'mine'),
-          },
-          {
-            label: 'Does not belong to me',
-            icon: <PersonOffOutlined sx={{ fontSize: 18 }} />,
-            danger: true,
-            onClick: () => setBulkPending({ kind: 'not-mine', ids: actionableIds }),
-          },
-        ]
-      : [
-          {
-            label: 'Certify',
-            icon: <CheckCircleOutline sx={{ fontSize: 18 }} />,
-            onClick: () => applyEntitlementBulk(actionableIds, 'certify'),
-          },
-          {
-            label: 'Revoke',
-            icon: <CancelOutlined sx={{ fontSize: 18 }} />,
-            danger: true,
-            onClick: () => setBulkPending({ kind: 'revoke', ids: actionableIds }),
-          },
-        ];
-
-  const headerOverflow = (
-    <Menu
-      ariaLabel="More actions"
-      offset={4}
-      trigger={
-        <button
-          type="button"
-          aria-label="More actions"
-          className="grid h-8 w-8 place-items-center rounded-sm text-icon hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-        >
-          <MoreVertOutlined sx={{ fontSize: 18 }} />
-        </button>
-      }
-      items={[
-        {
-          label: 'Add comment',
-          onClick: () => toast.info('Add comment is not available in this prototype'),
-        },
-        {
-          label: 'Export selected',
-          onClick: () => toast.info('Export is not available in this prototype'),
-        },
-      ]}
-    />
-  );
+  const showSelectionBar = actionableIds.length > 0;
 
   const barBulkActions =
     step === 0 ? (
       <>
         <Button
-          variant="secondary"
-          size="sm"
-          startIcon={<HowToRegOutlined />}
-          onClick={() => applyOwnershipBulk(actionableIds, 'mine')}
-        >
-          Belongs to me
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          startIcon={<PersonOffOutlined />}
-          onClick={() => setBulkPending({ kind: 'not-mine', ids: actionableIds })}
-        >
-          Does not belong
-        </Button>
-      </>
-    ) : (
-      <>
-        <Button
-          variant="secondary"
-          size="sm"
-          startIcon={<CheckCircleOutline />}
-          onClick={() => applyEntitlementBulk(actionableIds, 'certify')}
-        >
-          Certify
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          startIcon={<CancelOutlined />}
-          onClick={() => setBulkPending({ kind: 'revoke', ids: actionableIds })}
-        >
-          Revoke
-        </Button>
-      </>
-    );
-
-  const dockBulkActions =
-    step === 0 ? (
-      <>
-        <Button
           variant="tertiary"
-          size="xs"
-          startIcon={<HowToRegOutlined />}
+          size="sm"
+          startIcon={<HowToRegOutlined sx={{ fontSize: 18 }} />}
           onClick={() => applyOwnershipBulk(actionableIds, 'mine')}
         >
           Belongs to me
         </Button>
         <Button
           variant="tertiary"
-          size="xs"
-          startIcon={<PersonOffOutlined />}
+          size="sm"
+          startIcon={<PersonOffOutlined sx={{ fontSize: 18 }} />}
           onClick={() => setBulkPending({ kind: 'not-mine', ids: actionableIds })}
         >
           Does not belong
@@ -571,59 +402,20 @@ export function AccessCertificationReview({
       <>
         <Button
           variant="tertiary"
-          size="xs"
-          startIcon={<CheckCircleOutline />}
+          size="sm"
+          startIcon={<CheckCircleOutline sx={{ fontSize: 18 }} />}
           onClick={() => applyEntitlementBulk(actionableIds, 'certify')}
         >
           Certify
         </Button>
         <Button
           variant="tertiary"
-          size="xs"
-          startIcon={<CancelOutlined />}
+          size="sm"
+          startIcon={<CancelOutlined sx={{ fontSize: 18 }} />}
           onClick={() => setBulkPending({ kind: 'revoke', ids: actionableIds })}
         >
           Revoke
         </Button>
-      </>
-    );
-
-  const headerActions =
-    step === 0 ? (
-      <>
-        <HeaderAction
-          label="Belongs to me"
-          tone="success"
-          onClick={() => applyOwnershipBulk(actionableIds, 'mine')}
-        >
-          <HowToRegOutlined sx={{ fontSize: 18 }} />
-        </HeaderAction>
-        <HeaderAction
-          label="Does not belong to me"
-          tone="danger"
-          onClick={() => setBulkPending({ kind: 'not-mine', ids: actionableIds })}
-        >
-          <PersonOffOutlined sx={{ fontSize: 18 }} />
-        </HeaderAction>
-        {headerOverflow}
-      </>
-    ) : (
-      <>
-        <HeaderAction
-          label="Certify"
-          tone="success"
-          onClick={() => applyEntitlementBulk(actionableIds, 'certify')}
-        >
-          <CheckCircleOutline sx={{ fontSize: 18 }} />
-        </HeaderAction>
-        <HeaderAction
-          label="Revoke"
-          tone="danger"
-          onClick={() => setBulkPending({ kind: 'revoke', ids: actionableIds })}
-        >
-          <CancelOutlined sx={{ fontSize: 18 }} />
-        </HeaderAction>
-        {headerOverflow}
       </>
     );
 
@@ -746,37 +538,6 @@ export function AccessCertificationReview({
           >
             Filter{filterCount > 0 ? ` (${filterCount})` : ''}
           </Button>
-
-          {bulkSurface === 'toolbar' && actionableIds.length > 0 && (
-            <div className="flex items-center gap-3">
-              <Menu
-                ariaLabel="Bulk action"
-                items={bulkMenuItems}
-                trigger={
-                  <Button variant="secondary" endIcon={<ExpandMoreOutlined />}>
-                    Bulk action
-                  </Button>
-                }
-              />
-
-              {/* How many are chosen, then the reach of the set. The table's
-                  header checkbox only takes the page it is on, so Select all
-                  is the way to reach rows a filter matches but the page does
-                  not show. */}
-              <p className="text-body-sm text-text-secondary">
-                {`${actionableIds.length} selected, `}
-                <button
-                  type="button"
-                  onClick={() =>
-                    allMatchingSelected ? setSelectedIds([]) : setSelectedIds(visibleIds)
-                  }
-                  className="rounded-sm text-body-sm-medium text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-                >
-                  {allMatchingSelected ? 'Clear all' : `Select all ${visibleIds.length}`}
-                </button>
-              </p>
-            </div>
-          )}
         </div>
 
         <div className="relative flex min-h-0 flex-1 flex-col pb-4">
@@ -785,31 +546,39 @@ export function AccessCertificationReview({
               <div
                 role="region"
                 aria-label={`${selectionShown} ${selectionLabel} selected`}
-                className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border bg-surface px-4 py-2.5"
+                className="flex shrink-0 items-center gap-2 border-b border-border bg-surface py-2 pl-3 pr-1"
               >
-                <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1" role="status">
-                  <span className="inline-flex min-h-5 items-center justify-center rounded-sm bg-subtle px-2 text-caption-strong text-text-primary tabular-nums">
-                    {selectionShown}
-                  </span>
-                  <span className="text-body-sm text-text-primary">{selectionLabel} selected</span>
-                  {visibleIds.length > 0 && (
-                    <>
-                      <span className="text-text-tertiary" aria-hidden>
-                        ·
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          allMatchingSelected ? setSelectedIds([]) : setSelectedIds(visibleIds)
-                        }
-                        className="text-body-sm-medium text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-                      >
-                        {allMatchingSelected ? 'Clear all' : `Select all ${visibleIds.length}`}
-                      </button>
-                    </>
-                  )}
-                </p>
-                <div className="flex flex-wrap items-center gap-2">{barBulkActions}</div>
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                  <p className="shrink-0 text-body-sm" role="status">
+                    <span className="text-body-medium text-text-primary tabular-nums">
+                      {selectionShown} selected
+                    </span>
+                    {visibleIds.length > 0 ? (
+                      <>
+                        {' '}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            allMatchingSelected ? setSelectedIds([]) : setSelectedIds(visibleIds)
+                          }
+                          className="text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+                        >
+                          ({allMatchingSelected ? 'Clear all' : `Select all ${visibleIds.length}`})
+                        </button>
+                      </>
+                    ) : null}
+                  </p>
+                  <span className="hidden h-4 w-px shrink-0 bg-border sm:block" aria-hidden />
+                  <div className="flex flex-wrap items-center gap-0.5">{barBulkActions}</div>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Clear selection"
+                  onClick={() => setSelectedIds([])}
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-sm text-icon hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+                >
+                  <CloseOutlined sx={{ fontSize: 18 }} aria-hidden />
+                </button>
               </div>
               <div className="min-h-0 flex-1 [&>div]:flex [&>div]:h-full [&>div]:min-h-0 [&>div]:flex-col [&>div>div]:min-h-0 [&>div>div]:flex-1 [&>div>div]:rounded-none [&>div>div]:border-0">
                 {step === 0 ? (
@@ -858,7 +627,7 @@ export function AccessCertificationReview({
               selectable
               selectedIds={selectedIds}
               onSelectionChange={setSelectedIds}
-              highlightSelectedRows={bulkSurface !== 'dock'}
+              highlightSelectedRows
               fillHeight
               defaultRowsPerPage={12}
               rowsPerPageOptions={[12, 24]}
@@ -876,7 +645,7 @@ export function AccessCertificationReview({
               selectable
               selectedIds={selectedIds}
               onSelectionChange={setSelectedIds}
-              highlightSelectedRows={bulkSurface !== 'dock'}
+              highlightSelectedRows
               fillHeight
               defaultRowsPerPage={12}
               rowsPerPageOptions={[12, 24]}
@@ -887,33 +656,6 @@ export function AccessCertificationReview({
                   : 'Try a different search or clear filters.'
               }
             />
-          )}
-          {bulkSurface === 'row' && (
-            <SelectionDock
-              open={actionableIds.length > 0}
-              placement="header"
-              count={actionableIds.length}
-              total={visibleIds.length}
-              noun={noun}
-              allSelected={allMatchingSelected}
-              onSelectAll={() => setSelectedIds(visibleIds)}
-              onClear={() => setSelectedIds([])}
-            >
-              {headerActions}
-            </SelectionDock>
-          )}
-          {bulkSurface === 'dock' && (
-            <SelectionDock
-              open={actionableIds.length > 0}
-              count={actionableIds.length}
-              total={visibleIds.length}
-              noun={noun}
-              allSelected={allMatchingSelected}
-              onSelectAll={() => setSelectedIds(visibleIds)}
-              onClear={() => setSelectedIds([])}
-            >
-              {dockBulkActions}
-            </SelectionDock>
           )}
         </div>
       </div>

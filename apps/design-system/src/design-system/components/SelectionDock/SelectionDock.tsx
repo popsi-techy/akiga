@@ -36,10 +36,10 @@ function boundsFor(node: HTMLElement): HTMLElement {
  * This card sits on the page and holds the count, select-all, and the actions
  * that apply to the selection.
  *
- * `bottom` (default) — inverse toolbar, bottom-center. Access Certification V2.
+ * `bottom` (default) — inverse toolbar, bottom-center.
  * `header` — Notion-style: a light pill that overlays the table header, a
  * drag handle, count, Select all N (Clear all when the set is full) as a
- * link, and icon actions. Access Certification V1. The handle moves
+ * link, and icon actions. The handle moves
  * the pill anywhere on the page area it can be seen — it starts over the table
  * header, where it is in the way of the rows you are about to act on, so it has
  * to be able to leave the table (see {@link boundsFor}).

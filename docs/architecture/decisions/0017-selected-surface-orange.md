@@ -18,8 +18,9 @@ We will map **`surface.selected` to `orange[50]` `#FFF4EE`** and
 **`surface.selectedHover` to `orange[100]` `#FFE5D8`**.
 
 The MUI theme applies these on `MuiTableRow`, `MuiListItemButton`, and
-`MuiMenuItem` at full opacity. DataTable still opts out with
-`highlightSelectedRows={false}` (Access Certification V2). Tailwind exposes
+`MuiMenuItem` at full opacity. DataTable can opt out with
+`highlightSelectedRows={false}` when a dock or bar is the only selection mark.
+Tailwind exposes
 `bg-surface-selected` and `bg-surface-selected-hover`.
 
 ## Consequences
