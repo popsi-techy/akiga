@@ -12,8 +12,11 @@
  * Deterministic by application id: no `Date.now()` or `Math.random()`, so the
  * server and the client render the same history.
  */
-import { applicationDiscoverySource, getApplicationDetail } from './directory';
-import { listAuthorizations } from './provisioning-auth';
+import {
+  applicationDiscoverySource,
+  applicationIsAuthorized,
+  getApplicationDetail,
+} from './directory';
 
 export type SyncTrigger = 'manual' | 'auto';
 export type SyncOutcome = 'success' | 'failed';
@@ -255,10 +258,17 @@ export function hasSyncHistory(applicationId: string): boolean {
   ) {
     return false;
   }
-  // Nor has one IGA has never been able to sign in to. Without this an
-  // application can show "no authorization" and a sync history on the same
-  // screen, and only one of those can be true.
-  if (listAuthorizations(applicationId).length === 0) return false;
+  /*
+    Nor has one IGA has never been able to sign in to — an application cannot show "no
+    authorization" and a sync history on the same screen, and only one of those can be true.
+
+    Asked through `applicationIsAuthorized`, which reads "signed in, *or* no connector is
+    required", rather than by counting authorization records. Counting them made an
+    application with provisioning off fail a test it can never pass: there is no connector
+    to hold a credential, so the count is zero by definition, and the tab reported "Never
+    run" beside the four accounts it actually holds.
+  */
+  if (!applicationIsAuthorized(applicationId)) return false;
   return true;
 }
 

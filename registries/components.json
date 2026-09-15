@@ -371,7 +371,7 @@
         "read-only"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/input/page.tsx",
-      "notes": "Shares the control-height scale with Select, DatePicker, TimePicker and Button. Error is driven by the presence of the `error` message, not a separate boolean. `hint` puts an explanation on an info icon beside the label, for what a user needs once; `helperText` stays on screen, for what they need every time."
+      "notes": "Shares the control-height scale with Select, DatePicker, TimePicker and Button. Error is driven by the presence of the `error` message, not a separate boolean. `hint` puts an explanation on an info icon beside the label, for what a user needs once; `helperText` stays on screen, for what they need every time. A field with no visible `label` names itself with `aria-label`, which is forwarded to the native input; with a visible label it is ignored, because the label already names the field."
     },
     {
       "name": "Menu",
@@ -499,10 +499,12 @@
         "default",
         "active",
         "hover",
-        "with-count"
+        "with-count",
+        "with-trailing",
+        "with-action"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/nav-list/page.tsx",
-      "notes": "Vertical in-panel section switcher, reported as role=tablist. Use over Tabs when labels are long, the set may grow, or each item carries a count. Supplies no chrome of its own — put it inside a bordered panel."
+      "notes": "Vertical in-panel section switcher, reported as role=tablist. Use over Tabs when labels are long, the set may grow, or each item carries a count. Supplies no chrome of its own — put it inside a bordered panel. The trailing edge holds one thing: `count` for the usual pill, or `trailing` for anything else (a StatusChip). `action` adds a per-row control — a Menu kebab — rendered as a sibling of the tab button, never inside it. Do not fork it to add a slot; a local copy drifts on every state it owns."
     },
     {
       "name": "OverflowChips",

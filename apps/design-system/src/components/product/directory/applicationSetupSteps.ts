@@ -3,8 +3,8 @@ import {
   isAppSetupStepDone,
   isRequiredAppSetupStep,
   type AppSetupStepId,
+  type AppSetupSubject,
 } from '@/data/application-setup';
-import type { OnboardedApplication } from '@/data/applications-store';
 import { reconciliationSummary } from '@/data/reconciliation';
 
 export interface ApplicationSetupStep {
@@ -52,7 +52,7 @@ const COPY: Record<AppSetupStepId, { hint: string; cta: string; tab: string }> =
  * Ordering, labels and required-ness all come from `data/application-setup` — this only
  * adds where a step is edited, which is a fact about the screens rather than the domain.
  */
-export function applicationSetupSteps(app: OnboardedApplication): ApplicationSetupStep[] {
+export function applicationSetupSteps(app: AppSetupSubject): ApplicationSetupStep[] {
   return APP_SETUP_STEPS.filter(
     (step) =>
       (step.id !== 'provisioning' && step.id !== 'reconciliation') || app.enableProvisioning,
@@ -74,12 +74,12 @@ export function applicationSetupSteps(app: OnboardedApplication): ApplicationSet
 }
 
 /** Whether any setup step for this application is still open. */
-export function appSetupIncomplete(app: OnboardedApplication): boolean {
+export function appSetupIncomplete(app: AppSetupSubject): boolean {
   return applicationSetupSteps(app).some((s) => !s.done);
 }
 
 /** First unfinished setup tab, or the last one once everything is in place. */
-export function firstUnfinishedAppTab(app: OnboardedApplication): string {
+export function firstUnfinishedAppTab(app: AppSetupSubject): string {
   const steps = applicationSetupSteps(app);
   return steps.find((s) => !s.done)?.tab ?? steps[steps.length - 1].tab;
 }

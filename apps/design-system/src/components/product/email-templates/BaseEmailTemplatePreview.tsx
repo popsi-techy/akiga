@@ -71,7 +71,10 @@ export function BaseEmailTemplateShell({
           <div className="flex flex-col gap-5 px-4 py-5 sm:gap-6 sm:px-6 sm:py-6">
             {children}
 
-            <div className="flex flex-col gap-1">
+            {/* One step down the scale. The two lines already carry their own leading —
+                24px on the sign-off, 20px on the team — so a 4px gap on top of that read as
+                a paragraph break between two halves of one signature. */}
+            <div className="flex flex-col gap-0.5">
               <p className="text-h5 text-text-secondary">{signOff}</p>
               <p className="text-body-strong text-text-primary">{teamName}</p>
             </div>

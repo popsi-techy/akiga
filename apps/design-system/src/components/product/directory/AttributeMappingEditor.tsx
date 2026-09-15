@@ -3,6 +3,7 @@
 import * as React from 'react';
 import AddOutlined from '@mui/icons-material/AddOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
+import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import { Button, Input, Select, Tooltip } from '@ds/components';
 import {
   ATTRIBUTE_SOURCES,
@@ -56,11 +57,52 @@ export function AttributeMappingEditor({
       </div>
 
       <div className="ds-scroll overflow-x-auto">
-        <div className="min-w-[760px]">
+        {/* 700, which is what the five columns actually need: 170 + 170 + 36 for the two
+            selects and the remove button, 40 of gaps, and 142 each for the two text fields.
+            It was 760, and the pane it sits in is 704 wide — so the Transformation field
+            was cut off at the right on every screen, and reaching it meant scrolling a
+            table sideways inside a drawer that does not otherwise scroll. */}
+        <div className="min-w-[700px]">
           <div className={`${COLS} items-center border-b border-border pb-2`}>
-            {['Source', `${applicationName} field`, 'IGA attribute', 'Transformation', ''].map((h, i) => (
-              <span key={i} className="text-caption-strong uppercase tracking-wider text-text-tertiary">
-                {h}
+            {[
+              { label: 'Source' },
+              {
+                /*
+                  "App attribute", not "<Application> field".
+
+                  The application's name made the header as long as the application is
+                  called — "Google Workspace field" wrapped to two lines in a 144px column,
+                  and "Microsoft Entra ID field" would take three — while saying something
+                  the reader already knows, since the whole drawer belongs to one
+                  application. Dropping it also puts this column in the same shape as the
+                  one beside it: app attribute on the left, IGA attribute on the right,
+                  which is the mapping the row is making. The full name stays on the
+                  field's accessible name, where length costs nothing.
+                */
+                label: 'App attribute',
+              },
+              { label: 'IGA attribute' },
+              {
+                label: 'Transformation',
+                /* The expression syntax, on the column that wants it. It used to be a
+                   permanent paragraph under the table — a sentence you read once and then
+                   scrolled past for the rest of the connector's life. */
+                hint: 'Optional. Reference attributes in square brackets and quote literal text — for example [firstName] + " " + [lastName].',
+              },
+              { label: '' },
+            ].map((h, i) => (
+              <span
+                key={i}
+                className="flex items-center gap-1 text-caption-strong uppercase tracking-wider text-text-tertiary"
+              >
+                {h.label}
+                {h.hint && (
+                  <Tooltip title={h.hint}>
+                    <span tabIndex={0} aria-label={h.hint} className="inline-flex shrink-0 text-icon-subtle">
+                      <InfoOutlined sx={{ fontSize: 14 }} />
+                    </span>
+                  </Tooltip>
+                )}
               </span>
             ))}
           </div>
@@ -80,7 +122,7 @@ export function AttributeMappingEditor({
                     }
                   />
                   <Input
-                    aria-label={`${applicationName} field`}
+                    aria-label={`${applicationName} attribute`}
                     placeholder="e.g. userName"
                     value={row.applicationField}
                     onChange={(e) => update(row.id, { applicationField: e.target.value })}
@@ -130,11 +172,6 @@ export function AttributeMappingEditor({
           No attributes mapped. This event will not write any fields.
         </p>
       )}
-
-      <p className="text-caption text-text-tertiary">
-        A transformation is optional. Reference attributes in square brackets and quote literal text — for example{' '}
-        <span className="text-text-secondary">[firstName] + &quot; &quot; + [lastName]</span>.
-      </p>
     </div>
   );
 }

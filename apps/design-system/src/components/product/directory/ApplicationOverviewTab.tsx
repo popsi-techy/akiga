@@ -1,16 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
 import AccountBalance from '@mui/icons-material/AccountBalance';
+import Inventory2 from '@mui/icons-material/Inventory2';
+import ReportProblem from '@mui/icons-material/ReportProblem';
 import Hub from '@mui/icons-material/Hub';
-import ManageAccountsOutlined from '@mui/icons-material/ManageAccountsOutlined';
-import PeopleOutlined from '@mui/icons-material/PeopleOutlined';
-import AppsOutlined from '@mui/icons-material/AppsOutlined';
-import VerifiedUserOutlined from '@mui/icons-material/VerifiedUserOutlined';
-import { Card, InfoRow, InfoRowGroup, StatTile, StatusChip } from '@ds/components';
+import { Card, InfoRow, InfoRowGroup, StatusChip } from '@ds/components';
 import { formatDateTime } from '../sod/labels';
 import { infoIcon } from './infoIcons';
+import { RowLink, RowValue } from './RowLink';
 import { appProfileFor } from '@/data/seed';
 import { listAuthorizations } from '@/data/provisioning-auth';
 import { eventStatus, listConnectionEvents } from '@/data/connection-events';
@@ -38,10 +36,15 @@ interface Gap {
 /**
  * Application overview — is this application healthy and governed, and if not, what next.
  *
- * The counts use the same `StatTile` row as the dashboard. Connection and
- * Governance use the framed Card + InfoRow pattern every other overview uses
- * (Emergency Access, Request Governance). Needs-attention stays its own list:
- * wrapping problems in the same card as facts would bury them again.
+ * Four cards of the same shape, in two rows: what this application holds and what still
+ * needs doing, then how it connects and how it is governed.
+ *
+ * The counts were a row of `StatTile`s above all of it — three 96px panels carrying one
+ * number each, which is a dashboard's job, not a detail page's. They also linked to
+ * `?tab=accounts`, a tab that no longer exists, so two of the three had been dead since
+ * the inventory moved into Reconciliation. As rows in a card they sit at the same weight
+ * as every other fact about the application, and the link goes where the list actually
+ * lives.
  *
  * Risk stays off this tab — the identity band already carries the chip.
  */
@@ -102,6 +105,8 @@ export function ApplicationOverviewTab({
   const controls = row?.controls;
   const policyCount = controls ? controls.birthright + controls.approval + controls.sod : 0;
   const href = (tab: string) => `/iga/directory/applications/${app.id}?tab=${tab}`;
+  /** Reconciliation, with one of its inventory drawers already open. */
+  const view = (v: string) => `/iga/directory/applications/${app.id}?view=${v}`;
 
   /*
     Only gaps the reader can actually close from here.
@@ -164,51 +169,66 @@ export function ApplicationOverviewTab({
     return out;
   }, [live, provisions, policyCount]);
 
-  const usersWithAccess = gov?.metrics.find((m) => m.label === 'Users')?.value ?? 0;
-  const tileCount = 3 + (live?.applications != null ? 1 : 0);
 
   return (
     <div className="ds-scroll flex h-full min-h-0 flex-col gap-5 overflow-y-auto">
-        <div
-          className={`grid shrink-0 gap-4 sm:grid-cols-2 ${tileCount === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}
-        >
-          <StatTile
-            label="Active users"
-            value={accounts.length}
-            icon={<ManageAccountsOutlined sx={{ fontSize: 22 }} />}
-            tone="brand"
-            hoverElevate
-            href={href('accounts')}
-          />
-          <StatTile
-            label="Entitlements"
-            value={entitlements.length}
-            icon={<VerifiedUserOutlined sx={{ fontSize: 22 }} />}
-            tone="success"
-            hoverElevate
-            href={href('entitlements')}
-          />
-          <StatTile
-            label="Users with access"
-            value={usersWithAccess}
-            icon={<PeopleOutlined sx={{ fontSize: 22 }} />}
-            tone="info"
-            hoverElevate
-          />
-          {live?.applications != null && (
-            <StatTile
-              label="Applications discovered"
-              value={live.applications}
-              icon={<AppsOutlined sx={{ fontSize: 22 }} />}
-              tone="neutral"
-              hoverElevate
-              href={href('reconciliation')}
-            />
-          )}
-        </div>
+        <div className="grid shrink-0 items-stretch gap-5 lg:grid-cols-2">
+          <Card title="Inventory" icon={<Inventory2 />} padding="none" className="h-full min-h-0">
+            <InfoRowGroup>
+              {/* Straight to the list, not to the tab that holds it: `?view=` opens
+                  Reconciliation with the drawer already up, which is where these rows
+                  live now. */}
+              <InfoRow
+                icon={infoIcon.account}
+                label="Accounts"
+                valueWrap
+                value={
+                  <RowValue>
+                    <span>{accounts.length}</span>
+                    <RowLink href={view('accounts')}>View all</RowLink>
+                  </RowValue>
+                }
+              />
+              <InfoRow
+                icon={infoIcon.entitlement}
+                label="Entitlements"
+                valueWrap
+                value={
+                  <RowValue>
+                    <span>{entitlements.length}</span>
+                    <RowLink href={view('entitlements')}>View all</RowLink>
+                  </RowValue>
+                }
+              />
+              {live?.applications != null && (
+                <InfoRow
+                  icon={infoIcon.application}
+                  label="Applications discovered"
+                  valueWrap
+                  value={
+                    <RowValue>
+                      <span>{live.applications}</span>
+                      <RowLink href={href('reconciliation')}>View all</RowLink>
+                    </RowValue>
+                  }
+                />
+              )}
+            </InfoRowGroup>
+          </Card>
 
-        <div className="shrink-0">
-          {live && (gaps.length > 0 ? <NeedsAttention gaps={gaps} appId={app.id} /> : <AllClear />)}
+          <Card
+            title="Needs attention"
+            icon={<ReportProblem />}
+            padding="none"
+            className="h-full min-h-0"
+            action={
+              gaps.length > 0 ? (
+                <span className="tabular-nums text-caption text-text-tertiary">{gaps.length}</span>
+              ) : undefined
+            }
+          >
+            {live && (gaps.length > 0 ? <NeedsAttention gaps={gaps} appId={app.id} /> : <AllClear />)}
+          </Card>
         </div>
 
         <div className="grid min-h-0 flex-1 items-stretch gap-5 lg:grid-cols-2">
@@ -340,26 +360,24 @@ export function ApplicationOverviewTab({
 }
 
 /**
- * The page's protagonist: everything unresolved, and one link each to resolve it.
+ * Everything unresolved, and one link each to resolve it.
  *
- * Built here rather than from `Card` on purpose. `Card` is a grey wrapper around a white
- * inner panel with an icon header — right for a region of reference rows, too much frame
- * for a short action list that has to be the loudest thing on a page where nothing else
- * is framed at all. One hairline border is the whole container.
+ * It used to carry its own frame and heading, because it was the one framed thing on a
+ * page of loose tiles and had to be the loudest. That is no longer true — the overview is
+ * four cards now — so it sits in the same `Card` as everything else and keeps only the
+ * list. A second frame inside a card is a box inside a box.
  *
  * The dots take their status colour; the container stays white. A card about problems is
  * not an amber card.
  */
 function NeedsAttention({ gaps, appId }: { gaps: Gap[]; appId: string }) {
   return (
-    <section className="rounded-xl border border-border bg-surface px-4 py-3">
-      <div className="mb-2 flex items-baseline gap-2">
-        <h3 className="text-body-strong text-text-primary">Needs attention</h3>
-        <span className="tabular-nums text-caption text-text-tertiary">{gaps.length}</span>
-      </div>
-      <ul className="divide-y divide-border-subtle">
+    /* No gutter of its own: `padding="none"` already keeps the Card's `px-4` so a flush
+       list's dividers do not kiss the panel border (ADR-0009). Adding another put this
+       card's rows 16px inside the Inventory card's beside it. */
+    <ul className="divide-y divide-border-subtle">
         {gaps.map((gap) => (
-          <li key={gap.id} className="flex items-center justify-between gap-4 py-2.5">
+          <li key={gap.id} className="flex items-center justify-between gap-4 py-3">
             <span className="flex min-w-0 items-center gap-2.5">
               <span
                 aria-hidden
@@ -368,23 +386,19 @@ function NeedsAttention({ gaps, appId }: { gaps: Gap[]; appId: string }) {
               />
               <span className="truncate text-body-sm text-text-primary">{gap.text}</span>
             </span>
-            <Link
-              href={`/iga/directory/applications/${appId}?tab=${gap.tab}`}
-              className="shrink-0 rounded-sm text-body-sm-medium text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-            >
+            <RowLink href={`/iga/directory/applications/${appId}?tab=${gap.tab}`}>
               {gap.cta}
-            </Link>
+            </RowLink>
           </li>
         ))}
-      </ul>
-    </section>
+    </ul>
   );
 }
 
-/** No frame, no green panel — the reward for a well-set-up application is quiet. */
+/** No green panel — the reward for a well-set-up application is quiet. */
 function AllClear() {
   return (
-    <p className="text-body-sm text-text-secondary">
+    <p className="py-3 text-body-sm text-text-secondary">
       <span className="font-emphasis text-text-primary">Nothing needs attention.</span> The connector is
       wired, the inventory is current, and this application is owned and governed.
     </p>

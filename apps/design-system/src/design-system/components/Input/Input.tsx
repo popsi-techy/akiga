@@ -11,7 +11,9 @@ import { Tooltip } from '../Tooltip/Tooltip';
  * Input — text field extended from MUI, themed by tokens.
  * The label sits ABOVE the box (a standalone <label> with a gap), matching the
  * product — not MUI's floating outlined label. Helper/error text renders below.
- * The label is associated to the field (htmlFor/id) for accessibility.
+ * The label is associated to the field (htmlFor/id) for accessibility. A field with no
+ * visible label — a toolbar search, say — names itself with `aria-label`, which is
+ * forwarded to the native input rather than left on MUI's wrapper.
  */
 export interface InputProps
   extends Omit<TextFieldProps, 'variant' | 'size' | 'error' | 'color' | 'label'> {
@@ -46,6 +48,8 @@ export function Input({
   fullWidth = true,
   id,
   InputProps,
+  inputProps,
+  'aria-label': ariaLabel,
   ...rest
 }: InputProps) {
   const reactId = React.useId();
@@ -89,6 +93,22 @@ export function Input({
         error={Boolean(error)}
         helperText={error || helperText}
         fullWidth={fullWidth}
+        /*
+          `aria-label` has to be pulled out and put here by hand.
+
+          Everything left in `...rest` spreads onto TextField, which passes unknown props
+          to the root FormControl — so `aria-label` landed on a wrapping <div> and the
+          input itself had no accessible name at all. Every unlabelled search field in the
+          product passed one and none of them had it. `inputProps` (lowercase) is the only
+          route to the native <input>.
+
+          Only where there is no visible label: a field that already has one is named by
+          it, and a second, different name read out over the top of it is worse than none.
+        */
+        inputProps={{
+          ...(ariaLabel && !label ? { 'aria-label': ariaLabel } : null),
+          ...inputProps,
+        }}
         InputProps={{
           ...InputProps,
           startAdornment: startAdornment ? (

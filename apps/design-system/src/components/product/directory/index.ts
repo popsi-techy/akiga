@@ -27,3 +27,4 @@ export { BaselineAccessTab } from './BaselineAccessTab';
 export { ApplicationOverviewTab } from './ApplicationOverviewTab';
 export { AppAccountsPeek } from './AppAccountsPeek';
 export { IdentityDetailsBody } from './IdentityDetailsBody';
+export { RowLink, RowValue } from './RowLink';

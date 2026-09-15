@@ -656,14 +656,25 @@ export function applicationDiscoverySource(id: string): AppDiscoverySource | nul
 
 export { applicationLifecycle };
 
-/** Connector signed in, or no connector is required. */
+/**
+ * Connector signed in, or no connector is required.
+ *
+ * The second half of that sentence applied only to onboarded applications, so a catalogued
+ * one with provisioning off sat on whatever `authorizationStatus` the seed gave it —
+ * `pending`, forever, because there is no connector to authorize and nothing anyone could
+ * do to change it. That is not "not yet authorized", it is "authorization does not apply",
+ * and treating the two the same is what had SAP reporting four accounts it had never
+ * synced.
+ */
 export function applicationIsAuthorized(id: string): boolean {
   const onboarded = getOnboardedApplication(id);
   if (onboarded) {
     if (!onboarded.enableProvisioning) return true;
     return listAuthorizations(id).some((a) => a.authorized);
   }
-  return appProfileFor(id).authorizationStatus === 'authorized';
+  const profile = appProfileFor(id);
+  if (profile.externalProvisioning !== 'enabled') return true;
+  return profile.authorizationStatus === 'authorized';
 }
 
 export function activateApplication(id: string): boolean {

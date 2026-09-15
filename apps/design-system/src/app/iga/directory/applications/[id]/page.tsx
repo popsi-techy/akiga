@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import SettingsOutlined from '@mui/icons-material/SettingsOutlined';
-import { Button, Dialog, Menu, SetupChecklistDock, StatusChip, type TabItem, useToast } from '@ds/components';
+import { Button, Dialog, Drawer, Menu, SetupChecklistDock, StatusChip, type TabItem, useToast } from '@ds/components';
 import {
   applicationIsAuthorized,
   deleteApplication,
@@ -41,24 +41,26 @@ import { EmergencyAccessGuideButton } from '@/components/product/emergency/Emerg
 
 const LIST_HREF = '/iga/directory/applications';
 
+/**
+ * The strip is the parts of an application you set up.
+ *
+ * App Accounts and Entitlements were on it and are not any more. They are not steps — they
+ * are what reconciliation pulled in, and having them here put the inventory in three places
+ * at once: a count on a tab, the same totals on the Reconciliation cards, and the rows a
+ * click past either. They open from those cards now, which is the one place that counts
+ * them.
+ */
 const BASE_TABS: TabItem[] = [
   { value: 'overview', label: 'Overview' },
   { value: 'provisioning', label: 'Configure' },
   { value: 'reconciliation', label: 'Reconciliation' },
-  { value: 'accounts', label: 'App Accounts' },
-  { value: 'entitlements', label: 'Entitlements' },
   { value: 'owners', label: 'Owners' },
   { value: 'baseline', label: 'Baseline Access' },
   { value: 'approval', label: 'Approval Policy' },
 ];
 
-function sectionsFor(accounts: number, entitlements: number): TabItem[] {
-  return BASE_TABS.map((t) => {
-    if (t.value === 'accounts') return { ...t, count: accounts };
-    if (t.value === 'entitlements') return { ...t, count: entitlements };
-    return t;
-  });
-}
+/** What the inventory drawer is showing, when it is open. */
+type InventoryView = 'accounts' | 'entitlements';
 
 /**
  * Inventory tabs — nothing to show until the connector exists, so they stay off
@@ -66,11 +68,21 @@ function sectionsFor(accounts: number, entitlements: number): TabItem[] {
  */
 const PRE_CONFIGURE_TABS = new Set(['overview', 'accounts', 'entitlements']);
 
-/** `?view=` from the brief clubbed inventory — still land on the matching tab. */
+/**
+ * `?view=` from the brief clubbed inventory.
+ *
+ * All three of its values land on Reconciliation now — it is the section that owns the
+ * inventory, and `accounts` / `entitlements` open its drawer on top rather than naming a
+ * tab of their own.
+ */
 function tabFromQuery(tab: string | null, view: string | null, fallback: string): string {
-  if (view === 'accounts' || view === 'entitlements') return view;
-  if (view === 'history') return 'reconciliation';
+  if (view === 'accounts' || view === 'entitlements' || view === 'history') return 'reconciliation';
   return tab ?? fallback;
+}
+
+/** The `?view=` values that open the drawer, rather than just choosing a tab. */
+function inventoryFromQuery(view: string | null): InventoryView | null {
+  return view === 'accounts' || view === 'entitlements' ? view : null;
 }
 
 /**
@@ -127,6 +139,7 @@ export default function ApplicationDetailPage() {
   const [tab, setTab] = React.useState('overview');
   const [basicsOpen, setBasicsOpen] = React.useState(false);
   const [checklistOpen, setChecklistOpen] = React.useState(false);
+  const [inventory, setInventory] = React.useState<InventoryView | null>(null);
   const [pendingDelete, setPendingDelete] = React.useState(false);
   const [, bump] = React.useReducer((n: number) => n + 1, 0);
 
@@ -159,6 +172,7 @@ export default function ApplicationDetailPage() {
         : 'overview';
     if (requestedTab || requestedView) {
       setTab(tabFromQuery(requestedTab, requestedView, fallback));
+      setInventory(inventoryFromQuery(requestedView));
       return;
     }
     setTab(fallback);
@@ -170,21 +184,36 @@ export default function ApplicationDetailPage() {
   }
 
   const { app, accounts, entitlements } = detail;
-  const blocking = onboarded ? appBlockingSteps(onboarded) : [];
-  const steps = onboarded ? applicationSetupSteps(onboarded) : [];
-  const requiredTotal = onboarded ? requiredAppSetupCount(onboarded) : 0;
+
   // Catalogued apps use the seed profile; onboarded apps use the toggle the
   // admin set in the drawer. Off means IGA will not push access to the system.
   const showsConfigure = onboarded
     ? applicationShowsConfigure(onboarded)
     : appProfileFor(app.id).externalProvisioning === 'enabled';
 
-  const provisioningDone = onboarded ? isAppSetupStepDone('provisioning', onboarded) : true;
-  const setupIncomplete = onboarded ? appSetupIncomplete(onboarded) : false;
+  /*
+    Every application has the same five setup steps, so every application gets the
+    checklist — including one that came from the catalogue rather than the onboarding
+    drawer, and one whose steps are all done.
+
+    These used to be gated on `onboarded`, which made the guide a property of *how the
+    application arrived* rather than of the work it needs. A catalogued app still has
+    owners to name, a baseline to set and an approval policy to choose; it simply had
+    nowhere to see that. And "all done" is worth showing, not hiding: the checklist is
+    the page that answers "is this application actually governed", and a finished one
+    answers yes.
+  */
+  const setupSubject = onboarded ?? { id: app.id, enableProvisioning: showsConfigure };
+  const blocking = appBlockingSteps(setupSubject);
+  const steps = applicationSetupSteps(setupSubject);
+  const requiredTotal = requiredAppSetupCount(setupSubject);
+
+  const provisioningDone = isAppSetupStepDone('provisioning', setupSubject);
+  const setupIncomplete = appSetupIncomplete(setupSubject);
   const hideInventoryTabs =
     setupIncomplete && (!showsConfigure || !provisioningDone);
 
-  const allSections = sectionsFor(accounts.length, entitlements.length).filter((s) => {
+  const allSections = BASE_TABS.filter((s) => {
     /*
       Only Configure follows the provisioning toggle.
 
@@ -229,13 +258,21 @@ export default function ApplicationDetailPage() {
         avatar={<EntityAvatar kind="application" name={app.name} appType={onboarded?.appType} size="md" />}
         title={app.name}
         description={app.description}
+        /*
+          Authorization is about IGA being able to reach *into* the system — it is the
+          credential the connector signs in with. With provisioning off there is no
+          connector, so there is nothing to authorize and nothing the reader could do about
+          it: the chip reported a permanently unresolvable "Not authorized" on an
+          application that was never going to push anything. It appears only where Configure
+          appears, which is the screen that would change it.
+        */
         chips={
-          <>
+          showsConfigure ? (
             <StatusChip
               intent={authorized ? 'success' : 'warning'}
               label={authorized ? 'Authorized' : 'Not authorized'}
             />
-          </>
+          ) : undefined
         }
         actions={
           <>
@@ -256,28 +293,29 @@ export default function ApplicationDetailPage() {
                 },
               ]}
             />
-            {onboarded ? (
-              <EmergencyAccessGuideButton
-                expanded={checklistOpen}
-                progress={
-                  isDraft && showsConfigure
-                    ? {
-                        done: requiredTotal === 0 ? 1 : requiredTotal - blocking.length,
-                        total: Math.max(requiredTotal, 1),
-                      }
-                    : undefined
-                }
-                onClick={() => setChecklistOpen((open) => !open)}
-              />
-            ) : null}
+            {/* The donut is for a draft still being assembled — it counts down blocking
+                work. On anything else the book stands alone: the guide is still there to
+                open, it just has no countdown to show. */}
+            <EmergencyAccessGuideButton
+              expanded={checklistOpen}
+              progress={
+                isDraft && showsConfigure
+                  ? {
+                      done: requiredTotal === 0 ? 1 : requiredTotal - blocking.length,
+                      total: Math.max(requiredTotal, 1),
+                    }
+                  : undefined
+              }
+              onClick={() => setChecklistOpen((open) => !open)}
+            />
           </>
         }
         tabs={allSections}
         tab={shownTab}
         onTab={setTab}
-        docked={Boolean(onboarded)}
+        docked
         dock={
-          onboarded && checklistOpen ? (
+          checklistOpen ? (
             <SetupChecklistDock
               steps={steps}
               currentTab={shownTab}
@@ -301,21 +339,8 @@ export default function ApplicationDetailPage() {
               applicationId={app.id}
               applicationName={app.name}
               canSync={showsConfigure}
-            />
-          )}
-          {shownTab === 'accounts' && (
-            <ApplicationAccountsTab
-              applicationId={app.id}
-              applicationName={app.name}
-              accounts={accounts}
-              onChanged={bump}
-            />
-          )}
-          {shownTab === 'entitlements' && (
-            <ApplicationEntitlementsTab
-              applicationId={app.id}
-              entitlements={entitlements}
-              onChanged={bump}
+              onViewAccounts={() => setInventory('accounts')}
+              onViewEntitlements={() => setInventory('entitlements')}
             />
           )}
           {shownTab === 'provisioning' && (
@@ -336,6 +361,44 @@ export default function ApplicationDetailPage() {
           </>
         )}
       </DetailShell>
+
+      {/*
+        * The inventory, over the page rather than instead of it.
+        *
+        * A drawer rather than a section, because reading what an application holds is a
+        * side-read: you are checking the rows against the totals you just saw, and the
+        * cards, the sync history and the last-sync banner all stay behind it. As its own
+        * section it replaced the page you opened it from, and the way back was a link the
+        * reader had to find — the tab strip appeared to be on Reconciliation already.
+        *
+        * 760 rather than the 480 default: the entitlement table carries a name, an
+        * application and a risk chip beside search and paging, and at 480 the name is the
+        * column that gives way.
+        */}
+      <Drawer
+        open={inventory != null}
+        onClose={() => setInventory(null)}
+        title={inventory === 'accounts' ? 'App accounts' : 'Entitlements'}
+        subtitle={app.name}
+        leading={<EntityAvatar kind="application" name={app.name} appType={onboarded?.appType} size="sm" />}
+        width={760}
+      >
+        {inventory === 'accounts' && (
+          <ApplicationAccountsTab
+            applicationId={app.id}
+            applicationName={app.name}
+            accounts={accounts}
+            onChanged={bump}
+          />
+        )}
+        {inventory === 'entitlements' && (
+          <ApplicationEntitlementsTab
+            applicationId={app.id}
+            entitlements={entitlements}
+            onChanged={bump}
+          />
+        )}
+      </Drawer>
 
       {onboarded ? (
         <ApplicationBasicDetailsDrawer

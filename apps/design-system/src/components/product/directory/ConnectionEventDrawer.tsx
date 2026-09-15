@@ -3,10 +3,11 @@
 import * as React from 'react';
 import SettingsEthernet from '@mui/icons-material/SettingsEthernet';
 import AddOutlined from '@mui/icons-material/AddOutlined';
+import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import ContentCopyOutlined from '@mui/icons-material/ContentCopyOutlined';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
-import { Button, Dialog, Drawer, Input, Menu, Select, StatusChip, Switch, Tabs, Tooltip, useToast } from '@ds/components';
+import { Button, Dialog, Drawer, Input, Menu, NavList, Select, StatusChip, Switch, Tabs, Tooltip, useToast } from '@ds/components';
 import {
   BODY_TYPES,
   HTTP_METHODS,
@@ -52,7 +53,7 @@ interface TestOutcome {
 /**
  * One event type — every call of that kind, then the one you are describing.
  *
- * The left rail stores the calls. The right side describes the selected one:
+ * The left rail stores the API calls. The right side describes the selected one:
  * the request, how to read the answer, how it behaves across a sync, and
  * which attributes it writes. Mapping sits with Advanced because it is the
  * last thing you set on a call, not a separate trip back to the catalog.
@@ -168,7 +169,7 @@ export function ConnectionEventDrawer({
     });
     setRows((rs) => rs.map((r) => (r.id === selectedId ? { ...record } : r)));
     setSelectedId(record.id);
-    toast.success(wasDraft ? 'Event added. It runs on the next sync.' : 'Event updated.');
+    toast.success(wasDraft ? 'API call added. It runs on the next sync.' : 'API call updated.');
     onChanged();
   };
 
@@ -176,14 +177,23 @@ export function ConnectionEventDrawer({
     if (!kind) return;
     const taken = new Set(rows.map((e) => e.name));
     const base = eventKindMeta(kind).label;
-    // Annotated, because `base` is one of the literal event-kind labels and inference
-    // would pin `name` to that union — leaving the de-duplicating "Account Create 2"
-    // below unassignable to the variable that is meant to hold it.
-    let name: string = base;
-    let n = 2;
+    /*
+      Numbered from the first one: "Accounts Fetch 1", then 2, then 3.
+
+      The first call used to take the bare kind label and only the second got a suffix,
+      which made the first one look like the event itself rather than one call of it — and
+      it is the common case that an event has several. Starting at 1 says a number is
+      coming, and the two names differ by something you can see rather than by one having
+      a number and the other not.
+
+      Annotated, because `base` is one of the literal event-kind labels and inference
+      would otherwise pin `name` to that union.
+    */
+    let n = 1;
+    let name: string = `${base} ${n}`;
     while (taken.has(name)) {
-      name = `${base} ${n}`;
       n += 1;
+      name = `${base} ${n}`;
     }
     const next: Draft = { ...emptyEvent(applicationId, kind), id: makeDraftId(), name };
     setRows((rs) => [next, ...rs]);
@@ -248,6 +258,17 @@ export function ConnectionEventDrawer({
     label: `${METHOD_LABEL[a.method]}${a.authorized ? '' : ' — not connected'}`,
   }));
 
+  /*
+    The rail's search narrows the rail and nothing else — the call open in the pane stays
+    open even once it has been typed out of the list. Losing the thing you were editing
+    because you went looking for another one is not a filter, it is a bug.
+  */
+  const [railQuery, setRailQuery] = React.useState('');
+  const railQ = railQuery.trim().toLowerCase();
+  const shownRows = railQ
+    ? rows.filter((r) => (r.name.trim() || 'New API call').toLowerCase().includes(railQ))
+    : rows;
+
   const noBody = draft.method === 'GET';
   const target = applicationName ?? 'the application';
 
@@ -256,53 +277,159 @@ export function ConnectionEventDrawer({
       open={open}
       onClose={onClose}
       icon={<SettingsEthernet sx={{ fontSize: 22 }} />}
-      title={meta?.label ?? 'Event'}
-      subtitle={`${meta?.direction === 'inbound' ? 'Inbound' : 'Outbound'}. Add the calls IGA makes, then describe each one.`}
+      /*
+        The heading names what this panel holds, not what the card outside it was called.
+
+        It read "Accounts Fetch", which is the label on the card that opened the drawer, the
+        heading of the rail's first row and the value in the Event name field two inches
+        below — the one word on screen that was already said three times, and the only one
+        that never said what you were now looking at. "Accounts Fetch API calls" is the
+        rail's own noun: this panel is that event's API calls, and the tabs describe one of
+        them.
+
+        The subtitle drops "Inbound." — the card sits under an Inbound heading, and the
+        label says Fetch — for the thing neither of them says: which system is on the other
+        end, and that reading the answer is part of the job.
+      */
+      title={`${meta?.label ?? 'Event'} API calls`}
+      subtitle={`The requests IGA sends to ${target}, and how it reads what comes back.`}
       width={1040}
       disablePadding
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          {hasDraft ? <Button onClick={save}>Save</Button> : null}
-        </>
-      }
     >
       <div className="flex min-h-0 flex-1 overflow-hidden">
       {/* The rail appears with the first call.
 
           It is a switcher between calls, and there is nothing to switch between until one
-          exists — empty, it was a 240px column saying "No calls yet" beside an empty state
+          exists — empty, it was a column saying "No API calls yet" beside an empty state
           saying the same thing, and an Add event button under a list with nothing in it.
-          Gone, the empty state gets the whole pane and says it once. */}
+          Gone,
+          the empty state gets the whole pane and says it once.
+
+          288 wide, and the names are told apart by hover, not by width.
+
+          A rail holds one event kind — `eventsFor(drawerKind)` — so the default names in it
+          are that kind's label and the same label with a numeral: "Account Entitlement
+          Revocation", then "Account Entitlement Revocation 2". What distinguishes them is
+          the last character, which is the first thing truncation takes. Fitting the longest
+          of those outright wants about 340, a third of the drawer held open for three
+          names, and even 340 only postpones it — a renamed call can be longer still.
+
+          So width is not the mechanism. `NavList` puts the full label in a `title`, the
+          status chip and the order carry the rest, and 288 is set at the point where every
+          short and medium label reads whole: "Entitlements Fetch", the longest of those,
+          needs 108, and the row spends about 150 on the 24px gutter, its own padding and
+          border, the state chip and the kebab. */}
       {rows.length > 0 && (
-        <aside className="flex h-full w-[240px] shrink-0 flex-col self-stretch border-r border-border bg-subtle">
-          <div className="ds-scroll min-h-0 flex-1 overflow-y-auto p-1">
-            <div role="tablist" aria-label={`${meta?.label ?? 'Event'} calls`} className="flex flex-col gap-1">
-              {rows.map((row) => (
-                <RailItem
-                  key={row.id}
-                  label={row.name.trim() || 'New event'}
-                  status={statusOf(row)}
-                  active={row.id === selectedId}
-                  onSelect={() => selectEvent(row.id)}
-                  onDelete={() => {
-                    if (isDraftId(row.id)) {
-                      dropRow(row.id);
-                      toast.info('Draft discarded.');
-                      return;
-                    }
-                    setRemoving(row);
-                  }}
+        <aside className="flex h-full w-[288px] shrink-0 flex-col self-stretch border-r border-border bg-surface">
+          {/*
+            One toolbar: find a call, or add one. The house pattern for any list —
+            search leading, add opposite it — held to in a 288px column.
+
+            The heading sits above the toolbar rather than beside Add, in the same shape
+            the flow board's rail uses: the name of the list at `body-sm-strong`, and what
+            it holds on the right in caption grey. It is a heading rather than an overline
+            because it is the top of a column, not a label inside one — and the count is
+            the one thing about this column that nothing else on screen says.
+
+            Add used to be up there with it for want of anywhere better; opposite the field
+            is where every other list in the product keeps it.
+
+            `secondary`, not the primary this pattern usually gets: the drawer already
+            spends its one filled button on Save, and adding a call is not the thing you
+            came to the drawer to do.
+
+            The field shows from the first call on. It used to appear at two, so the head
+            changed height and the list jumped the moment a second call was added, and the
+            control was missing every time you came back to a one-call event.
+          */}
+          <div className="shrink-0 border-b border-border px-3 py-3">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              {/*
+                "API calls", not "Calls", "Endpoints", "Operations" or "Requests".
+
+                SailPoint's Web Services connector calls the level above this one an
+                *operation* — "Accounts Fetch" is the operation — and the HTTP requests
+                inside it *endpoints*; Saviynt's REST connector keys them `call1`, `call2`.
+                Endpoint is already a field on each of these items, so it cannot also name
+                the list; Operation belongs to the event kind, one level up; and Request in
+                this product means an access request. API call is both the industry's word
+                and the only one of them that is unambiguous here.
+              */}
+              <h3 className="min-w-0 truncate text-body-sm-strong text-text-primary">API calls</h3>
+              {/* The number alone. "1 call" repeated the noun standing an inch to its left,
+                  and a heading that says API calls does not need its count to say it too. */}
+              <span className="shrink-0 tabular-nums text-caption text-text-secondary">{rows.length}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <Input
+                  size="sm"
+                  placeholder="Search API calls"
+                  aria-label="Search API calls"
+                  value={railQuery}
+                  onChange={(e) => setRailQuery(e.target.value)}
+                  startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
                 />
-              ))}
+              </div>
+              <Button size="sm" variant="secondary" startIcon={<AddOutlined />} onClick={addEvent}>
+                Add
+              </Button>
             </div>
           </div>
-          <div className="shrink-0 border-t border-border p-3">
-            <Button className="w-full" variant="secondary" startIcon={<AddOutlined />} onClick={addEvent}>
-              Add more event
-            </Button>
+
+          {/* Same 12px gutter as the heading and the search above it. The list was on 4px,
+              so every item hung 8px outside the field it sits under — three left edges in
+              one column. */}
+          <div className="ds-scroll min-h-0 flex-1 overflow-y-auto p-3">
+            {/*
+              `NavList`, not a rail of its own.
+
+              This was a local `RailItem` — the last hand-rolled role=tablist in the
+              product, beside twelve surfaces already on the component. It had drifted into
+              its own selected treatment, its own hover and its own hairline, so every
+              adjustment to it was a fresh judgement about something the system had already
+              settled. The two things it needed that the component lacked — a status chip on
+              the trailing edge and a per-row kebab — are slots on `NavList` now.
+            */}
+            <NavList
+              ariaLabel={`${meta?.label ?? 'Event'} API calls`}
+              value={selectedId ?? ''}
+              onChange={selectEvent}
+              items={shownRows.map((row) => {
+                const status = statusOf(row);
+                const label = row.name.trim() || 'New API call';
+                return {
+                  id: row.id,
+                  label,
+                  trailing: <StatusChip intent={status.intent} label={status.label} />,
+                  action: (
+                    <Menu
+                      ariaLabel={`Actions for ${label}`}
+                      items={[
+                        {
+                          label: 'Delete',
+                          icon: <DeleteOutline sx={{ fontSize: 18 }} />,
+                          danger: true,
+                          onClick: () => {
+                            if (isDraftId(row.id)) {
+                              dropRow(row.id);
+                              toast.info('Draft discarded.');
+                              return;
+                            }
+                            setRemoving(row);
+                          },
+                        },
+                      ]}
+                    />
+                  ),
+                };
+              })}
+            />
+            {shownRows.length === 0 && (
+              <p className="px-2 py-3 text-caption text-text-secondary">
+                No API call matches &ldquo;{railQuery.trim()}&rdquo;.
+              </p>
+            )}
           </div>
         </aside>
       )}
@@ -311,7 +438,7 @@ export function ConnectionEventDrawer({
           {hasDraft ? (
             <div className="shrink-0 bg-surface px-6 pt-2">
               <Tabs
-                aria-label="Event settings"
+                aria-label="API call settings"
                 value={section}
                 onChange={(v) => setSection(v as Section)}
                 items={[
@@ -331,13 +458,13 @@ export function ConnectionEventDrawer({
           {!hasDraft && (
             <div className="grid min-h-0 flex-1 place-items-center px-6">
               <div className="flex max-w-sm flex-col items-center text-center">
-                <p className="text-body-sm-strong text-text-primary">No calls yet</p>
+                <p className="text-body-sm-strong text-text-primary">No API calls yet</p>
                 <p className="mt-1 text-body-sm text-text-secondary">
                   Add the API call IGA makes to {applicationName ?? 'this application'} for {meta?.label ?? 'this event'}.
                 </p>
                 <div className="mt-5">
                   <Button startIcon={<AddOutlined />} onClick={addEvent}>
-                    Add event
+                    Add API call
                   </Button>
                 </div>
               </div>
@@ -348,7 +475,7 @@ export function ConnectionEventDrawer({
         <div className="ds-scroll min-h-0 flex-1 overflow-y-auto px-6 py-5">
         <div className="space-y-5">
           <Input
-            label="Event name"
+            label="API call name"
             required
             hint="Yours to choose — it appears in sync history, so name it after what it does."
             placeholder="Nightly user import"
@@ -461,9 +588,18 @@ export function ConnectionEventDrawer({
         </div>
       )}
 
+      {/*
+        The response split: the form takes what is left, rather than claiming a fixed 420.
+
+        420 + the preview's 380 came to exactly 800, which is what the detail pane used to be
+        when the rail was 240 wide. The rail is 288 now, the pane is 752, and two `shrink-0`
+        columns adding up to 800 in a 752 box do not shrink — they run 48px past the drawer's
+        edge, where `overflow-hidden` cuts the preview's status chip in half. One fixed column
+        and one flexible one survives the next change to either side of it.
+      */}
       {hasDraft && section === 'response' && (
         <div className="flex h-full min-h-0 overflow-hidden">
-          <div className="ds-scroll min-h-0 w-[420px] shrink-0 overflow-y-auto px-6 py-5">
+          <div className="ds-scroll min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-5">
             <div className="space-y-5">
               <Input
                 label="Success status code"
@@ -532,8 +668,8 @@ export function ConnectionEventDrawer({
         <div className="ds-scroll min-h-0 flex-1 overflow-y-auto px-6 py-5">
         <div className="space-y-5">
           <Input
-            label="Event priority"
-            hint="Lower runs first when several events fire in the same sync."
+            label="API call priority"
+            hint="Lower runs first when several API calls run in the same sync."
             type="number"
             value={String(draft.priority)}
             onChange={(e) => set('priority', Number(e.target.value) || 1)}
@@ -587,13 +723,34 @@ export function ConnectionEventDrawer({
           />
         </div>
       )}
+
+          {/*
+            The actions belong to the pane they act on, not to the whole drawer.
+
+            As the Drawer's own footer they spanned all 1040px, which cut the rail off
+            above the bottom edge and left a strip of drawer under a column that is
+            otherwise full height — the rail reads as a sidebar, and a sidebar that stops
+            short of the floor reads as unfinished. Inside the detail pane the rail runs
+            to the bottom and Save sits under the form it saves.
+
+            Still only with a draft: without one this is a panel the reader is looking at,
+            and Cancel would be the header's ✕ said a second time.
+          */}
+          {hasDraft && (
+            <footer className="flex shrink-0 items-center justify-end gap-2 border-t border-border px-6 py-4">
+              <Button variant="secondary" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button onClick={save}>Save</Button>
+            </footer>
+          )}
         </div>
       </div>
 
       <Dialog
         open={removing !== null}
         onClose={() => setRemoving(null)}
-        title="Remove this call?"
+        title="Remove this API call?"
         confirmLabel="Remove"
         tone="danger"
         onConfirm={confirmRemove}
@@ -602,55 +759,6 @@ export function ConnectionEventDrawer({
         entitlements it already imported are kept.
       </Dialog>
     </Drawer>
-  );
-}
-
-function RailItem({
-  label,
-  status,
-  active,
-  onSelect,
-  onDelete,
-}: {
-  label: string;
-  status: { intent: 'success' | 'warning' | 'neutral' | 'info'; label: string };
-  active: boolean;
-  onSelect: () => void;
-  onDelete?: () => void;
-}) {
-  return (
-    <div
-      className={[
-        'flex w-full items-center gap-0.5 rounded-md border bg-surface py-1.5 pl-2 pr-0.5',
-        active ? 'border-brand' : 'border-border hover:border-border-strong',
-      ].join(' ')}
-    >
-      <button
-        type="button"
-        role="tab"
-        aria-selected={active}
-        onClick={onSelect}
-        className="min-w-0 flex-1 py-0.5 text-left"
-      >
-        <span className="flex min-w-0 items-center gap-1.5">
-          <span className="min-w-0 truncate text-body-sm-medium text-text-primary">{label}</span>
-          <StatusChip intent={status.intent} label={status.label} />
-        </span>
-      </button>
-      {onDelete ? (
-        <Menu
-          ariaLabel={`Actions for ${label}`}
-          items={[
-            {
-              label: 'Delete',
-              icon: <DeleteOutline sx={{ fontSize: 18 }} />,
-              danger: true,
-              onClick: onDelete,
-            },
-          ]}
-        />
-      ) : null}
-    </div>
   );
 }
 
@@ -772,7 +880,7 @@ function ResponsePreview({
     <aside
       aria-label={title}
       aria-live="polite"
-      className="flex h-full w-[380px] shrink-0 flex-col border-l border-border bg-subtle"
+      className="flex h-full w-[360px] shrink-0 flex-col border-l border-border bg-subtle"
     >
       <header className="shrink-0 px-5 pt-5 pb-3">
         <div className="flex items-center justify-between gap-3">
