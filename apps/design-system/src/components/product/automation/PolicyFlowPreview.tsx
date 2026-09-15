@@ -8,7 +8,13 @@ import AccountTreeOutlined from '@mui/icons-material/AccountTreeOutlined';
 import SkipNext from '@mui/icons-material/SkipNext';
 import Logout from '@mui/icons-material/Logout';
 import RuleOutlined from '@mui/icons-material/RuleOutlined';
-import { FlowCanvas, FlowStem, type FlowBranchLike, type FlowNodeLike } from '@ds/components';
+import {
+  FlowCanvas,
+  FlowStem,
+  flowSectionTile,
+  type FlowBranchLike,
+  type FlowNodeLike,
+} from '@ds/components';
 import {
   APPROVER_TYPE_LABEL,
   type ApprovalPolicy,
@@ -41,13 +47,8 @@ const ICONS: Record<string, React.ComponentType<{ sx?: object }>> = {
   logout: Logout,
 };
 
-/** Same categorical icon-tile colours as the builder palette sections. */
-const SECTION_TILE: Record<string, { bg: string; fg: string }> = {
-  Tasks: { bg: '#E8F1FE', fg: '#2E7CF6' },
-  Branching: { bg: '#FFF1E3', fg: '#F59E0B' },
-  'Flow Control': { bg: '#E4F6EF', fg: '#0EA47A' },
-};
-const tileFor = (section: string) => SECTION_TILE[section] ?? { bg: 'var(--ds-color-surface-hover)', fg: 'var(--ds-color-icon-default)' };
+/** The canvas's own section ramp — see `flowSectionTile`. */
+const tileFor = flowSectionTile;
 
 function slaLabel(sla?: ApprovalLevelConfig['sla']): string {
   if (!sla) return '';
@@ -123,7 +124,7 @@ export function PolicyFlowPreview({ policy }: { policy: ApprovalPolicy }) {
       return (
         <div className="relative grid h-[188px] w-[188px] place-items-center">
           <span className="absolute left-1/2 top-1/2 h-[132px] w-[132px] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-2xl border border-border bg-surface" />
-          <span className="relative z-[1] flex w-[130px] flex-col items-center gap-1 px-1 text-center">
+          <span className="relative z-raised flex w-[130px] flex-col items-center gap-1 px-1 text-center">
             <span className="grid h-9 w-9 place-items-center rounded-full" style={{ backgroundColor: tile.bg, color: tile.fg }}>
               <Icon sx={{ fontSize: 18 }} />
             </span>

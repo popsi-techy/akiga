@@ -187,6 +187,7 @@ export function BaselineAccessTab({
 
       <div className="min-h-0 flex-1">
         <DataTable<AccessBaseline>
+          layout="auto"
           columns={columns}
           rows={filtered}
           fillHeight

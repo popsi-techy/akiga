@@ -2,17 +2,10 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@ds/components';
+import { DirectoryListPage, useToast } from '@ds/components';
 import type { Column } from '@ds/components';
 import { listEntitlementRows, type EntitlementRow } from '@/data/directory';
-import {
-  DirectoryListPage,
-  EntityAvatar,
-  RiskScoreChip,
-  AddEntitlementDrawer,
-  ImportEntitlementsCsvModal,
-  EntitlementAddActions,
-} from '@/components/product/directory';
+import { EntityAvatar, RiskScoreChip, AddEntitlementDrawer, ImportEntitlementsCsvModal, EntitlementAddActions } from '@/components/product/directory';
 
 export default function EntitlementsListPage() {
   const router = useRouter();

@@ -408,7 +408,7 @@ export default function WorkflowBuilderPage() {
         <div className="ds-node-in group relative flex flex-col items-center">
           <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedId(node.id); setConfigOpen(true); }} className="relative grid h-[188px] w-[188px] place-items-center">
             <span style={selected ? { borderColor: tile.fg } : undefined} className={['absolute left-1/2 top-1/2 h-[132px] w-[132px] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-2xl border bg-surface transition-all duration-150', selected ? 'shadow-sm' : 'border-border group-hover:border-border-strong'].join(' ')} />
-            <span className="relative z-[1] flex w-[130px] flex-col items-center gap-1 px-1 text-center">
+            <span className="relative z-raised flex w-[130px] flex-col items-center gap-1 px-1 text-center">
               <span className="grid h-9 w-9 place-items-center rounded-full" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 18 }} /></span>
               <span className="text-body-sm-medium leading-tight text-text-primary">{displayTitle}</span>
               <span className="text-caption leading-tight text-text-secondary">{paths} condition{paths !== 1 ? 's' : ''}</span>
@@ -420,7 +420,7 @@ export default function WorkflowBuilderPage() {
             </span>
           </button>
           {!inspectOnly && (
-            <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(node.id); }} aria-label={`Delete ${meta.title}`} className="absolute right-8 top-8 z-10 hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid">
+            <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(node.id); }} aria-label={`Delete ${meta.title}`} className="absolute right-8 top-8 z-raised hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid">
               <CloseIcon sx={{ fontSize: 14 }} />
             </button>
           )}

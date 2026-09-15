@@ -185,7 +185,10 @@ export type { FormSectionProps } from './FormSection/FormSection';
 export { RelationshipCanvas } from './RelationshipCanvas/RelationshipCanvas';
 export type { RelationshipCanvasProps, CanvasNode, CanvasEdge } from './RelationshipCanvas/RelationshipCanvas';
 
-export { FlowCanvas, buildSimTrace } from './FlowCanvas/FlowCanvas';
+export {
+  FLOW_SECTION_TILE,
+  FLOW_NEUTRAL_TILE,
+  flowSectionTile, FlowCanvas, buildSimTrace } from './FlowCanvas/FlowCanvas';
 export { FlowStem } from './FlowCanvas/FlowStem';
 export type {
   FlowCanvasProps,

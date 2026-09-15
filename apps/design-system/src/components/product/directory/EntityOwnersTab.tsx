@@ -9,22 +9,7 @@ import TuneOutlined from '@mui/icons-material/TuneOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import PersonAddAltOutlined from '@mui/icons-material/PersonAddAltOutlined';
 import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
-import {
-  DataTable,
-  Avatar,
-  IdentityCell,
-  Button,
-  Card,
-  Input,
-  Drawer,
-  NavList,
-  SelectionPanel,
-  Tooltip,
-  InfoRow,
-  InfoRowGroup,
-  useToast,
-  type Column,
-} from '@ds/components';
+import { Avatar, Button, Card, DataTable, Drawer, IdentityCell, InfoRow, InfoRowGroup, Input, NavList, PeekPanel, PeekSlot, RowActions, SelectionPanel, Tooltip, type Column, useToast } from '@ds/components';
 import {
   listGoverningTeams,
   listTeamsNotGoverning,
@@ -37,10 +22,9 @@ import {
   type UserIdentityRow,
 } from '@/data/directory';
 import { getOwners, setOwners, type OwnedEntityType } from '@/data/entity-owners';
-import { PeekPanel, PeekSlot } from './PeekPanel';
 import { IdentityDetailsBody } from './IdentityDetailsBody';
 import { infoIcon } from './infoIcons';
-import { RowActions } from '@/components/product/RowActions';
+
 import { TableSelectDrawer } from '@/components/product/automation/TableSelectDrawer';
 
 /** How the empty copy names the thing being owned. */
@@ -382,6 +366,7 @@ export function EntityOwnersTab({
                 <div className="min-h-0 min-w-0 flex-1">
                   {view === 'individual' ? (
                     <DataTable<UserIdentityRow>
+                      layout="auto"
                       columns={columns}
                       rows={owners}
                       fillHeight
@@ -391,6 +376,7 @@ export function EntityOwnersTab({
                     />
                   ) : (
                     <DataTable<GovernanceTeamRow>
+                      layout="auto"
                       columns={teamColumns}
                       rows={teamRows}
                       fillHeight
@@ -504,6 +490,7 @@ export function EntityOwnersTab({
             </div>
             <div className="min-h-0 flex-1">
               <DataTable<UserIdentityRow>
+                layout="auto"
                 columns={addColumns}
                 rows={available}
                 selectable

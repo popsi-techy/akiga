@@ -72,17 +72,17 @@ function RequestDetailsCard({ details }: { details: ReviewRequestNewBody }) {
   return (
     <EmailDetailCard {...REQUEST_DETAILS_CARD}>
       <DetailField icon={<TagOutlined sx={{ fontSize: 16 }} />} label="Request ID" value={details.requestNumber} />
-      <DetailField icon={<VpnKeyOutlined sx={{ fontSize: 16 }} />} label="Item" value={details.itemName} />
+      <DetailField icon={<VpnKeyOutlined sx={{ fontSize: 16 }} />} label="Resource" value={details.itemName} />
       <DetailField icon={<LabelOutlined sx={{ fontSize: 16 }} />} label="Type" value={details.itemTypeLabel} />
       <DetailField
         icon={<MailOutlineOutlined sx={{ fontSize: 16 }} />}
-        label="Requester"
-        value={details.requesterEmail}
+        label="Requested by"
+        value={details.requestedByEmail}
         valueClassName="break-all text-brand"
       />
       <DetailField
-        icon={<AccessTimeOutlined sx={{ fontSize: 16 }} />}
-        label="Due"
+        icon={<EventOutlined sx={{ fontSize: 16 }} />}
+        label="Due date"
         value={details.dueDate}
         valueClassName="tabular-nums"
       />
@@ -97,7 +97,7 @@ function AccessRequestReferenceCard({ details }: { details: AccessRequestSubmitt
       <DetailField
         icon={<MailOutlineOutlined sx={{ fontSize: 16 }} />}
         label="Requested by"
-        value={details.requesterEmail}
+        value={details.requestedByEmail}
         valueClassName="break-all text-brand"
       />
       <DetailField
@@ -141,8 +141,8 @@ function AccessRequestSubmittedBody({ details }: { details: AccessRequestSubmitt
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       <p className="text-body text-text-secondary">
-        Your access request is in. We&apos;ve sent it to the review team — keep the reference below if you need to
-        follow up in IGA or with your manager.
+        Your access request has been submitted and routed to the review team. Please use the reference below
+        in any follow-up on this request.
       </p>
 
       <AccessRequestReferenceCard details={details} />
@@ -153,8 +153,8 @@ function AccessRequestSubmittedBody({ details }: { details: AccessRequestSubmitt
       >
         <p className="text-body-sm-strong text-text-primary">What happens next</p>
         <p className="mt-1.5 text-body-sm text-text-secondary">
-          Approvers will review your request in miniOrange IGA. We&apos;ll email you when it&apos;s approved, denied, or
-          needs more information — no action is required from you right now.
+          Approvers will review your request and you will be notified by email once it is approved, denied, or
+          requires further information. No action is required from you at this time.
         </p>
       </div>
     </div>
@@ -165,7 +165,7 @@ function NewReviewRequestBody({ details }: { details: ReviewRequestNewBody }) {
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       <p className="text-body text-text-secondary">
-        A request has been submitted for access to{' '}
+        A request has been submitted for access to {details.itemTypeLabel}{' '}
         <span className="font-emphasis text-text-primary">{details.itemName}</span>. Please review it and submit your
         decision before the due date.
       </p>
@@ -173,7 +173,7 @@ function NewReviewRequestBody({ details }: { details: ReviewRequestNewBody }) {
       <RequestDetailsCard details={details} />
 
       <p className="text-body-sm text-text-secondary">
-        Timely reviews keep access requests from stalling — open the request in IGA to approve, deny, or ask for more
+        Timely reviews keep access requests from stalling. Open the request to approve, deny, or request more
         information.
       </p>
 
@@ -370,7 +370,7 @@ function ReviewDueApproachingBody({ details }: { details: ReviewDueApproachingBo
 
       <EmailDetailCard
         title="Review deadline"
-        icon={<AccessTimeOutlined sx={{ fontSize: 18 }} />}
+        icon={<EventOutlined sx={{ fontSize: 18 }} />}
         ariaLabel="Review deadline"
       >
         <DetailField
@@ -386,8 +386,8 @@ function ReviewDueApproachingBody({ details }: { details: ReviewDueApproachingBo
           valueClassName="tabular-nums"
         />
         <DetailField
-          icon={<AccessTimeOutlined sx={{ fontSize: 16 }} />}
-          label="Due"
+          icon={<EventOutlined sx={{ fontSize: 16 }} />}
+          label="Due date"
           value={details.dueDate}
           valueClassName="tabular-nums"
         />
@@ -401,7 +401,7 @@ function ReviewDueApproachingBody({ details }: { details: ReviewDueApproachingBo
           tabIndex={-1}
           onClick={(e) => e.preventDefault()}
         >
-          Open Review Dashboard
+          View pending reviews
         </Button>
       </div>
 
@@ -465,7 +465,7 @@ function VerificationOtpBody({ details }: { details: VerificationOtpBody }) {
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       <p className="text-body text-text-secondary">
-        Use this one-time code to verify MFA and finish signing in. Enter it in the prompt where you started your
+        Use this OTP to verify MFA and finish signing in. Enter it on the screen where you started your
         session — do not share it with anyone.
       </p>
 

@@ -2,10 +2,10 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { IdentityCell, StatusChip, type Column, type StatusIntent } from '@ds/components';
+import { DirectoryListPage, IdentityCell, StatusChip, type Column, type StatusIntent } from '@ds/components';
 import { listUserIdentities, type UserIdentityRow } from '@/data/directory';
 import type { IdentityStatus } from '@/data/seed';
-import { DirectoryListPage, IdentityKindChip, RiskScoreChip } from '@/components/product/directory';
+import { IdentityKindChip, RiskScoreChip } from '@/components/product/directory';
 
 const STATUS: Record<IdentityStatus, { label: string; intent: StatusIntent }> = {
   active: { label: 'Active', intent: 'success' },

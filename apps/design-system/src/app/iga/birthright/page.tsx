@@ -180,6 +180,7 @@ export default function BirthrightPoliciesPage() {
 
       <div className="min-h-0 flex-1">
         <DataTable<BirthrightPolicyRow>
+          layout="auto"
           columns={columns}
           rows={filtered}
           loading={rows === null}

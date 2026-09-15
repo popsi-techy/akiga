@@ -222,7 +222,7 @@ export function StepTracker({
 
               <span
                 className={[
-                  'relative z-[1] grid h-7 w-7 shrink-0 place-items-center rounded-full text-caption-strong tabular-nums',
+                  'relative z-raised grid h-7 w-7 shrink-0 place-items-center rounded-full text-caption-strong tabular-nums',
                   // Only the unreached steps are drawn as an outline. Done, current
                   // and skipped are all solid fills, set in the style objects above.
                   done || active || skipped ? '' : 'border border-border bg-surface text-text-tertiary',

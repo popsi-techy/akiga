@@ -201,6 +201,7 @@ export function FilterDrawer({
 
           <div className="min-h-0 flex-1">
             <DataTable<FilterOption>
+              layout="auto"
               columns={columns}
               rows={rows}
               selectable

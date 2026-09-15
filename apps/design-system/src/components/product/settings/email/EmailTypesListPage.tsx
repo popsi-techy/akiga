@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import AddOutlined from '@mui/icons-material/AddOutlined';
-import { Button, Dialog, Menu, StatusChip, useToast, type Column, type StatusIntent } from '@ds/components';
+import { Button, Dialog, DirectoryListPage, Menu, StatusChip, type Column, type StatusIntent, useToast } from '@ds/components';
 import {
   deleteEmailType,
   listEmailTypes,
@@ -14,7 +14,6 @@ import {
 } from '@/data/email-types';
 import { getEmailTemplate } from '@/data/email-templates';
 import { getSystemSettingsSection } from '@/data/system-settings-catalog';
-import { DirectoryListPage } from '@/components/product/directory';
 import { formatDateTime } from '@/lib/datetime';
 import { SettingsDenied, SettingsLoading, useAdminSettings, useSettingsCrumbs } from '../SettingsChrome';
 

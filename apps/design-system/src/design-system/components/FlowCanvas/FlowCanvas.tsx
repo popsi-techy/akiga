@@ -248,6 +248,47 @@ function endsFlow(node: FlowNodeLike, isTerminal?: (n: FlowNodeLike) => boolean)
   return (isTerminal?.(node) ?? false) || tierTerminates(node.branches, isTerminal) || tierTerminates(node.outcomeBranches, isTerminal);
 }
 
+/**
+ * The icon tile a canvas item wears, by the palette section it came from.
+ *
+ * Exported from the canvas because the canvas is what consumes it: `FlowPaletteItem.tile`
+ * is this shape, and a sidebar, a preview and a docs example all have to agree with the
+ * node they are drawing. It was the same six hex literals in four files until now.
+ */
+export const FLOW_SECTION_TILE: Record<string, { bg: string; fg: string }> = {
+  /** The thing that starts a flow — the product's own colour, not a categorical one. */
+  Events: { bg: 'var(--ds-color-brand-subtle)', fg: 'var(--ds-color-brand-primary)' },
+  Filters: {
+    bg: 'var(--ds-color-flow-section-filters-bg)',
+    fg: 'var(--ds-color-flow-section-filters-fg)',
+  },
+  Tasks: {
+    bg: 'var(--ds-color-flow-section-tasks-bg)',
+    fg: 'var(--ds-color-flow-section-tasks-fg)',
+  },
+  Branching: {
+    bg: 'var(--ds-color-flow-section-branching-bg)',
+    fg: 'var(--ds-color-flow-section-branching-fg)',
+  },
+  Lifecycle: {
+    bg: 'var(--ds-color-flow-section-lifecycle-bg)',
+    fg: 'var(--ds-color-flow-section-lifecycle-fg)',
+  },
+  'Flow Control': {
+    bg: 'var(--ds-color-flow-section-flowControl-bg)',
+    fg: 'var(--ds-color-flow-section-flowControl-fg)',
+  },
+};
+
+/** Anything the canvas cannot place in a section — stays greyscale. */
+export const FLOW_NEUTRAL_TILE = {
+  bg: 'var(--ds-color-surface-hover)',
+  fg: 'var(--ds-color-icon-default)',
+};
+
+/** The tile for a section name, falling back to the neutral one. */
+export const flowSectionTile = (section: string) => FLOW_SECTION_TILE[section] ?? FLOW_NEUTRAL_TILE;
+
 /** Start / End terminal markers — soft-blue pills with a leading glyph. */
 function Pill({
   label,
@@ -263,7 +304,7 @@ function Pill({
   return (
     <div
       data-flow-sim-node={simId}
-      className={['inline-flex items-center gap-2 rounded-pill bg-[#CFE5FC] px-4 py-2 text-body-sm-strong text-text-primary shadow-xs', simClass(state, !!simulation?.active)].filter(Boolean).join(' ')}
+      className={['inline-flex items-center gap-2 rounded-pill bg-[var(--ds-color-flow-terminal)] px-4 py-2 text-body-sm-strong text-text-primary shadow-xs', simClass(state, !!simulation?.active)].filter(Boolean).join(' ')}
     >
       <span className="flex text-[var(--ds-color-status-info-solid)]">{icon}</span>
       {label}
@@ -491,7 +532,7 @@ function BranchTier({
               className={styles.lane}
             >
               <div data-flow-lane-head className={styles.laneHead} />
-              <div className="relative z-[1] mb-1.5 flex w-max max-w-full justify-center px-0.5">
+              <div className="relative z-raised mb-1.5 flex w-max max-w-full justify-center px-0.5">
                 {renderBranchLabel ? (
                   renderBranchLabel(br, node)
                 ) : (

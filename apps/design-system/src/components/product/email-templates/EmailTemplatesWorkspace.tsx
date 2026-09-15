@@ -148,7 +148,7 @@ export function EmailTemplatesWorkspace({ initialSelectedId }: { initialSelected
                 >
                   <h3
                     id={`email-template-category-${group.category}`}
-                    className="sticky top-0 z-[1] bg-surface px-1 pb-2 pt-1 text-overline uppercase text-text-tertiary"
+                    className="sticky top-0 z-raised bg-surface px-1 pb-2 pt-1 text-overline uppercase text-text-tertiary"
                   >
                     {group.label}
                   </h3>

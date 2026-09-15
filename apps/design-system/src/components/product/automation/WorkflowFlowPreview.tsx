@@ -44,7 +44,7 @@ export function WorkflowFlowPreview({ workflow }: { workflow: AutomationWorkflow
       return (
         <div className="relative grid h-[188px] w-[188px] place-items-center">
           <span className="absolute left-1/2 top-1/2 h-[132px] w-[132px] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-2xl border border-border bg-surface" />
-          <span className="relative z-[1] flex w-[130px] flex-col items-center gap-1 px-1 text-center">
+          <span className="relative z-raised flex w-[130px] flex-col items-center gap-1 px-1 text-center">
             <span className="grid h-9 w-9 place-items-center rounded-full" style={{ backgroundColor: tile.bg, color: tile.fg }}>
               <Icon sx={{ fontSize: 18 }} />
             </span>

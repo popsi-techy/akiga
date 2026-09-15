@@ -40,14 +40,16 @@ function TimelineDash({ className }: { className: string }) {
  * The bodies genuinely differ (a decision card, a stage with its approval hops), so the
  * shared part stops at the node and the line.
  *
- * `ring-4 ring-surface` is what lets the dash pass behind the node without touching it:
- * the ring paints the page's own background as a halo, so no gap has to be measured.
+ * `ring-4` in the page's own colour is what lets the dash pass behind the node without
+ * touching it: the ring paints the background as a halo, so no gap has to be measured.
+ * `ground` says which colour that is.
  */
 export function TimelineItem({
   icon,
   tone,
   first = false,
   last = false,
+  ground = 'surface',
   children,
 }: {
   icon: React.ReactNode;
@@ -55,6 +57,12 @@ export function TimelineItem({
   /** No connector above the first node, none below the last. */
   first?: boolean;
   last?: boolean;
+  /**
+   * What the rail is drawn on. The node's halo has to paint the *page's* colour to hide
+   * the dash behind it, so a rail on a tinted canvas needs to know — a `surface` halo on
+   * a subtle ground is a white ring around every node.
+   */
+  ground?: 'surface' | 'subtle';
   children: React.ReactNode;
 }) {
   const neutral = tone === 'neutral';
@@ -64,7 +72,10 @@ export function TimelineItem({
         {!first && <TimelineDash className="top-0 h-9" />}
         {!last && <TimelineDash className="bottom-0 top-9" />}
         <span
-          className="relative z-[1] grid h-9 w-9 shrink-0 place-items-center rounded-full border ring-4 ring-surface"
+          className={[
+            'relative z-raised grid h-9 w-9 shrink-0 place-items-center rounded-full border ring-4',
+            ground === 'subtle' ? 'ring-subtle' : 'ring-surface',
+          ].join(' ')}
           style={{
             // A node nobody has reached yet is drawn on the surface rather than tinted:
             // a "waiting" stage should not carry as much colour as one that happened.

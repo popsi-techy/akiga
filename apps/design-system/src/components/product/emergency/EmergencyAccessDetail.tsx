@@ -24,27 +24,7 @@ import PersonAddAltOutlined from '@mui/icons-material/PersonAddAltOutlined';
 import HistoryOutlined from '@mui/icons-material/HistoryOutlined';
 import CalendarTodayOutlined from '@mui/icons-material/CalendarTodayOutlined';
 import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
-import {
-  Tabs,
-  Card,
-  InfoRow,
-  InfoRowGroup,
-  StatusChip,
-  Avatar,
-  IdentityCell,
-  Button,
-  Menu,
-  DataTable,
-  Dialog,
-  Drawer,
-  Input,
-  SelectionPanel,
-  NavList,
-  Tooltip,
-  useToast,
-  type Column,
-  type TabItem,
-} from '@ds/components';
+import { Avatar, Button, Card, ClickToEditText, DataTable, Dialog, Drawer, IdentityCell, InfoRow, InfoRowGroup, Input, Menu, NavList, PeekPanel, PeekSlot, RowActions, SelectionPanel, SetupChecklistDock, StatusChip, Tabs, Tooltip, type Column, type TabItem, useToast } from '@ds/components';
 import {
   updateEmergencyAccessBasics,
   getEmergencyAccess,
@@ -67,10 +47,8 @@ import {
 } from '@/data/emergency-access';
 import type { SeedEAOwner } from '@/data/seed';
 import { listGovernanceTeamRows, listUserIdentities, type GovernanceTeamRow } from '@/data/directory';
-import { PeekPanel, PeekSlot } from '@/components/product/directory/PeekPanel';
 import { IdentityDetailsBody } from '@/components/product/directory/IdentityDetailsBody';
 import { infoIcon } from '@/components/product/directory/infoIcons';
-import { RowActions } from '@/components/product/RowActions';
 import { TableSelectDrawer } from '@/components/product/automation/TableSelectDrawer';
 import { EligibilityCriteriaTab } from '@/components/product/emergency/EligibilityCriteriaTab';
 import { AdvancedConfigurationTab } from '@/components/product/emergency/AdvancedConfigurationTab';
@@ -79,8 +57,6 @@ import { emergencySetupSteps } from '@/components/product/emergency/setupSteps';
 import { toastEASetupStep } from '@/components/product/emergency/ea-setup-toast';
 import { formatDateTime } from '@/lib/datetime';
 import { EmergencyAccessGuideButton } from '@/components/product/emergency/EmergencyAccessGuideModal';
-import { SetupChecklistDock } from '@/components/product/emergency/SetupChecklistDock';
-import { ClickToEditText } from '@/components/product/emergency/ClickToEditText';
 
 /**
  * The tab strip, with a count on every tab that holds a collection.
@@ -624,6 +600,7 @@ export function EmergencyOwnersTab({
           <div className="min-h-0 min-w-0 flex-1">
             {view === 'individual' ? (
               <DataTable<SeedEAOwner>
+                layout="auto"
                 columns={columns}
                 rows={rows}
                 selectable
@@ -633,6 +610,7 @@ export function EmergencyOwnersTab({
               />
             ) : (
               <DataTable<GovernanceTeamRow>
+                layout="auto"
                 columns={teamColumns}
                 rows={teamRows}
                 fillHeight
@@ -775,6 +753,7 @@ export function EmergencyOwnersTab({
             </div>
             <div className="min-h-0 flex-1">
               <DataTable<SeedEAOwner>
+                layout="auto"
                 columns={addColumns}
                 rows={available}
                 selectable

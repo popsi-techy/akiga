@@ -58,24 +58,30 @@ export interface Column<Row> {
 
 export interface DataTableProps<Row extends { id: string }> {
   /**
-   * How columns are sized. **Prefer `'fixed'` for any new list.**
+   * How columns are sized. @default 'fixed'
    *
-   * `'auto'` (the default, for compatibility) sizes columns to their content. It
-   * reads well until a value is long, and then it fails two ways at once: a cell's
-   * minimum width is its longest word, so one long string widens the table past its
-   * container and the trailing columns scroll off — and truncation is impossible,
-   * because adding `nowrap` under auto layout makes the minimum the *whole string*
-   * and the overflow larger. Measured on the reports list: 82px of overflow before,
-   * 302px with nowrap alone.
+   * `'auto'` sizes columns to their content. It reads well until a value is long,
+   * and then it fails two ways at once: a cell's minimum width is its longest word,
+   * so one long string widens the table past its container and the trailing columns
+   * scroll off — and truncation is impossible, because adding `nowrap` under auto
+   * layout makes the minimum the *whole string* and the overflow larger. Measured on
+   * the reports list: 82px of overflow before, 302px with nowrap alone.
    *
    * `'fixed'` ends both. Columns take the `width` they declare and share what is
    * left equally, cells truncate to one line with the full text on hover, and every
    * row is the same height (that same list went 75px → 55px rows, 0 overflow).
    *
    * The cost is that it stops guessing: a table that does not say which column
-   * carries the name will give it the same share as its status column. That is why
-   * this is not yet the default — twenty-five existing tables would need widths
-   * declared before it could be flipped safely.
+   * carries the name gives it the same share as its status column. That was the
+   * reason `'auto'` was the default — and it meant the component shipped the
+   * behaviour its own documentation told you not to use, which every new table then
+   * inherited without deciding anything.
+   *
+   * So the default is the recommended one now, and the tables that are not ready say
+   * `layout="auto"` out loud. That list is the work remaining: `grep 'layout="auto"'`
+   * names every table still owed a width per column. Nothing moved when this flipped
+   * — the point is what happens to the *next* table, which now has to opt out of the
+   * good behaviour rather than into it.
    */
   layout?: 'auto' | 'fixed';
   columns: Column<Row>[];
@@ -138,7 +144,7 @@ export function DataTable<Row extends { id: string }>({
   rows,
   selectable = false,
   selectionMode = 'multiple',
-  layout = 'auto',
+  layout = 'fixed',
   loading = false,
   emptyTitle = 'Nothing here yet',
   emptyMessage = 'When there is data to show, it will appear in this table.',

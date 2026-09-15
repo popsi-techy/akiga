@@ -142,6 +142,7 @@ export function EmergencyAccessListView({
       ) : (
         <div className="min-h-0 flex-1">
           <DataTable<EARow>
+            layout="auto"
             columns={columns}
             rows={rows}
             onRowClick={(r) => open(r)}

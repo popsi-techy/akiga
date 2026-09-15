@@ -6,17 +6,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined';
-import {
-  Button,
-  Dialog,
-  Menu,
-  StatusChip,
-  useToast,
-  type Column,
-  type FilterGroup,
-  type FilterSelection,
-} from '@ds/components';
-import { DirectoryListPage } from '@/components/product/directory';
+import { Button, Dialog, DirectoryListPage, Menu, StatusChip, type Column, type FilterGroup, type FilterSelection, useToast } from '@ds/components';
 import { deleteSodPolicy, listSodPolicies, type SodPolicyRow } from '@/data/sod-policies';
 import { SEVERITY_META, STATUS_META, formatDate } from '@/components/product/sod/policy-labels';
 import { SodPolicyDetailsDrawer } from '@/components/product/sod/SodPolicyDetailsDrawer';

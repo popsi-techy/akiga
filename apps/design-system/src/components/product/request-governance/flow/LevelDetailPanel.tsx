@@ -1,24 +1,34 @@
 'use client';
 
 import * as React from 'react';
-import { Avatar, FileAttachmentField, PeekPanel } from '@ds/components';
+import { PeekPanel } from '@ds/components';
 import { formatDateTime } from '@/lib/datetime';
 import {
   formatElapsed,
   formatSlaClock,
+  hopApprovers,
+  requiredApprovalCount,
   slaSpentPercent,
+  visibleApprovalLevels,
   type ApprovalHop,
   type ItemFlowProgress,
 } from '@/data/request-governance';
-import { FLOW_COLOR, levelStateLabel, levelApproverLine, levelToneOf } from './flowVocabulary';
+import { ApproverCard } from './ApproverCard';
+import { FLOW_COLOR, LevelStateChip, levelApproverLine, levelToneOf } from './flowVocabulary';
 
 /**
  * One approval level, read closely — the panel that docks beside the chain.
  *
- * It takes width from the flow, which a column of stacked cards can afford: they reflow to
- * a narrower measure and stay readable, where a left-to-right diagram would have to
- * scroll. The header stays above both, so the board keeps saying which line is on it while
- * a level is open.
+ * It is the same object as the card it opens from, so it is built from the same parts: the
+ * level number as an eyebrow, its name as the title, its condition as a **chip** rather
+ * than as grey prose, and its approvers as {@link ApproverCard}s. The panel used to draw
+ * its own divided rows and write its own status sentence, which made one decision look
+ * like two different objects a click apart.
+ *
+ * What the panel adds is depth, not a second copy: each approver's address, the item's SLA
+ * while this level is the one holding it, and the level's own clock. It does not repeat
+ * the line's name — the canvas header two inches to the left is already saying it, and the
+ * eyebrow was spending its width on a word the reader could see for free.
  *
  * Actions are deliberately absent for now. Nudge, escalate and reassign belong on the
  * level that is actually waiting, and that is a decision about routing rather than about
@@ -43,13 +53,11 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
 }
 
 export function LevelDetailPanel({
-  itemName,
   hop,
   index,
   progress,
   onClose,
 }: {
-  itemName: string;
   hop: ApprovalHop;
   index: number;
   progress: ItemFlowProgress;
@@ -58,27 +66,49 @@ export function LevelDetailPanel({
   const { view, slaStatus } = progress;
   const tone = levelToneOf(hop, slaStatus);
   const decided = hop.decision === 'approved' || hop.decision === 'rejected';
-  const opened = view.stages.find((s) => s.id === 'approval')?.startedAt;
-  const elapsed = formatElapsed(opened);
-  const files = hop.attachments ?? [];
+  const approvers = hopApprovers(hop);
+  const approved = approvers.filter((a) => a.decision === 'approved').length;
+
+  /**
+   * The same two instants the card's footer carries, read the same way: a level opens when
+   * the one above it closes, and closes on the last answer that satisfied its rule — not
+   * on whichever decision happens to sit first in the array.
+   */
+  const levels = visibleApprovalLevels(view);
+  const approvalStartedAt = view.stages.find((s) => s.id === 'approval')?.startedAt;
+  const openedAt = index === 0 ? approvalStartedAt : levels[index - 1]?.decidedAt ?? approvalStartedAt;
+  const closedAt =
+    hop.decidedAt ??
+    approvers
+      .map((a) => a.decidedAt)
+      .filter((t): t is string => Boolean(t))
+      .sort()
+      .pop();
+  const elapsed = formatElapsed(openedAt);
 
   return (
     <PeekPanel
       docked
-      // No "of N": the chain's length is not known until it has finished, so a total here
-      // would be a number the board itself refuses to claim.
-      eyebrow={`${itemName} · Level ${index + 1}`}
+      // Just the position. The line's name lived here until the canvas header beside it
+      // was already saying it in full, twice the size.
+      eyebrow={`Level ${index + 1}`}
       title={hop.label}
-      subtitle={[levelStateLabel(tone), !decided && elapsed ? `${elapsed} open` : null]
-        .filter(Boolean)
-        .join(' · ')}
+      // The condition as the object it is. "Approved" set in grey prose here contradicted
+      // the green chip on the card this panel opened from — §5.2, status colour belongs on
+      // the status object, and the same fact should not change species between surfaces.
+      subtitle={
+        <>
+          <LevelStateChip tone={tone} />
+          {!decided && elapsed && <span>{elapsed} open</span>}
+        </>
+      }
       onClose={onClose}
     >
       {/* The SLA belongs to the line, not to this level — the model has one clock per cart
           line — so it is labelled as the item's and shown only while this level is the one
           holding it up. Attributing it to the level would invent a deadline. */}
       {!decided && (
-        <Block title={`SLA on ${itemName}`}>
+        <Block title="SLA on this item">
           <div className="h-1.5 w-full overflow-hidden rounded-pill bg-subtle">
             <div
               className="h-full rounded-pill"
@@ -105,39 +135,38 @@ export function LevelDetailPanel({
       )}
 
       <Block title={levelApproverLine(hop)}>
-        <div className="flex min-w-0 items-center gap-2.5">
-          <Avatar name={hop.approver.name} size="s" kind="person" />
-          <div className="min-w-0">
-            <p className="truncate text-body-sm-strong text-text-primary">{hop.approver.name}</p>
-            <p className="truncate text-caption text-text-secondary">
-              {hop.approver.title ?? hop.label}
-            </p>
-            <p className="truncate text-caption text-text-tertiary">{hop.approver.email}</p>
-          </div>
+        {/* Every approver, each with their own answer — a level satisfied by "any one of
+            two" still owes the reader the second person and what they did or did not do.
+            The same card the canvas draws, with the address it leaves out. */}
+        <div className="flex flex-col gap-2.5">
+          {approvers.map((decision) => (
+            <ApproverCard
+              key={decision.approver.id}
+              decision={decision}
+              label={hop.label}
+              showEmail
+            />
+          ))}
         </div>
-      </Block>
 
-      <Block title="Decision">
-        <Row label="Outcome" value={levelStateLabel(tone)} />
-        {hop.decidedAt && <Row label="Decided" value={formatDateTime(hop.decidedAt)} />}
-        {!decided && opened && <Row label="Open for" value={elapsed} />}
-        {hop.note ? (
-          <p className="mt-2 text-body-sm text-text-secondary">&ldquo;{hop.note}&rdquo;</p>
-        ) : (
-          <p className="mt-2 text-body-sm text-text-tertiary">
-            {decided ? 'No justification was recorded.' : 'Nothing has been recorded yet.'}
+        {/* Only while the rule is still open. A settled level printed "1 of 1 needed
+            approvals recorded" under a heading that already said "Any one of 2" and a chip
+            that already said "Approved" — three ways of saying one thing. */}
+        {approvers.length > 1 && !decided && (
+          <p className="mt-3 text-caption text-text-tertiary">
+            {approved} of {requiredApprovalCount(hop)} needed approvals recorded.
           </p>
         )}
       </Block>
 
-      <Block title={files.length === 1 ? '1 attachment' : `${files.length} attachments`}>
-        {files.length > 0 ? (
-          /* The Block heading already counts them; the field's default label would be a
-             second one. */
-          <FileAttachmentField readOnly files={files} label="" />
-        ) : (
-          <p className="text-body-sm text-text-tertiary">No files were filed with this decision.</p>
-        )}
+      {/* The level's own clock. No "Outcome" row: the chip in the header is the outcome,
+          and no level note either — for a single-approver level `hop.note` *is* that
+          approver's justification, already quoted on their card above. */}
+      <Block title="Timing">
+        {openedAt && <Row label="Opened" value={formatDateTime(openedAt)} />}
+        {decided
+          ? closedAt && <Row label="Closed" value={formatDateTime(closedAt)} />
+          : elapsed && <Row label="Open for" value={elapsed} />}
       </Block>
 
       <div className="pb-2" />

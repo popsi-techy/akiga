@@ -4,7 +4,8 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import type { Column } from '@ds/components';
 import { listBusinessRoleRows, type RoleRow } from '@/data/directory';
-import { DirectoryListPage, EntityAvatar, RiskScoreChip } from '@/components/product/directory';
+import { EntityAvatar, RiskScoreChip } from '@/components/product/directory';
+import { DirectoryListPage } from '@ds/components';
 
 export default function BusinessRolesListPage() {
   const router = useRouter();

@@ -587,7 +587,7 @@ export function RelationshipCanvas({
 
   if (!fullscreen) return surface;
   return (
-    <div className="fixed inset-0 z-[1300] bg-canvas p-0" role="dialog" aria-modal="true" aria-label={`${ariaLabel} — fullscreen`}>
+    <div className="fixed inset-0 z-drawer bg-canvas p-0" role="dialog" aria-modal="true" aria-label={`${ariaLabel} — fullscreen`}>
       {surface}
     </div>
   );

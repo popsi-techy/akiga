@@ -164,6 +164,7 @@ export default function SodResolutionV3ListPage() {
 
       <div className="min-h-0 flex-1">
         <DataTable<MyReviewRow>
+          layout="auto"
           columns={columns}
           rows={filtered}
           loading={rows === null}

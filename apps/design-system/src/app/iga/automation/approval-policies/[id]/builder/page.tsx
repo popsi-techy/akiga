@@ -22,6 +22,7 @@ import TaskAltOutlined from '@mui/icons-material/TaskAltOutlined';
 import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined';
 import DragIndicator from '@mui/icons-material/DragIndicator';
 import {
+  FLOW_SECTION_TILE,
   Avatar,
   Button,
   StatusChip,
@@ -120,12 +121,8 @@ const ICONS: Record<string, React.ComponentType<{ sx?: object }>> = {
   logout: Logout,
 };
 
-/** Icon-tile colors grouped by palette section (decorative — categorical, not text). */
-const SECTION_TILE: Record<string, { bg: string; fg: string }> = {
-  Tasks: { bg: '#E8F1FE', fg: '#2E7CF6' }, //         blue
-  Branching: { bg: '#FFF1E3', fg: '#F59E0B' }, //     amber
-  'Flow Control': { bg: '#E4F6EF', fg: '#0EA47A' }, // teal
-};
+/** The canvas's own section ramp — see `FLOW_SECTION_TILE`. */
+const SECTION_TILE = FLOW_SECTION_TILE;
 const tileFor = (section: string) => SECTION_TILE[section] ?? { bg: 'var(--ds-color-surface-hover)', fg: 'var(--ds-color-icon-default)' };
 /** Section order — shared by the sidebar palette and the canvas quick-insert menu. */
 const PALETTE_SECTIONS = ['Tasks', 'Branching', 'Flow Control'] as const;
@@ -446,7 +443,7 @@ export default function ApprovalPolicyBuilderPage() {
                 selected ? 'shadow-sm' : 'border-border group-hover:border-border-strong',
               ].join(' ')}
             />
-            <span className="relative z-[1] flex w-[130px] flex-col items-center gap-1 px-1 text-center">
+            <span className="relative z-raised flex w-[130px] flex-col items-center gap-1 px-1 text-center">
               <span className="grid h-9 w-9 place-items-center rounded-full" style={{ backgroundColor: tile.bg, color: tile.fg }}><Icon sx={{ fontSize: 18 }} /></span>
               <span className="text-body-sm-medium leading-tight text-text-primary">{displayTitle}</span>
               <span className="text-caption leading-tight text-text-secondary">{paths} condition{paths !== 1 ? 's' : ''}</span>
@@ -461,7 +458,7 @@ export default function ApprovalPolicyBuilderPage() {
             type="button"
             onClick={(e) => { e.stopPropagation(); handleDelete(node.id); }}
             aria-label={`Delete ${meta.title}`}
-            className="absolute right-8 top-8 z-10 hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid"
+            className="absolute right-8 top-8 z-raised hidden h-6 w-6 place-items-center rounded-full border border-border bg-surface text-icon shadow-sm transition-colors hover:text-danger group-hover:grid"
           >
             <CloseIcon sx={{ fontSize: 14 }} />
           </button>

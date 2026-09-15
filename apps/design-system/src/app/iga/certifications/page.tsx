@@ -9,19 +9,7 @@ import EventOutlined from '@mui/icons-material/EventOutlined';
 import PlayCircleOutlined from '@mui/icons-material/PlayCircleOutlined';
 import RocketLaunchOutlined from '@mui/icons-material/RocketLaunchOutlined';
 import TaskAltOutlined from '@mui/icons-material/TaskAltOutlined';
-import {
-  Avatar,
-  Button,
-  Dialog,
-  Menu,
-  StatTile,
-  StatusChip,
-  useToast,
-  type Column,
-  type FilterGroup,
-  type FilterSelection,
-} from '@ds/components';
-import { DirectoryListPage } from '@/components/product/directory';
+import { Avatar, Button, Dialog, DirectoryListPage, Menu, StatTile, StatusChip, type Column, type FilterGroup, type FilterSelection, useToast } from '@ds/components';
 import {
   certificationCounts,
   deleteCertification,

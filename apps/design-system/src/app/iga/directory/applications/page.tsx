@@ -6,16 +6,7 @@ import { useRouter } from 'next/navigation';
 import AddOutlined from '@mui/icons-material/AddOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import ScheduleOutlined from '@mui/icons-material/ScheduleOutlined';
-import {
-  Avatar,
-  Button,
-  Menu,
-  OverflowChips,
-  StatusChip,
-  useToast,
-  type Column,
-  type FilterGroup,
-} from '@ds/components';
+import { Avatar, Button, DirectoryListPage, Menu, OverflowChips, StatusChip, type Column, type FilterGroup, useToast } from '@ds/components';
 import {
   applicationAccountable,
   listDirectoryCatalogApplications,
@@ -25,7 +16,7 @@ import {
   type ApplicationRow,
 } from '@/data/directory';
 import { getOnboardedApplication, type OnboardedApplication } from '@/data/applications-store';
-import { ApplicationBasicDetailsDrawer, DirectoryListPage, EntityAvatar } from '@/components/product/directory';
+import { ApplicationBasicDetailsDrawer, EntityAvatar } from '@/components/product/directory';
 import { lastSyncAt } from '@/data/reconciliation';
 import { formatDateTime } from '@/components/product/sod/labels';
 

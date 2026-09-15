@@ -25,17 +25,51 @@ export interface GovernanceIdentity {
   title?: string;
 }
 
+/**
+ * How a level with more than one approver is satisfied.
+ *
+ * The same four rules the approval-policy builder offers, by the same names — a level
+ * rendered here should be describable in the words the person who configured it chose.
+ */
+export type LevelCompletionRule = 'all' | 'anyOne' | 'majority' | 'threshold';
+
+/** One person's answer at a level. A level may be waiting on several of these at once. */
+export interface ApprovalDecision {
+  approver: GovernanceIdentity;
+  state: StageState;
+  decision?: 'approved' | 'rejected' | 'pending';
+  decidedAt?: string;
+  /** The justification this approver typed with their decision. */
+  note?: string;
+  /** Evidence they attached to it — a sign-off, a ticket export, a screenshot. */
+  attachments?: FileAttachment[];
+}
+
 export interface ApprovalHop {
   id: string;
   label: string;
+  /**
+   * The level's own approver, for a level that has exactly one.
+   *
+   * Kept alongside `approvers` rather than replaced by it: most levels are one person,
+   * and making every seed record wrap that person in a list would be ceremony for the
+   * common case. Read through {@link hopApprovers}, never directly.
+   */
   approver: GovernanceIdentity;
   state: StageState;
   decidedAt?: string;
+  /** The level's outcome, once the completion rule is satisfied. */
   decision?: 'approved' | 'rejected' | 'pending';
   /** The justification the approver typed with the decision. */
   note?: string;
-  /** Evidence filed with the decision — a sign-off, a ticket export, a screenshot. */
+  /** Evidence attached to the decision — a sign-off, a ticket export, a screenshot. */
   attachments?: FileAttachment[];
+  /** Present when the level has more than one approver. */
+  approvers?: ApprovalDecision[];
+  /** How those approvers satisfy the level. Meaningless for a single approver. */
+  completionRule?: LevelCompletionRule;
+  /** How many must approve under the `threshold` rule. */
+  requiredApprovals?: number;
 }
 
 export interface LifecycleStage {
@@ -99,6 +133,15 @@ export interface GovernanceRequest {
   sodConflict: boolean;
   sodSummary?: string;
   submittedAt: string;
+  /**
+   * Why the requester says they need this, in their own words.
+   *
+   * On the request rather than on a cart line: a person fills one justification box for
+   * the whole basket, and splitting it per line would invent sentences nobody wrote.
+   */
+  businessJustification?: string;
+  /** What the requester filed with the request — a signed approval, a handover note. */
+  attachments?: FileAttachment[];
   slaDueAt: string;
   closedAt?: string;
   currentStage: LifecycleStageId;
@@ -124,6 +167,13 @@ export const RESOURCE_TYPE_LABEL: Record<ResourceType, string> = {
   application: 'Application',
   entitlement: 'Entitlement',
   role: 'Technical Role',
+};
+
+/** The same nouns over a list of them — a heading, not a tag. */
+export const RESOURCE_TYPE_PLURAL: Record<ResourceType, string> = {
+  application: 'Applications',
+  entitlement: 'Entitlements',
+  role: 'Technical Roles',
 };
 
 export const STAGE_LABEL: Record<LifecycleStageId, string> = {
@@ -183,7 +233,7 @@ export const ORIGIN_LABEL: Record<RequestOrigin, string> = {
 };
 
 const STORE_KEY = 'iga.requestGovernance.v1';
-const SEED_VERSION = 4;
+const SEED_VERSION = 5;
 
 type Store = { version: number; requests: Record<string, GovernanceRequest> };
 
@@ -332,7 +382,7 @@ export function cartStatusMeta(row: GovernanceRequest): {
   intent: 'success' | 'warning';
 } {
   const { pending } = cartStatusOf(row);
-  if (pending === 0) return { label: 'All completed', intent: 'success' };
+  if (pending === 0) return { label: 'Completed', intent: 'success' };
   return { label: pending === 1 ? '1 pending' : `${pending} pending`, intent: 'warning' };
 }
 
@@ -343,6 +393,21 @@ export function slaStatusOf(row: GovernanceRequest, now = Date.now()): SlaStatus
   const hoursLeft = (due - now) / 36e5;
   if (hoursLeft <= 8) return 'at_risk';
   return 'on_track';
+}
+
+/**
+ * Whether a finished line beat its clock.
+ *
+ * `slaStatusOf` answers `closed` once a line is done, which is true and useless: closed is
+ * not an SLA outcome, and whether the target was met is the only SLA question a finished
+ * line still has. Reads the provisioning stage's own completion rather than the request's
+ * `closedAt`, because a cart closes when its last line lands and the others may have
+ * landed days earlier.
+ */
+export function slaSettlement(row: GovernanceRequest): 'on_time' | 'late' | null {
+  const finishedAt = row.stages.find((s) => s.id === 'provisioning')?.completedAt ?? row.closedAt;
+  if (!finishedAt) return null;
+  return new Date(finishedAt).getTime() > new Date(row.slaDueAt).getTime() ? 'late' : 'on_time';
 }
 
 export function isProvisioningFailed(row: GovernanceRequest): boolean {
@@ -452,6 +517,42 @@ export function slaSpentPercent(row: GovernanceRequest, now = Date.now()): numbe
  * reader's in the browser, which is the mismatch `lib/datetime` exists to prevent.
  */
 export const formatGovDateTime = formatDateTime;
+
+/**
+ * Everyone who may decide a level, in one shape.
+ *
+ * A single-approver level is read as a list of one, so every renderer walks the same
+ * structure and none of them has to branch on which of the two fields the seed used.
+ */
+export function hopApprovers(hop: ApprovalHop): ApprovalDecision[] {
+  if (hop.approvers && hop.approvers.length > 0) return hop.approvers;
+  return [
+    {
+      approver: hop.approver,
+      state: hop.state,
+      decision: hop.decision,
+      decidedAt: hop.decidedAt,
+      note: hop.note,
+      attachments: hop.attachments,
+    },
+  ];
+}
+
+/** How many approvals this level needs before it is satisfied. */
+export function requiredApprovalCount(hop: ApprovalHop): number {
+  const total = hopApprovers(hop).length;
+  if (total <= 1) return 1;
+  switch (hop.completionRule ?? 'all') {
+    case 'anyOne':
+      return 1;
+    case 'majority':
+      return Math.floor(total / 2) + 1;
+    case 'threshold':
+      return Math.min(Math.max(hop.requiredApprovals ?? 1, 1), total);
+    default:
+      return total;
+  }
+}
 
 /** Every approval level configured on this request, decided or not. */
 export function approvalLevels(row: GovernanceRequest): ApprovalHop[] {

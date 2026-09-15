@@ -23,8 +23,8 @@ export const muiTheme = createTheme({
     // contrastText = onSolid), so filled MUI components (e.g. danger buttons,
     // error text) inherit contrast the gate already enforces. Primary is the
     // documented brand exception (#EB5424, see ADR-0005).
-    primary: { main: p.orange[700], dark: p.orange[800], light: p.orange[500], contrastText: '#FFFFFF' },
-    secondary: { main: p.ink[800], contrastText: '#FFFFFF' },
+    primary: { main: p.orange[700], dark: p.orange[800], light: p.orange[500], contrastText: p.white },
+    secondary: { main: p.ink[800], contrastText: p.white },
     info: { main: color.status.info.solid, light: color.status.info.subtle, dark: p.blue[900], contrastText: color.status.info.onSolid },
     success: { main: color.status.success.solid, light: color.status.success.subtle, dark: p.green[700], contrastText: color.status.success.onSolid },
     warning: { main: color.status.warning.solid, light: color.status.warning.subtle, dark: p.yellow[700], contrastText: color.status.warning.onSolid },

@@ -7,6 +7,7 @@ import AccessTimeOutlined from '@mui/icons-material/AccessTimeOutlined';
 import DeleteOutlineOutlined from '@mui/icons-material/DeleteOutlineOutlined';
 import HistoryOutlined from '@mui/icons-material/HistoryOutlined';
 import { Dialog, Input, Menu, StatusChip, useToast } from '@ds/components';
+import { formatDateTime } from '@/lib/datetime';
 
 /** Minimal envelope shared by approval policies and workflows. */
 export type VersionedDoc = {
@@ -22,18 +23,6 @@ type VersionRow = {
   at: string;
   status: 'active' | 'draft';
 };
-
-function formatVersionAt(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString(undefined, {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 /** Demo history for the builder rail — durable versioning is not wired yet. */
 function seedVersions(doc: VersionedDoc): VersionRow[] {
@@ -255,7 +244,7 @@ function VersionCard({
           </div>
           <div className="mt-1.5 flex items-center gap-1.5 text-caption text-text-secondary">
             <AccessTimeOutlined sx={{ fontSize: 14 }} className="shrink-0 text-icon" aria-hidden />
-            <time dateTime={version.at}>{formatVersionAt(version.at)}</time>
+            <time dateTime={version.at}>{formatDateTime(version.at)}</time>
           </div>
         </div>
         <div

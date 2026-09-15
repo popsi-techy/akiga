@@ -6,17 +6,7 @@ import LinkOutlined from '@mui/icons-material/LinkOutlined';
 import PeopleOutlined from '@mui/icons-material/PeopleOutlined';
 import PersonOffOutlined from '@mui/icons-material/PersonOffOutlined';
 import TuneOutlined from '@mui/icons-material/TuneOutlined';
-import {
-  Button,
-  Dialog,
-  OverflowChips,
-  StatTile,
-  StatusChip,
-  useToast,
-  type Column,
-  type FilterGroup,
-  type FilterSelection,
-} from '@ds/components';
+import { Button, Dialog, DirectoryListPage, OverflowChips, RowActions, StatTile, StatusChip, type Column, type FilterGroup, type FilterSelection, useToast } from '@ds/components';
 import { listAppAccounts, listApplications, listCataloguedApplications } from '@/data/directory';
 import {
   correlationModeLabel,
@@ -26,8 +16,7 @@ import {
   type CorrelationConfig,
 } from '@/data/identity-correlation';
 import { getSystemSettingsSection } from '@/data/system-settings-catalog';
-import { DirectoryListPage, EntityAvatar } from '@/components/product/directory';
-import { RowActions } from '@/components/product/RowActions';
+import { EntityAvatar } from '@/components/product/directory';
 import { IdentityCorrelationDrawer } from './IdentityCorrelationForm';
 import { SettingsDenied, SettingsLoading, useAdminSettings, useSettingsCrumbs } from './SettingsChrome';
 

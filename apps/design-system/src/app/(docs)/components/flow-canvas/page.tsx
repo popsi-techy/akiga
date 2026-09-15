@@ -5,7 +5,7 @@ import PersonOutline from '@mui/icons-material/PersonOutline';
 import AccountTreeOutlined from '@mui/icons-material/AccountTreeOutlined';
 import MailOutline from '@mui/icons-material/MailOutline';
 import { PageHeader, Section, PropsTable, DoDont, Code } from '@/components/docs/primitives';
-import { FlowCanvas, type FlowNodeLike, type FlowInsertLoc } from '@ds/components';
+import { FLOW_SECTION_TILE, FlowCanvas, type FlowNodeLike, type FlowInsertLoc } from '@ds/components';
 
 type DemoNode = FlowNodeLike & { kind: 'approval' | 'notify' | 'branch' };
 
@@ -77,9 +77,9 @@ export default function FlowCanvasDocs() {
             root={root}
             renderCard={renderCard}
             palette={[
-              { kind: 'approval', label: 'Approval Level', icon: <PersonOutline sx={{ fontSize: 17 }} />, section: 'Tasks', tile: { bg: '#E8F1FE', fg: '#2E7CF6' } },
-              { kind: 'notify', label: 'Notification', icon: <MailOutline sx={{ fontSize: 17 }} />, section: 'Tasks', tile: { bg: '#E8F1FE', fg: '#2E7CF6' } },
-              { kind: 'branch', label: 'Conditional Branch', icon: <AccountTreeOutlined sx={{ fontSize: 17 }} />, section: 'Branching', tile: { bg: '#FFF1E3', fg: '#F59E0B' } },
+              { kind: 'approval', label: 'Approval Level', icon: <PersonOutline sx={{ fontSize: 17 }} />, section: 'Tasks', tile: FLOW_SECTION_TILE.Tasks },
+              { kind: 'notify', label: 'Notification', icon: <MailOutline sx={{ fontSize: 17 }} />, section: 'Tasks', tile: FLOW_SECTION_TILE.Tasks },
+              { kind: 'branch', label: 'Conditional Branch', icon: <AccountTreeOutlined sx={{ fontSize: 17 }} />, section: 'Branching', tile: FLOW_SECTION_TILE.Branching },
             ]}
             onInsert={onInsert}
             onClearSelection={() => setSelected(null)}

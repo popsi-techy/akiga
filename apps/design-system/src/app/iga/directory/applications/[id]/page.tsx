@@ -5,14 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import SettingsOutlined from '@mui/icons-material/SettingsOutlined';
-import {
-  Button,
-  Dialog,
-  Menu,
-  StatusChip,
-  useToast,
-  type TabItem,
-} from '@ds/components';
+import { Button, Dialog, Menu, SetupChecklistDock, StatusChip, type TabItem, useToast } from '@ds/components';
 import {
   applicationIsAuthorized,
   deleteApplication,
@@ -45,7 +38,6 @@ import {
   ApplicationEntitlementsTab,
 } from '@/components/product/directory';
 import { EmergencyAccessGuideButton } from '@/components/product/emergency/EmergencyAccessGuideModal';
-import { SetupChecklistDock } from '@/components/product/emergency/SetupChecklistDock';
 
 const LIST_HREF = '/iga/directory/applications';
 

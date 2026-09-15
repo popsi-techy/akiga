@@ -260,6 +260,7 @@ export function ReconciliationTab({
         <div>
           <h3 className="mb-3 text-h5 text-text-primary">Sync History</h3>
           <DataTable<SyncRun>
+            layout="fixed"
             columns={columns}
             rows={runs}
             emptyTitle="No syncs yet"

@@ -126,6 +126,7 @@ export default function FileAttachmentDocs() {
             { name: 'maxBytes', type: 'number', default: '10 MB', description: 'Per-file size limit. Shown on the empty well with the file-count cap.' },
             { name: 'fill', type: 'boolean', description: 'Take leftover height in a flex column whether empty or filled, and scroll the list only when the cards run out of room — for a rail with a pinned footer.' },
             { name: 'readOnly', type: 'boolean', description: 'List only — no add or remove. Used on submitted requests.' },
+            { name: 'itemVariant', type: `'filled' | 'outlined'`, default: `'filled'`, description: 'How each file card is drawn. `filled` sits it on the subtle ground — right inside a white panel. `outlined` trades the fill for a hairline, for a card already sitting on a tinted or grouped ground where a second fill stacks two greys. The call site is the only thing that knows what the card sits on.' },
             { name: 'disabled', type: 'boolean', description: 'Blocks interaction while still showing the current files.' },
             { name: 'error', type: 'string', description: 'Error message under the field.' },
           ]}

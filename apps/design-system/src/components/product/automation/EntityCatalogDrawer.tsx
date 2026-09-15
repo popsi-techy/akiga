@@ -259,6 +259,7 @@ export function EntityCatalogDrawer({
           ) : (
             <div className="min-h-0 flex-1">
               <DataTable<EntRow>
+                layout="auto"
                 columns={entColumns}
                 rows={filteredEnts}
                 selectable

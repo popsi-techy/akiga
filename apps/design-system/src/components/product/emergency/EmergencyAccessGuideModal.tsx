@@ -2,8 +2,7 @@
 
 import * as React from 'react';
 import MenuBookOutlined from '@mui/icons-material/MenuBookOutlined';
-import { Button, Modal, Tooltip } from '@ds/components';
-import { SegmentedDonut } from '@/components/product/SetupProgress';
+import { Button, Modal, SegmentedDonut, Tooltip } from '@ds/components';
 import { EA_SETUP_STEPS, isRequiredSetupStep, type EASetupStepId } from '@/data/emergency-access';
 
 const GUIDE_INTRO: Record<EASetupStepId, string> = {

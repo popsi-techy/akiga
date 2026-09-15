@@ -156,7 +156,8 @@ export function RelationTable<Row extends { id: string }>({
 }) {
   return (
     <div className="h-full">
-      <DataTable<Row> columns={columns} rows={rows} onRowClick={onRowClick} fillHeight emptyTitle={emptyTitle} emptyMessage={emptyMessage} />
+      <DataTable<Row>
+        layout="auto" columns={columns} rows={rows} onRowClick={onRowClick} fillHeight emptyTitle={emptyTitle} emptyMessage={emptyMessage} />
     </div>
   );
 }

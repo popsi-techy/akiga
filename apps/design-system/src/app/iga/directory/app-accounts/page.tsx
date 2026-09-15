@@ -2,9 +2,8 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { IdentityCell, StatusChip, type Column } from '@ds/components';
+import { DirectoryListPage, IdentityCell, StatusChip, type Column } from '@ds/components';
 import { listAppAccounts, type AppAccountRow } from '@/data/directory';
-import { DirectoryListPage } from '@/components/product/directory';
 import { AppBadge } from '@/components/product/sod/labels';
 
 export default function AppAccountsListPage() {

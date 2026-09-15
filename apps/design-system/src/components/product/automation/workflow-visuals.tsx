@@ -39,6 +39,7 @@ import type {
   DelegateAccessConfig,
   TriggerReviewConfig,
 } from '@/data/automation-types';
+import { FLOW_SECTION_TILE } from '@ds/components';
 
 /**
  * Everything needed to *draw* a workflow block, in one place.
@@ -78,19 +79,12 @@ export const ICONS: Record<string, React.ComponentType<{ sx?: object }>> = {
   review: FactCheckOutlined,
 };
 
-/** Icon-tile colors grouped by palette section (decorative — categorical, not text). */
-export const SECTION_TILE: Record<string, { bg: string; fg: string }> = {
-  Events: { bg: 'var(--ds-color-brand-subtle)', fg: 'var(--ds-color-brand-primary)' },
-  Filters: { bg: '#EFEAFE', fg: '#7C4DFF' }, //       violet
-  Tasks: { bg: '#E8F1FE', fg: '#2E7CF6' }, //         blue
-  Branching: { bg: '#FFF1E3', fg: '#F59E0B' }, //     amber
-  // Lifecycle operations reach into a connected system and change an account's
-  // state, so they get their own hue rather than sharing Tasks' blue — on a
-  // leaver canvas the difference between "notify the manager" and "delete the
-  // account" should not be a matter of reading the label.
-  Lifecycle: { bg: '#FDECEF', fg: '#D4405C' }, //     rose
-  'Flow Control': { bg: '#E4F6EF', fg: '#0EA47A' }, // teal
-};
+/**
+ * The canvas's section ramp, re-exported under the name this module's callers already
+ * use. The values live in `FLOW_SECTION_TILE` — they were six hex literals here and the
+ * same six in three other files.
+ */
+export const SECTION_TILE = FLOW_SECTION_TILE;
 
 export const tileFor = (section: string) =>
   SECTION_TILE[section] ?? { bg: 'var(--ds-color-surface-hover)', fg: 'var(--ds-color-icon-default)' };

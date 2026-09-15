@@ -15,7 +15,7 @@ export const color = {
     subtle: p.neutral[50], //    alternate / striped surfaces
     sunken: p.neutral[100], //   wells, code blocks
     sidebar: p.sidebar, //       product dark navigation
-    emailPreview: p.neutral[700], // #D7DBE0 — email template outer canvas
+    emailPreview: p.neutral[400], // #E6E8EC — email template outer canvas
   },
   // Surfaces (component-level)
   surface: {
@@ -151,6 +151,32 @@ export const color = {
     image: { fg: p.green[500], subtle: p.green[100] },
     /** Anything the field accepts but cannot name — stays greyscale. */
     other: { fg: p.ink[500], subtle: p.neutral[100] },
+  },
+  /**
+   * Canvas — the flow builder's own surfaces.
+   *
+   * `section` is the icon tile a node wears, by the palette section it came from, so an
+   * item looks the same in the sidebar, on the canvas and in a preview of it. It was six
+   * hexes copied into four files — the builder page, the workflow visuals, the policy
+   * preview and the FlowCanvas docs — which is four places to change and four chances to
+   * miss one.
+   */
+  flow: {
+    /** Start / End terminal pills. */
+    terminal: p.blue[400],
+    section: {
+      filters: { bg: p.categorical.violetBg, fg: p.categorical.violetFg },
+      tasks: { bg: p.categorical.blueBg, fg: p.categorical.blueFg },
+      branching: { bg: p.categorical.amberBg, fg: p.categorical.amberFg },
+      /**
+       * Lifecycle operations reach into a connected system and change an account's
+       * state, so they get their own hue rather than sharing Tasks' blue — on a leaver
+       * canvas the difference between "notify the manager" and "delete the account"
+       * should not be a matter of reading the label.
+       */
+      lifecycle: { bg: p.categorical.roseBg, fg: p.categorical.roseFg },
+      flowControl: { bg: p.categorical.tealBg, fg: p.categorical.tealFg },
+    },
   },
   // Risk-score tiers map onto the `status` roles above via RiskScoreChip — no separate
   // risk palette. One hue per level so severity reads as a ramp:

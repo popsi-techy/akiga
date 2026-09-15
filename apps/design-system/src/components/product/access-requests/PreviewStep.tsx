@@ -84,6 +84,7 @@ export function PreviewStep({ request }: { request: AccessRequest }) {
         <h2 className="text-h3 text-text-primary">Preview & Submit</h2>
       </div>
       <DataTable<AccessRequestItem & { id: string }>
+        layout="auto"
         columns={columns}
         rows={items.map((r) => ({ ...r, id: r.entitlementId }))}
         emptyTitle={copy.emptyTitle}

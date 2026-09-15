@@ -24,6 +24,15 @@ export interface DirectoryListPageProps<Row extends { id: string }> {
   /**
    * Forwarded to `DataTable`. Pass `'fixed'` once every column declares a width —
    * it stops the horizontal overflow auto layout causes and keeps rows one height.
+   *
+   * @default 'auto' — deliberately *not* DataTable's own default.
+   *
+   * This wrapper forwards the prop, so when DataTable's default became `'fixed'`, every
+   * list page that had never thought about it inherited the change through here. On the
+   * applications list that meant the actions column taking the same share as Last Synced
+   * and squeezing both: 5px of overflow and a truncated timestamp. Holding `'auto'` here
+   * keeps a wrapper from making that decision on a page's behalf; each list opts in when
+   * its columns carry widths.
    */
   layout?: 'auto' | 'fixed';
   matches: (row: Row, query: string) => boolean;
@@ -76,7 +85,7 @@ export function DirectoryListPage<Row extends { id: string }>({
   downloadable = false,
   actions,
   summary,
-  layout,
+  layout = 'auto',
   hideTitle,
   hideFilter,
   filterGroups,

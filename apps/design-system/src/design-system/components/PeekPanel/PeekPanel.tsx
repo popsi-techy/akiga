@@ -74,7 +74,15 @@ export interface PeekPanelProps {
    */
   docked?: boolean;
   title: string;
-  subtitle?: string;
+  /**
+   * The line under the title — a sentence, or the objects that say the same thing better.
+   *
+   * A node rather than a string because a panel's condition is a status object: a level
+   * that reads "Approved" in a chip on the card behind it should not read "Approved" in
+   * grey prose here. Laid out as an inline row so a chip and a few words of context sit on
+   * one baseline; a plain string still renders exactly as it did.
+   */
+  subtitle?: React.ReactNode;
   onClose: () => void;
   footer?: React.ReactNode;
   children: React.ReactNode;
@@ -104,7 +112,11 @@ export function PeekPanel({
             <p className="mb-0.5 truncate text-overline uppercase text-text-tertiary">{eyebrow}</p>
           )}
           <h3 className="truncate text-h5 text-text-primary">{title}</h3>
-          {subtitle && <p className="mt-0.5 text-caption text-text-secondary">{subtitle}</p>}
+          {subtitle != null && (
+            <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-2 text-caption text-text-secondary">
+              {subtitle}
+            </div>
+          )}
         </div>
         <button
           type="button"

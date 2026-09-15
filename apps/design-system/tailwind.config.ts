@@ -106,6 +106,28 @@ const config: Config = {
         warning: 'var(--ds-color-status-warning-fg)',
         danger: 'var(--ds-color-status-danger-fg)',
       },
+      /**
+       * The stacking order from tokens.ts, so a layer can be named from a className.
+       *
+       * The scale existed in `tokens.ts` and was reachable only from an inline `style`,
+       * which is why nine call sites reached for `z-[1]` and one for `z-[1300]` — the
+       * literal value of `zIndex.drawer`. A token nobody can spend is a token nobody
+       * spends.
+       *
+       * `raised` is the one to use for "above my own sibling": local stacking contexts
+       * mean any positive value works, and naming it stops the next person inventing
+       * `z-[2]` for the same job.
+       */
+      zIndex: {
+        base: '0',
+        raised: '10',
+        sticky: '1100',
+        dropdown: '1200',
+        drawer: '1300',
+        modal: '1400',
+        toast: '1500',
+        tooltip: '1600',
+      },
       spacing: {
         0: 'var(--ds-space-0)',
         0.5: 'var(--ds-space-0_5)',

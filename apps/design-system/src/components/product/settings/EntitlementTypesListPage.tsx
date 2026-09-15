@@ -3,11 +3,9 @@
 import * as React from 'react';
 import AddOutlined from '@mui/icons-material/AddOutlined';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
-import { Button, Dialog, useToast, type Column } from '@ds/components';
+import { Button, Dialog, DirectoryListPage, RowActions, type Column, useToast } from '@ds/components';
 import { deleteEntitlementType, listEntitlementTypes, type EntitlementType } from '@/data/entitlement-types';
 import { getSystemSettingsSection } from '@/data/system-settings-catalog';
-import { DirectoryListPage } from '@/components/product/directory';
-import { RowActions } from '@/components/product/RowActions';
 import { EntitlementTypeDrawer } from './EntitlementTypeForm';
 import { SettingsDenied, SettingsLoading, useAdminSettings, useSettingsCrumbs } from './SettingsChrome';
 

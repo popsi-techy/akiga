@@ -173,6 +173,7 @@ export default function WorkflowsListPage() {
 
       <div className="min-h-0 flex-1">
         <DataTable<WorkflowRow>
+          layout="auto"
           columns={columns}
           rows={filtered}
           loading={rows === null}

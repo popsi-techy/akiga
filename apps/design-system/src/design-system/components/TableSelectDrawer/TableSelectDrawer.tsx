@@ -169,6 +169,7 @@ export function TableSelectDrawer({
           </div>
           <div className="min-h-0 flex-1">
             <DataTable<TableSelectRow>
+              layout="auto"
               columns={columns}
               rows={filtered}
               selectable

@@ -5,20 +5,8 @@ import AddIcon from '@mui/icons-material/Add';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import LaptopOutlined from '@mui/icons-material/LaptopOutlined';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
-import {
-  Button,
-  Card,
-  DataTable,
-  InfoRow,
-  InfoRowGroup,
-  Input,
-  NavList,
-  useToast,
-  type Column,
-} from '@ds/components';
+import { Button, Card, DataTable, InfoRow, InfoRowGroup, Input, NavList, PeekPanel, PeekSlot, RowActions, type Column, useToast } from '@ds/components';
 import { AppBadge } from '../sod/labels';
-import { PeekPanel, PeekSlot } from '../directory/PeekPanel';
-import { RowActions } from '../RowActions';
 import { EntityCatalogDrawer } from '../automation/EntityCatalogDrawer';
 import { TableSelectDrawer } from '../automation/TableSelectDrawer';
 import { listApps, listTechnicalRoles } from '@/data/catalog';

@@ -583,6 +583,7 @@ export function AccessCertificationReview() {
               <div className="min-h-0 flex-1 [&>div]:flex [&>div]:h-full [&>div]:min-h-0 [&>div]:flex-col [&>div>div]:min-h-0 [&>div>div]:flex-1 [&>div>div]:rounded-none [&>div>div]:border-0">
                 {step === 0 ? (
                   <DataTable<ReviewAccount>
+                    layout="auto"
                     columns={ownershipColumns}
                     rows={ownershipRows}
                     selectable
@@ -601,6 +602,7 @@ export function AccessCertificationReview() {
                   />
                 ) : (
                   <DataTable<ReviewAccount>
+                    layout="auto"
                     columns={reviewColumns}
                     rows={reviewRows}
                     selectable
@@ -622,6 +624,7 @@ export function AccessCertificationReview() {
             </div>
           ) : step === 0 ? (
             <DataTable<ReviewAccount>
+              layout="auto"
               columns={ownershipColumns}
               rows={ownershipRows}
               selectable
@@ -640,6 +643,7 @@ export function AccessCertificationReview() {
             />
           ) : (
             <DataTable<ReviewAccount>
+              layout="auto"
               columns={reviewColumns}
               rows={reviewRows}
               selectable

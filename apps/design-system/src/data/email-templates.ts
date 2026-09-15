@@ -68,7 +68,7 @@ export type EmailTemplateBodyVariant =
 
 export interface AccessRequestSubmittedBody {
   requestNumber: string;
-  requesterEmail: string;
+  requestedByEmail: string;
   submittedAt: string;
 }
 
@@ -76,7 +76,7 @@ export interface ReviewRequestNewBody {
   requestNumber: string;
   itemName: string;
   itemTypeLabel: string;
-  requesterEmail: string;
+  requestedByEmail: string;
   dueDate: string;
   reviewUrl: string;
 }
@@ -285,10 +285,10 @@ const PASSWORD_RESET_TEMPLATE: EmailTemplate = {
 const VERIFICATION_OTP_TEMPLATE: EmailTemplate = {
   id: 'verification-otp',
   name: 'Verification OTP',
-  description: 'Delivers a one-time code for MFA verification during sign-in.',
+  description: 'Delivers an OTP for MFA verification during sign-in.',
   category: 'account-security',
   kind: 'security',
-  subjectLine: 'Enter this code to finish signing in',
+  subjectLine: 'OTP for your miniOrange IGA login',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -311,11 +311,11 @@ const ACCESS_REQUEST_TEMPLATE: EmailTemplate = {
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
-    heading: 'Access Request Submitted',
+    heading: 'Access Request Submitted Successfully!',
     bodyVariant: 'access-request-submitted',
     accessRequest: {
       requestNumber: 'REQ-2026-0042',
-      requesterEmail: 'user@example.com',
+      requestedByEmail: 'user@example.com',
       submittedAt: 'Mar 4, 2026 · 10:15 AM',
     },
   },
@@ -336,8 +336,8 @@ const REVIEW_REQUEST_TEMPLATE: EmailTemplate = {
     reviewRequest: {
       requestNumber: 'AR-001',
       itemName: 'Finance Approver',
-      itemTypeLabel: 'Role',
-      requesterEmail: 'mohammed.ali@acme.com',
+      itemTypeLabel: 'Technical Role',
+      requestedByEmail: 'mohammed.ali@acme.com',
       dueDate: 'Mar 11, 2026 · 5:00 PM',
       reviewUrl: 'https://iga.example.com/reviewer/review-requests/ar-001',
     },
@@ -423,7 +423,7 @@ const REVIEW_DUE_APPROACHING_TEMPLATE: EmailTemplate = {
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
-    heading: 'Review Due Date Approaching',
+    heading: 'Access Certification Review Due Date Approaching',
     bodyVariant: 'review-due-approaching',
     reviewDueApproaching: {
       daysRemaining: 3,
@@ -458,14 +458,14 @@ const EMERGENCY_ACCESS_ASSIGNED_TEMPLATE: EmailTemplate = {
 const REVIEW_INACTIVITY_TEMPLATE: EmailTemplate = {
   id: 'review-inactivity-reminder',
   name: 'Review Inactivity Reminder',
-  description: 'Nudges a reviewer who has not updated assigned review items for several days.',
+  description: 'Nudges a reviewer who has not updated assigned resources for several days.',
   category: 'reviews-certification',
   kind: 'review-request',
   subjectLine: 'Your reviews have been idle for 3 days',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
-    heading: 'Review Inactivity Reminder',
+    heading: 'Access Certification Review Inactivity Reminder',
     bodyVariant: 'review-inactivity-reminder',
     reviewInactivityReminder: {
       daysInactive: 3,
@@ -542,10 +542,10 @@ const PROVISIONING_ACTION_TEMPLATE: EmailTemplate = {
 const REVIEWER_ATTENTION_TEMPLATE: EmailTemplate = {
   id: 'reviewer-attention-required',
   name: 'Reviewer Attention Required',
-  description: 'Asks a campaign owner to follow up with reviewers who still have open items.',
+  description: 'Asks a campaign owner to follow up with reviewers who still have unreviewed resources.',
   category: 'reviews-certification',
   kind: 'review-request',
-  subjectLine: 'Reviewers still have open items on Q1 2026',
+  subjectLine: 'Reviewers still have unreviewed resources on Q1 2026',
   updatedAt: '2026-03-04T00:00:00.000Z',
   content: {
     ...SHARED_SHELL,
@@ -577,7 +577,7 @@ const REVIEW_OVERDUE_TEMPLATE: EmailTemplate = {
 const PROVISIONING_OUTCOME_TEMPLATE: EmailTemplate = {
   id: 'provisioning-outcome',
   name: 'Provisioning Request Outcome',
-  description: 'Notifies the requester when a provisioning task was approved or rejected.',
+  description: 'Notifies the person who raised the request when a provisioning task was approved or rejected.',
   category: 'provisioning-lifecycle',
   kind: 'provisioning',
   subjectLine: 'Your request for Finance Approver was approved',

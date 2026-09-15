@@ -93,6 +93,19 @@ export interface FileAttachmentFieldProps {
   disabled?: boolean;
   readOnly?: boolean;
   /**
+   * How each file card is drawn.
+   *
+   * `filled` (the default) sits the card on the subtle ground — right inside a white
+   * panel, where a fill is what separates the card from the surface behind it.
+   *
+   * `outlined` trades the fill for a hairline. Use it where the card already sits on a
+   * tinted or grouped ground and a second fill would stack two greys, or where the
+   * surrounding block is itself outlined and a filled card reads as a different kind of
+   * object. The choice belongs to the call site, which is the only thing that knows what
+   * the card is sitting on.
+   */
+  itemVariant?: 'filled' | 'outlined';
+  /**
    * Take the leftover height of a flex column. Empty, the prompt is centred in that
    * well. With files, the list keeps the same height — cards at the top, open surface
    * below them — and scrolls only when the cards run out of room. Use on a rail with
@@ -161,6 +174,7 @@ export function FileAttachmentField({
   maxBytes = FILE_ATTACHMENT_MAX_BYTES,
   disabled = false,
   readOnly = false,
+  itemVariant = 'filled',
   fill = false,
   helperText,
   error,
@@ -525,7 +539,7 @@ export function FileAttachmentField({
           {(dropzone || beckon) && (
             <span
               aria-hidden
-              className="pointer-events-none absolute inset-0 z-[1]"
+              className="pointer-events-none absolute inset-0 z-raised"
               style={{
                 backgroundColor:
                   dragging || pageDragging
@@ -553,7 +567,7 @@ export function FileAttachmentField({
           {dragging && (
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 z-[1] grid place-items-center rounded-md"
+              className="pointer-events-none absolute inset-0 z-raised grid place-items-center rounded-md"
               style={{
                 backgroundColor: 'color-mix(in srgb, var(--ds-color-status-info-fill) 12%, transparent)',
               }}
@@ -665,7 +679,13 @@ export function FileAttachmentField({
                 }
               >
                 {shown.map((file) => (
-                  <li key={file.id} className="min-w-0 rounded-md bg-subtle">
+                  <li
+                    key={file.id}
+                    className={[
+                      'min-w-0 rounded-md',
+                      itemVariant === 'outlined' ? 'border border-border' : 'bg-subtle',
+                    ].join(' ')}
+                  >
                     <FileRow
                       file={file}
                       readOnly={readOnly || disabled}

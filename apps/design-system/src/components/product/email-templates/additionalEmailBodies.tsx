@@ -2,11 +2,13 @@
 
 import AssignmentOutlined from '@mui/icons-material/AssignmentOutlined';
 import BarChartOutlined from '@mui/icons-material/BarChartOutlined';
+import InsightsOutlined from '@mui/icons-material/InsightsOutlined';
 import CampaignOutlined from '@mui/icons-material/CampaignOutlined';
 import EventOutlined from '@mui/icons-material/EventOutlined';
 import FolderOffOutlined from '@mui/icons-material/FolderOffOutlined';
 import FolderOutlined from '@mui/icons-material/FolderOutlined';
 import HourglassEmptyOutlined from '@mui/icons-material/HourglassEmptyOutlined';
+import PendingActionsOutlined from '@mui/icons-material/PendingActionsOutlined';
 import LabelOutlined from '@mui/icons-material/LabelOutlined';
 import MailOutlineOutlined from '@mui/icons-material/MailOutlineOutlined';
 import PersonOffOutlined from '@mui/icons-material/PersonOffOutlined';
@@ -77,24 +79,29 @@ export function ReviewInactivityReminderBody({ details }: { details: ReviewInact
   return (
     <EmailBodyStack>
       <p className="text-body text-text-secondary">
-        We noticed you haven&apos;t started or updated your assigned review items. Please take a moment to complete
+        We noticed you haven&apos;t started or updated your assigned resources. Please take a moment to complete
         your reviews to stay on track.
       </p>
+      {/* "Review activity" rather than "Review inactivity": the heading above already
+          says nothing has happened, and a card repeating it spends its title on the news
+          instead of on what it holds — how long the queue has been idle, and where it
+          stands. It also joins its siblings, which are all `Review <noun>`. The header
+          icon is pending work, not time, so it no longer duplicates the hourglass on the
+          Period row directly beneath it. */}
       <EmailDetailCard
-        title="Review inactivity"
-        icon={<HourglassEmptyOutlined sx={{ fontSize: 18 }} />}
-        ariaLabel="Review inactivity"
+        title="Review activity"
+        icon={<PendingActionsOutlined sx={{ fontSize: 18 }} />}
+        ariaLabel="Review activity"
       >
+        {/* One row, not two. "Period: 3 days" and "Status: no activity for 3 days" were
+            the same fact twice — the second row spent a whole line restating the first
+            and naming what the paragraph above already named. The label carries what the
+            duration is a duration *of*, so the number needs no sentence around it. */}
         <DetailField
           icon={<HourglassEmptyOutlined sx={{ fontSize: 16 }} />}
-          label="Period"
+          label="Inactivity period"
           value={`${details.daysInactive} ${dayWord}`}
           valueClassName="tabular-nums"
-        />
-        <DetailField
-          icon={<WarningAmberOutlined sx={{ fontSize: 16 }} />}
-          label="Status"
-          value={`No activity on assigned review items for ${details.daysInactive} ${dayWord}`}
         />
       </EmailDetailCard>
       <CtaWithFallback buttonLabel="Open Review Dashboard" url={details.dashboardUrl} />
@@ -188,7 +195,7 @@ export function ReviewerAttentionRequiredBody({ details }: { details: ReviewerAt
   return (
     <EmailBodyStack>
       <p className="text-body text-text-secondary">
-        One or more reviewers on your team have unreviewed items in the campaign{' '}
+        One or more reviewers on your team have unreviewed resources in the campaign{' '}
         <span className="font-emphasis text-text-primary">{details.campaignName}</span>. Please follow up so the
         campaign can stay on schedule.
       </p>
@@ -202,25 +209,24 @@ export function ReviewOverdueBody({ details }: { details: ReviewOverdueBody }) {
   return (
     <EmailBodyStack>
       <p className="text-body text-text-secondary">
-        You have missed the deadline for completing your assigned review items in the campaign.
+        You have missed the deadline for completing your assigned review in the access certification campaign.
       </p>
+      {/* "Review deadline", not "Review overdue". Overdue was the third thing saying
+          overdue inside four centimetres — the email's own heading, the paragraph above,
+          and the amber chip on this very row. The chip is the status object and carries
+          that; the title names what the card reports. It is also the title the same card
+          carries in the due-date email, so one card means one thing in both. */}
       <EmailDetailCard
-        title="Review overdue"
+        title="Review deadline"
         icon={<WarningAmberOutlined sx={{ fontSize: 18 }} />}
         status={{ intent: 'warning', label: 'Overdue' }}
-        ariaLabel="Review overdue status"
+        ariaLabel="Review deadline status"
       >
         <DetailField
           icon={<HourglassEmptyOutlined sx={{ fontSize: 16 }} />}
           label="Overdue by"
           value={`${details.daysOverdue} ${dayWord}`}
           valueClassName="tabular-nums"
-        />
-        <DetailField
-          icon={<WarningAmberOutlined sx={{ fontSize: 16, color: 'var(--ds-color-status-warning-fg)' }} />}
-          label="Status"
-          value={`Your review is overdue by ${details.daysOverdue} ${dayWord}`}
-          valueClassName="text-[var(--ds-color-status-warning-fg)]"
         />
       </EmailDetailCard>
       <p className="text-body-sm text-text-secondary">
@@ -261,7 +267,7 @@ export function ReviewDurationExtendedBody({ details }: { details: ReviewDuratio
     <EmailBodyStack>
       <p className="text-body text-text-secondary">
         The review duration for your assigned campaign has been extended. You can continue working through your
-        assigned items.
+        assigned resources.
       </p>
       <EmailDetailCard
         title="Review extension"
@@ -321,9 +327,22 @@ export function RoleMiningResultsBody({ details }: { details: RoleMiningResultsB
         <span className="font-emphasis text-text-primary">{details.sourceName}</span>. The results are ready for your
         review — you can accept or reject the proposed roles.
       </p>
+      {/* The product's own role-mining icon (`settingsIcons`), not a second bar chart:
+          the header was wearing the same glyph as the Mined roles row directly beneath
+          it, so the card's identity and its first field were indistinguishable. */}
+      {/* "Outliers found" as a chip on the header, not amber on a metric.
+          The count and its icon used to turn amber above zero, which spent a status
+          colour on a plain value in a definition list — §5.2 reserves status colour for
+          status objects, and the card has a slot for exactly one. The number stays a
+          number; the card says whether it needs attention. */}
       <EmailDetailCard
         title="Role mining summary"
-        icon={<BarChartOutlined sx={{ fontSize: 18 }} />}
+        icon={<InsightsOutlined sx={{ fontSize: 18 }} />}
+        status={
+          details.outlierAccountsCount > 0
+            ? { intent: 'warning', label: 'Outliers found' }
+            : undefined
+        }
         ariaLabel="Role mining summary"
       >
         <DetailField
@@ -333,23 +352,10 @@ export function RoleMiningResultsBody({ details }: { details: RoleMiningResultsB
           valueClassName="tabular-nums"
         />
         <DetailField
-          icon={
-            <WarningAmberOutlined
-              sx={{
-                fontSize: 16,
-                ...(details.outlierAccountsCount > 0
-                  ? { color: 'var(--ds-color-status-warning-fg)' }
-                  : {}),
-              }}
-            />
-          }
+          icon={<WarningAmberOutlined sx={{ fontSize: 16 }} />}
           label="Outlier accounts"
           value={String(details.outlierAccountsCount)}
-          valueClassName={
-            details.outlierAccountsCount > 0
-              ? 'tabular-nums text-[var(--ds-color-status-warning-fg)]'
-              : 'tabular-nums'
-          }
+          valueClassName="tabular-nums"
         />
       </EmailDetailCard>
       <p className="text-body-sm text-text-secondary">

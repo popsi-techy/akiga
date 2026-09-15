@@ -4,12 +4,11 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
-import { Button, IdentityCell, Tooltip, type Column } from '@ds/components';
+import { Button, IdentityCell, PeekPanel, PeekSlot, Tooltip, type Column } from '@ds/components';
 import { AppBadge } from '../sod/labels';
 import { EntityAvatar } from './EntityAvatar';
 import { RelationTable } from './DetailShell';
 import { AccountDetailsBody } from './AccountDetailsBody';
-import { PeekPanel, PeekSlot } from './PeekPanel';
 import type { AppAccountRow } from '@/data/directory';
 
 /**

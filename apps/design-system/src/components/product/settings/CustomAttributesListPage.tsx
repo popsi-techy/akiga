@@ -2,15 +2,7 @@
 
 import * as React from 'react';
 import AddOutlined from '@mui/icons-material/AddOutlined';
-import {
-  Button,
-  Dialog,
-  StatusChip,
-  useToast,
-  type Column,
-  type FilterGroup,
-  type FilterSelection,
-} from '@ds/components';
+import { Button, Dialog, DirectoryListPage, RowActions, StatusChip, type Column, type FilterGroup, type FilterSelection, useToast } from '@ds/components';
 import {
   CUSTOM_ATTRIBUTE_FIELD_TYPES,
   customAttributeFieldTypeLabel,
@@ -19,8 +11,6 @@ import {
   type CustomAttribute,
 } from '@/data/custom-attributes';
 import { getSystemSettingsSection } from '@/data/system-settings-catalog';
-import { DirectoryListPage } from '@/components/product/directory';
-import { RowActions } from '@/components/product/RowActions';
 import { CustomAttributeDrawer } from './CustomAttributeForm';
 import { SettingsDenied, SettingsLoading, useAdminSettings, useSettingsCrumbs } from './SettingsChrome';
 

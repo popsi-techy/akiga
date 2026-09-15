@@ -276,6 +276,7 @@ export function SelectItemsStep({
         </div>
         <div className="min-h-0 flex-1 p-3">
           <DataTable<AccessRequestItem & { id: string }>
+            layout="auto"
             columns={columns}
             rows={visibleEnts.map((r) => ({ ...r, id: r.entitlementId }))}
             fillHeight
@@ -487,6 +488,7 @@ function CatalogItemsStep({
       </div>
       <div className="min-h-0 flex-1 p-3">
         <DataTable<AccessRequestItem & { id: string }>
+          layout="auto"
           columns={columns}
           rows={visible.map((r) => ({ ...r, id: r.entitlementId }))}
           fillHeight

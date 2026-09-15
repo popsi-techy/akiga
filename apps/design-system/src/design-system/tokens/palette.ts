@@ -120,6 +120,40 @@ export const palette = {
     800: '#172B4D',
     900: '#292A2E',
   },
+
+  /**
+   * Categorical — hues that group by *kind*, where the colour carries no severity.
+   *
+   * The only family here that is not a ramp, because it is not measuring anything: the
+   * canvas palette needs tiles that are told apart at a glance and mean nothing in
+   * order. They deliberately sit outside `blue` / `yellow` / `green`, which the status
+   * roles own: a node tile borrowing `status.info` would say "informational" about a step
+   * that is simply a task.
+   *
+   * Each pair is a glyph on its own tint — a graphical object, so the floor is WCAG
+   * 1.4.11's 3:1 rather than 4.5:1. Measured, as of naming them:
+   *
+   *   violet 4.10 · blue 3.46 · rose 3.93 · **amber 1.94** · **teal 2.83**
+   *
+   * Amber and teal do not clear the floor. They were the same values before this role
+   * existed — naming them is what made it measurable — so they are recorded here rather
+   * than quietly corrected, because changing them changes how every canvas looks and that
+   * is the owner's call. The same hue and saturation clears 3:1 at `#C27D08` (3.04) and
+   * `#0D9D75` (3.07). They are deliberately NOT in check-contrast.ts yet: adding them
+   * would fail the gate, and a waiver should be granted, not assumed.
+   */
+  categorical: {
+    violetFg: '#7C4DFF',
+    violetBg: '#EFEAFE',
+    blueFg: '#2E7CF6',
+    blueBg: '#E8F1FE',
+    amberFg: '#F59E0B',
+    amberBg: '#FFF1E3',
+    roseFg: '#D4405C',
+    roseBg: '#FDECEF',
+    tealFg: '#0EA47A',
+    tealBg: '#E4F6EF',
+  },
 } as const;
 
 export type Palette = typeof palette;

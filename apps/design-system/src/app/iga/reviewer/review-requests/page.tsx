@@ -238,6 +238,7 @@ export default function ReviewRequestsPage() {
 
       <div className="min-h-0 flex-1">
         <DataTable<ReviewRequestRow>
+          layout="auto"
           columns={columns}
           rows={filtered}
           selectable={tab === 'pending'}

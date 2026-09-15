@@ -267,6 +267,7 @@ export function ProvisioningSetupTab({
                   </div>
                   <div className="min-h-0 flex-1">
                     <DataTable<AppAuthorization>
+                      layout="auto"
                       columns={columns}
                       rows={filtered}
                       fillHeight

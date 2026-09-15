@@ -1935,7 +1935,7 @@ function RemoveAccessColumns({
 
         <div className="ds-scroll min-h-0 flex-1 overflow-y-auto px-5 pb-5">
           {fastest.length > 0 && (
-            <div className="mb-5 rounded-xl border border-[#90CAF9] bg-[var(--ds-color-status-info-subtle)] p-4">
+            <div className="mb-5 rounded-xl border border-[var(--ds-color-status-info-border)] bg-[var(--ds-color-status-info-subtle)] p-4">
               <div className="flex items-start gap-3">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface text-[var(--ds-color-status-info-fg)]">
                   <AutoAwesomeOutlined sx={{ fontSize: 20 }} />

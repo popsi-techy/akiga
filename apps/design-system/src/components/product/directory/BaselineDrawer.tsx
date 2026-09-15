@@ -168,6 +168,7 @@ export function BaselineDrawer({
 
           <div className="min-h-0 flex-1">
             <DataTable<EntitlementRow>
+              layout="auto"
               columns={columns}
               rows={filtered}
               fillHeight

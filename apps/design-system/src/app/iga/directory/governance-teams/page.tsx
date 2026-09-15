@@ -4,7 +4,8 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import type { Column } from '@ds/components';
 import { listGovernanceTeamRows, type GovernanceTeamRow } from '@/data/directory';
-import { DirectoryListPage, EntityAvatar } from '@/components/product/directory';
+import { EntityAvatar } from '@/components/product/directory';
+import { DirectoryListPage } from '@ds/components';
 
 export default function GovernanceTeamsListPage() {
   const router = useRouter();

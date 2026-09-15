@@ -201,6 +201,7 @@ export default function AccessRequestAuditPage() {
           tabs' worth of detail, which needs more room than a table can give up. */}
       <div className="min-h-0 flex-1">
         <DataTable<AuditEntry>
+          layout="auto"
           columns={columns}
           rows={rows}
           fillHeight
