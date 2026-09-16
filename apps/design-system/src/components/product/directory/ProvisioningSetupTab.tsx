@@ -6,6 +6,7 @@ import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import KeyOutlined from '@mui/icons-material/KeyOutlined';
 import LanOutlined from '@mui/icons-material/LanOutlined';
+import TuneOutlined from '@mui/icons-material/TuneOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import LinkOffOutlined from '@mui/icons-material/LinkOffOutlined';
@@ -22,6 +23,7 @@ import {
   type Column,
 } from '@ds/components';
 import { AuthorizationDrawer } from './AuthorizationDrawer';
+import { AdvancedAttributeMappingPanel } from './AdvancedAttributeMappingPanel';
 import { ConnectionConfiguration } from './ConnectionConfiguration';
 import { ScimInboundPanel } from './ScimInboundPanel';
 import {
@@ -35,7 +37,7 @@ import {
 import { listConnectionEvents } from '@/data/connection-events';
 import { applicationHasScimInbound } from '@/data/scim-inbound';
 
-type Section = 'authorization' | 'connection';
+type Section = 'authorization' | 'connection' | 'advanced';
 
 /**
  * Provisioning — everything the connector needs before it can act on this
@@ -64,10 +66,24 @@ export function ProvisioningSetupTab({
 
   // Stored in localStorage, so it can only be read after mount.
   const [eventCount, setEventCount] = React.useState(0);
+  const [mappingCount, setMappingCount] = React.useState(0);
 
   const refresh = React.useCallback(() => {
     setRows(listAuthorizations(applicationId));
-    setEventCount(listConnectionEvents(applicationId).length);
+    const events = listConnectionEvents(applicationId);
+    setEventCount(events.length);
+    setMappingCount(
+      events
+        .filter((e) => e.kind === 'accounts-fetch' || e.kind === 'entitlements-fetch')
+        .reduce(
+          (n, e) =>
+            n +
+            e.attributes.filter(
+              (r) => r.applicationField.trim() !== '' && (r.igaAttribute !== '' || r.expression.trim() !== ''),
+            ).length,
+          0,
+        ),
+    );
   }, [applicationId]);
   React.useEffect(() => refresh(), [refresh]);
 
@@ -225,6 +241,12 @@ export function ProvisioningSetupTab({
               label: 'Connection configuration',
               count: eventCount,
             },
+            {
+              id: 'advanced',
+              icon: <TuneOutlined sx={{ fontSize: 18 }} />,
+              label: 'Advanced attribute mapping',
+              count: mappingCount,
+            },
           ]}
         />
       </Card>
@@ -295,6 +317,16 @@ export function ProvisioningSetupTab({
               }}
             />
           </div>
+        )}
+        {section === 'advanced' && (
+          <AdvancedAttributeMappingPanel
+            applicationId={applicationId}
+            applicationName={applicationName}
+            onChanged={() => {
+              refresh();
+              onChanged?.();
+            }}
+          />
         )}
       </div>
     </div>

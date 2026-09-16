@@ -592,7 +592,7 @@
         "with-count"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/quick-filter/page.tsx",
-      "notes": "Standalone single-select filter chips where null means \"show all\", and clicking the active chip clears it. Chip height follows the shared control scale (sm 36 / md 40) so it lines up with the Input beside it in a table toolbar."
+      "notes": "Standalone single-select filter chips where null means \"show all\", and clicking the active chip clears it. `clearable={false}` makes the choice required instead: the ✕ goes, the active chip stays put, onChange never emits null, and the chips report as a radio group — for a control where every option is a real answer and \"unset\" is not one of them, such as a reporting period. Chip height follows the shared control scale (sm 36 / md 40) so it lines up with the Input beside it in a table toolbar."
     },
     {
       "name": "Radio",
@@ -627,7 +627,7 @@
         "disabled"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/radio-card-group/page.tsx",
-      "notes": "Single-choice selector as icon + label cards. Use when the options need explanation; a bare Select when they do not."
+      "notes": "Single-choice selector as icon + label cards. Use when the options need explanation; a bare Select when they do not. The radio dot centres on the 32px icon tile when an option has an icon, and aligns to the label's first line when it does not — a 16px dot pinned to the top of a 32px neighbour reads as misaligned."
     },
     {
       "name": "RelationshipCanvas",

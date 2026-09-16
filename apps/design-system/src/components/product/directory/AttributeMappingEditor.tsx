@@ -8,10 +8,16 @@ import { Button, Input, Select, Tooltip } from '@ds/components';
 import {
   ATTRIBUTE_SOURCES,
   IGA_ATTRIBUTES,
+  formatDateSample,
   mappingComplete,
+  needsDateFormat,
   type AttributeMapping,
   type AttributeSource,
 } from '@/data/connection-events';
+
+/** Read once — column-level format gate: mismatch skips updating this field on sync. */
+const SOURCE_DATE_PATTERN_HINT =
+  'Enter how dates are written in the source field — for example dd/MM/yyyy or yyyy-MM-dd. On sync, IGA checks the column against this pattern. If it does not match, this field is not updated.';
 
 export const blankMappingRow = (i: number): AttributeMapping => ({
   id: `m-${Date.now().toString(36)}-${i}`,
@@ -111,6 +117,8 @@ export function AttributeMappingEditor({
             {rows.map((row) => {
               const hasExpression = row.expression.trim() !== '';
               const bad = Boolean(touched && started.includes(row) && !mappingComplete(row));
+              const dated = needsDateFormat(row);
+              const sample = dated ? formatDateSample(row.dateFormat ?? '') : null;
               return (
                 <div key={row.id} className={`${COLS} items-start py-3`}>
                   <Select
@@ -128,20 +136,73 @@ export function AttributeMappingEditor({
                     onChange={(e) => update(row.id, { applicationField: e.target.value })}
                     error={bad && !row.applicationField.trim() ? 'Name the field.' : undefined}
                   />
-                  <Select
-                    ariaLabel="IGA attribute"
-                    placeholder="Select"
-                    options={IGA_ATTRIBUTES[row.source]}
-                    value={hasExpression ? '' : row.igaAttribute}
-                    onChange={(v) => update(row.id, { igaAttribute: v })}
-                    disabled={hasExpression}
-                    helperText={hasExpression ? 'Set by the expression' : undefined}
-                    error={
-                      bad && row.applicationField.trim() !== ''
-                        ? 'Pick one or write an expression.'
-                        : undefined
-                    }
-                  />
+                  {/*
+                    The format sits beside the attribute, inside its cell — not in the
+                    Transformation column next door, and without widening the column.
+
+                    A date's format is part of reading that attribute, so it belongs to the
+                    attribute. The cell holds both by letting the select give up what it
+                    does not need: the value is chosen, so a truncated one is recoverable
+                    from the row it sits in and from its own tooltip, while the format is
+                    the thing being checked and keeps enough width to be read whole.
+                  */}
+                  <div className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                    <Select
+                      ariaLabel="IGA attribute"
+                      placeholder="Select"
+                      options={IGA_ATTRIBUTES[row.source]}
+                      value={hasExpression ? '' : row.igaAttribute}
+                      /* The format belongs to the date. Leave it behind on a row that is no
+                         longer a date and it becomes a saved value nothing reads. */
+                      onChange={(v) => update(row.id, { igaAttribute: v, dateFormat: undefined })}
+                      disabled={hasExpression}
+                      helperText={hasExpression ? 'Set by the expression' : undefined}
+                      /* Only when there is genuinely nothing chosen. The row's `bad` flag
+                         says the row is unfinished, which used to be the same thing — now a
+                         row can be unfinished because its date has no format, and this
+                         select would tell you to pick an attribute you had already picked,
+                         with the real error sitting underneath it. */
+                      error={
+                        bad && row.applicationField.trim() !== '' && !hasExpression && row.igaAttribute === ''
+                          ? 'Pick one or write an expression.'
+                          : undefined
+                      }
+                    />
+                    </div>
+                    {dated && (
+                      <div className="w-[104px] shrink-0">
+                        <Input
+                          aria-label="Column date pattern"
+                          placeholder="dd/MM/yyyy"
+                          value={row.dateFormat ?? ''}
+                          onChange={(e) => update(row.id, { dateFormat: e.target.value })}
+                          endAdornment={
+                            <Tooltip title={SOURCE_DATE_PATTERN_HINT}>
+                              <span
+                                tabIndex={0}
+                                aria-label={SOURCE_DATE_PATTERN_HINT}
+                                className="inline-flex shrink-0 text-icon-subtle"
+                              >
+                                <InfoOutlined sx={{ fontSize: 14 }} />
+                              </span>
+                            </Tooltip>
+                          }
+                          /* "Column format check" before there is anything in it; once you
+                             type, what you typed read back against a known date so you can
+                             confirm the column gate will read day and month the way the
+                             source stores them. The info icon carries the full why — same
+                             split as the Transformation column header. */
+                          helperText={sample ? `e.g. ${sample}` : 'Column format check'}
+                          error={
+                            bad && (row.dateFormat ?? '').trim() === ''
+                              ? 'Enter the column date pattern.'
+                              : undefined
+                          }
+                        />
+                      </div>
+                    )}
+                  </div>
                   <Input
                     aria-label="Transformation"
                     placeholder="Optional"

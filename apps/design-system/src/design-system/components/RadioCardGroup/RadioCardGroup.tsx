@@ -48,6 +48,16 @@ export function RadioCardGroup({
       {options.map((opt) => {
         const selected = value === opt.value;
         const hasMeta = Boolean(opt.icon || opt.description);
+        const dot = (
+          <span
+            className={[
+              'grid h-4 w-4 shrink-0 place-items-center rounded-full border',
+              selected ? 'border-brand' : 'border-border-strong',
+            ].join(' ')}
+          >
+            {selected && <span className="h-2 w-2 rounded-full bg-brand" />}
+          </span>
+        );
         return (
           <button
             key={opt.value}
@@ -74,15 +84,15 @@ export function RadioCardGroup({
               'disabled:cursor-not-allowed disabled:opacity-50',
             ].join(' ')}
           >
-            <span
-              className={[
-                'grid h-4 w-4 shrink-0 place-items-center rounded-full border',
-                hasMeta ? 'mt-0.5' : '',
-                selected ? 'border-brand' : 'border-border-strong',
-              ].join(' ')}
-            >
-              {selected && <span className="h-2 w-2 rounded-full bg-brand" />}
-            </span>
+            {/* With an icon the control sits against a 32px tile, so it centres on
+                that tile rather than on the first line of text — a 16px dot pinned to
+                the top of a 32px neighbour reads as misaligned. Without an icon it
+                still aligns to the label's first line, which is where the eye starts. */}
+            {opt.icon ? (
+              <span className="mt-0.5 flex h-8 shrink-0 items-center">{dot}</span>
+            ) : (
+              <span className={hasMeta ? 'mt-0.5 flex shrink-0' : 'flex shrink-0'}>{dot}</span>
+            )}
             {opt.icon && (
               <span
                 className={[

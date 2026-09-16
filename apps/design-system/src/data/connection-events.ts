@@ -99,8 +99,44 @@ export const IGA_ATTRIBUTES: Record<AttributeSource, { value: string; label: str
     { value: 'externalId', label: 'External ID' },
     { value: 'createdAt', label: 'Created at' },
     { value: 'lastSyncedAt', label: 'Last synced at' },
+    { value: 'terminationDate', label: 'Termination date' },
   ],
 };
+
+/**
+ * Attributes that are a date, and so cannot be read without knowing its shape.
+ *
+ * Every other attribute is a string IGA passes through. A date is a string that has to
+ * parse, and an HR system will send 04/03/2026 meaning either the fourth of March or the
+ * third of April — guessing produces a leaver date that is silently months wrong, which is
+ * the one attribute where being wrong revokes the wrong person's access.
+ *
+ * `startDate` under custom-user is the obvious next member; it is not here yet because
+ * nothing asked for it, and adding a required field to an attribute people already map
+ * would make their finished rows incomplete.
+ */
+const DATE_ATTRIBUTES = new Set(['terminationDate']);
+
+/** Whether this mapping has to declare an incoming date format. */
+export const needsDateFormat = (m: Pick<AttributeMapping, 'igaAttribute' | 'expression'>) =>
+  m.expression.trim() === '' && DATE_ATTRIBUTES.has(m.igaAttribute);
+
+/**
+ * The pattern rendered against one fixed instant, so the reader can see what they typed.
+ *
+ * Every field of the sample is a different number — March, the 9th, 17:04:05 — so no token
+ * can look correct by coincidence. Returns null when the pattern carries no recognisable
+ * token at all, which is the case worth saying something about.
+ */
+const SAMPLE = { yyyy: '2026', yy: '26', MMMM: 'March', MMM: 'Mar', MM: '03', dd: '09', HH: '17', mm: '04', ss: '05' };
+const TOKEN = /yyyy|yy|MMMM|MMM|MM|dd|HH|mm|ss/g;
+
+export function formatDateSample(pattern: string): string | null {
+  const p = pattern.trim();
+  if (p === '' || !TOKEN.test(p)) return null;
+  TOKEN.lastIndex = 0;
+  return p.replace(TOKEN, (t) => SAMPLE[t as keyof typeof SAMPLE]);
+}
 
 export interface AttributeMapping {
   id: string;
@@ -111,11 +147,23 @@ export interface AttributeMapping {
   igaAttribute: string;
   /** Composes a value from several attributes — supersedes `igaAttribute`. */
   expression: string;
+  /**
+   * How the source system writes this date — `dd/MM/yyyy`, `yyyy-MM-dd`, and so on. Sync
+   * checks the column against it once; a mismatch skips updating this field. Only for
+   * `DATE_ATTRIBUTES`; ignored elsewhere.
+   */
+  dateFormat?: string;
 }
 
-/** A row is finished when it names a field and has something to put in it. */
+/**
+ * A row is finished when it names a field, has something to put in it, and — for a date —
+ * says how that date is written. A termination date with no format is not a half-finished
+ * row, it is a row that will parse wrongly on the first sync.
+ */
 export const mappingComplete = (m: AttributeMapping) =>
-  m.applicationField.trim() !== '' && (m.expression.trim() !== '' || m.igaAttribute !== '');
+  m.applicationField.trim() !== '' &&
+  (m.expression.trim() !== '' || m.igaAttribute !== '') &&
+  (!needsDateFormat(m) || (m.dateFormat ?? '').trim() !== '');
 
 export interface ConnectionEvent {
   id: string;
@@ -284,6 +332,28 @@ export function listConnectionEvents(applicationId: string): ConnectionEvent[] {
   return Object.values(readStore().events)
     .filter((e) => e.applicationId === applicationId)
     .sort((a, b) => a.priority - b.priority || a.name.localeCompare(b.name));
+}
+
+/** The first configured call of this kind for an application, if any. */
+export function getConnectionEventByKind(
+  applicationId: string,
+  kind: EventKind,
+): ConnectionEvent | null {
+  return listConnectionEvents(applicationId).find((e) => e.kind === kind) ?? null;
+}
+
+/** Returns an existing fetch event or creates a disabled stub the mapping UI can save into. */
+export function ensureConnectionEventForKind(
+  applicationId: string,
+  kind: EventKind,
+): ConnectionEvent {
+  const existing = getConnectionEventByKind(applicationId, kind);
+  if (existing) return existing;
+  return saveConnectionEvent({
+    ...emptyEvent(applicationId, kind),
+    name: eventKindMeta(kind).label,
+    enabled: false,
+  });
 }
 
 const makeId = () => `evt-${Math.random().toString(36).slice(2, 10)}`;

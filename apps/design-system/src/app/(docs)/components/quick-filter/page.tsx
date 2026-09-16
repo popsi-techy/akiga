@@ -9,6 +9,7 @@ type Status = 'active' | 'pending' | 'revoked';
 export default function QuickFilterDocs() {
   const [status, setStatus] = React.useState<Status | null>(null);
   const [risk, setRisk] = React.useState<string | null>('critical');
+  const [period, setPeriod] = React.useState<string | null>('last-quarter');
 
   return (
     <>
@@ -50,6 +51,29 @@ export default function QuickFilterDocs() {
       </Section>
 
       <Section
+        title="A required choice, when none is not an answer"
+        description="`clearable={false}` drops the ✕ and makes the active chip stay put — for a control where every option is a real answer and “unset” is not one of them. A reporting period is always some period. The chips also report as a radio group rather than as toggles, so assistive technology announces the choice being made instead of a state the reader cannot leave."
+      >
+        <Example label="Reporting period">
+          <QuickFilter
+            ariaLabel="Reporting period"
+            clearable={false}
+            value={period}
+            onChange={(v) => v && setPeriod(v)}
+            options={[
+              { value: 'last-30', label: 'Last 30 days' },
+              { value: 'this-quarter', label: 'This quarter' },
+              { value: 'last-quarter', label: 'Last quarter' },
+              { value: 'ytd', label: 'Year to date' },
+            ]}
+          />
+          <span className="text-body-sm text-text-secondary">
+            selected: <Code>{period}</Code>
+          </span>
+        </Example>
+      </Section>
+
+      <Section
         title="Chips sit on the control scale"
         description="Chip height follows the shared control scale — sm 36px, md 40px — so a Quick Filter lines up with the Input and Button beside it in a table toolbar without hand-tuning."
       >
@@ -57,7 +81,8 @@ export default function QuickFilterDocs() {
           rows={[
             { name: 'options', type: 'QuickFilterOption<T>[]', description: 'The chips: value, label, and an optional count shown after the label.' },
             { name: 'value', type: 'T | null', description: 'The selected value, or null when nothing is filtered.' },
-            { name: 'onChange', type: '(value: T | null) => void', description: 'Fires with the chosen value, or null when the active chip is cleared.' },
+            { name: 'onChange', type: '(value: T | null) => void', description: 'Fires with the chosen value, or null when the active chip is cleared. Never null when clearable is false.' },
+            { name: 'clearable', type: 'boolean', default: 'true', description: 'Whether the active chip can be cleared back to “no filter”. False drops the ✕ and makes the choice required.' },
             { name: 'size', type: "'sm' | 'md'", default: "'sm'", description: 'Matches the shared control heights: sm 36px, md 40px.' },
             { name: 'ariaLabel', type: 'string', description: 'Names the group. The chips report aria-pressed individually.' },
           ]}
@@ -71,11 +96,12 @@ export default function QuickFilterDocs() {
             'Keep the set short; these are shortcuts, not the full filter surface.',
             'Put it in the table toolbar beside search, at size sm.',
             'Move rarely used facets into a Filters drawer instead of adding chips.',
+            'Reach for SegmentedControl when the choice deserves the weight of a connected track; chips are the lighter of the two, and a screen already carrying a track should not carry a second.',
           ]}
           donts={[
             'Don’t use it for multi-select — this control is single-choice by contract.',
-            'Don’t use it where one option must always be on; that is SegmentedControl.',
             'Don’t hide the cleared state behind a separate “All” chip — clicking the active chip already clears.',
+            'Don’t leave it clearable where “no selection” is not a state the screen can be in; pass clearable={false} rather than ignoring the null.',
             'Don’t exceed one row of chips at the narrowest supported width.',
           ]}
         />

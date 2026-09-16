@@ -20,6 +20,7 @@ import {
   type ReportSectionV2,
 } from '@/data/governance-analytics-v2';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
+import { CUSTOM_ANALYTICS_CRUMBS } from '@/data/reports';
 
 /**
  * Configure a report — one screen, not a wizard.
@@ -36,7 +37,7 @@ export default function GovernanceAnalyticsV2CreatePage() {
   const router = useRouter();
   const toast = useToast();
   useSetBreadcrumbs([
-    { label: 'Governance Analytics V2', href: '/iga/governance-analytics-v2' },
+    ...CUSTOM_ANALYTICS_CRUMBS,
     { label: 'Create report', href: '/iga/governance-analytics-v2/templates' },
     { label: 'From scratch' },
   ]);

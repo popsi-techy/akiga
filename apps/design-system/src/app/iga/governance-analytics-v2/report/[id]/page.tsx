@@ -33,6 +33,7 @@ import {
 } from '@/data/governance-analytics-v2';
 import { formatDateTime } from '@/lib/datetime';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
+import { CUSTOM_ANALYTICS_CRUMBS } from '@/data/reports';
 
 /**
  * A rendered report, and the dock that changes it.
@@ -101,10 +102,7 @@ function ReportRoute() {
 
   useSetBreadcrumbs(
     React.useMemo(
-      () => [
-        { label: 'Governance Analytics V2', href: '/iga/governance-analytics-v2' },
-        { label: report?.name || 'Report' },
-      ],
+      () => [...CUSTOM_ANALYTICS_CRUMBS, { label: report?.name || 'Report' }],
       [report?.name],
     ),
   );

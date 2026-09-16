@@ -31,6 +31,7 @@ import {
 } from '@/data/governance-analytics-v2';
 import { formatDate } from '@/lib/datetime';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
+import { CUSTOM_ANALYTICS_CRUMBS } from '@/data/reports';
 
 const FILTER_GROUPS: FilterGroup[] = [
   {
@@ -81,7 +82,7 @@ function matchesFilters(report: ReportV2, selection: FilterSelection) {
 export default function GovernanceAnalyticsV2Page() {
   const router = useRouter();
   const toast = useToast();
-  useSetBreadcrumbs([{ label: 'Governance Analytics V2' }]);
+  useSetBreadcrumbs([...CUSTOM_ANALYTICS_CRUMBS]);
 
   // localStorage-backed, so read after mount — `null` keeps DataTable in its skeleton
   // rather than flashing an empty state the store would contradict.

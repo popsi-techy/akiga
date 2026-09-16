@@ -20,6 +20,7 @@ import {
   type SectionCategory,
 } from '@/data/governance-analytics-v2';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
+import { CUSTOM_ANALYTICS_CRUMBS } from '@/data/reports';
 
 /**
  * Create a report — the template gallery.
@@ -177,10 +178,7 @@ function ReportTemplatePreview({
 
 export default function GovernanceAnalyticsV2TemplatesPage() {
   const router = useRouter();
-  useSetBreadcrumbs([
-    { label: 'Governance Analytics V2', href: '/iga/governance-analytics-v2' },
-    { label: 'Create report' },
-  ]);
+  useSetBreadcrumbs([...CUSTOM_ANALYTICS_CRUMBS, { label: 'Create report' }]);
 
   const [query, setQuery] = React.useState('');
   const [active, setActive] = React.useState<SectionCategory>('Access');
