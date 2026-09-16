@@ -10,7 +10,7 @@ import {
   type UserIdentityRow,
 } from '@/data/directory';
 import type { IdentityStatus } from '@/data/seed';
-import { IdentityKindChip, RiskScoreChip } from '@/components/product/directory';
+import { IdentityKindChip } from '@/components/product/directory';
 import { formatDate } from '@/lib/datetime';
 
 const STATUS: Record<IdentityStatus, { label: string; intent: StatusIntent }> = {
@@ -114,16 +114,6 @@ export default function ExternalIdentitiesListPage() {
       wrap: true,
       value: (r) => STATUS[r.status].label,
       render: (r) => <StatusChip intent={STATUS[r.status].intent} label={STATUS[r.status].label} />,
-    },
-    {
-      id: 'risk',
-      header: 'Risk',
-      sortable: true,
-      align: 'right',
-      width: 110,
-      wrap: true,
-      value: (r) => r.riskScore,
-      render: (r) => <RiskScoreChip score={r.riskScore} />,
     },
   ];
 

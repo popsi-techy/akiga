@@ -9,7 +9,6 @@ import {
   saveConnectionEvent,
   type AttributeMapping,
   type ConnectionEvent,
-  type EventKind,
 } from '@/data/connection-events';
 import { AttributeMappingEditor, blankMappingRow } from './AttributeMappingEditor';
 import { IdentityClassificationCard } from './IdentityClassificationCard';
@@ -123,7 +122,7 @@ export function AdvancedAttributeMappingPanel({
             key={fetchTab}
             applicationId={applicationId}
             applicationName={applicationName}
-            kind={fetchTab as EventKind}
+            kind={fetchTab}
           />
         </div>
       </section>
