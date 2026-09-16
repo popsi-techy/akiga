@@ -3,16 +3,19 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import ArrowForward from '@mui/icons-material/ArrowForward';
+import EventRepeatOutlined from '@mui/icons-material/EventRepeatOutlined';
 import { Meter, StatusChip } from '@ds/components';
 import {
-  COMPLIANCE_FRAMEWORKS,
   SAMA_CLAUSES,
   clauseCoverage,
   clausesForFramework,
   evidenceGaps,
+  nextScheduledRun,
+  schedulesForFramework,
   sealOutcome,
   type ComplianceFramework,
 } from '@/data/reports';
+import { formatDate } from '@/lib/datetime';
 import { ReportStateChip } from './ReportStateChip';
 
 /**
@@ -28,9 +31,23 @@ import { ReportStateChip } from './ReportStateChip';
  * still to come stay on the quieter treatment — they have nothing to report yet, and a
  * greyed-out coverage bar reading zero would say "nothing is evidenced" when the truth is
  * "we have not built this".
+ *
+ * A live card also says how it is **produced**. Readiness without a cadence is a screen;
+ * readiness with one is an artefact that will be sealed and mailed on a date, and a reader
+ * deciding whether 8 of 15 clauses is urgent needs to know which of the two they are
+ * looking at. Schedules moved off the hub's rail, so this line is how a reader gets from a
+ * framework to the subscription behind it.
  */
-export function CompliancePackagesTab() {
+export function CompliancePackagesTab({ frameworks }: { frameworks: ComplianceFramework[] }) {
   const router = useRouter();
+
+  if (frameworks.length === 0) {
+    return (
+      <p className="rounded-xl border border-border bg-surface px-6 py-10 text-center text-body-sm text-text-secondary">
+        No framework matches the search.
+      </p>
+    );
+  }
 
   return (
     /* No lead-in sentence. "Choose a framework to see what a sealed evidence package would
@@ -38,7 +55,7 @@ export function CompliancePackagesTab() {
        each with an arrow — the instruction was the only thing on the tab that did not tell
        the reader something they could not already see. */
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {COMPLIANCE_FRAMEWORKS.map((f) =>
+      {frameworks.map((f) =>
         f.href ? (
           <LiveFramework key={f.id} framework={f} onOpen={() => router.push(f.href as string)} />
         ) : (
@@ -54,6 +71,9 @@ function LiveFramework({ framework, onOpen }: { framework: ComplianceFramework; 
   const coverage = clauseCoverage(clauses.length > 0 ? clauses : SAMA_CLAUSES);
   const gaps = evidenceGaps(clauses).length;
   const outcome = sealOutcome(clauses);
+  // The next firing among this framework's own subscriptions — a paused one is excluded,
+  // because a date that will not happen is not how this package gets produced.
+  const next = nextScheduledRun(schedulesForFramework(framework.id));
 
   return (
     <button
@@ -93,6 +113,14 @@ function LiveFramework({ framework, onOpen }: { framework: ComplianceFramework; 
           {gaps === 0
             ? 'Every clause in scope has evidence behind it.'
             : `${gaps} ${gaps === 1 ? 'clause needs' : 'clauses need'} attention before this seals clean.`}
+        </p>
+        {/* Produced, or produced by hand. Both readings are worth a line: the second is
+            the reason a quarter goes by without a package. */}
+        <p className="flex items-center gap-1.5 text-caption text-text-tertiary">
+          <EventRepeatOutlined sx={{ fontSize: 14 }} aria-hidden />
+          {next
+            ? `${next.cadence} — next ${formatDate(next.nextRunAt)}`
+            : 'Not scheduled — sealed by hand'}
         </p>
       </div>
     </button>

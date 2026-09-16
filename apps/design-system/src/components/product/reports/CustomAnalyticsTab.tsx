@@ -8,7 +8,6 @@ import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
 import { Button, DataTable, Menu, StatusChip, useToast, type Column } from '@ds/components';
 import {
   describeOrganization,
-  listReportsV2,
   timelineById,
   type ReportV2,
 } from '@/data/governance-analytics-v2';
@@ -35,15 +34,15 @@ import { formatDate } from '@/lib/datetime';
  * compliance package — rides on the report row rather than leading the page, because it is
  * a claim about *this* report answering *that* clause and has to start from a row that
  * names one.
+ *
+ * The rows come from the hub rather than from a read of the store here: the rail counts
+ * this section, and a count that reads the store separately from the table under it is one
+ * render away from disagreeing with it. `null` is "not loaded yet", which keeps the table
+ * in its skeleton rather than flashing an empty state the store is about to contradict.
  */
-export function CustomAnalyticsTab() {
+export function CustomAnalyticsTab({ reports }: { reports: ReportV2[] | null }) {
   const router = useRouter();
   const toast = useToast();
-  // localStorage-backed, so read after mount — `null` keeps DataTable in its skeleton
-  // rather than flashing an empty state the store would contradict.
-  const [reports, setReports] = React.useState<ReportV2[] | null>(null);
-
-  React.useEffect(() => setReports(listReportsV2()), []);
 
   const live = COMPLIANCE_FRAMEWORKS.filter((f) => f.href);
 
@@ -105,10 +104,13 @@ export function CustomAnalyticsTab() {
 
   return (
     <div className="space-y-4">
+      {/* No heading: the rail already names this section, and a title repeated three
+          inches to the right of itself is the kind of chrome that makes a page feel
+          filled in rather than designed. The sentence stays — it says what belongs here,
+          which the label cannot. */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-body-strong text-text-primary">Custom reports</h2>
-          <p className="mt-0.5 max-w-3xl text-body-sm text-text-secondary">
+          <p className="max-w-3xl text-body-sm text-text-secondary">
             For the questions the registers do not answer — JML drift, licence reclamation, orphan sweeps. Start from a
             template or build one from blank.
           </p>

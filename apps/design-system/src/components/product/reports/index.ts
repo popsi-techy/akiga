@@ -1,10 +1,11 @@
 export { ReportsHubMainScreen } from './ReportsHubMainScreen';
+export { ReportsActivityBand } from './ReportsActivityBand';
 export { ComplianceFrameworkDetailView } from './ComplianceFrameworkDetailView';
 export { RegisterView } from './RegisterView';
 export { OperationalReportsTab } from './OperationalReportsTab';
 export { CompliancePackagesTab } from './CompliancePackagesTab';
 export { CustomAnalyticsTab } from './CustomAnalyticsTab';
-export { SchedulesTab } from './SchedulesTab';
+export { SchedulesScreen } from './SchedulesScreen';
 export { ScheduleDrawer } from './ScheduleDrawer';
 export { EvidenceGapDrawer } from './EvidenceGapDrawer';
 export { AttachEvidenceDrawer } from './AttachEvidenceDrawer';

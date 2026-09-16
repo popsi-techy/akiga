@@ -457,6 +457,17 @@ export const SEALED_PACKAGES: SealedPackage[] = [
 export const packagesForFramework = (frameworkId: string) =>
   SEALED_PACKAGES.filter((p) => p.frameworkId === frameworkId);
 
+/**
+ * The package sealed most recently, across every framework.
+ *
+ * "Last delivered" is a fact about the tenant, not about a framework, so it is not scoped:
+ * a reader arriving at the hub wants to know whether anything has come out of here lately,
+ * and which framework it belonged to is the second question, answered by where it links.
+ */
+export function latestSealedPackage(packages: SealedPackage[] = SEALED_PACKAGES): SealedPackage | null {
+  return packages.slice().sort((a, b) => b.sealedAt.localeCompare(a.sealedAt))[0] ?? null;
+}
+
 /* --------------------------------------------------------- schedules */
 
 export type Cadence = 'Daily' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual';
@@ -535,6 +546,63 @@ export function nextScheduledRun(schedules: ReportSchedule[] = REPORT_SCHEDULES)
       .slice()
       .sort((a, b) => a.nextRunAt.localeCompare(b.nextRunAt))[0] ?? null
   );
+}
+
+/**
+ * The subscriptions that produce one framework's packages.
+ *
+ * A framework card says how it is produced — "Quarterly, next Oct 1" — because a reader
+ * looking at 8 of 15 clauses evidenced needs to know whether that number is about to be
+ * sealed into an artefact and mailed, or is only a screen.
+ */
+export const schedulesForFramework = (frameworkId: string) =>
+  REPORT_SCHEDULES.filter((s) => s.frameworkId === frameworkId);
+
+/* ------------------------------------------------------------- attention */
+
+/**
+ * Something in the hub that is not doing what it was set up to do.
+ *
+ * This is the one summary the hub is allowed to lead with, and it is not a count of
+ * reports. Counts of catalogued things were the old KPI strip: true, inert, and on the
+ * wrong tab half the time. An attention item is the opposite — it exists only when
+ * something is wrong, it names the one thing, and it carries the route that shows it.
+ *
+ * Ordered by severity, so the tile that shows the first one shows the worst one. A failed
+ * run beats a skipped run (nothing was produced, and the attempt broke), a skipped run
+ * beats missing evidence (the cadence is live but silently producing nothing), and missing
+ * evidence is last because it is a state of the world rather than a malfunction.
+ */
+export interface ReportsAttentionItem {
+  id: string;
+  /** The finding, as a sentence fragment that can stand alone in a tile. */
+  label: string;
+  href: string;
+}
+
+export function reportsAttention(): ReportsAttentionItem[] {
+  const runs = REPORT_SCHEDULES.filter((s) => s.enabled)
+    .filter((s) => s.lastRunState === 'failed' || s.lastRunState === 'skipped')
+    .sort((a, b) => (a.lastRunState === 'failed' ? -1 : b.lastRunState === 'failed' ? 1 : 0))
+    .map((s) => ({
+      id: `run-${s.id}`,
+      label: `${s.name} — last run ${REPORT_STATE[s.lastRunState].label.toLowerCase()}`,
+      href: '/iga/reports/schedules',
+    }));
+
+  // Only frameworks with a page behind them: a framework that is not built has no gaps,
+  // it has no clauses, and reporting zero coverage on it would read as a failure to
+  // evidence something nobody has been asked to evidence yet.
+  const evidence = COMPLIANCE_FRAMEWORKS.filter((f) => f.href)
+    .map((f) => ({ framework: f, gaps: evidenceGaps(clausesForFramework(f.id)).length }))
+    .filter(({ gaps }) => gaps > 0)
+    .map(({ framework, gaps }) => ({
+      id: `evidence-${framework.id}`,
+      label: `${framework.version} — ${gaps} ${gaps === 1 ? 'clause needs' : 'clauses need'} evidence`,
+      href: framework.href as string,
+    }));
+
+  return [...runs, ...evidence];
 }
 
 export const CADENCE_OPTIONS: Cadence[] = ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Annual'];

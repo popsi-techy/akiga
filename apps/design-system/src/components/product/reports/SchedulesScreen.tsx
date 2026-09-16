@@ -8,24 +8,37 @@ import PauseOutlined from '@mui/icons-material/PauseOutlined';
 import { Button, DataTable, Menu, useToast, type Column } from '@ds/components';
 import { REPORT_SCHEDULES, nextScheduledRun, type ReportSchedule } from '@/data/reports';
 import { formatDateTime } from '@/lib/datetime';
+import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import { ReportStateChip } from './ReportStateChip';
 import { ScheduleDrawer } from './ScheduleDrawer';
 
 /**
- * The cadences that produce sealed packages without anyone asking.
+ * The cadences that produce sealed packages without anyone asking — its own page.
+ *
+ * It used to be the hub's fourth tab, filed beside the registers, the packages and the
+ * custom reports as though it were a fourth kind of report. It is not one: those three are
+ * things a reader *gets*, and this is the machine that produces the second of them. A
+ * mechanism listed among its own output is what made that tab row read as a filing
+ * cabinet, and it cost the hub a quarter of its most valuable row.
+ *
+ * Nothing is buried by the move. The hub's Next download tile names the next firing and
+ * links here, every live framework card says its cadence, and this is a page you open to
+ * *change* a cadence — administration, done occasionally, by one person.
  *
  * Two states per row, and they are not the same state: **Last run** is what happened, and
- * a skipped or failed firing is the reason someone opens this tab; **State** is whether it
+ * a skipped or failed firing is the reason someone opens this page; **State** is whether it
  * will fire again. A single column would have to pick one, and the pair is the whole story
  * — "enabled, last run skipped" is a live subscription that quietly produced nothing.
  */
-export function SchedulesTab() {
+export function SchedulesScreen() {
   const toast = useToast();
   const next = nextScheduledRun();
   const [drawer, setDrawer] = React.useState<{ open: boolean; schedule: ReportSchedule | null }>({
     open: false,
     schedule: null,
   });
+
+  useSetBreadcrumbs([{ label: 'Reports', href: '/iga/reports' }, { label: 'Schedules' }]);
 
   const columns: Column<ReportSchedule>[] = [
     {
@@ -97,8 +110,8 @@ export function SchedulesTab() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-body-strong text-text-primary">Scheduled evidence packages</h2>
-          <p className="mt-0.5 max-w-3xl text-body-sm text-text-secondary">
+          <h1 className="text-h2 text-text-primary">Schedules</h1>
+          <p className="mt-1 max-w-3xl text-body text-text-secondary">
             A subscription seals a package on a cadence and mails a download link. The period is stored as a rule
             rather than as dates, so the same subscription produces the right window every time it fires.
           </p>
@@ -111,10 +124,10 @@ export function SchedulesTab() {
       {/*
         The next firing, above the table it comes from.
 
-        It used to be a KPI card on the hub's landing page, where it was a date with nowhere
-        to go — the reader still had to find the subscription that produced it. Here the row
-        is directly underneath, and the sentence is doing the job a summary should: telling
-        you which of these rows matters next.
+        The hub carries the same date in a tile, and that is not a duplicate: there it is
+        the answer to "is anything coming", with a link to here; here the row that produces
+        it is directly underneath, and the sentence is doing the job a summary should —
+        telling you which of these rows matters next.
       */}
       {next ? (
         <p className="rounded-lg border border-border bg-subtle px-4 py-3 text-body-sm text-text-secondary">
