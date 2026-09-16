@@ -130,7 +130,15 @@ export const emergencySessionsTotal = 24;
  * Directory — canonical domain entities (User Identity is the primary
  * representation of a person; App Accounts link identities to applications).
  * ------------------------------------------------------------------ */
-export type IdentityStatus = 'active' | 'inactive' | 'leaver-pending' | 'terminated';
+export type IdentityStatus =
+  | 'active'
+  | 'inactive'
+  | 'leaver-pending'
+  | 'terminated'
+  /** External only — imported, but nobody here has claimed them yet. */
+  | 'pending-sponsor'
+  /** External only — a sponsor is named; access is not live until they approve. */
+  | 'pending-approval';
 
 /**
  * Where a person sits relative to the organisation.
@@ -158,6 +166,8 @@ export interface SeedUserIdentity {
   sponsorId?: string;
   /** External only — ISO date the access is due to end. */
   accessEndsOn?: string;
+  /** When this record last changed — ISO instant. */
+  updatedAt?: string;
 }
 
 /** The canonical people directory. Owners/reviewers everywhere reference these. */
@@ -180,13 +190,18 @@ export const userIdentities: SeedUserIdentity[] = [
   // Not on the payroll, so nothing in the HR feed will announce their leaving.
   // Each carries the organisation it comes from, an internal sponsor, and the date
   // its access is due to end — the three fields that make an external reviewable.
-  { id: 'x-arjun', name: 'Arjun Nair', email: 'arjun.nair@northwind-consulting.com', jobTitle: 'Integration Consultant', department: 'IT', status: 'active', riskLevel: 'critical', riskScore: 79, kind: 'external', organization: 'Northwind Consulting', sponsorId: 'o-marcus', accessEndsOn: '2026-09-30' },
-  { id: 'x-mei', name: 'Mei Chen', email: 'mei.chen@brightpath.io', jobTitle: 'Data Migration Engineer', department: 'Data', status: 'active', riskLevel: 'high', riskScore: 68, kind: 'external', organization: 'Brightpath', sponsorId: 'o-nathan', accessEndsOn: '2026-10-15' },
-  { id: 'x-tomas', name: 'Tomas Blum', email: 'tomas.blum@ledgerwise.eu', jobTitle: 'External Auditor', department: 'Compliance', status: 'active', riskLevel: 'medium', riskScore: 46, kind: 'external', organization: 'Ledgerwise', sponsorId: 'o-olivia', accessEndsOn: '2026-08-31' },
-  { id: 'x-fatima', name: 'Fatima Zahra', email: 'fatima.zahra@northwind-consulting.com', jobTitle: 'Change Manager', department: 'IT', status: 'active', riskLevel: 'medium', riskScore: 38, kind: 'external', organization: 'Northwind Consulting', sponsorId: 'o-henry', accessEndsOn: '2026-12-01' },
+  { id: 'x-arjun', name: 'Arjun Nair', email: 'arjun.nair@northwind-consulting.com', jobTitle: 'Integration Consultant', department: 'IT', status: 'active', riskLevel: 'critical', riskScore: 79, kind: 'external', organization: 'Northwind Consulting', sponsorId: 'o-marcus', accessEndsOn: '2026-09-30', updatedAt: '2026-08-12T09:18:00.000Z' },
+  { id: 'x-mei', name: 'Mei Chen', email: 'mei.chen@brightpath.io', jobTitle: 'Data Migration Engineer', department: 'Data', status: 'active', riskLevel: 'high', riskScore: 68, kind: 'external', organization: 'Brightpath', sponsorId: 'o-nathan', accessEndsOn: '2026-10-15', updatedAt: '2026-08-04T14:02:00.000Z' },
+  { id: 'x-tomas', name: 'Tomas Blum', email: 'tomas.blum@ledgerwise.eu', jobTitle: 'External Auditor', department: 'Compliance', status: 'active', riskLevel: 'medium', riskScore: 46, kind: 'external', organization: 'Ledgerwise', sponsorId: 'o-olivia', accessEndsOn: '2026-08-31', updatedAt: '2026-07-22T11:40:00.000Z' },
+  { id: 'x-fatima', name: 'Fatima Zahra', email: 'fatima.zahra@northwind-consulting.com', jobTitle: 'Change Manager', department: 'IT', status: 'active', riskLevel: 'medium', riskScore: 38, kind: 'external', organization: 'Northwind Consulting', sponsorId: 'o-henry', accessEndsOn: '2026-12-01', updatedAt: '2026-08-01T08:10:00.000Z' },
   // Expired but still enabled — the case the list exists to surface.
-  { id: 'x-viktor', name: 'Viktor Sorel', email: 'viktor.sorel@brightpath.io', jobTitle: 'QA Contractor', department: 'Engineering', status: 'active', riskLevel: 'high', riskScore: 61, kind: 'external', organization: 'Brightpath', sponsorId: 'o-priya', accessEndsOn: '2026-07-31' },
-  { id: 'x-lena', name: 'Lena Vogt', email: 'lena.vogt@partnerhub.de', jobTitle: 'Partner Support Agent', department: 'Customer Support', status: 'inactive', riskLevel: 'low', riskScore: 21, kind: 'external', organization: 'PartnerHub', sponsorId: 'o-grace', accessEndsOn: '2026-06-30' },
+  { id: 'x-viktor', name: 'Viktor Sorel', email: 'viktor.sorel@brightpath.io', jobTitle: 'QA Contractor', department: 'Engineering', status: 'active', riskLevel: 'high', riskScore: 61, kind: 'external', organization: 'Brightpath', sponsorId: 'o-priya', accessEndsOn: '2026-07-31', updatedAt: '2026-08-18T07:05:00.000Z' },
+  { id: 'x-lena', name: 'Lena Vogt', email: 'lena.vogt@partnerhub.de', jobTitle: 'Partner Support Agent', department: 'Customer Support', status: 'inactive', riskLevel: 'low', riskScore: 21, kind: 'external', organization: 'PartnerHub', sponsorId: 'o-grace', accessEndsOn: '2026-06-30', updatedAt: '2026-07-01T16:22:00.000Z' },
+  // Fetched, but nobody here has claimed them — the list's "Add sponsor" case.
+  { id: 'x-jonas', name: 'Jonas Berg', email: 'jonas.berg@apex-partners.no', jobTitle: 'Platform Consultant', department: 'IT', status: 'pending-sponsor', riskLevel: 'medium', riskScore: 42, kind: 'external', organization: 'Apex Partners', accessEndsOn: '2026-11-30', updatedAt: '2026-09-16T10:04:00.000Z' },
+  // A sponsor is named; they have not approved the access yet.
+  { id: 'x-nina', name: 'Nina Okonkwo', email: 'nina.okonkwo@brightpath.io', jobTitle: 'Security Assessor', department: 'Security', status: 'pending-approval', riskLevel: 'medium', riskScore: 47, kind: 'external', organization: 'Brightpath', sponsorId: 'o-catherine', accessEndsOn: '2026-10-31', updatedAt: '2026-09-14T13:51:00.000Z' },
+  { id: 'x-rafael', name: 'Rafael Costa', email: 'rafael.costa@northwind-consulting.com', jobTitle: 'Network Engineer', department: 'IT', status: 'pending-approval', riskLevel: 'medium', riskScore: 44, kind: 'external', organization: 'Northwind Consulting', sponsorId: 'o-marcus', accessEndsOn: '2026-11-15', updatedAt: '2026-09-15T09:20:00.000Z' },
 ];
 
 /** Owners assignable to an emergency access — a projection of the workforce. */
@@ -413,6 +428,19 @@ export const appAccounts: SeedAppAccount[] = [
   { id: 'aa-sofia-jira', accountName: 'sofia.rossi', email: 'sofia.rossi@acme.com', applicationId: 'app-jira', identityId: 'o-sofia', entitlementIds: ['ent-jira-admin'] },
   { id: 'aa-frank-jira', accountName: 'frank.wilson', email: 'frank.wilson@acme.com', applicationId: 'app-jira', identityId: 'o-frank', entitlementIds: ['ent-jira-project'] },
   { id: 'aa-priya-jira', accountName: 'priya.sharma', email: 'priya.sharma@acme.com', applicationId: 'app-jira', identityId: 'o-priya', entitlementIds: ['ent-jira-contrib'] },
+  // External identities — contractors hold real accounts, which is why the list
+  // has to name the applications beside the sponsor and the end date.
+  { id: 'aa-arjun-okta', accountName: 'arjun.nair', email: 'arjun.nair@northwind-consulting.com', applicationId: 'app-okta', identityId: 'x-arjun', entitlementIds: ['ent-okta-user'] },
+  { id: 'aa-arjun-aws', accountName: 'anair', email: 'arjun.nair@northwind-consulting.com', applicationId: 'app-aws', identityId: 'x-arjun', entitlementIds: ['ent-aws-ro'] },
+  { id: 'aa-arjun-jira', accountName: 'arjun.nair', email: 'arjun.nair@northwind-consulting.com', applicationId: 'app-jira', identityId: 'x-arjun', entitlementIds: ['ent-jira-contrib'] },
+  { id: 'aa-mei-flake', accountName: 'MCHEN', email: 'mei.chen@brightpath.io', applicationId: 'app-snowflake', identityId: 'x-mei', entitlementIds: ['ent-flake-read'] },
+  { id: 'aa-mei-aws', accountName: 'mchen', email: 'mei.chen@brightpath.io', applicationId: 'app-aws', identityId: 'x-mei', entitlementIds: ['ent-aws-ro'] },
+  { id: 'aa-tomas-sap', accountName: 'TBLUM', email: 'tomas.blum@ledgerwise.eu', applicationId: 'app-sap', identityId: 'x-tomas', entitlementIds: ['ent-sap-report'] },
+  { id: 'aa-fatima-snow', accountName: 'fatima.zahra', email: 'fatima.zahra@northwind-consulting.com', applicationId: 'app-servicenow', identityId: 'x-fatima', entitlementIds: ['ent-snow-fulfiller'] },
+  { id: 'aa-fatima-jira', accountName: 'fatima.zahra', email: 'fatima.zahra@northwind-consulting.com', applicationId: 'app-jira', identityId: 'x-fatima', entitlementIds: ['ent-jira-contrib'] },
+  { id: 'aa-viktor-github', accountName: 'viktor-s', email: 'viktor.sorel@brightpath.io', applicationId: 'app-github', identityId: 'x-viktor', entitlementIds: ['ent-gh-write'] },
+  { id: 'aa-viktor-jira', accountName: 'viktor.sorel', email: 'viktor.sorel@brightpath.io', applicationId: 'app-jira', identityId: 'x-viktor', entitlementIds: ['ent-jira-contrib'] },
+  { id: 'aa-lena-sf', accountName: 'lena.vogt@partnerhub.de', email: 'lena.vogt@partnerhub.de', applicationId: 'app-salesforce', identityId: 'x-lena', entitlementIds: ['ent-sf-service'] },
 ];
 
 /** People directory — candidates for "Add Owners". The full canonical people set. */

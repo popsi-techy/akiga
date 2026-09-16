@@ -2,23 +2,16 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { DirectoryListPage, IdentityCell, StatusChip, Tooltip, type Column, type StatusIntent } from '@ds/components';
+import { DirectoryListPage, IdentityCell, StatusChip, Tooltip, type Column } from '@ds/components';
 import {
   accessExpired,
   getUserIdentityDetail,
   listExternalIdentities,
   type UserIdentityRow,
 } from '@/data/directory';
-import type { IdentityStatus } from '@/data/seed';
-import { IdentityKindChip } from '@/components/product/directory';
+import { IdentityKindChip, IDENTITY_STATUS } from '@/components/product/directory';
+import { LastModified } from '@/components/product/LastModified';
 import { formatDate } from '@/lib/datetime';
-
-const STATUS: Record<IdentityStatus, { label: string; intent: StatusIntent }> = {
-  active: { label: 'Active', intent: 'success' },
-  inactive: { label: 'Inactive', intent: 'neutral' },
-  'leaver-pending': { label: 'Leaver Pending', intent: 'warning' },
-  terminated: { label: 'Terminated', intent: 'danger' },
-};
 
 /**
  * External Identities — everyone with access who is not on the payroll.
@@ -52,7 +45,7 @@ export default function ExternalIdentitiesListPage() {
       // carries the contractor's own domain, so it runs longer than any internal
       // one. The extra came from Type and Access ends, both of which had slack
       // over their chip.
-      width: '28%',
+      width: '22%',
       wrap: true,
       value: (r) => r.name,
       render: (r) => <IdentityCell name={r.name} email={r.email} />,
@@ -73,15 +66,33 @@ export default function ExternalIdentitiesListPage() {
       id: 'organization',
       header: 'Organization',
       sortable: true,
-      width: '18%',
+      width: '16%',
       value: (r) => r.organization ?? '—',
     },
     {
       id: 'sponsor',
       header: 'Sponsored by',
       sortable: true,
-      width: '18%',
-      value: (r) => sponsorName(r.sponsorId),
+      width: '16%',
+      wrap: true,
+      value: (r) => (r.sponsorId ? sponsorName(r.sponsorId) : 'Add sponsor'),
+      render: (r) => {
+        if (r.sponsorId) {
+          return <span className="text-text-secondary">{sponsorName(r.sponsorId)}</span>;
+        }
+        return (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/iga/directory/user-identities/${r.id}`);
+            }}
+            className="rounded-sm text-body-sm-strong text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+          >
+            Add sponsor
+          </button>
+        );
+      },
     },
     {
       id: 'accessEndsOn',
@@ -110,10 +121,24 @@ export default function ExternalIdentitiesListPage() {
       id: 'status',
       header: 'Status',
       sortable: true,
-      width: 110,
+      width: 168,
       wrap: true,
-      value: (r) => STATUS[r.status].label,
-      render: (r) => <StatusChip intent={STATUS[r.status].intent} label={STATUS[r.status].label} />,
+      value: (r) => IDENTITY_STATUS[r.status].label,
+      render: (r) => <StatusChip intent={IDENTITY_STATUS[r.status].intent} label={IDENTITY_STATUS[r.status].label} />,
+    },
+    {
+      id: 'updatedAt',
+      header: 'Last modified',
+      sortable: true,
+      width: 176,
+      wrap: true,
+      value: (r) => r.updatedAt ?? '',
+      render: (r) =>
+        r.updatedAt ? (
+          <LastModified at={r.updatedAt} />
+        ) : (
+          <span className="text-text-tertiary">—</span>
+        ),
     },
   ];
 

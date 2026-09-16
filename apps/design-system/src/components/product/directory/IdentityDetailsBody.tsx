@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Avatar, InfoRow, InfoRowGroup, StatusChip } from '@ds/components';
 import { RiskScoreChip } from './RiskScoreChip';
 import { infoIcon } from './infoIcons';
+import { IDENTITY_STATUS } from './identityStatus';
 import { getUserIdentityDetail, type UserIdentityRow } from '@/data/directory';
 
 /**
@@ -52,8 +53,8 @@ export function IdentityDetailsBody({
         label="Status"
         value={
           <StatusChip
-            intent={identity.status === 'active' ? 'success' : 'neutral'}
-            label={identity.status === 'active' ? 'Active' : 'Inactive'}
+            intent={IDENTITY_STATUS[identity.status].intent}
+            label={IDENTITY_STATUS[identity.status].label}
           />
         }
       />

@@ -7,6 +7,7 @@ import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
 import { Avatar, StatusChip, Tooltip } from '@ds/components';
 import type { SeedUserIdentity } from '@/data/seed';
 import { RiskScoreChip } from './RiskScoreChip';
+import { IDENTITY_STATUS } from './identityStatus';
 
 /**
  * Who the account belongs to, one hover away.
@@ -62,8 +63,8 @@ function IdentityCard({ identity }: { identity: SeedUserIdentity }) {
         <dt className="mt-2 text-caption text-text-tertiary">Risk</dt>
         <dd className="min-w-0">
           <StatusChip
-            intent={identity.status === 'active' ? 'success' : 'neutral'}
-            label={identity.status === 'active' ? 'Active' : 'Inactive'}
+            intent={IDENTITY_STATUS[identity.status].intent}
+            label={IDENTITY_STATUS[identity.status].label}
           />
         </dd>
         <dd className="min-w-0">

@@ -2,9 +2,8 @@
 
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Card, StatusChip, type TabItem, type StatusIntent } from '@ds/components';
+import { Card, StatusChip, type TabItem } from '@ds/components';
 import { getUserIdentityDetail } from '@/data/directory';
-import type { IdentityStatus } from '@/data/seed';
 import {
   DetailShell,
   DetailNotFound,
@@ -16,14 +15,8 @@ import {
   accountColumns,
   roleColumns,
   infoIcon,
+  IDENTITY_STATUS,
 } from '@/components/product/directory';
-
-const STATUS: Record<IdentityStatus, { label: string; intent: StatusIntent }> = {
-  active: { label: 'Active', intent: 'success' },
-  inactive: { label: 'Inactive', intent: 'neutral' },
-  'leaver-pending': { label: 'Leaver Pending', intent: 'warning' },
-  terminated: { label: 'Terminated', intent: 'danger' },
-};
 
 const TABS: TabItem[] = [
   { value: 'overview', label: 'Overview' },
@@ -40,7 +33,7 @@ export default function UserIdentityDetailPage() {
 
   if (!detail) return <DetailNotFound title="User identity not found" backHref="/iga/directory/user-identities" backLabel="Back to Workforce" />;
   const { identity, accounts, technicalRoles, businessRoles } = detail;
-  const status = STATUS[identity.status];
+  const status = IDENTITY_STATUS[identity.status];
 
   return (
     <DetailShell

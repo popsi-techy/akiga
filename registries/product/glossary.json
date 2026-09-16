@@ -527,7 +527,22 @@
       "related": [
         "user-identity",
         "app-account",
-        "birthright-policy"
+        "birthright-policy",
+        "sponsored-user"
+      ]
+    },
+    {
+      "id": "sponsored-user",
+      "term": "Sponsored User",
+      "definition": "An external identity a workforce person has claimed. The sponsor reviews pending onboardings — approve to provision access, reject to disable it — and remains accountable for how long that access lasts.",
+      "synonyms": [
+        "sponsored identity",
+        "sponsored external"
+      ],
+      "preferred": "Sponsored User",
+      "related": [
+        "external-identity",
+        "identity"
       ]
     }
   ]

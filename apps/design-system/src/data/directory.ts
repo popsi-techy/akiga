@@ -43,6 +43,7 @@ import { DIRECTORY_LIST_ID_SET } from './application-directory-list';
 import { getOwners, type OwnedEntityType } from './entity-owners';
 import { getTeamCharter, setTeamCharter, type TeamCharterField } from './team-charter';
 import { listAuthorizations } from './provisioning-auth';
+import { getSponsorDecision } from './sponsor-decisions';
 import { listStoredEntitlements } from './entitlements-store';
 import { getStoredAppAccount, listStoredAppAccounts, type StoredAppAccount } from './app-accounts-store';
 
@@ -130,6 +131,7 @@ export interface UserIdentityRow {
   organization?: string;
   sponsorId?: string;
   accessEndsOn?: string;
+  updatedAt?: string;
 }
 export interface AppAccountRow {
   id: string;
@@ -421,6 +423,26 @@ export function getUserIdentity(id: string): UserIdentityRow | undefined {
 /** The external subset — contractors, vendors, partners, auditors. */
 export function listExternalIdentities(): UserIdentityRow[] {
   return userIdentities.filter((u) => u.kind === 'external').map(toUserRow);
+}
+
+/**
+ * Externals a reviewer is accountable for — anyone with a sponsor.
+ *
+ * Jonas (no sponsor) is an admin job, not a reviewer's. Overlay stored
+ * approve/reject so a decision survives refresh.
+ */
+export function listSponsoredIdentities(): UserIdentityRow[] {
+  return listExternalIdentities()
+    .filter((u) => Boolean(u.sponsorId))
+    .map((row) => {
+      const stored = getSponsorDecision(row.id);
+      if (!stored) return row;
+      return {
+        ...row,
+        status: stored.decision === 'approved' ? 'active' : 'inactive',
+        updatedAt: stored.at,
+      };
+    });
 }
 
 /**

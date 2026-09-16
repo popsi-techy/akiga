@@ -2,6 +2,7 @@ export { RiskScoreChip, RiskDot } from './RiskScoreChip';
 export { EntityAvatar, type EntityKind } from './EntityAvatar';
 export { APPLICATION_LIFECYCLE_CHIP } from './application-labels';
 export { IdentityKindChip } from './IdentityKindChip';
+export { IDENTITY_STATUS } from './identityStatus';
 export { AccountDetailsBody } from './AccountDetailsBody';
 export { AddApplicationDrawer } from './AddApplicationDrawer';
 export { AddEntitlementDrawer } from './AddEntitlementDrawer';
