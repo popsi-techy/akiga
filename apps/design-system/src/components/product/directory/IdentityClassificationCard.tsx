@@ -93,7 +93,7 @@ export function IdentityClassificationCard({
 
   return (
     <>
-      <p className="text-body-sm-strong text-text-primary">What does this source send?</p>
+      <p className="mb-3 text-body-sm-strong text-text-primary">What does this source send?</p>
       <RadioCardGroup
         appearance="outlined"
         columns={2}
@@ -214,7 +214,10 @@ export function IdentityClassificationCard({
         </div>
       )}
 
-      <div className="mt-6 flex justify-end border-t border-border pt-4">
+      {/* No rule above the button. The card's own border already closes the group, and a
+          second line 40px inside it divided a form of two fields into two halves. The
+          mapping card next door ends the same way. */}
+      <div className="mt-5 flex justify-end">
         <Button onClick={save}>Save classification</Button>
       </div>
     </>
