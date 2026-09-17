@@ -9,7 +9,7 @@ import PauseCircleOutlined from '@mui/icons-material/PauseCircleOutlined';
 import PlayCircleOutlined from '@mui/icons-material/PlayCircleOutlined';
 import PersonSearchOutlined from '@mui/icons-material/PersonSearchOutlined';
 import BlockOutlined from '@mui/icons-material/BlockOutlined';
-import HistoryOutlined from '@mui/icons-material/HistoryOutlined';
+import History from '@mui/icons-material/History';
 import { Card, StatusChip, type TabItem } from '@ds/components';
 import { DetailShell, DetailNotFound, InfoRow, InfoRowGroup, RelationTable } from './DetailShell';
 import { EntityAvatar } from './EntityAvatar';
@@ -180,7 +180,7 @@ export function ExternalIdentityDetail({
             </InfoRowGroup>
           </Card>
 
-          <Card title="Lifecycle history" icon={<HistoryOutlined />} padding="none" className="lg:col-span-2">
+          <Card title="Lifecycle history" icon={<History />} padding="none" className="lg:col-span-2">
             {events.length === 0 ? (
               <p className="px-5 py-6 text-body-sm text-text-secondary">
                 Nothing has changed since {identity.name} was imported. Approvals, extensions,
