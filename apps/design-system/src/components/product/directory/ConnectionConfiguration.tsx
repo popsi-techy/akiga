@@ -9,6 +9,7 @@ import {
   useToast,
 } from '@ds/components';
 import { ConnectionEventDrawer } from './ConnectionEventDrawer';
+import { EventAttributeMappingDrawer } from './EventAttributeMappingDrawer';
 import {
   EVENT_KINDS,
   listConnectionEvents,
@@ -17,6 +18,7 @@ import {
   type EventKind,
 } from '@/data/connection-events';
 import { type AppAuthorization } from '@/data/provisioning-auth';
+import { applicationIsScimProvisioned } from '@/data/scim-inbound';
 
 /**
  * Connection Configuration — the calls IGA makes once it can sign in.
@@ -41,8 +43,18 @@ export function ConnectionConfiguration({
   const toast = useToast();
   const [rows, setRows] = React.useState<ConnectionEvent[]>([]);
   const [drawerKind, setDrawerKind] = React.useState<EventKind | null>(null);
+  /** The event whose attribute mapping is open — SCIM/UMAPI types only. */
+  const [mappingKind, setMappingKind] = React.useState<EventKind | null>(null);
   /** Switches the user has flipped but not yet saved, by event type. */
   const [pending, setPending] = React.useState<Partial<Record<EventKind, boolean>>>({});
+  /**
+   * Whether this application provisions over SCIM/UMAPI. Read after mount —
+   * it resolves from the onboarding store, which only exists on the client.
+   */
+  const [scimProvisioned, setScimProvisioned] = React.useState(false);
+  React.useEffect(() => {
+    setScimProvisioned(applicationIsScimProvisioned(applicationId));
+  }, [applicationId]);
 
   const refresh = React.useCallback(() => setRows(listConnectionEvents(applicationId)), [applicationId]);
   React.useEffect(() => refresh(), [refresh]);
@@ -58,7 +70,10 @@ export function ConnectionConfiguration({
 
   const toggleSlot = (kind: EventKind, on: boolean) => {
     if (eventsFor(kind).length === 0) {
-      setDrawerKind(kind);
+      // No setup yet: send the user to where this type is configured — its
+      // attribute mapping for a SCIM/UMAPI push, its API call otherwise.
+      if (scimProvisioned) setMappingKind(kind);
+      else setDrawerKind(kind);
       return;
     }
     setPending((p) => {
@@ -92,38 +107,56 @@ export function ConnectionConfiguration({
     const events = eventsFor(slot.value);
     const on = isOn(slot.value);
     const open = drawerKind === slot.value;
+    const mapped = events.reduce((n, e) => n + e.attributes.length, 0);
     return (
       <SettingsRow
         key={slot.value}
         surface="subtle"
         title={slot.label}
         description={
-          events.length === 0
-            ? 'Not configured'
-            : `${events.length} ${events.length === 1 ? 'call' : 'calls'}`
+          scimProvisioned
+            ? // SCIM/UMAPI push: an event is set up by its attribute mapping, not
+              // by an API call, so the row counts mapped attributes instead.
+              mapped === 0
+              ? 'No attributes mapped'
+              : `${mapped} ${mapped === 1 ? 'attribute' : 'attributes'} mapped`
+            : events.length === 0
+              ? 'Not configured'
+              : `${events.length} ${events.length === 1 ? 'call' : 'calls'}`
         }
       >
-        <Button
-          variant="secondary"
-          size="xs"
-          aria-label={`Configure ${slot.label}`}
-          aria-expanded={open}
-          onClick={() => setDrawerKind(open ? null : slot.value)}
-          sx={
-            open
-              ? {
-                  borderColor: 'var(--ds-color-brand-primary)',
-                  backgroundColor: 'var(--ds-color-surface-default)',
-                  '&:hover': {
+        {scimProvisioned ? (
+          <Button
+            variant="secondary"
+            size="xs"
+            aria-label={`Attribute mapping for ${slot.label}`}
+            onClick={() => setMappingKind(slot.value)}
+          >
+            Attribute mapping
+          </Button>
+        ) : (
+          <Button
+            variant="secondary"
+            size="xs"
+            aria-label={`Configure ${slot.label}`}
+            aria-expanded={open}
+            onClick={() => setDrawerKind(open ? null : slot.value)}
+            sx={
+              open
+                ? {
                     borderColor: 'var(--ds-color-brand-primary)',
                     backgroundColor: 'var(--ds-color-surface-default)',
-                  },
-                }
-              : undefined
-          }
-        >
-          Configure
-        </Button>
+                    '&:hover': {
+                      borderColor: 'var(--ds-color-brand-primary)',
+                      backgroundColor: 'var(--ds-color-surface-default)',
+                    },
+                  }
+                : undefined
+            }
+          >
+            Configure
+          </Button>
+        )}
         <Switch
           checked={on}
           onChange={(e) => toggleSlot(slot.value, e.target.checked)}
@@ -165,6 +198,18 @@ export function ConnectionConfiguration({
         applicationName={applicationName}
         authorizations={authorizations}
         onClose={() => setDrawerKind(null)}
+        onChanged={() => {
+          refresh();
+          onChanged?.();
+        }}
+      />
+
+      <EventAttributeMappingDrawer
+        open={mappingKind !== null}
+        kind={mappingKind}
+        applicationId={applicationId}
+        applicationName={applicationName}
+        onClose={() => setMappingKind(null)}
         onChanged={() => {
           refresh();
           onChanged?.();

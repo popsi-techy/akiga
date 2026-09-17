@@ -2,149 +2,100 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
-import CancelOutlined from '@mui/icons-material/CancelOutlined';
-import { DirectoryListPage, IdentityCell, StatusChip, Tooltip, useToast, type Column } from '@ds/components';
-import { accessExpired, listSponsoredIdentities, type UserIdentityRow } from '@/data/directory';
-import { recordSponsorDecision } from '@/data/sponsor-decisions';
-import { IdentityKindChip, IDENTITY_STATUS } from '@/components/product/directory';
+import { DirectoryListPage, IdentityCell, StatusChip, Tooltip, type Column } from '@ds/components';
+import {
+  accessEndingSoon,
+  accessExpired,
+  listSponsoredIdentities,
+  type UserIdentityRow,
+} from '@/data/directory';
+import { ExternalTypeChip, ExternalIdentityActions, IDENTITY_STATUS } from '@/components/product/directory';
 import { LastModified } from '@/components/product/LastModified';
 import { formatDate } from '@/lib/datetime';
 
 /**
- * Sponsored Users — the reviewer's view of externals they are accountable for.
+ * Sponsored Users — the reviewer's view of the externals they answer for.
  *
- * Not the admin External Identities list. Application is the wrong column here:
- * a sponsored person is not scoped to one app. Organization and the access end
- * date are what the sponsor has to stand behind; approve/reject is the work
- * when onboarding is still pending.
+ * Not the admin External Identities list. The Sponsor column is dropped — every
+ * row is theirs — so the space goes to the two things the sponsor acts on: the
+ * access period they have to stand behind, and the decision that is due
+ * (approve/reject a pending onboarding, or extend / suspend / end an active one).
  */
 export default function SponsoredUsersPage() {
   const router = useRouter();
-  const toast = useToast();
   const [rows, setRows] = React.useState<UserIdentityRow[]>([]);
-
   const refresh = React.useCallback(() => setRows(listSponsoredIdentities()), []);
   React.useEffect(() => refresh(), [refresh]);
-
-  const decide = (row: UserIdentityRow, decision: 'approved' | 'rejected') => {
-    recordSponsorDecision(row.id, decision);
-    refresh();
-    toast.success(
-      decision === 'approved'
-        ? `${row.name} is onboarded. Their access will provision.`
-        : `${row.name} was rejected. Their access stays disabled.`,
-    );
-  };
 
   const columns: Column<UserIdentityRow>[] = [
     {
       id: 'name',
       header: 'Name',
       sortable: true,
-      width: '24%',
+      width: '26%',
       wrap: true,
       value: (r) => r.name,
       render: (r) => <IdentityCell name={r.name} email={r.email} />,
     },
     {
-      id: 'kind',
-      header: 'Type',
+      id: 'type',
+      header: 'Type / Organization',
       sortable: true,
-      width: 104,
+      width: '20%',
       wrap: true,
-      value: () => 'External',
-      render: (r) => <IdentityKindChip kind={r.kind} />,
+      value: (r) => `${r.externalType ?? ''} ${r.organization ?? ''}`.trim(),
+      render: (r) => (
+        <div className="flex min-w-0 flex-col items-start gap-1">
+          <ExternalTypeChip type={r.externalType} />
+          <span className="truncate text-body-sm text-text-secondary" title={r.organization}>
+            {r.organization ?? '—'}
+          </span>
+        </div>
+      ),
     },
     {
-      id: 'organization',
-      header: 'Organization',
+      id: 'accessPeriod',
+      header: 'Access period',
       sortable: true,
-      width: '16%',
-      value: (r) => r.organization ?? '—',
-    },
-    {
-      id: 'accessEndsOn',
-      header: 'Access ends',
-      sortable: true,
-      width: 150,
+      width: 160,
       wrap: true,
       value: (r) => r.accessEndsOn ?? '',
-      render: (r) => {
-        if (!r.accessEndsOn) return <span className="text-text-tertiary">Not set</span>;
-        if (accessExpired(r)) {
-          return (
-            <Tooltip title="The end date has passed and the account is still enabled.">
-              <span>
-                <StatusChip intent="danger" label={`Expired ${formatDate(r.accessEndsOn)}`} />
-              </span>
-            </Tooltip>
-          );
-        }
-        return <span className="text-text-secondary">{formatDate(r.accessEndsOn)}</span>;
-      },
+      render: (r) => <AccessPeriod row={r} />,
     },
     {
       id: 'status',
       header: 'Status',
       sortable: true,
-      width: 168,
+      width: 150,
       wrap: true,
       value: (r) => IDENTITY_STATUS[r.status].label,
       render: (r) => <StatusChip intent={IDENTITY_STATUS[r.status].intent} label={IDENTITY_STATUS[r.status].label} />,
     },
     {
-      id: 'action',
-      header: 'Action',
-      width: 120,
-      wrap: true,
-      value: (r) => (r.status === 'pending-approval' ? 'Pending' : r.status === 'inactive' ? 'Rejected' : 'Approved'),
-      render: (r) => {
-        if (r.status === 'pending-approval') {
-          return (
-            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                aria-label={`Approve ${r.name}`}
-                onClick={() => decide(r, 'approved')}
-                className="grid h-8 w-8 place-items-center rounded-md text-[var(--ds-color-status-success-fg)] transition-colors hover:bg-[var(--ds-color-status-success-subtle)]"
-              >
-                <CheckCircleOutline sx={{ fontSize: 20 }} />
-              </button>
-              <button
-                type="button"
-                aria-label={`Reject ${r.name}`}
-                onClick={() => decide(r, 'rejected')}
-                className="grid h-8 w-8 place-items-center rounded-md text-danger transition-colors hover:bg-[var(--ds-color-status-danger-subtle)]"
-              >
-                <CancelOutlined sx={{ fontSize: 20 }} />
-              </button>
-            </div>
-          );
-        }
-        if (r.status === 'inactive' || r.status === 'terminated') {
-          return <StatusChip intent="danger" label="Rejected" />;
-        }
-        return <StatusChip intent="success" label="Approved" />;
-      },
-    },
-    {
       id: 'updatedAt',
       header: 'Last modified',
       sortable: true,
-      width: 176,
+      width: 168,
       wrap: true,
       value: (r) => r.updatedAt ?? '',
       render: (r) =>
         r.updatedAt ? <LastModified at={r.updatedAt} /> : <span className="text-text-tertiary">—</span>,
+    },
+    {
+      id: 'action',
+      header: 'Action',
+      width: 112,
+      value: (r) =>
+        r.status === 'pending-approval' ? 'Pending' : r.status === 'inactive' ? 'Rejected' : 'Manage',
+      render: (r) => <ExternalIdentityActions row={r} role="reviewer" variant="row" onChanged={refresh} />,
     },
   ];
 
   return (
     <DirectoryListPage<UserIdentityRow>
       title="Sponsored Users"
-      description="External users you sponsor. Approve pending onboardings to provision their access, or reject to disable it. Active users are already onboarded."
-      searchPlaceholder="Search sponsored people"
+      description="External users you sponsor. Approve a pending onboarding to provision access, or manage an active one — extend, suspend, or end the contract."
+      searchPlaceholder="Search by name, organization or email"
       columns={columns}
       rows={rows}
       layout="fixed"
@@ -152,11 +103,36 @@ export default function SponsoredUsersPage() {
         r.name.toLowerCase().includes(q) ||
         r.email.toLowerCase().includes(q) ||
         (r.organization ?? '').toLowerCase().includes(q) ||
-        r.jobTitle.toLowerCase().includes(q)
+        (r.externalType ?? '').toLowerCase().includes(q)
       }
-      onOpen={(id) => router.push(`/iga/directory/user-identities/${id}`)}
+      onOpen={(id) => router.push(`/iga/reviewer/sponsored-users/${id}`)}
       emptyTitle="No sponsored users"
       emptyMessage="When you sponsor an external identity, they will appear here for review."
     />
+  );
+}
+
+/** End date with the risk stated in the cell, and the start date muted beneath it. */
+function AccessPeriod({ row }: { row: UserIdentityRow }) {
+  if (!row.accessEndsOn) return <span className="text-text-tertiary">Not set</span>;
+  const expired = accessExpired(row);
+  const soon = accessEndingSoon(row);
+  return (
+    <div className="flex flex-col items-start gap-0.5">
+      {expired ? (
+        <Tooltip title="The end date has passed and the account is still enabled.">
+          <span>
+            <StatusChip intent="danger" label={`Expired ${formatDate(row.accessEndsOn)}`} />
+          </span>
+        </Tooltip>
+      ) : soon ? (
+        <StatusChip intent="warning" label={`Ends ${formatDate(row.accessEndsOn)}`} />
+      ) : (
+        <span className="text-body-sm text-text-secondary">{formatDate(row.accessEndsOn)}</span>
+      )}
+      {row.accessStartsOn && (
+        <span className="text-caption text-text-tertiary">from {formatDate(row.accessStartsOn)}</span>
+      )}
+    </div>
   );
 }

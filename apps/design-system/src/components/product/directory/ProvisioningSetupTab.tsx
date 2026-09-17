@@ -273,7 +273,7 @@ export function ProvisioningSetupTab({
               ) : (
                 <>
                   <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
-                    <div className="w-full max-w-sm">
+                    <div className="min-w-0 flex-1 max-w-sm">
                       <Input
                         placeholder="Search methods"
                         value={search}
@@ -281,7 +281,7 @@ export function ProvisioningSetupTab({
                         startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
                       />
                     </div>
-                    <div className="ml-auto">
+                    <div className="ml-auto shrink-0">
                       <Button startIcon={<AddOutlined />} onClick={openAdd}>
                         Add Authorization
                       </Button>

@@ -27,6 +27,15 @@ export interface AppTypeOption {
    * must not show an inbound token.
    */
   inboundScim?: boolean;
+  /**
+   * IGA provisions this type over SCIM (or Adobe's UMAPI), so there are no
+   * per-event HTTP calls to configure — a connection event carries only its
+   * attribute mapping. Connection configuration shows "Attribute mapping"
+   * where a REST type shows "Configure". Listing SCIM as a protocol is not
+   * enough: Salesforce and Google also speak SCIM but are still REST-driven
+   * here, so this is set only on the types that provision purely over it.
+   */
+  scimProvisioned?: boolean;
   /** What IGA can do once this type is connected. Shown in Preview. */
   capabilities: string[];
   /** What an administrator must have ready before connecting. Shown in Preview. */
@@ -77,6 +86,7 @@ export const appTypes: AppTypeOption[] = [
     summary: 'Connect any SCIM app so IGA provisions and reconciles accounts.',
     protocols: ['SCIM'],
     inboundScim: true,
+    scimProvisioned: true,
     capabilities: [
       'Automated SCIM Provisioning',
       'Account Schema Aggregation',
@@ -107,6 +117,7 @@ export const appTypes: AppTypeOption[] = [
     name: 'Adobe',
     summary: 'Connect Creative Cloud so IGA assigns seats and product access.',
     protocols: ['UMAPI', 'SCIM'],
+    scimProvisioned: true,
     capabilities: [
       'Automated SCIM Provisioning',
       'Product profile assignment',
@@ -256,6 +267,14 @@ export function appTypeHasProtocol(nameOrId: string, protocol: string): boolean 
 /** True when IGA is the SCIM server this type pushes into. */
 export function appTypeHasInboundScim(nameOrId: string): boolean {
   return getAppType(nameOrId)?.inboundScim === true;
+}
+
+/**
+ * True when this type provisions over SCIM/UMAPI rather than configurable HTTP
+ * calls — so its connection events are set up by attribute mapping alone.
+ */
+export function appTypeIsScimProvisioned(nameOrId: string): boolean {
+  return getAppType(nameOrId)?.scimProvisioned === true;
 }
 
 /** The fallback type when the catalog has no match for a search. */

@@ -7,7 +7,7 @@
  * Hybrid persistence, same contract as the other stores.
  */
 import { getOnboardedApplication } from './applications-store';
-import { appTypeHasInboundScim } from './app-types';
+import { appTypeHasInboundScim, appTypeIsScimProvisioned } from './app-types';
 import { appProfileFor } from './seed';
 
 export interface ScimInbound {
@@ -70,6 +70,20 @@ export function applicationHasScimInbound(applicationId: string): boolean {
     return appTypeHasInboundScim(onboarded.appTypeId) || appTypeHasInboundScim(onboarded.appType);
   }
   return appTypeHasInboundScim(appProfileFor(applicationId).appType);
+}
+
+/**
+ * True when this application provisions over SCIM/UMAPI — so its connection
+ * events are configured by attribute mapping rather than by HTTP call setup.
+ */
+export function applicationIsScimProvisioned(applicationId: string): boolean {
+  const onboarded = getOnboardedApplication(applicationId);
+  if (onboarded) {
+    return (
+      appTypeIsScimProvisioned(onboarded.appTypeId) || appTypeIsScimProvisioned(onboarded.appType)
+    );
+  }
+  return appTypeIsScimProvisioned(appProfileFor(applicationId).appType);
 }
 
 export function getScimInbound(applicationId: string): ScimInbound {

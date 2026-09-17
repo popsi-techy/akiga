@@ -9,4 +9,5 @@ export const IDENTITY_STATUS: Record<IdentityStatus, { label: string; intent: St
   terminated: { label: 'Terminated', intent: 'danger' },
   'pending-sponsor': { label: 'No sponsor assigned', intent: 'warning' },
   'pending-approval': { label: 'Pending approval', intent: 'warning' },
+  suspended: { label: 'Suspended', intent: 'neutral' },
 };

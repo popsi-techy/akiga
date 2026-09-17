@@ -24,6 +24,7 @@ import {
   type RiskLevel,
   type IdentityKind,
   type IdentityStatus,
+  type ExternalType,
 } from './seed';
 import {
   listOnboardedApplications,
@@ -43,7 +44,7 @@ import { DIRECTORY_LIST_ID_SET } from './application-directory-list';
 import { getOwners, type OwnedEntityType } from './entity-owners';
 import { getTeamCharter, setTeamCharter, type TeamCharterField } from './team-charter';
 import { listAuthorizations } from './provisioning-auth';
-import { getSponsorDecision } from './sponsor-decisions';
+import { getExternalOverlay } from './external-lifecycle';
 import { listStoredEntitlements } from './entitlements-store';
 import { getStoredAppAccount, listStoredAppAccounts, type StoredAppAccount } from './app-accounts-store';
 
@@ -94,7 +95,7 @@ const flatEntitlements: FlatEntitlement[] = catalogApps.flatMap((app) =>
   app.entitlements.map((e) => ({ ...e, applicationId: app.id, applicationName: app.name })),
 );
 
-function applicationNameFor(id: string): string {
+export function applicationNameFor(id: string): string {
   return appById.get(id)?.name ?? getOnboardedApplication(id)?.name ?? id;
 }
 
@@ -130,6 +131,9 @@ export interface UserIdentityRow {
   /** External only — see `SeedUserIdentity`. */
   organization?: string;
   sponsorId?: string;
+  externalType?: ExternalType;
+  sourceApplicationId?: string;
+  accessStartsOn?: string;
   accessEndsOn?: string;
   updatedAt?: string;
 }
@@ -420,29 +424,48 @@ export function getUserIdentity(id: string): UserIdentityRow | undefined {
   return row ? toUserRow(row) : undefined;
 }
 
+/**
+ * Merge an external identity's stored lifecycle decisions onto its seed row, so
+ * the lists, the detail page and every count read the same current state.
+ */
+export function applyExternalOverlay(row: UserIdentityRow): UserIdentityRow {
+  const overlay = getExternalOverlay(row.id);
+  if (!overlay) return row;
+  return {
+    ...row,
+    status: overlay.status ?? row.status,
+    sponsorId: overlay.sponsorId ?? row.sponsorId,
+    accessEndsOn: overlay.endsOn ?? row.accessEndsOn,
+    updatedAt: overlay.at ?? row.updatedAt,
+  };
+}
+
 /** The external subset — contractors, vendors, partners, auditors. */
 export function listExternalIdentities(): UserIdentityRow[] {
-  return userIdentities.filter((u) => u.kind === 'external').map(toUserRow);
+  return userIdentities.filter((u) => u.kind === 'external').map(toUserRow).map(applyExternalOverlay);
 }
 
 /**
  * Externals a reviewer is accountable for — anyone with a sponsor.
  *
- * Jonas (no sponsor) is an admin job, not a reviewer's. Overlay stored
- * approve/reject so a decision survives refresh.
+ * Jonas (no sponsor) is an admin job, not a reviewer's. The sponsor can be one
+ * the reviewer assigned, so the overlay is applied before the filter.
  */
 export function listSponsoredIdentities(): UserIdentityRow[] {
-  return listExternalIdentities()
-    .filter((u) => Boolean(u.sponsorId))
-    .map((row) => {
-      const stored = getSponsorDecision(row.id);
-      if (!stored) return row;
-      return {
-        ...row,
-        status: stored.decision === 'approved' ? 'active' : 'inactive',
-        updatedAt: stored.at,
-      };
-    });
+  return listExternalIdentities().filter((u) => Boolean(u.sponsorId));
+}
+
+/** One external identity, with its lifecycle overlay applied. */
+export function getExternalIdentity(id: string): UserIdentityRow | undefined {
+  const row = identityById.get(id);
+  return row && row.kind === 'external' ? applyExternalOverlay(toUserRow(row)) : undefined;
+}
+
+/** Internal people who can sponsor an external — the Assign/Change sponsor list. */
+export function listSponsorCandidates(): { id: string; name: string; jobTitle: string }[] {
+  return userIdentities
+    .filter((u) => u.kind === 'internal')
+    .map((u) => ({ id: u.id, name: u.name, jobTitle: u.jobTitle }));
 }
 
 /**
@@ -456,6 +479,23 @@ export function listSponsoredIdentities(): UserIdentityRow[] {
 export function accessExpired(row: UserIdentityRow, today = '2026-08-18'): boolean {
   return Boolean(row.accessEndsOn && row.accessEndsOn < today && row.status === 'active');
 }
+
+/**
+ * Days until access ends, or null when there is no end date. Negative once it has
+ * passed. Lets a cell say "ends in 9 days" before it becomes the expired-red case.
+ */
+export function accessEndsInDays(row: UserIdentityRow, today = '2026-08-18'): number | null {
+  if (!row.accessEndsOn) return null;
+  const ms = Date.parse(row.accessEndsOn) - Date.parse(today);
+  return Math.round(ms / 86_400_000);
+}
+
+/** Access ends within `within` days and is still live — the "renew soon" nudge. */
+export function accessEndingSoon(row: UserIdentityRow, within = 30, today = '2026-08-18'): boolean {
+  if (row.status !== 'active') return false;
+  const days = accessEndsInDays(row, today);
+  return days !== null && days >= 0 && days <= within;
+}
 export function getUserIdentityDetail(id: string) {
   const identity = identityById.get(id);
   if (!identity) return null;
@@ -463,6 +503,13 @@ export function getUserIdentityDetail(id: string) {
   const technicalRolesFor = technicalRoles.filter((r) => r.memberIds.includes(id)).map(toRoleRow);
   const businessRolesFor = businessRoles.filter((r) => r.memberIds.includes(id)).map(toRoleRow);
   return { identity, accounts, technicalRoles: technicalRolesFor, businessRoles: businessRolesFor };
+}
+
+/** Same shape as {@link getUserIdentityDetail}, but with the external overlay applied. */
+export function getExternalIdentityDetail(id: string) {
+  const base = getUserIdentityDetail(id);
+  if (!base || base.identity.kind !== 'external') return null;
+  return { ...base, identity: applyExternalOverlay(toUserRow(base.identity)) };
 }
 
 // ---- App Account -----------------------------------------------------
