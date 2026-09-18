@@ -15,6 +15,7 @@ import {
   ExternalTypeChip,
   ExternalIdentityActions,
   IDENTITY_STATUS,
+  accessStatusOf,
 } from '@/components/product/directory';
 import { LastModified } from '@/components/product/LastModified';
 import { formatDate } from '@/lib/datetime';
@@ -25,10 +26,11 @@ import { formatDate } from '@/lib/datetime';
  *
  * The columns are chosen for the questions this list exists to answer, not copied
  * from a generic directory: **who is accountable** (Sponsor), **when does access
- * end and has it already** (Access period), and **what state is it in** (a single
- * effective Status). Type and Organization are clubbed — the type is a chip over
- * the company — and the source application is a filter rather than a column,
- * because it narrows the list without being a risk in itself.
+ * end and has it already** (End date), **where they are in onboarding** (Identity
+ * status), and **whether access is live** (Access status). Type is a chip; the
+ * company is not listed here yet. The
+ * source application is a filter rather than a column, because it narrows the
+ * list without being a risk in itself.
  */
 export default function ExternalIdentitiesListPage() {
   const router = useRouter();
@@ -58,74 +60,66 @@ export default function ExternalIdentitiesListPage() {
       id: 'name',
       header: 'Name',
       sortable: true,
-      width: '22%',
+      // No width: Name absorbs whatever the sized columns leave.
       wrap: true,
       value: (r) => r.name,
       render: (r) => <IdentityCell name={r.name} email={r.email} />,
     },
     {
       id: 'type',
-      header: 'Type / Organization',
+      header: 'Type',
       sortable: true,
-      width: '18%',
+      width: '9%',
       wrap: true,
-      value: (r) => `${r.externalType ?? ''} ${r.organization ?? ''}`.trim(),
-      render: (r) => (
-        <div className="flex min-w-0 flex-col items-start gap-1">
-          <ExternalTypeChip type={r.externalType} />
-          <span className="truncate text-body-sm text-text-secondary" title={r.organization}>
-            {r.organization ?? '—'}
-          </span>
-        </div>
-      ),
+      value: (r) => r.externalType ?? '',
+      render: (r) => <ExternalTypeChip type={r.externalType} />,
     },
     {
       id: 'sponsor',
       header: 'Sponsor',
       sortable: true,
-      width: '15%',
+      width: '14%',
       wrap: true,
       value: (r) => sponsorName(r.sponsorId) ?? 'Unsponsored',
-      render: (r) => {
-        const name = sponsorName(r.sponsorId);
-        if (name) return <span className="text-text-secondary">{name}</span>;
-        return (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/iga/directory/external-identities/${r.id}`);
-            }}
-            className="rounded-sm text-body-sm-strong text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-          >
-            Assign sponsor
-          </button>
-        );
-      },
+      render: (r) => (
+        <ExternalIdentityActions row={r} role="admin" variant="assign-link" onChanged={refresh} />
+      ),
     },
     {
       id: 'accessPeriod',
-      header: 'Access period',
+      header: 'End date',
       sortable: true,
-      width: 160,
+      width: '12%',
       wrap: true,
       value: (r) => r.accessEndsOn ?? '',
       render: (r) => <AccessPeriod row={r} />,
     },
     {
       id: 'status',
-      header: 'Status',
+      header: 'Identity status',
       sortable: true,
-      width: 150,
+      width: '13%',
       wrap: true,
       value: (r) => IDENTITY_STATUS[r.status].label,
       render: (r) => <StatusChip intent={IDENTITY_STATUS[r.status].intent} label={IDENTITY_STATUS[r.status].label} />,
     },
     {
+      id: 'accessStatus',
+      header: 'Access status',
+      sortable: true,
+      width: '12%',
+      wrap: true,
+      value: (r) => accessStatusOf(r.status).label,
+      render: (r) => {
+        const access = accessStatusOf(r.status);
+        return <StatusChip intent={access.intent} label={access.label} />;
+      },
+    },
+    {
       id: 'updatedAt',
       header: 'Last modified',
       sortable: true,
-      width: 168,
+      width: '12%',
       wrap: true,
       value: (r) => r.updatedAt ?? '',
       render: (r) =>
@@ -134,7 +128,7 @@ export default function ExternalIdentitiesListPage() {
     {
       id: 'action',
       header: 'Action',
-      width: 96,
+      width: '8%',
       value: () => '',
       render: (r) => <ExternalIdentityActions row={r} role="admin" variant="row" onChanged={refresh} />,
     },
@@ -144,14 +138,13 @@ export default function ExternalIdentitiesListPage() {
     <DirectoryListPage<UserIdentityRow>
       title="External Identities"
       description="Contractors, vendors, partners and auditors — everyone with access who is not on the payroll."
-      searchPlaceholder="Search by name, organization or email"
+      searchPlaceholder="Search by name, email or type"
       columns={columns}
       rows={rows}
       layout="fixed"
       matches={(r, q) =>
         r.name.toLowerCase().includes(q) ||
         r.email.toLowerCase().includes(q) ||
-        (r.organization ?? '').toLowerCase().includes(q) ||
         (r.externalType ?? '').toLowerCase().includes(q)
       }
       filterGroups={filterGroups}
@@ -169,25 +162,22 @@ export default function ExternalIdentitiesListPage() {
 
 /** End date with the risk stated in the cell, and the start date muted beneath it. */
 function AccessPeriod({ row }: { row: UserIdentityRow }) {
+  const awaitingDecision = row.status === 'pending-approval' || row.status === 'pending-sponsor';
+  if (awaitingDecision) {
+    return <span className="text-text-tertiary">Set on approval</span>;
+  }
   if (!row.accessEndsOn) return <span className="text-text-tertiary">Not set</span>;
   const expired = accessExpired(row);
   const soon = accessEndingSoon(row);
-  return (
-    <div className="flex flex-col items-start gap-0.5">
-      {expired ? (
-        <Tooltip title="The end date has passed and the account is still enabled.">
-          <span>
-            <StatusChip intent="danger" label={`Expired ${formatDate(row.accessEndsOn)}`} />
-          </span>
-        </Tooltip>
-      ) : soon ? (
-        <StatusChip intent="warning" label={`Ends ${formatDate(row.accessEndsOn)}`} />
-      ) : (
-        <span className="text-body-sm text-text-secondary">{formatDate(row.accessEndsOn)}</span>
-      )}
-      {row.accessStartsOn && (
-        <span className="text-caption text-text-tertiary">from {formatDate(row.accessStartsOn)}</span>
-      )}
-    </div>
-  );
+  if (expired) {
+    return (
+      <Tooltip title="The end date has passed and the account is still enabled.">
+        <span>
+          <StatusChip intent="danger" label={`Expired ${formatDate(row.accessEndsOn)}`} />
+        </span>
+      </Tooltip>
+    );
+  }
+  if (soon) return <StatusChip intent="warning" label={`Ends ${formatDate(row.accessEndsOn)}`} />;
+  return <span className="text-body-sm text-text-secondary">{formatDate(row.accessEndsOn)}</span>;
 }

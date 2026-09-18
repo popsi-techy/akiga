@@ -38,6 +38,12 @@ export interface Column<Row> {
    * equally — which is why a table of six columns where one carries a name and
    * another carries a status chip should say so: equal columns are never broken,
    * only plain.
+   *
+   * Leave one column — normally the name — without a width. Percentages resolve
+   * exactly, and whatever is left over lands on the columns measured in pixels:
+   * the selection checkbox grows into a gutter when the percentages undershoot,
+   * and is shrunk until it clips when they overshoot. One flexible column
+   * absorbs the difference in either direction.
    */
   width?: string | number;
   /**
@@ -249,6 +255,18 @@ export function DataTable<Row extends { id: string }>({
     borderBottom: '1px solid var(--ds-color-border-default)',
   };
   /**
+   * The selection column, wide enough for the control it holds.
+   *
+   * MUI's `padding="checkbox"` asks for a 24px column and then pads it 16px/12px,
+   * which leaves the 18px box 4px short and clips it. The override needs the
+   * `&&` — MUI writes that width under `.MuiTableCell-paddingCheckbox`, a
+   * two-class selector that plain `sx` cannot outrank.
+   *
+   * A fixed layout ignores `minWidth` on a cell, so this width only holds if the
+   * other columns leave room for it — see `Column.width`.
+   */
+  const selectCellSx = { '&&': { width: 48 } };
+  /**
    * One line, ellipsized — so every row is the same height whatever is in it.
    *
    * Headers were already `nowrap` while body cells wrapped freely, which is what
@@ -300,7 +318,7 @@ export function DataTable<Row extends { id: string }>({
               {selectable && (
                 // Single-select keeps the column (so the rows still align) but has
                 // no select-all — there is nothing to select all of.
-                <TableCell padding="checkbox" sx={headCellSx}>
+                <TableCell padding="checkbox" sx={{ ...headCellSx, ...selectCellSx }}>
                   {!single && (
                     <Checkbox
                       checked={allOnPageSelected}
@@ -349,7 +367,7 @@ export function DataTable<Row extends { id: string }>({
               Array.from({ length: Math.min(rowsPerPage, 5) }).map((_, i) => (
                 <TableRow key={`sk-${i}`}>
                   {selectable && (
-                    <TableCell padding="checkbox" sx={bodyCellSx}>
+                    <TableCell padding="checkbox" sx={{ ...bodyCellSx, ...selectCellSx }}>
                       <Skeleton variant="rounded" width={18} height={18} />
                     </TableCell>
                   )}
@@ -428,7 +446,11 @@ export function DataTable<Row extends { id: string }>({
                     }}
                   >
                     {selectable && (
-                      <TableCell padding="checkbox" sx={bodyCellSx} onClick={(e) => e.stopPropagation()}>
+                      <TableCell
+                        padding="checkbox"
+                        sx={{ ...bodyCellSx, ...selectCellSx }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {single ? (
                           <Radio
                             checked={isSelected}

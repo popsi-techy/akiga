@@ -26,7 +26,19 @@ export const EVENT_KINDS = [
   { value: 'account-entitlement-assignment', label: 'Account Entitlement Assignment', direction: 'outbound' },
   { value: 'account-entitlement-revocation', label: 'Account Entitlement Revocation', direction: 'outbound' },
 ] as const;
-export type EventKind = (typeof EVENT_KINDS)[number]['value'];
+/**
+ * SCIM/UMAPI does not expose HTTP calls. The three resources a SCIM client
+ * actually sends — users, groups, and who is in which group — are the whole
+ * catalog, unlabeled by direction.
+ */
+export const SCIM_EVENT_KINDS = [
+  { value: 'accounts-fetch', label: 'User import', description: 'Users this application pushes into IGA.' },
+  { value: 'entitlements-fetch', label: 'Group Import', description: 'Groups this application pushes into IGA.' },
+  { value: 'group-membership', label: 'Group membership', description: 'Who belongs to each imported group.' },
+] as const;
+export type EventKind =
+  | (typeof EVENT_KINDS)[number]['value']
+  | (typeof SCIM_EVENT_KINDS)[number]['value'];
 export type EventDirection = (typeof EVENT_KINDS)[number]['direction'];
 
 const KIND_ALIASES: Record<string, EventKind> = {
@@ -39,12 +51,23 @@ const KIND_ALIASES: Record<string, EventKind> = {
 };
 
 export function eventKindMeta(kind: EventKind) {
-  return EVENT_KINDS.find((k) => k.value === kind) ?? EVENT_KINDS[0];
+  return (
+    EVENT_KINDS.find((k) => k.value === kind) ??
+    SCIM_EVENT_KINDS.find((k) => k.value === kind) ??
+    EVENT_KINDS[0]
+  );
+}
+
+/** Label on the SCIM event catalog; falls back to the REST name. */
+export function scimEventLabel(kind: EventKind): string {
+  return SCIM_EVENT_KINDS.find((k) => k.value === kind)?.label ?? eventKindMeta(kind).label;
 }
 
 export function normalizeEventKind(kind: string): EventKind {
   if (kind in KIND_ALIASES) return KIND_ALIASES[kind];
-  return EVENT_KINDS.some((k) => k.value === kind) ? (kind as EventKind) : EVENT_KINDS[0].value;
+  if (EVENT_KINDS.some((k) => k.value === kind)) return kind as EventKind;
+  if (SCIM_EVENT_KINDS.some((k) => k.value === kind)) return kind as EventKind;
+  return EVENT_KINDS[0].value;
 }
 
 export const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;

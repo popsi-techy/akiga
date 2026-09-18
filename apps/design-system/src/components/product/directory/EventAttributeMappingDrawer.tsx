@@ -5,7 +5,7 @@ import TuneOutlined from '@mui/icons-material/TuneOutlined';
 import { Button, Drawer, useToast } from '@ds/components';
 import {
   ensureConnectionEventForKind,
-  eventKindMeta,
+  scimEventLabel,
   mappingComplete,
   saveConnectionEvent,
   type AttributeMapping,
@@ -42,7 +42,7 @@ export function EventAttributeMappingDrawer({
   const kindRef = React.useRef<EventKind | null>(null);
   if (kind) kindRef.current = kind;
   const displayKind = kind ?? kindRef.current;
-  const meta = displayKind ? eventKindMeta(displayKind) : null;
+  const titleKind = displayKind ? scimEventLabel(displayKind) : 'Event';
 
   const [event, setEvent] = React.useState<ConnectionEvent | null>(null);
   const [rows, setRows] = React.useState<AttributeMapping[]>([]);
@@ -90,7 +90,7 @@ export function EventAttributeMappingDrawer({
       open={open}
       onClose={onClose}
       icon={<TuneOutlined sx={{ fontSize: 22 }} />}
-      title={`${meta?.label ?? 'Event'} attribute mapping`}
+      title={`${titleKind} attribute mapping`}
       subtitle={`Map ${applicationName}'s fields to IGA attributes for this event.`}
       width={860}
       footer={

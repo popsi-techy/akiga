@@ -31,7 +31,9 @@ export interface LifecycleEvent {
 export interface ExternalOverlay {
   /** Overrides the seed status once a decision changes it. */
   status?: IdentityStatus;
-  /** Extended contract end date (ISO yyyy-mm-dd). */
+  /** Contract start date, set when onboarding is approved. */
+  startsOn?: string;
+  /** Contract end date (ISO yyyy-mm-dd). */
   endsOn?: string;
   /** Reassigned or newly assigned sponsor. */
   sponsorId?: string;
@@ -89,11 +91,20 @@ function mutate(
 }
 
 /** Sponsor's onboarding decision — approve provisions access, reject disables it. */
-export function recordSponsorDecision(identityId: string, decision: 'approved' | 'rejected'): void {
+export function recordSponsorDecision(
+  identityId: string,
+  decision: 'approved' | 'rejected',
+  opts?: { startsOn?: string; endsOn?: string; justification?: string },
+): void {
   mutate(
     identityId,
-    { status: decision === 'approved' ? 'active' : 'inactive' },
-    { action: decision },
+    {
+      status: decision === 'approved' ? 'active' : 'inactive',
+      ...(decision === 'approved'
+        ? { startsOn: opts?.startsOn, endsOn: opts?.endsOn }
+        : {}),
+    },
+    { action: decision, note: opts?.justification },
   );
 }
 

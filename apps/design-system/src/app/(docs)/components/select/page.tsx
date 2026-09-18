@@ -54,6 +54,8 @@ export default function SelectDocs() {
             { name: 'options', type: 'SelectOption[]', description: '{ value, label, disabled? } items.' },
             { name: 'value / onChange', type: 'string / (v) => void', description: 'Controlled value.' },
             { name: 'label', type: 'string', description: 'Visible field label.' },
+            { name: 'hint', type: 'ReactNode', description: 'Info icon on the label with a tooltip. For the sentence a user only needs once.' },
+            { name: 'helperText', type: 'ReactNode', description: 'Persistent help under the field.' },
             { name: 'placeholder', type: 'string', description: 'Shown when no value is selected.' },
             { name: 'error', type: 'string', description: 'Error message + error state.' },
             { name: 'size', type: "'sm' | 'md'", default: "'md'", description: 'Control height.' },

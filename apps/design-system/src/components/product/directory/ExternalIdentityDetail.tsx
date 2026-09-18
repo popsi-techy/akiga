@@ -16,7 +16,7 @@ import { EntityAvatar } from './EntityAvatar';
 import { RiskScoreChip } from './RiskScoreChip';
 import { infoIcon } from './infoIcons';
 import { accountColumns, roleColumns } from './relationColumns';
-import { IDENTITY_STATUS } from './identityStatus';
+import { IDENTITY_STATUS, accessStatusOf } from './identityStatus';
 import { ExternalTypeChip, externalTypeLabel } from './ExternalTypeChip';
 import { ExternalIdentityActions } from './ExternalIdentityActions';
 import {
@@ -46,29 +46,12 @@ const EVENT_LABEL: Record<LifecycleAction, string> = {
   'sponsor-assigned': 'Sponsor assigned',
 };
 
-/** Onboarding lifecycle status vs. whether access is currently live — the two axes. */
-function accessStatusOf(status: string): { label: string; intent: 'success' | 'neutral' | 'warning' | 'danger' } {
-  switch (status) {
-    case 'active':
-      return { label: 'Active', intent: 'success' };
-    case 'suspended':
-      return { label: 'Suspended', intent: 'neutral' };
-    case 'terminated':
-    case 'inactive':
-      return { label: 'Revoked', intent: 'danger' };
-    default:
-      return { label: 'No access', intent: 'neutral' };
-  }
-}
-
 /**
  * One external identity — the sponsor/admin's page for onboarding, contract and
  * access, kept under its own route so the sidebar never flips to Workforce.
  *
  * The same component serves both personas; `role` gates the two admin-only moves.
- * Onboarding status and access status get their own rows here — the list clubs
- * them into one chip, but on the page the reader is deciding, and the difference
- * between "onboarded but suspended" and "still pending" is the decision.
+ * Identity status and access status are separate rows here and on the list.
  */
 export function ExternalIdentityDetail({
   id,

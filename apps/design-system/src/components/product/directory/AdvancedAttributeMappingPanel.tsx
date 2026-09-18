@@ -96,9 +96,6 @@ export function AdvancedAttributeMappingPanel({
     <div className="ds-scroll min-h-0 flex-1 overflow-y-auto pb-2">
       <section>
         <h2 className="text-h5 text-text-primary">Identity classification</h2>
-        <p className="mt-1 max-w-2xl text-body-sm text-text-secondary">
-          Same type for everyone, or mixed types from one source — pick which applies here.
-        </p>
         <Card padding="md" className="mt-4">
           <IdentityClassificationCard applicationId={applicationId} onSaved={onChanged} />
         </Card>

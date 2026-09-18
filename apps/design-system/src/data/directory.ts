@@ -430,13 +430,17 @@ export function getUserIdentity(id: string): UserIdentityRow | undefined {
  */
 export function applyExternalOverlay(row: UserIdentityRow): UserIdentityRow {
   const overlay = getExternalOverlay(row.id);
-  if (!overlay) return row;
+  const status = overlay?.status ?? row.status;
+  const awaiting = status === 'pending-approval' || status === 'pending-sponsor';
   return {
     ...row,
-    status: overlay.status ?? row.status,
-    sponsorId: overlay.sponsorId ?? row.sponsorId,
-    accessEndsOn: overlay.endsOn ?? row.accessEndsOn,
-    updatedAt: overlay.at ?? row.updatedAt,
+    status,
+    sponsorId: overlay?.sponsorId ?? row.sponsorId,
+    // Dates are a product of approval, not of the seed. Pending rows stay undated
+    // until the sponsor drawer writes startsOn / endsOn onto the overlay.
+    accessStartsOn: overlay?.startsOn ?? (awaiting ? undefined : row.accessStartsOn),
+    accessEndsOn: overlay?.endsOn ?? (awaiting ? undefined : row.accessEndsOn),
+    updatedAt: overlay?.at ?? row.updatedAt,
   };
 }
 
@@ -462,10 +466,10 @@ export function getExternalIdentity(id: string): UserIdentityRow | undefined {
 }
 
 /** Internal people who can sponsor an external — the Assign/Change sponsor list. */
-export function listSponsorCandidates(): { id: string; name: string; jobTitle: string }[] {
+export function listSponsorCandidates(): { id: string; name: string; email: string; jobTitle: string }[] {
   return userIdentities
     .filter((u) => u.kind === 'internal')
-    .map((u) => ({ id: u.id, name: u.name, jobTitle: u.jobTitle }));
+    .map((u) => ({ id: u.id, name: u.name, email: u.email, jobTitle: u.jobTitle }));
 }
 
 /**

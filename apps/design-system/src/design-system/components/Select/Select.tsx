@@ -4,6 +4,8 @@ import * as React from 'react';
 import { typography } from '../../tokens/tokens';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
+import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 /**
  * Select — a single-choice dropdown built on MUI's select-mode TextField.
@@ -23,6 +25,11 @@ export interface SelectProps {
   onChange: (value: string) => void;
   placeholder?: string;
   helperText?: React.ReactNode;
+  /**
+   * Explanation in a tooltip on an info icon beside the label. For the sentence
+   * a user only needs once — `helperText` is for what they need every time.
+   */
+  hint?: React.ReactNode;
   error?: string;
   required?: boolean;
   disabled?: boolean;
@@ -50,6 +57,7 @@ export function Select({
   onChange,
   placeholder,
   helperText,
+  hint,
   error,
   required,
   disabled,
@@ -71,14 +79,27 @@ export function Select({
         <label
           id={labelId}
           htmlFor={fieldId}
-          className="mb-1.5 block text-body-sm-strong text-text-primary"
+          className="mb-1.5 flex items-center gap-1.5 text-body-sm-strong text-text-primary"
         >
-          {label}
-          {required && (
-            <span aria-hidden className="text-danger">
-              {' '}
-              *
-            </span>
+          <span>
+            {label}
+            {required && (
+              <span aria-hidden className="text-danger">
+                {' '}
+                *
+              </span>
+            )}
+          </span>
+          {hint && (
+            <Tooltip title={hint}>
+              <span
+                tabIndex={0}
+                aria-label={typeof hint === 'string' ? hint : undefined}
+                className="inline-flex shrink-0 text-icon-subtle"
+              >
+                <InfoOutlined sx={{ fontSize: 15 }} />
+              </span>
+            </Tooltip>
           )}
         </label>
       )}

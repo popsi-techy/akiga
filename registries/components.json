@@ -171,7 +171,7 @@
         "row-hover"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/data-table/page.tsx",
-      "notes": "fillHeight takes the remaining height and scrolls its own body with a sticky header and pinned pagination — the page itself never scrolls on a list screen. `layout` decides column sizing and PREFER 'fixed' for any new list. Under the default 'auto', a cell's minimum width is its longest word, so ONE long value widens the table past its container and the trailing columns scroll off — and truncation cannot fix it, because `nowrap` under auto layout makes the minimum the whole string and the overflow LARGER (measured on the reports list: 82px overflow before, 302px with nowrap alone). 'fixed' ends both: columns take the `width` they declare and share the remainder equally, cells truncate to one line with the full text as a `title`, and every row is one height (75px → 55px rows, 0 overflow on that same list). Its cost is that it stops guessing — a table that does not say which column carries the name gives it the same share as its status column, so declare widths. 'auto' remains the default only for compatibility: twenty-five existing tables would need widths before it could be flipped, and that sweep has not been done. `Column.wrap` opts a single cell out of truncation, for two-line renders and for anything that paints outside its own box (a chip's border, an avatar's ring) which `overflow: hidden` would otherwise shave — the same trade and the same name as `InfoRow.valueWrap`. `Column.width` binds on BOTH the header and the body cell; it used to be applied to the `<th>` alone, which made the hint weaker than it looked. `selectionToolbar` is a first body row while any row is selected — select-all matching and clear live there. Icon-only bulk actions sit on the page toolbar, to the right of Filter, not in that row and not docked to the bottom of the screen."
+      "notes": "fillHeight takes the remaining height and scrolls its own body with a sticky header and pinned pagination — the page itself never scrolls on a list screen. `layout` decides column sizing and PREFER 'fixed' for any new list. Under the default 'auto', a cell's minimum width is its longest word, so ONE long value widens the table past its container and the trailing columns scroll off — and truncation cannot fix it, because `nowrap` under auto layout makes the minimum the whole string and the overflow LARGER (measured on the reports list: 82px overflow before, 302px with nowrap alone). 'fixed' ends both: columns take the `width` they declare and share the remainder equally, cells truncate to one line with the full text as a `title`, and every row is one height (75px → 55px rows, 0 overflow on that same list). Its cost is that it stops guessing — a table that does not say which column carries the name gives it the same share as its status column, so declare widths. 'auto' remains the default only for compatibility: twenty-five existing tables would need widths before it could be flipped, and that sweep has not been done. `Column.wrap` opts a single cell out of truncation, for two-line renders and for anything that paints outside its own box (a chip's border, an avatar's ring) which `overflow: hidden` would otherwise shave — the same trade and the same name as `InfoRow.valueWrap`. `Column.width` binds on BOTH the header and the body cell; it used to be applied to the `<th>` alone, which made the hint weaker than it looked. Under 'fixed', LEAVE ONE COLUMN (normally the name) WITHOUT a width: percentages resolve exactly and the leftover lands on the pixel-width columns, so the 48px selection column turns into a gutter when they undershoot and is shrunk until the checkbox clips when they overshoot — one flexible column absorbs the difference either way. `selectionToolbar` is a first body row while any row is selected — select-all matching and clear live there. Icon-only bulk actions sit on the page toolbar, to the right of Filter, not in that row and not docked to the bottom of the screen."
     },
     {
       "name": "DatePicker",
@@ -216,7 +216,8 @@
       "variants": [
         "titled",
         "hideTitle",
-        "hideFilter"
+        "hideFilter",
+        "selectable"
       ],
       "states": [
         "default",
@@ -225,7 +226,7 @@
         "downloading"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/directory-list-page/page.tsx",
-      "notes": "Catalog-list frame: title, search, optional FilterDrawer, fill-height DataTable, row-click. hideTitle is for System Settings (breadcrumb already names the screen). hideFilter keeps search when there is nothing to filter. Promoted from product Directory. See the catalog-list pattern and ADR-0015."
+      "notes": "Catalog-list frame: title, search, optional FilterDrawer, fill-height DataTable, row-click. hideTitle is for System Settings (breadcrumb already names the screen). hideFilter keeps search when there is nothing to filter. selectable forwards DataTable checkboxes and, when any visible row is selected, the Access Certification selection bar (count, Select all / Clear, selectionActions). Promoted from product Directory. See the catalog-list pattern and ADR-0015."
     },
     {
       "name": "DonutChart",
@@ -627,7 +628,7 @@
         "disabled"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/radio-card-group/page.tsx",
-      "notes": "Single-choice selector as icon + label cards. Use when the options need explanation; a bare Select when they do not. The radio dot centres on the 32px icon tile when an option has an icon, and aligns to the label's first line when it does not — a 16px dot pinned to the top of a 32px neighbour reads as misaligned."
+      "notes": "Single-choice selector as icon + label cards. Use when the options need explanation; a bare Select when they do not. The radio dot centres on the 32px icon tile when an option has an icon, and aligns to the label's first line when it does not — a 16px dot pinned to the top of a 32px neighbour reads as misaligned. `options[].action` is a trailing control (e.g. Configure) rendered beside the radio, not inside it: a button nested in a role=radio is invalid, and clicking it must not also pick the option. `selectedTone=\"quiet\"` keeps an outlined selected card on the same border as its neighbours when the radio dot is the only this-one signal."
     },
     {
       "name": "RelationshipCanvas",
@@ -768,7 +769,7 @@
         "disabled"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/select/page.tsx",
-      "notes": "Matched to Input so the two align in a form row. Pass ariaLabel when the visible label sits outside the component — otherwise the combobox announces only its value."
+      "notes": "Matched to Input so the two align in a form row. Pass ariaLabel when the visible label sits outside the component — otherwise the combobox announces only its value. hint is an info tooltip on the label, same as Input — use it for the sentence a user only needs once; helperText stays under the field."
     },
     {
       "name": "SelectableList",

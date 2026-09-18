@@ -3,10 +3,20 @@
 import * as React from 'react';
 import AddOutlined from '@mui/icons-material/AddOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
-import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import PersonOutline from '@mui/icons-material/PersonOutline';
 import GroupsOutlined from '@mui/icons-material/GroupsOutlined';
-import { Button, Input, RadioCardGroup, Select, Tooltip, useToast } from '@ds/components';
+import TuneOutlined from '@mui/icons-material/TuneOutlined';
+import {
+  Button,
+  Drawer,
+  Input,
+  RadioCardGroup,
+  Select,
+  SettingsRow,
+  SettingsStack,
+  StatusChip,
+  useToast,
+} from '@ds/components';
 import {
   CLASSIFICATION_OPERATORS,
   IDENTITY_TYPES,
@@ -18,9 +28,6 @@ import {
 } from '@/data/identity-classification';
 
 type SourceMode = 'uniform' | 'mixed';
-
-const MIXED_HINT =
-  'Rules run top to bottom — the first match wins. When nothing matches, the fallback type is used.';
 
 const inferMode = (d: IdentityClassification): SourceMode =>
   d.rules.length > 0 || d.classifyBasedOn.trim() !== '' ? 'mixed' : 'uniform';
@@ -41,6 +48,12 @@ export function IdentityClassificationCard({
     inferMode(getIdentityClassification(applicationId)),
   );
   const [touched, setTouched] = React.useState(false);
+  const [rulesOpen, setRulesOpen] = React.useState(false);
+  const [rulesTouched, setRulesTouched] = React.useState(false);
+  const rulesSnapshot = React.useRef<Pick<IdentityClassification, 'classifyBasedOn' | 'rules'>>({
+    classifyBasedOn: '',
+    rules: [],
+  });
 
   React.useEffect(() => {
     const next = getIdentityClassification(applicationId);
@@ -52,11 +65,13 @@ export function IdentityClassificationCard({
   const patch = (p: Partial<IdentityClassification>) => setDraft((d) => ({ ...d, ...p }));
 
   const updateRule = (id: string, p: Partial<ClassificationRule>) =>
-    patch({ rules: draft.rules.map((r) => (r.id === id ? { ...r, ...p } : r)) });
+    setDraft((d) => ({ ...d, rules: d.rules.map((r) => (r.id === id ? { ...r, ...p } : r)) }));
 
-  const addRule = () => patch({ rules: [...draft.rules, blankClassificationRule(draft.rules.length)] });
+  const addRule = () =>
+    setDraft((d) => ({ ...d, rules: [...d.rules, blankClassificationRule(d.rules.length)] }));
 
-  const removeRule = (id: string) => patch({ rules: draft.rules.filter((r) => r.id !== id) });
+  const removeRule = (id: string) =>
+    setDraft((d) => ({ ...d, rules: d.rules.filter((r) => r.id !== id) }));
 
   const switchMode = (next: SourceMode) => {
     setMode(next);
@@ -68,24 +83,67 @@ export function IdentityClassificationCard({
     }
   };
 
+  const sourceField = draft.classifyBasedOn.trim();
+  const rulesHint =
+    sourceField === ''
+      ? 'Checked top to bottom — the first match decides the type.'
+      : `Checked top to bottom against ${sourceField} — the first match decides the type.`;
+
   const rulesStarted = draft.rules.filter((r) => r.value.trim() !== '' || r.identityType !== '');
   const rulesIncomplete =
-    mode === 'mixed' &&
-    (rulesStarted.length === 0 ||
-      draft.classifyBasedOn.trim() === '' ||
-      rulesStarted.some((r) => r.value.trim() === '' || r.identityType === ''));
+    rulesStarted.length === 0 ||
+    sourceField === '' ||
+    rulesStarted.some((r) => r.value.trim() === '' || r.identityType === '');
+  const rulesConfigured = !rulesIncomplete;
 
   const typeMissing = touched && draft.defaultIdentityType === '';
+
+  const snapshotRules = (rules: ClassificationRule[]) =>
+    rules.map((r) => ({ ...r }));
+
+  const openRules = () => {
+    const nextRules = draft.rules.length === 0 ? [blankClassificationRule(0)] : draft.rules;
+    if (draft.rules.length === 0) patch({ rules: nextRules });
+    rulesSnapshot.current = {
+      classifyBasedOn: draft.classifyBasedOn,
+      rules: snapshotRules(nextRules),
+    };
+    setRulesTouched(false);
+    setRulesOpen(true);
+  };
+
+  const closeRules = () => {
+    patch({
+      classifyBasedOn: rulesSnapshot.current.classifyBasedOn,
+      rules: snapshotRules(rulesSnapshot.current.rules),
+    });
+    setRulesOpen(false);
+  };
+
+  const saveRules = () => {
+    setRulesTouched(true);
+    if (rulesIncomplete) return;
+    const classifyBasedOn = draft.classifyBasedOn.trim();
+    patch({ classifyBasedOn, rules: rulesStarted });
+    saveIdentityClassification({
+      applicationId,
+      defaultIdentityType: draft.defaultIdentityType,
+      classifyBasedOn,
+      rules: rulesStarted,
+    });
+    setRulesOpen(false);
+    toast.success('Rules saved.');
+    onSaved?.();
+  };
 
   const save = () => {
     setTouched(true);
     if (draft.defaultIdentityType === '') return;
-    if (rulesIncomplete) return;
     saveIdentityClassification({
       applicationId,
       defaultIdentityType: draft.defaultIdentityType,
       classifyBasedOn: mode === 'mixed' ? draft.classifyBasedOn.trim() : '',
-      rules: mode === 'mixed' ? rulesStarted : [],
+      rules: mode === 'mixed' ? (rulesStarted.length > 0 ? rulesStarted : draft.rules) : [],
     });
     toast.success('Identity classification saved.');
     onSaved?.();
@@ -93,24 +151,24 @@ export function IdentityClassificationCard({
 
   return (
     <>
-      <p className="mb-3 text-body-sm-strong text-text-primary">What does this source send?</p>
+      <p className="mb-3 text-body-sm-strong text-text-primary">What identity types does this application send?</p>
       <RadioCardGroup
         appearance="outlined"
         columns={2}
-        ariaLabel="Source user types"
+        ariaLabel="Application identity types"
         value={mode}
         onChange={(v) => switchMode(v as SourceMode)}
         options={[
           {
             value: 'uniform',
             label: 'One identity type',
-            description: 'Every user from this source is the same type.',
+            description: 'All users share the same identity type.',
             icon: <PersonOutline sx={{ fontSize: 18 }} />,
           },
           {
             value: 'mixed',
             label: 'More than one type',
-            description: 'Types vary — classify by a source field.',
+            description: 'Classify each identity using an application field.',
             icon: <GroupsOutlined sx={{ fontSize: 18 }} />,
           },
         ]}
@@ -130,96 +188,126 @@ export function IdentityClassificationCard({
         </div>
       ) : (
         <div className="mt-5 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="Source field"
-              placeholder="e.g. userType"
-              value={draft.classifyBasedOn}
-              onChange={(e) => patch({ classifyBasedOn: e.target.value })}
-              error={touched && draft.classifyBasedOn.trim() === '' ? 'Required.' : undefined}
-            />
+          <SettingsStack>
+            <SettingsRow
+              surface="subtle"
+              title="Classification rules"
+              description="Use an application field to assign each identity a type."
+              hint="Rules are checked top to bottom — the first match decides the type."
+            >
+              <StatusChip
+                intent={rulesConfigured ? 'success' : 'warning'}
+                label={
+                  rulesConfigured
+                    ? `${rulesStarted.length} ${rulesStarted.length === 1 ? 'rule' : 'rules'}`
+                    : 'Pending'
+                }
+              />
+              <Button variant="secondary" size="xs" aria-label="Configure rules" onClick={openRules}>
+                Configure rules
+              </Button>
+            </SettingsRow>
+          </SettingsStack>
+          <div className="max-w-sm">
             <Select
               label="Fallback type"
+              hint="Used when no rule matches"
               options={IDENTITY_TYPES.map((t) => ({ value: t.value, label: t.label }))}
               value={draft.defaultIdentityType}
-              onChange={(v) => patch({ defaultIdentityType: v as IdentityClassification['defaultIdentityType'] })}
+              onChange={(v) =>
+                patch({ defaultIdentityType: v as IdentityClassification['defaultIdentityType'] })
+              }
               placeholder="Select"
               required
               error={typeMissing ? 'Required.' : undefined}
-              helperText="When no rule matches"
             />
           </div>
+        </div>
+      )}
+
+      <div className="mt-5">
+        <Button onClick={save}>Save classification</Button>
+      </div>
+
+      <Drawer
+        open={rulesOpen}
+        onClose={closeRules}
+        icon={<TuneOutlined sx={{ fontSize: 22 }} />}
+        title="Classification rules"
+        subtitle="Rules run against an application field — the first match decides the type."
+        width={560}
+        footer={
+          <>
+            <Button variant="secondary" onClick={closeRules}>
+              Cancel
+            </Button>
+            <Button onClick={saveRules}>Save rules</Button>
+          </>
+        }
+      >
+        <div className="space-y-5">
+          <Input
+            label="Application field"
+            hint={rulesHint}
+            placeholder="e.g. userType"
+            required
+            value={draft.classifyBasedOn}
+            onChange={(e) => patch({ classifyBasedOn: e.target.value })}
+            error={rulesTouched && sourceField === '' ? 'Required.' : undefined}
+          />
 
           <div>
-            <div className="mb-2 flex items-center gap-1.5">
-              <span className="text-body-sm-strong text-text-primary">Rules</span>
-              <Tooltip title={MIXED_HINT}>
-                <span tabIndex={0} aria-label={MIXED_HINT} className="inline-flex shrink-0 text-icon-subtle">
-                  <InfoOutlined sx={{ fontSize: 14 }} />
-                </span>
-              </Tooltip>
-            </div>
-
-            <div className="space-y-2">
+            <p className="mb-1.5 text-body-sm-strong text-text-primary">Rules</p>
+            <div className="space-y-3">
               {draft.rules.map((rule, index) => (
-                <div
-                  key={rule.id}
-                  className="grid grid-cols-[120px_minmax(0,1fr)_auto_minmax(0,1fr)_36px] items-start gap-2 rounded-md border border-border bg-canvas px-2 py-2.5 sm:border-0 sm:bg-transparent sm:p-0"
-                >
-                  <Select
-                    ariaLabel={`Rule ${index + 1} condition`}
-                    options={CLASSIFICATION_OPERATORS.map((o) => ({ value: o.value, label: o.label }))}
-                    value={rule.operator}
-                    onChange={(v) => updateRule(rule.id, { operator: v as ClassificationRule['operator'] })}
-                  />
-                  <Input
-                    aria-label={`Rule ${index + 1} value`}
-                    placeholder="e.g. contractor"
-                    value={rule.value}
-                    onChange={(e) => updateRule(rule.id, { value: e.target.value })}
-                    error={touched && rule.value.trim() === '' ? 'Required.' : undefined}
-                  />
-                  <span className="hidden pt-2 text-body-sm text-text-tertiary sm:inline" aria-hidden>
-                    →
-                  </span>
-                  <Select
-                    ariaLabel={`Rule ${index + 1} identity type`}
-                    placeholder="Identity type"
-                    options={IDENTITY_TYPES.map((t) => ({ value: t.value, label: t.label }))}
-                    value={rule.identityType}
-                    onChange={(v) =>
-                      updateRule(rule.id, { identityType: v as ClassificationRule['identityType'] })
-                    }
-                    error={touched && rule.identityType === '' ? 'Required.' : undefined}
-                  />
-                  <div className="flex justify-end pt-1">
+                <div key={rule.id} className="flex flex-col gap-2 rounded-md bg-subtle px-3 py-3">
+                  <div className="flex items-start gap-2">
+                    <div className="w-28 shrink-0">
+                      <Select
+                        ariaLabel={`Rule ${index + 1} condition`}
+                        options={CLASSIFICATION_OPERATORS.map((o) => ({ value: o.value, label: o.label }))}
+                        value={rule.operator}
+                        onChange={(v) => updateRule(rule.id, { operator: v as ClassificationRule['operator'] })}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <Input
+                        aria-label={`Rule ${index + 1} value`}
+                        placeholder="e.g. contractor"
+                        value={rule.value}
+                        onChange={(e) => updateRule(rule.id, { value: e.target.value })}
+                        error={rulesTouched && rule.value.trim() === '' ? 'Required.' : undefined}
+                      />
+                    </div>
                     <button
                       type="button"
                       onClick={() => removeRule(rule.id)}
                       aria-label={`Remove rule ${index + 1}`}
                       disabled={draft.rules.length === 1}
-                      className="rounded-md p-1.5 text-icon hover:bg-surface-hover hover:text-danger disabled:opacity-40"
+                      className="mt-1 shrink-0 rounded-md p-1.5 text-icon hover:bg-surface-hover hover:text-danger disabled:opacity-40"
                     >
                       <DeleteOutline sx={{ fontSize: 18 }} />
                     </button>
                   </div>
+                  <Select
+                    label="Identity type"
+                    placeholder="Select"
+                    options={IDENTITY_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+                    value={rule.identityType}
+                    onChange={(v) =>
+                      updateRule(rule.id, { identityType: v as ClassificationRule['identityType'] })
+                    }
+                    error={rulesTouched && rule.identityType === '' ? 'Required.' : undefined}
+                  />
                 </div>
               ))}
             </div>
-
             <Button variant="secondary" size="sm" startIcon={<AddOutlined />} className="mt-3" onClick={addRule}>
               Add rule
             </Button>
           </div>
         </div>
-      )}
-
-      {/* No rule above the button. The card's own border already closes the group, and a
-          second line 40px inside it divided a form of two fields into two halves. The
-          mapping card next door ends the same way. */}
-      <div className="mt-5 flex justify-end">
-        <Button onClick={save}>Save classification</Button>
-      </div>
+      </Drawer>
     </>
   );
 }

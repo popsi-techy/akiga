@@ -3,15 +3,19 @@
 import * as React from 'react';
 import {
   Button,
+  Card,
   SettingsRow,
   SettingsStack,
+  StatusChip,
   Switch,
   useToast,
 } from '@ds/components';
 import { ConnectionEventDrawer } from './ConnectionEventDrawer';
 import { EventAttributeMappingDrawer } from './EventAttributeMappingDrawer';
+import { IdentityClassificationCard } from './IdentityClassificationCard';
 import {
   EVENT_KINDS,
+  SCIM_EVENT_KINDS,
   listConnectionEvents,
   saveConnectionEvent,
   type ConnectionEvent,
@@ -23,11 +27,21 @@ import { applicationIsScimProvisioned } from '@/data/scim-inbound';
 /**
  * Connection Configuration — the calls IGA makes once it can sign in.
  *
- * The catalog is fixed: one inbound/outbound row per event type. Configure
- * opens that type's drawer — calls on the left, the selected call on the
- * right — so adding and editing stay on one surface.
+ * The catalog is fixed: one inbound/outbound row per event type on REST
+ * connectors. SCIM/UMAPI types show three unlabeled slots — User import,
+ * Group Import, Group membership — because those types do not split work
+ * into HTTP direction.
  *
- * The switch runs the type: off keeps every call configured but stops them.
+ * Configure opens that type's drawer — calls on the left, the selected call
+ * on the right — so adding and editing stay on one surface.
+ *
+ * On SCIM/UMAPI types, identity classification sits above that catalog:
+ * those types have no Advanced rail item, and mapping already lives on each
+ * event.
+ *
+ * The switch runs the type on REST connectors: off keeps every call configured
+ * but stops them. SCIM/UMAPI rows have no switch and no Save — mapping is the
+ * only setup those types have.
  */
 export function ConnectionConfiguration({
   applicationId,
@@ -70,10 +84,7 @@ export function ConnectionConfiguration({
 
   const toggleSlot = (kind: EventKind, on: boolean) => {
     if (eventsFor(kind).length === 0) {
-      // No setup yet: send the user to where this type is configured — its
-      // attribute mapping for a SCIM/UMAPI push, its API call otherwise.
-      if (scimProvisioned) setMappingKind(kind);
-      else setDrawerKind(kind);
+      setDrawerKind(kind);
       return;
     }
     setPending((p) => {
@@ -103,11 +114,12 @@ export function ConnectionConfiguration({
     );
   };
 
-  const slotRow = (slot: (typeof EVENT_KINDS)[number]) => {
+  const slotRow = (slot: { value: EventKind; label: string; description?: string }) => {
     const events = eventsFor(slot.value);
     const on = isOn(slot.value);
     const open = drawerKind === slot.value;
     const mapped = events.reduce((n, e) => n + e.attributes.length, 0);
+    const configured = mapped > 0;
     return (
       <SettingsRow
         key={slot.value}
@@ -115,53 +127,61 @@ export function ConnectionConfiguration({
         title={slot.label}
         description={
           scimProvisioned
-            ? // SCIM/UMAPI push: an event is set up by its attribute mapping, not
-              // by an API call, so the row counts mapped attributes instead.
-              mapped === 0
-              ? 'No attributes mapped'
-              : `${mapped} ${mapped === 1 ? 'attribute' : 'attributes'} mapped`
+            ? slot.description
             : events.length === 0
               ? 'Not configured'
               : `${events.length} ${events.length === 1 ? 'call' : 'calls'}`
         }
       >
         {scimProvisioned ? (
-          <Button
-            variant="secondary"
-            size="xs"
-            aria-label={`Attribute mapping for ${slot.label}`}
-            onClick={() => setMappingKind(slot.value)}
-          >
-            Attribute mapping
-          </Button>
+          <>
+            <StatusChip
+              intent={configured ? 'success' : 'warning'}
+              label={
+                configured
+                  ? `${mapped} ${mapped === 1 ? 'attribute' : 'attributes'} mapped`
+                  : 'Pending'
+              }
+            />
+            <Button
+              variant="secondary"
+              size="xs"
+              aria-label={`Map attributes for ${slot.label}`}
+              onClick={() => setMappingKind(slot.value)}
+            >
+              Map attributes
+            </Button>
+          </>
         ) : (
-          <Button
-            variant="secondary"
-            size="xs"
-            aria-label={`Configure ${slot.label}`}
-            aria-expanded={open}
-            onClick={() => setDrawerKind(open ? null : slot.value)}
-            sx={
-              open
-                ? {
-                    borderColor: 'var(--ds-color-brand-primary)',
-                    backgroundColor: 'var(--ds-color-surface-default)',
-                    '&:hover': {
+          <>
+            <Button
+              variant="secondary"
+              size="xs"
+              aria-label={`Configure ${slot.label}`}
+              aria-expanded={open}
+              onClick={() => setDrawerKind(open ? null : slot.value)}
+              sx={
+                open
+                  ? {
                       borderColor: 'var(--ds-color-brand-primary)',
                       backgroundColor: 'var(--ds-color-surface-default)',
-                    },
-                  }
-                : undefined
-            }
-          >
-            Configure
-          </Button>
+                      '&:hover': {
+                        borderColor: 'var(--ds-color-brand-primary)',
+                        backgroundColor: 'var(--ds-color-surface-default)',
+                      },
+                    }
+                  : undefined
+              }
+            >
+              Configure
+            </Button>
+            <Switch
+              checked={on}
+              onChange={(e) => toggleSlot(slot.value, e.target.checked)}
+              inputProps={{ 'aria-label': `${on ? 'Disable' : 'Enable'} ${slot.label}` }}
+            />
+          </>
         )}
-        <Switch
-          checked={on}
-          onChange={(e) => toggleSlot(slot.value, e.target.checked)}
-          inputProps={{ 'aria-label': `${on ? 'Disable' : 'Enable'} ${slot.label}` }}
-        />
       </SettingsRow>
     );
   };
@@ -169,26 +189,57 @@ export function ConnectionConfiguration({
   const inbound = EVENT_KINDS.filter((s) => s.direction === 'inbound');
   const outbound = EVENT_KINDS.filter((s) => s.direction === 'outbound');
 
+  const eventsToolbar = (
+    <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
+      <h2 className="text-h5 text-text-primary">Events</h2>
+      {!scimProvisioned && (
+        <>
+          <p role="status" className="text-body-sm text-text-secondary">
+            {dirty > 0 && `${dirty} unsaved ${dirty === 1 ? 'change' : 'changes'}`}
+          </p>
+          <div className="ml-auto">
+            <Button disabled={dirty === 0} onClick={saveToggles}>
+              Save changes
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  const eventsStacks = scimProvisioned ? (
+    <SettingsStack>{SCIM_EVENT_KINDS.map(slotRow)}</SettingsStack>
+  ) : (
+    <>
+      <h3 className="mb-2 text-overline text-text-tertiary">Inbound</h3>
+      <SettingsStack>{inbound.map(slotRow)}</SettingsStack>
+      <h3 className="mb-2 mt-5 text-overline text-text-tertiary">Outbound</h3>
+      <SettingsStack>{outbound.map(slotRow)}</SettingsStack>
+    </>
+  );
+
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
-        <h2 className="text-h5 text-text-primary">Events</h2>
-        <p role="status" className="text-body-sm text-text-secondary">
-          {dirty > 0 && `${dirty} unsaved ${dirty === 1 ? 'change' : 'changes'}`}
-        </p>
-        <div className="ml-auto">
-          <Button disabled={dirty === 0} onClick={saveToggles}>
-            Save changes
-          </Button>
+      {scimProvisioned ? (
+        // SCIM/UMAPI: classification sits with the connection, above the event
+        // catalog. There is no Advanced nav on these types — mapping lives on
+        // each event — so this is the only place identity typing is set.
+        <div className="ds-scroll min-h-0 flex-1 overflow-y-auto">
+          <section className="mb-8">
+            <h2 className="text-h5 text-text-primary">Identity classification</h2>
+            <Card padding="md" className="mt-4">
+              <IdentityClassificationCard applicationId={applicationId} onSaved={onChanged} />
+            </Card>
+          </section>
+          {eventsToolbar}
+          {eventsStacks}
         </div>
-      </div>
-
-      <div className="ds-scroll min-h-0 flex-1 overflow-y-auto">
-        <h3 className="mb-2 text-overline text-text-tertiary">Inbound</h3>
-        <SettingsStack>{inbound.map(slotRow)}</SettingsStack>
-        <h3 className="mb-2 mt-5 text-overline text-text-tertiary">Outbound</h3>
-        <SettingsStack>{outbound.map(slotRow)}</SettingsStack>
-      </div>
+      ) : (
+        <>
+          {eventsToolbar}
+          <div className="ds-scroll min-h-0 flex-1 overflow-y-auto">{eventsStacks}</div>
+        </>
+      )}
 
       <ConnectionEventDrawer
         open={drawerKind !== null}

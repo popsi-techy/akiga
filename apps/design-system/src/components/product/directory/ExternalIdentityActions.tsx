@@ -6,18 +6,13 @@ import CancelOutlined from '@mui/icons-material/CancelOutlined';
 import EventRepeatOutlined from '@mui/icons-material/EventRepeatOutlined';
 import PauseCircleOutlined from '@mui/icons-material/PauseCircleOutlined';
 import PlayCircleOutlined from '@mui/icons-material/PlayCircleOutlined';
-import PersonSearchOutlined from '@mui/icons-material/PersonSearchOutlined';
+import PersonAddAltOutlined from '@mui/icons-material/PersonAddAltOutlined';
+import EditOutlined from '@mui/icons-material/EditOutlined';
 import BlockOutlined from '@mui/icons-material/BlockOutlined';
-import {
-  Button,
-  DatePicker,
-  Dialog,
-  Menu,
-  Select,
-  StatusChip,
-  useToast,
-} from '@ds/components';
-import { listSponsorCandidates, type UserIdentityRow } from '@/data/directory';
+import HowToRegOutlined from '@mui/icons-material/HowToRegOutlined';
+import PersonOffOutlined from '@mui/icons-material/PersonOffOutlined';
+import { Avatar, Button, DatePicker, Dialog, Drawer, Menu, Tooltip, useToast } from '@ds/components';
+import { getUser, listSponsorCandidates, type UserIdentityRow } from '@/data/directory';
 import {
   assignSponsor,
   endContract,
@@ -26,8 +21,19 @@ import {
   resumeAccess,
   suspendAccess,
 } from '@/data/external-lifecycle';
+import { SponsorDecisionDrawer } from './SponsorDecisionDrawer';
+import { TableSelectDrawer } from '@/components/product/automation/TableSelectDrawer';
 
 type DialogKind = 'extend' | 'end' | 'sponsor' | null;
+
+/** Same square as Access Certification's Belongs to me / Does not belong to me. */
+function decideIconClass(tone: 'success' | 'danger') {
+  const idle =
+    'grid h-8 w-8 place-items-center rounded-md border border-border bg-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle';
+  return tone === 'success'
+    ? `${idle} text-[var(--ds-color-status-success-fg)] hover:bg-[var(--ds-color-status-success-subtle)]`
+    : `${idle} text-[var(--ds-color-status-danger-fg)] hover:bg-[var(--ds-color-status-danger-subtle)]`;
+}
 
 /**
  * Everything you can do to an external identity, in one place.
@@ -36,7 +42,8 @@ type DialogKind = 'extend' | 'end' | 'sponsor' | null;
  * detail header and both personas share this component and can never offer an
  * action the row cannot take. `variant` only changes how they are shown — icon
  * buttons and a kebab in a table row, full buttons on the detail header — and
- * `role` gates the two admin-only moves (assign / change sponsor).
+ * `role` gates the admin-only sponsor assign / change, which lives in the
+ * Sponsor column — not in the row kebab.
  */
 export function ExternalIdentityActions({
   row,
@@ -46,13 +53,13 @@ export function ExternalIdentityActions({
 }: {
   row: UserIdentityRow;
   role: 'admin' | 'reviewer';
-  variant?: 'row' | 'header';
+  variant?: 'row' | 'header' | 'assign-link';
   onChanged: () => void;
 }) {
   const toast = useToast();
   const [dialog, setDialog] = React.useState<DialogKind>(null);
+  const [decideOpen, setDecideOpen] = React.useState<'approved' | 'rejected' | null>(null);
   const [extendDate, setExtendDate] = React.useState('');
-  const [sponsorPick, setSponsorPick] = React.useState('');
 
   const candidates = React.useMemo(() => listSponsorCandidates(), []);
   const isAdmin = role === 'admin';
@@ -63,8 +70,9 @@ export function ExternalIdentityActions({
     toast.success(message);
   };
 
-  const decide = (decision: 'approved' | 'rejected') => {
-    recordSponsorDecision(row.id, decision);
+  const decide = (decision: 'approved' | 'rejected', payload: { startsOn?: string; endsOn?: string; justification: string }) => {
+    recordSponsorDecision(row.id, decision, payload);
+    setDecideOpen(null);
     onChanged();
     toast.success(
       decision === 'approved'
@@ -93,11 +101,12 @@ export function ExternalIdentityActions({
     endContract(row.id);
     done(`${row.name}'s contract has ended. Their access is revoked.`);
   };
-  const confirmSponsor = () => {
-    if (!sponsorPick) return;
+  const confirmSponsor = (ids: string[]) => {
+    const id = ids[0];
+    if (!id) return;
     const wasUnsponsored = !row.sponsorId;
-    const name = candidates.find((c) => c.id === sponsorPick)?.name ?? 'the new sponsor';
-    assignSponsor(row.id, sponsorPick, wasUnsponsored, name);
+    const name = candidates.find((c) => c.id === id)?.name ?? 'the new sponsor';
+    assignSponsor(row.id, id, wasUnsponsored, name);
     done(
       wasUnsponsored
         ? `${name} now sponsors ${row.name}. It is waiting on their approval.`
@@ -110,7 +119,6 @@ export function ExternalIdentityActions({
     setDialog('extend');
   };
   const openSponsor = () => {
-    setSponsorPick(row.sponsorId ?? '');
     setDialog('sponsor');
   };
 
@@ -125,9 +133,6 @@ export function ExternalIdentityActions({
     row.status === 'suspended'
       ? { label: 'Resume access', icon: <PlayCircleOutlined sx={{ fontSize: 18 }} />, onClick: doResume }
       : { label: 'Suspend access', icon: <PauseCircleOutlined sx={{ fontSize: 18 }} />, onClick: doSuspend },
-    ...(isAdmin
-      ? [{ label: 'Change sponsor', icon: <PersonSearchOutlined sx={{ fontSize: 18 }} />, onClick: openSponsor }]
-      : []),
     {
       label: 'End contract',
       icon: <BlockOutlined sx={{ fontSize: 18 }} />,
@@ -138,28 +143,33 @@ export function ExternalIdentityActions({
 
   const dialogs = (
     <>
-      <Dialog
+      <Drawer
         open={dialog === 'extend'}
         onClose={() => setDialog(null)}
         title={`Extend ${row.name}'s contract`}
-        confirmLabel="Extend"
-        onConfirm={confirmExtend}
+        subtitle="Pick the new date their access should end. Everything else stays as it is."
+        icon={<EventRepeatOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setDialog(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmExtend} disabled={!extendDate}>
+              Extend
+            </Button>
+          </>
+        }
       >
-        <div className="flex flex-col gap-3">
-          <p className="text-body-sm text-text-secondary">
-            Pick the new date their access should end. Everything else stays as it is.
-          </p>
-          <div className="flex flex-col gap-1.5">
-            <span className="text-body-sm-strong text-text-primary">New end date</span>
-            <DatePicker
-              ariaLabel="New end date"
-              value={extendDate}
-              onChange={setExtendDate}
-              min={row.accessEndsOn ?? undefined}
-            />
-          </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-body-sm-strong text-text-primary">New end date</span>
+          <DatePicker
+            ariaLabel="New end date"
+            value={extendDate}
+            onChange={setExtendDate}
+            min={row.accessEndsOn ?? undefined}
+          />
         </div>
-      </Dialog>
+      </Drawer>
 
       <Dialog
         open={dialog === 'end'}
@@ -173,39 +183,97 @@ export function ExternalIdentityActions({
         delete their account — reconciliation records what they held.
       </Dialog>
 
-      <Dialog
+      <TableSelectDrawer
         open={dialog === 'sponsor'}
         onClose={() => setDialog(null)}
         title={row.sponsorId ? `Change ${row.name}'s sponsor` : `Assign a sponsor to ${row.name}`}
+        subtitle="The sponsor answers for this external identity and approves their onboarding."
+        icon={<PersonAddAltOutlined sx={{ fontSize: 22, color: 'var(--ds-color-brand-primary)' }} />}
+        nameHeader="Name"
+        descriptionHeader="Email"
+        entity="sponsor"
+        selectionMode="single"
         confirmLabel={row.sponsorId ? 'Change sponsor' : 'Assign sponsor'}
-        onConfirm={confirmSponsor}
-      >
-        <div className="flex flex-col gap-3">
-          <p className="text-body-sm text-text-secondary">
-            The sponsor answers for this external identity and approves their onboarding.
-          </p>
-          <Select
-            label="Sponsor"
-            placeholder="Choose a person…"
-            value={sponsorPick}
-            onChange={setSponsorPick}
-            options={candidates.map((c) => ({ value: c.id, label: `${c.name} — ${c.jobTitle}` }))}
-          />
-        </div>
-      </Dialog>
+        showRisk={false}
+        selectedIds={row.sponsorId ? [row.sponsorId] : []}
+        rows={candidates.map((c) => ({ id: c.id, name: c.name, description: c.email }))}
+        onApply={confirmSponsor}
+      />
     </>
   );
+
+  const decisionDrawer = (
+    <SponsorDecisionDrawer
+      open={decideOpen !== null}
+      decision={decideOpen}
+      names={[row.name]}
+      onClose={() => setDecideOpen(null)}
+      onConfirm={(payload) => decideOpen && decide(decideOpen, payload)}
+    />
+  );
+
+  // ---- Sponsor column: name + edit, or "+ Add sponsor" -------------------
+  if (variant === 'assign-link') {
+    if (!isAdmin) {
+      const name = row.sponsorId ? getUser(row.sponsorId)?.name : null;
+      return name ? (
+        <span className="inline-flex min-w-0 items-center gap-2">
+          <Avatar name={name} size="xs" kind="person" />
+          <span className="truncate text-body-sm text-text-primary" title={name}>
+            {name}
+          </span>
+        </span>
+      ) : (
+        <span className="text-text-tertiary">—</span>
+      );
+    }
+    const name = row.sponsorId ? getUser(row.sponsorId)?.name : null;
+    return (
+      <div className="flex min-w-0 items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+        {name ? (
+          <>
+            <span className="inline-flex min-w-0 flex-1 items-center gap-2">
+              <Avatar name={name} size="xs" kind="person" />
+              <span className="truncate text-body-sm text-text-primary" title={name}>
+                {name}
+              </span>
+            </span>
+            <Tooltip title="Change sponsor">
+              <button
+                type="button"
+                onClick={openSponsor}
+                aria-label={`Change sponsor for ${row.name}`}
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-icon hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+              >
+                <EditOutlined sx={{ fontSize: 16 }} />
+              </button>
+            </Tooltip>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={openSponsor}
+            aria-label={`Add a sponsor for ${row.name}`}
+            className="rounded-sm text-body-sm text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+          >
+            + Add sponsor
+          </button>
+        )}
+        {dialogs}
+      </div>
+    );
+  }
 
   // ---- Detail header: full buttons ------------------------------------
   if (variant === 'header') {
     return (
       <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        {pendingApproval && (
+        {pendingApproval && !isAdmin && (
           <>
-            <Button variant="secondary" startIcon={<CancelOutlined sx={{ fontSize: 18 }} />} onClick={() => decide('rejected')}>
+            <Button variant="secondary" startIcon={<CancelOutlined sx={{ fontSize: 18 }} />} onClick={() => setDecideOpen('rejected')}>
               Reject
             </Button>
-            <Button startIcon={<CheckCircleOutline sx={{ fontSize: 18 }} />} onClick={() => decide('approved')}>
+            <Button startIcon={<CheckCircleOutline sx={{ fontSize: 18 }} />} onClick={() => setDecideOpen('approved')}>
               Approve onboarding
             </Button>
           </>
@@ -228,15 +296,13 @@ export function ExternalIdentityActions({
             <Menu
               ariaLabel={`More actions for ${row.name}`}
               items={[
-                ...(isAdmin
-                  ? [{ label: 'Change sponsor', icon: <PersonSearchOutlined sx={{ fontSize: 18 }} />, onClick: openSponsor }]
-                  : []),
                 { label: 'End contract', icon: <BlockOutlined sx={{ fontSize: 18 }} />, danger: true, onClick: () => setDialog('end') },
               ]}
             />
           </>
         )}
         {dialogs}
+        {decisionDrawer}
       </div>
     );
   }
@@ -244,49 +310,45 @@ export function ExternalIdentityActions({
   // ---- List row: icons + kebab ----------------------------------------
   return (
     <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-      {pendingApproval && (
+      {pendingApproval && !isAdmin && (
         <>
-          <button
-            type="button"
-            aria-label={`Approve ${row.name}`}
-            onClick={() => decide('approved')}
-            className="grid h-8 w-8 place-items-center rounded-md text-[var(--ds-color-status-success-fg)] transition-colors hover:bg-[var(--ds-color-status-success-subtle)]"
-          >
-            <CheckCircleOutline sx={{ fontSize: 20 }} />
-          </button>
-          <button
-            type="button"
-            aria-label={`Reject ${row.name}`}
-            onClick={() => decide('rejected')}
-            className="grid h-8 w-8 place-items-center rounded-md text-danger transition-colors hover:bg-[var(--ds-color-status-danger-subtle)]"
-          >
-            <CancelOutlined sx={{ fontSize: 20 }} />
-          </button>
+          <Tooltip title="Approve">
+            <button
+              type="button"
+              aria-label={`Approve ${row.name}`}
+              onClick={() => setDecideOpen('approved')}
+              className={decideIconClass('success')}
+            >
+              <HowToRegOutlined sx={{ fontSize: 18 }} />
+            </button>
+          </Tooltip>
+          <Tooltip title="Reject">
+            <button
+              type="button"
+              aria-label={`Reject ${row.name}`}
+              onClick={() => setDecideOpen('rejected')}
+              className={decideIconClass('danger')}
+            >
+              <PersonOffOutlined sx={{ fontSize: 18 }} />
+            </button>
+          </Tooltip>
         </>
       )}
 
-      {noSponsor &&
-        (isAdmin ? (
-          <button
-            type="button"
-            onClick={openSponsor}
-            className="rounded-sm px-1 text-body-sm-strong text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-          >
-            Assign sponsor
-          </button>
-        ) : (
-          <span className="text-body-sm text-text-tertiary">—</span>
-        ))}
+      {pendingApproval && isAdmin && <span className="text-body-sm text-text-tertiary">—</span>}
+
+      {noSponsor && <span className="text-body-sm text-text-tertiary">—</span>}
 
       {live && (
         <Menu ariaLabel={`Actions for ${row.name}`} items={lifecycleItems} />
       )}
 
-      {closed && (
-        <StatusChip intent="neutral" label={row.status === 'terminated' ? 'Terminated' : 'Disabled'} />
-      )}
+      {/* Closed rows have no move left — Identity status already says so. A chip here
+          restated the row's state in the action column and looked like a control. */}
+      {closed && <span className="text-body-sm text-text-tertiary">—</span>}
 
       {dialogs}
+      {decisionDrawer}
     </div>
   );
 }

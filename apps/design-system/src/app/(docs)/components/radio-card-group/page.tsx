@@ -38,10 +38,12 @@ export default function RadioCardGroupDocs() {
       <Section title="Props">
         <PropsTable
           rows={[
-            { name: 'options', type: 'RadioCardOption[]', description: '{ value, label, description?, icon?, disabled? }.' },
+            { name: 'options', type: 'RadioCardOption[]', description: '{ value, label, description?, icon?, disabled?, action? }.' },
+            { name: 'options[].action', type: 'ReactNode', description: 'Control on the card’s trailing edge — an xs Configure button for that option’s own settings. It renders beside the radio, not inside it: a button nested in a role="radio" is invalid, and clicking it would also pick the option. Opening the settings of the option you have not chosen must not switch the choice.' },
             { name: 'value / onChange', type: 'string / (v) => void', description: 'Controlled selection.' },
             { name: 'columns', type: '1 | 2 | 3', default: '1', description: 'Grid columns.' },
-            { name: 'appearance', type: "'plain' | 'outlined'", default: 'plain', description: 'Adds contained option surfaces when choices need stronger separation. Selected is a brand outline on surface — no fill.' },
+            { name: 'appearance', type: "'plain' | 'outlined'", default: 'plain', description: 'Adds contained option surfaces when choices need stronger separation. Selected is a brand outline on surface — no fill. Pass selectedTone="quiet" when the radio dot is enough and a brand ring would compete with a trailing action.' },
+            { name: 'selectedTone', type: "'brand' | 'quiet'", default: 'brand', description: 'Outlined selected treatment. quiet keeps the same border as the other cards.' },
             { name: 'ariaLabel', type: 'string', description: 'Labels the radiogroup for assistive tech.' },
           ]}
         />
@@ -58,6 +60,7 @@ export default function RadioCardGroupDocs() {
             'Don’t use for many options — use a Select.',
             'Don’t use for multi-select — that’s checkboxes.',
             'Don’t bury long paragraphs in the description.',
+            'Don’t put an option’s fields on the page under the group — give the option an action and open them in a Drawer.',
           ]}
         />
         <p className="mt-3 text-body-sm text-text-tertiary">

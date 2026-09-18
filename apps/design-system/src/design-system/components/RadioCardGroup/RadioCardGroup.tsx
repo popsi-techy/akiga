@@ -13,6 +13,16 @@ export interface RadioCardOption {
   description?: string;
   icon?: React.ReactNode;
   disabled?: boolean;
+  /**
+   * Control on the trailing edge of the card — a small Configure button for the
+   * option's own settings.
+   *
+   * It renders as a sibling of the radio, not inside it: a button nested in a
+   * `role="radio"` is invalid, and a click on it would also pick the option.
+   * Choosing and configuring stay separate targets, so opening the settings of
+   * the option you have not chosen does not silently switch the choice.
+   */
+  action?: React.ReactNode;
 }
 
 export interface RadioCardGroupProps {
@@ -28,6 +38,13 @@ export interface RadioCardGroupProps {
   layout?: 'grid' | 'inline';
   /** Visual treatment for each option. @default 'plain' */
   appearance?: 'plain' | 'outlined';
+  /**
+   * Outlined selected state. `brand` is the default ring. `quiet` keeps the
+   * same border as the other cards — the radio dot is the only “this one”
+   * signal, for a pair that already carries a Configure action.
+   * @default 'brand'
+   */
+  selectedTone?: 'brand' | 'quiet';
   ariaLabel?: string;
 }
 
@@ -38,6 +55,7 @@ export function RadioCardGroup({
   columns = 1,
   layout = 'grid',
   appearance = 'plain',
+  selectedTone = 'brand',
   ariaLabel,
 }: RadioCardGroupProps) {
   const cols = columns === 3 ? 'grid-cols-3' : columns === 2 ? 'grid-cols-2' : 'grid-cols-1';
@@ -58,9 +76,20 @@ export function RadioCardGroup({
             {selected && <span className="h-2 w-2 rounded-full bg-brand" />}
           </span>
         );
-        return (
+        // Alignment belongs to the content, padding to whatever carries the
+        // surface — the radio alone, or the card that also holds an action.
+        const alignClass = hasMeta ? 'items-start gap-2.5' : 'items-center gap-2';
+        const padClass =
+          appearance === 'outlined' ? 'px-3 py-2.5' : hasMeta ? 'px-1 py-1.5' : 'py-1';
+        const surfaceClass =
+          appearance === 'outlined'
+            ? selected && selectedTone === 'brand'
+              ? 'border border-brand bg-surface'
+              : 'border border-border bg-surface hover:border-border-strong hover:bg-surface-hover'
+            : 'hover:bg-surface-hover';
+
+        const radio = (
           <button
-            key={opt.value}
             type="button"
             role="radio"
             aria-checked={selected}
@@ -68,18 +97,10 @@ export function RadioCardGroup({
             onClick={() => onChange(opt.value)}
             className={[
               'flex rounded-md text-left transition-colors',
-              hasMeta
-                ? appearance === 'outlined'
-                  ? 'items-start gap-2.5 px-3 py-2.5'
-                  : 'items-start gap-2.5 px-1 py-1.5'
-                : appearance === 'outlined'
-                  ? 'items-center gap-2 px-3 py-2.5'
-                  : 'items-center gap-2 py-1',
-              appearance === 'outlined'
-                ? selected
-                  ? 'border border-brand bg-surface'
-                  : 'border border-border bg-surface hover:border-border-strong hover:bg-surface-hover'
-                : 'hover:bg-surface-hover',
+              alignClass,
+              // With an action the card around it carries the surface and the
+              // padding, so the radio is only the choosing target inside it.
+              opt.action ? 'min-w-0 flex-1' : `${padClass} ${surfaceClass}`,
               'outline-none focus-visible:ring-2 focus-visible:ring-brand/30',
               'disabled:cursor-not-allowed disabled:opacity-50',
             ].join(' ')}
@@ -110,6 +131,23 @@ export function RadioCardGroup({
               )}
             </span>
           </button>
+        );
+
+        if (!opt.action) return <React.Fragment key={opt.value}>{radio}</React.Fragment>;
+
+        return (
+          <div
+            key={opt.value}
+            className={[
+              'flex items-center justify-between gap-3 rounded-md transition-colors',
+              padClass,
+              surfaceClass,
+              opt.disabled ? 'cursor-not-allowed opacity-50' : '',
+            ].join(' ')}
+          >
+            {radio}
+            <span className="shrink-0">{opt.action}</span>
+          </div>
         );
       })}
     </div>

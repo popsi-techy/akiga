@@ -35,16 +35,19 @@ import {
   type AppAuthorization,
 } from '@/data/provisioning-auth';
 import { listConnectionEvents } from '@/data/connection-events';
-import { applicationHasScimInbound } from '@/data/scim-inbound';
+import { applicationHasScimInbound, applicationIsScimProvisioned } from '@/data/scim-inbound';
 
 type Section = 'authorization' | 'connection' | 'advanced';
 
 /**
  * Provisioning — everything the connector needs before it can act on this
  * application. Authorization, then connection configuration: sign-in has to
- * exist before a call can be tested.
+ * exist before a call can be tested. REST types keep a third rail item for
+ * fetch mapping and identity typing; SCIM/UMAPI types classify identities on
+ * Connection configuration and map attributes on each event, so that hop is
+ * omitted.
  *
- * The two jobs sit in a 240px NavList rail, same as Owners — a section
+ * The jobs sit in a 240px NavList rail, same as Owners — a section
  * switcher beside the work, not a segmented control above it.
  */
 export function ProvisioningSetupTab({
@@ -104,6 +107,13 @@ export function ProvisioningSetupTab({
 
   const noneYet = rows.length === 0;
   const showScimInbound = applicationHasScimInbound(applicationId);
+  const [scimProvisioned, setScimProvisioned] = React.useState(false);
+  React.useEffect(() => {
+    setScimProvisioned(applicationIsScimProvisioned(applicationId));
+  }, [applicationId]);
+  React.useEffect(() => {
+    if (scimProvisioned && section === 'advanced') setSection('connection');
+  }, [scimProvisioned, section]);
 
   const openAdd = () => {
     setEditing(null);
@@ -241,12 +251,19 @@ export function ProvisioningSetupTab({
               label: 'Connection configuration',
               count: eventCount,
             },
-            {
-              id: 'advanced',
-              icon: <TuneOutlined sx={{ fontSize: 18 }} />,
-              label: 'Advanced attribute mapping',
-              count: mappingCount,
-            },
+            // SCIM/UMAPI types map attributes on each event and classify
+            // identities on this same section — a third rail item would be a
+            // hop to a page whose work already lives here.
+            ...(!scimProvisioned
+              ? [
+                  {
+                    id: 'advanced' as const,
+                    icon: <TuneOutlined sx={{ fontSize: 18 }} />,
+                    label: 'Advanced attribute mapping',
+                    count: mappingCount,
+                  },
+                ]
+              : []),
           ]}
         />
       </Card>
