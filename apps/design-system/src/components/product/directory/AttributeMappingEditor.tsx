@@ -56,12 +56,6 @@ export function AttributeMappingEditor({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button variant="secondary" startIcon={<AddOutlined />} onClick={addRow}>
-          Add attribute
-        </Button>
-      </div>
-
       <div className="ds-scroll overflow-x-auto">
         {/* 700, which is what the five columns actually need: 170 + 170 + 36 for the two
             selects and the remove button, 40 of gaps, and 142 each for the two text fields.
@@ -113,7 +107,7 @@ export function AttributeMappingEditor({
             ))}
           </div>
 
-          <div className="divide-y divide-border">
+          <div>
             {rows.map((row) => {
               const hasExpression = row.expression.trim() !== '';
               const bad = Boolean(touched && started.includes(row) && !mappingComplete(row));
@@ -233,6 +227,10 @@ export function AttributeMappingEditor({
           No attributes mapped. This event will not write any fields.
         </p>
       )}
+
+      <Button variant="secondary" size="sm" startIcon={<AddOutlined />} onClick={addRow}>
+        Add attribute
+      </Button>
     </div>
   );
 }
