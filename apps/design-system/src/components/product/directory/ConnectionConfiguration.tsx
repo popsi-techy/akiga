@@ -137,19 +137,15 @@ export function ConnectionConfiguration({
           <>
             <StatusChip
               intent={configured ? 'success' : 'warning'}
-              label={
-                configured
-                  ? `${mapped} ${mapped === 1 ? 'attribute' : 'attributes'} mapped`
-                  : 'Pending'
-              }
+              label={`${mapped} ${mapped === 1 ? 'attribute' : 'attributes'} mapped`}
             />
             <Button
               variant="secondary"
               size="xs"
-              aria-label={`Map attributes for ${slot.label}`}
+              aria-label={`${configured ? 'Edit' : 'Map'} attributes for ${slot.label}`}
               onClick={() => setMappingKind(slot.value)}
             >
-              Map attributes
+              {configured ? 'Edit attributes' : 'Map attributes'}
             </Button>
           </>
         ) : (

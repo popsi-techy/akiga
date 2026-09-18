@@ -197,14 +197,15 @@ export function IdentityClassificationCard({
             >
               <StatusChip
                 intent={rulesConfigured ? 'success' : 'warning'}
-                label={
-                  rulesConfigured
-                    ? `${rulesStarted.length} ${rulesStarted.length === 1 ? 'rule' : 'rules'}`
-                    : 'Pending'
-                }
+                label={`${rulesStarted.length} ${rulesStarted.length === 1 ? 'rule' : 'rules'} added`}
               />
-              <Button variant="secondary" size="xs" aria-label="Configure rules" onClick={openRules}>
-                Configure rules
+              <Button
+                variant="secondary"
+                size="xs"
+                aria-label={rulesConfigured ? 'Edit rules' : 'Configure rules'}
+                onClick={openRules}
+              >
+                {rulesConfigured ? 'Edit rules' : 'Configure rules'}
               </Button>
             </SettingsRow>
           </SettingsStack>
