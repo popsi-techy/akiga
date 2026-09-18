@@ -17,7 +17,7 @@ import {
 
 /** Read once — column-level format gate: mismatch skips updating this field on sync. */
 const SOURCE_DATE_PATTERN_HINT =
-  'Enter how dates are written in the source field — for example dd/MM/yyyy or yyyy-MM-dd. On sync, IGA checks the column against this pattern. If it does not match, this field is not updated.';
+  'Enter how dates are written in the application field — for example dd/MM/yyyy or yyyy-MM-dd. On sync, IGA checks the column against this pattern. If it does not match, this field is not updated.';
 
 export const blankMappingRow = (i: number): AttributeMapping => ({
   id: `m-${Date.now().toString(36)}-${i}`,
@@ -65,7 +65,7 @@ export function AttributeMappingEditor({
         <div className="min-w-[700px]">
           <div className={`${COLS} items-center border-b border-border pb-2`}>
             {[
-              { label: 'Source' },
+              { label: 'Application' },
               {
                 /*
                   "App attribute", not "<Application> field".
@@ -116,7 +116,7 @@ export function AttributeMappingEditor({
               return (
                 <div key={row.id} className={`${COLS} items-start py-3`}>
                   <Select
-                    ariaLabel="Source"
+                    ariaLabel="Application"
                     options={ATTRIBUTE_SOURCES.map((s) => ({ value: s.value, label: s.label }))}
                     value={row.source}
                     onChange={(v) =>
