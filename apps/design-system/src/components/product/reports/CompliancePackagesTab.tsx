@@ -6,6 +6,7 @@ import ArrowForward from '@mui/icons-material/ArrowForward';
 import EventRepeatOutlined from '@mui/icons-material/EventRepeatOutlined';
 import { Meter, StatusChip } from '@ds/components';
 import {
+  COMPLIANCE_FRAMEWORKS,
   SAMA_CLAUSES,
   clauseCoverage,
   clausesForFramework,
@@ -33,18 +34,20 @@ import { ReportStateChip } from './ReportStateChip';
  * "we have not built this".
  *
  * A live card also says how it is **produced**. Readiness without a cadence is a screen;
- * readiness with one is an artefact that will be sealed and mailed on a date, and a reader
- * deciding whether 8 of 15 clauses is urgent needs to know which of the two they are
- * looking at. Schedules moved off the hub's rail, so this line is how a reader gets from a
- * framework to the subscription behind it.
+ * readiness with one is an artefact that will be sealed and mailed on a date. The cadence
+ * is a fact on the card; changing it is the Schedules page.
  */
-export function CompliancePackagesTab({ frameworks }: { frameworks: ComplianceFramework[] }) {
+export function CompliancePackagesTab({
+  frameworks = COMPLIANCE_FRAMEWORKS,
+}: {
+  frameworks?: ComplianceFramework[];
+}) {
   const router = useRouter();
 
   if (frameworks.length === 0) {
     return (
       <p className="rounded-xl border border-border bg-surface px-6 py-10 text-center text-body-sm text-text-secondary">
-        No framework matches the search.
+        No frameworks are catalogued yet.
       </p>
     );
   }
@@ -54,14 +57,16 @@ export function CompliancePackagesTab({ frameworks }: { frameworks: ComplianceFr
        contain" described the cards directly beneath it, which are three cards, each named,
        each with an arrow — the instruction was the only thing on the tab that did not tell
        the reader something they could not already see. */
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {frameworks.map((f) =>
-        f.href ? (
-          <LiveFramework key={f.id} framework={f} onOpen={() => router.push(f.href as string)} />
-        ) : (
-          <ComingSoonFramework key={f.id} framework={f} />
-        ),
-      )}
+    <div className="ds-scroll min-h-0 flex-1 overflow-y-auto">
+      <div className="grid gap-4 sm:grid-cols-2">
+        {frameworks.map((f) =>
+          f.href ? (
+            <LiveFramework key={f.id} framework={f} onOpen={() => router.push(f.href as string)} />
+          ) : (
+            <ComingSoonFramework key={f.id} framework={f} />
+          ),
+        )}
+      </div>
     </div>
   );
 }

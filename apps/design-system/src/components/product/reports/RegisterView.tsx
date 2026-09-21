@@ -67,6 +67,7 @@ export function RegisterView({ register }: { register: OperationalReport }) {
 
   useSetBreadcrumbs([
     { label: 'Reports', href: '/iga/reports' },
+    { label: 'Registers', href: '/iga/reports?tab=operational' },
     { label: register.name },
   ]);
 

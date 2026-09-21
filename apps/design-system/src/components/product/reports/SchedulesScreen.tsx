@@ -13,22 +13,15 @@ import { ReportStateChip } from './ReportStateChip';
 import { ScheduleDrawer } from './ScheduleDrawer';
 
 /**
- * The cadences that produce sealed packages without anyone asking — its own page.
+ * How sealed packages get produced without anyone asking — a page under Reports.
  *
- * It used to be the hub's fourth tab, filed beside the registers, the packages and the
- * custom reports as though it were a fourth kind of report. It is not one: those three are
- * things a reader *gets*, and this is the machine that produces the second of them. A
- * mechanism listed among its own output is what made that tab row read as a filing
- * cabinet, and it cost the hub a quarter of its most valuable row.
+ * Registers, packages and custom reports are the catalogue. This is the machine behind
+ * the packages, so it is not a fourth tab. You open it to change a cadence, run one now,
+ * or see why a live subscription skipped.
  *
- * Nothing is buried by the move. The hub's Next download tile names the next firing and
- * links here, every live framework card says its cadence, and this is a page you open to
- * *change* a cadence — administration, done occasionally, by one person.
- *
- * Two states per row, and they are not the same state: **Last run** is what happened, and
- * a skipped or failed firing is the reason someone opens this page; **State** is whether it
- * will fire again. A single column would have to pick one, and the pair is the whole story
- * — "enabled, last run skipped" is a live subscription that quietly produced nothing.
+ * Two states per row, and they are not the same state: **Last run** is what happened;
+ * **State** is whether it will fire again. "Enabled, last run skipped" is a live
+ * subscription that quietly produced nothing.
  */
 export function SchedulesScreen() {
   const toast = useToast();
@@ -107,13 +100,13 @@ export function SchedulesScreen() {
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="flex h-full flex-col">
+      <div className="mb-5 flex shrink-0 flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-h2 text-text-primary">Schedules</h1>
-          <p className="mt-1 max-w-3xl text-body text-text-secondary">
-            A subscription seals a package on a cadence and mails a download link. The period is stored as a rule
-            rather than as dates, so the same subscription produces the right window every time it fires.
+          <p className="mt-1 max-w-2xl text-body text-text-secondary">
+            Subscriptions seal a package on a cadence and mail a download link. The period is a
+            rule, so the same subscription produces the right window every time it fires.
           </p>
         </div>
         <Button startIcon={<AddOutlined />} onClick={() => setDrawer({ open: true, schedule: null })}>
@@ -121,35 +114,29 @@ export function SchedulesScreen() {
         </Button>
       </div>
 
-      {/*
-        The next firing, above the table it comes from.
-
-        The hub carries the same date in a tile, and that is not a duplicate: there it is
-        the answer to "is anything coming", with a link to here; here the row that produces
-        it is directly underneath, and the sentence is doing the job a summary should —
-        telling you which of these rows matters next.
-      */}
       {next ? (
-        <p className="rounded-lg border border-border bg-subtle px-4 py-3 text-body-sm text-text-secondary">
+        <p className="mb-4 shrink-0 rounded-lg border border-border bg-subtle px-4 py-3 text-body-sm text-text-secondary">
           Next run <span className="font-emphasis text-text-primary">{formatDateTime(next.nextRunAt)}</span>{' '}
           {next.timezone} — {next.name}, covering the {next.covers.toLowerCase()}.
         </p>
       ) : (
-        /* Nothing enabled is a finding, not an empty state: every package would have to be
-           sealed by hand, by someone who remembered to. */
-        <p className="rounded-lg border border-border bg-subtle px-4 py-3 text-body-sm text-text-secondary">
+        <p className="mb-4 shrink-0 rounded-lg border border-border bg-subtle px-4 py-3 text-body-sm text-text-secondary">
           <span className="font-emphasis text-text-primary">Nothing is scheduled.</span> Every package would have to
           be sealed by hand.
         </p>
       )}
 
-      <DataTable
-        columns={columns}
-        rows={REPORT_SCHEDULES}
-        onRowClick={(s) => setDrawer({ open: true, schedule: s })}
-        emptyTitle="No subscriptions yet"
-        emptyMessage="Create one to have a sealed package produced and mailed on a cadence."
-      />
+      <div className="min-h-0 flex-1">
+        <DataTable
+          fillHeight
+          layout="fixed"
+          columns={columns}
+          rows={REPORT_SCHEDULES}
+          onRowClick={(s) => setDrawer({ open: true, schedule: s })}
+          emptyTitle="No subscriptions yet"
+          emptyMessage="Create one to have a sealed package produced and mailed on a cadence."
+        />
+      </div>
 
       <ScheduleDrawer
         open={drawer.open}

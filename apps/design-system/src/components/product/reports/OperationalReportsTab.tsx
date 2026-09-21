@@ -2,8 +2,10 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { NavCard, QuickFilter } from '@ds/components';
+import SearchOutlined from '@mui/icons-material/SearchOutlined';
+import { Input, NavCard, QuickFilter } from '@ds/components';
 import {
+  OPERATIONAL_REPORTS,
   REPORT_CATEGORY_LABEL,
   type OperationalReport,
   type ReportCategory,
@@ -12,63 +14,65 @@ import {
 const CATEGORIES = Object.keys(REPORT_CATEGORY_LABEL) as ReportCategory[];
 
 /**
- * The registers an administrator runs — the hub's landing content.
+ * The registers an administrator runs — the hub's landing tab.
  *
- * Twelve cards, four categories, so the categories are chips rather than a nested page:
- * one click narrows twelve things to three, and the reader stays on the grid they were
- * already reading. Making Access its own destination would have cost a click to show a
- * quarter of what is already on screen.
- *
- * The chips carry counts and clear back to all, because "Access" is a narrowing and not a
- * mode — there is no state of this screen where showing every register is wrong.
- *
- * Unbuilt registers keep their place with a Coming soon tag. The set of registers is itself
- * information: an administrator deciding whether this product can answer a question needs to
- * see the ones it will answer, not an absence they have to ask about.
- *
- * Rows are filtered upstream by the hub's search, so the count on the rail and the cards in
- * here are always the same population.
+ * Twelve cards, four categories. Chips narrow the grid in place; search finds a register
+ * by name without leaving the catalogue.
  */
 export function OperationalReportsTab({
-  reports,
-  filtered = false,
+  reports = OPERATIONAL_REPORTS,
 }: {
-  reports: OperationalReport[];
-  /** Whether a search term produced this set — it changes what an empty grid means. */
-  filtered?: boolean;
+  reports?: OperationalReport[];
 }) {
   const router = useRouter();
   const [category, setCategory] = React.useState<ReportCategory | null>(null);
+  const [query, setQuery] = React.useState('');
 
-  // Counts describe what is on the grid now, not the catalogue: a chip reading "Access 4"
-  // under a search that matched one access register would be a promise the click breaks.
+  const q = query.trim().toLowerCase();
+  const searched = reports.filter(
+    (r) =>
+      !q ||
+      r.name.toLowerCase().includes(q) ||
+      r.description.toLowerCase().includes(q) ||
+      REPORT_CATEGORY_LABEL[r.category].toLowerCase().includes(q),
+  );
+
   const options = CATEGORIES.map((c) => ({
     value: c,
     label: REPORT_CATEGORY_LABEL[c],
-    count: reports.filter((r) => r.category === c).length,
+    count: searched.filter((r) => r.category === c).length,
   })).filter((o) => o.count > 0);
 
-  const shown = category ? reports.filter((r) => r.category === category) : reports;
+  const shown = category ? searched.filter((r) => r.category === category) : searched;
 
   return (
-    <div className="space-y-4">
-      {options.length > 1 && (
-        <QuickFilter
-          ariaLabel="Filter registers by category"
-          options={options}
-          value={category}
-          onChange={setCategory}
-        />
-      )}
+    <div className="ds-scroll flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
+        <div className="w-full max-w-sm">
+          <Input
+            aria-label="Search registers"
+            placeholder="Search registers"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            startAdornment={<SearchOutlined sx={{ fontSize: 18 }} className="text-icon-subtle" />}
+          />
+        </div>
+        {options.length > 1 && (
+          <QuickFilter
+            ariaLabel="Filter registers by category"
+            options={options}
+            value={category}
+            onChange={setCategory}
+          />
+        )}
+      </div>
 
       {shown.length === 0 ? (
         <p className="rounded-xl border border-border bg-surface px-6 py-10 text-center text-body-sm text-text-secondary">
-          {filtered
-            ? 'No register in this category matches the search.'
-            : 'No registers are catalogued yet.'}
+          {q ? 'No register matches that search.' : 'No registers are catalogued yet.'}
         </p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           {shown.map((r) => (
             <NavCard
               key={r.id}

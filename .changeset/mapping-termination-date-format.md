@@ -34,8 +34,8 @@ drawer that does not otherwise scroll — the defect this table already had once
 min-width larger than the pane it sat in. Every other tab gains the 120 as slack, and the
 response split takes it without being told, being a flexible column against a fixed preview.
 
-**The pattern reads itself back.** The helper says what the field does before there is anything
-in it ("Column format check"), then renders what you typed against one fixed instant —
+**The pattern reads itself back.** An empty field has no helper — the info icon carries the
+why. Once you type, the helper renders that pattern against one fixed instant —
 `dd/MM/yyyy` →
 `e.g. 09/03/2026`, `yyyy-MM-dd` → `e.g. 2026-03-09`, `dd-MMM-yyyy` → `e.g. 09-Mar-2026`. Every
 field of the sample is a different number (March, the 9th, 17:04:05) so no token can look

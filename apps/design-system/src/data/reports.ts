@@ -85,7 +85,7 @@ export const REPORT_STATE: Record<ReportState, { label: string; intent: StatusIn
  */
 export const CUSTOM_ANALYTICS_CRUMBS = [
   { label: 'Reports', href: '/iga/reports' },
-  { label: 'Custom Analytics', href: '/iga/reports?tab=custom' },
+  { label: 'Custom reports', href: '/iga/reports?tab=custom' },
 ] as const;
 
 /* ------------------------------------------------- operational registers */

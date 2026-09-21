@@ -1,5 +1,4 @@
 export { ReportsHubMainScreen } from './ReportsHubMainScreen';
-export { ReportsActivityBand } from './ReportsActivityBand';
 export { ComplianceFrameworkDetailView } from './ComplianceFrameworkDetailView';
 export { RegisterView } from './RegisterView';
 export { OperationalReportsTab } from './OperationalReportsTab';

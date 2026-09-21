@@ -70,7 +70,7 @@ export function ComplianceFrameworkDetailView({ framework }: { framework: Compli
 
   useSetBreadcrumbs([
     { label: 'Reports', href: '/iga/reports' },
-    { label: 'Compliance', href: '/iga/reports?tab=compliance' },
+    { label: 'Evidence packages', href: '/iga/reports?tab=compliance' },
     { label: framework.name },
   ]);
 

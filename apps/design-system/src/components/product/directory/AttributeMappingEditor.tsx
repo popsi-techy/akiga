@@ -182,12 +182,7 @@ export function AttributeMappingEditor({
                               </span>
                             </Tooltip>
                           }
-                          /* "Column format check" before there is anything in it; once you
-                             type, what you typed read back against a known date so you can
-                             confirm the column gate will read day and month the way the
-                             source stores them. The info icon carries the full why — same
-                             split as the Transformation column header. */
-                          helperText={sample ? `e.g. ${sample}` : 'Column format check'}
+                          helperText={sample ? `e.g. ${sample}` : undefined}
                           error={
                             bad && (row.dateFormat ?? '').trim() === ''
                               ? 'Enter the column date pattern.'
