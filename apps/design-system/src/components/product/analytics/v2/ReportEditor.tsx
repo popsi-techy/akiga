@@ -329,123 +329,125 @@ export function ReportEditor({ reportId: existingId }: { reportId?: string }) {
         </div>
       </div>
 
-      {/* The canvas — full height, a subtle backdrop with the report floating on it. */}
+      {/* The canvas — a column that mirrors the form: a docked header band, then the report
+          on a subtle backdrop below it. Its header sits at the same height as the form's, so
+          the two bands read as one bar across the page. */}
       {split && (
-        <div className="min-w-0 flex-1 overflow-hidden bg-subtle">
-          <div className="h-full p-3">
-            <div className="mx-auto flex h-full w-full max-w-[1040px] flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-lg">
-              {phase === 'generating' ? (
-                <div className="grid flex-1 place-items-center px-8 py-16">
-                  <div className="flex flex-col items-center text-center">
-                    <CircularProgress size={30} thickness={4} sx={{ color: 'var(--ds-color-brand-primary)' }} />
-                    <p className="mt-5 text-body-sm-strong text-text-primary" aria-live="polite">
-                      {BUILD_STEPS[step]}
-                    </p>
-                    <p className="mt-1 text-caption text-text-tertiary">
-                      Building “{name.trim() || 'Untitled report'}”
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* Document toolbar — pinned: what you do to the report, not the form. */}
-                  <div className="flex shrink-0 items-center justify-end gap-0.5 border-b border-border px-2 py-1">
-                    <Menu
-                      ariaLabel="Download report"
-                      items={[
-                        {
-                          label: 'Download as PDF',
-                          icon: <PictureAsPdfOutlined sx={{ fontSize: 18 }} />,
-                          onClick: () => download('PDF'),
-                        },
-                        {
-                          label: 'Download as CSV',
-                          icon: <GridOnOutlined sx={{ fontSize: 18 }} />,
-                          onClick: () => download('CSV'),
-                        },
-                      ]}
-                      trigger={
-                        <Button variant="tertiary" size="xs" iconOnly aria-label="Download report">
-                          <FileDownloadOutlined sx={{ fontSize: 18 }} />
-                        </Button>
-                      }
-                    />
-                    <Tooltip title="Schedule delivery">
-                      <Button
-                        variant="tertiary"
-                        size="xs"
-                        iconOnly
-                        aria-label="Schedule delivery"
-                        onClick={() => setScheduleOpen(true)}
-                      >
-                        <ScheduleSendOutlined sx={{ fontSize: 18 }} />
-                      </Button>
-                    </Tooltip>
-                    <span className="mx-0.5 h-4 w-px bg-border" aria-hidden />
-                    <Tooltip title={formCollapsed ? 'Show editor' : 'Expand to full width'}>
-                      <Button
-                        variant="tertiary"
-                        size="xs"
-                        iconOnly
-                        aria-label={formCollapsed ? 'Show editor' : 'Expand report to full width'}
-                        onClick={() => setFormCollapsed((c) => !c)}
-                      >
-                        {formCollapsed ? (
-                          <FullscreenExitOutlined sx={{ fontSize: 18 }} />
-                        ) : (
-                          <FullscreenOutlined sx={{ fontSize: 18 }} />
-                        )}
-                      </Button>
-                    </Tooltip>
-                  </div>
-
-                  <div className="ds-scroll min-h-0 flex-1 overflow-y-auto px-8 py-7">
-                    <div className="flex flex-col gap-5">
-                      <div className="min-w-0">
-                        <h2 className="truncate text-h3 text-text-primary" title={name.trim()}>
-                          {name.trim() || 'Untitled report'}
-                        </h2>
-                        {description.trim() && (
-                          <p className="mt-2 max-w-3xl text-body-sm text-text-secondary">{description.trim()}</p>
-                        )}
-                        <p className="mt-2 text-body-sm text-text-secondary">
-                          {[
-                            describeOrganization(organization),
-                            timeline ? `${timeline.label} (${timeline.covers})` : null,
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </p>
-                      </div>
-
-                      {preview.map((section, index) => (
-                        <ReportSectionBlock
-                          key={section.def.id}
-                          section={section}
-                          editing={false}
-                          isFirst={
-                            index === 0 ||
-                            preview.slice(0, index).every((s) => s.def.id === OVERVIEW_SECTION_ID)
-                          }
-                          isLast={index === preview.length - 1}
-                          onMove={() => {}}
-                        />
-                      ))}
-
-                      {preview.length === 0 && (
-                        <div className="rounded-xl border border-dashed border-border bg-subtle p-8 text-center">
-                          <p className="text-body-strong text-text-primary">This report has no sections</p>
-                          <p className="mt-1 text-body-sm text-text-secondary">
-                            Turn one on under “Sections to include” to give it something to say.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          {/* Docked actions row — the same band as the form header (bg-canvas, border-b,
+              py-3), actions only: what you do to the report, not the form. The report's own
+              title rides with the document below. */}
+          <div className="flex shrink-0 items-center justify-end gap-0.5 border-b border-border bg-canvas px-6 py-3">
+            <Menu
+              ariaLabel="Download report"
+              items={[
+                {
+                  label: 'Download as PDF',
+                  icon: <PictureAsPdfOutlined sx={{ fontSize: 18 }} />,
+                  onClick: () => download('PDF'),
+                },
+                {
+                  label: 'Download as CSV',
+                  icon: <GridOnOutlined sx={{ fontSize: 18 }} />,
+                  onClick: () => download('CSV'),
+                },
+              ]}
+              trigger={
+                <Button variant="tertiary" size="sm" iconOnly aria-label="Download report" disabled={phase === 'generating'}>
+                  <FileDownloadOutlined sx={{ fontSize: 20 }} />
+                </Button>
+              }
+            />
+            <Tooltip title="Schedule delivery">
+              <Button
+                variant="tertiary"
+                size="sm"
+                iconOnly
+                aria-label="Schedule delivery"
+                disabled={phase === 'generating'}
+                onClick={() => setScheduleOpen(true)}
+              >
+                <ScheduleSendOutlined sx={{ fontSize: 20 }} />
+              </Button>
+            </Tooltip>
+            <span className="mx-0.5 h-5 w-px bg-border" aria-hidden />
+            <Tooltip title={formCollapsed ? 'Show editor' : 'Expand to full width'}>
+              <Button
+                variant="tertiary"
+                size="sm"
+                iconOnly
+                aria-label={formCollapsed ? 'Show editor' : 'Expand report to full width'}
+                onClick={() => setFormCollapsed((c) => !c)}
+              >
+                {formCollapsed ? (
+                  <FullscreenExitOutlined sx={{ fontSize: 20 }} />
+                ) : (
+                  <FullscreenOutlined sx={{ fontSize: 20 }} />
+                )}
+              </Button>
+            </Tooltip>
           </div>
+
+          {/* Main — a subtle backdrop that scrolls, the report laid out on it as cards. */}
+          {phase === 'generating' ? (
+            <div className="grid min-h-0 flex-1 place-items-center bg-subtle px-8 py-16">
+              <div className="flex flex-col items-center text-center">
+                <CircularProgress size={30} thickness={4} sx={{ color: 'var(--ds-color-brand-primary)' }} />
+                <p className="mt-5 text-body-sm-strong text-text-primary" aria-live="polite">
+                  {BUILD_STEPS[step]}
+                </p>
+                <p className="mt-1 text-caption text-text-tertiary">
+                  Building “{name.trim() || 'Untitled report'}”
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="ds-scroll min-h-0 flex-1 overflow-y-auto bg-subtle px-6 py-6">
+              <div className="mx-auto w-full max-w-[1040px] rounded-2xl border border-border bg-surface p-8 shadow-sm">
+                <div className="flex flex-col gap-5">
+                <div className="min-w-0">
+                  <h2 className="truncate text-h3 text-text-primary" title={name.trim()}>
+                    {name.trim() || 'Untitled report'}
+                  </h2>
+                  {description.trim() && (
+                    <p className="mt-2 max-w-3xl text-body-sm text-text-secondary">{description.trim()}</p>
+                  )}
+                  <p className="mt-2 text-body-sm text-text-secondary">
+                    {[
+                      describeOrganization(organization),
+                      timeline ? `${timeline.label} (${timeline.covers})` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </p>
+                </div>
+
+                {preview.map((section, index) => (
+                  <ReportSectionBlock
+                    key={section.def.id}
+                    section={section}
+                    editing={false}
+                    isFirst={
+                      index === 0 ||
+                      preview.slice(0, index).every((s) => s.def.id === OVERVIEW_SECTION_ID)
+                    }
+                    isLast={index === preview.length - 1}
+                    onMove={() => {}}
+                  />
+                ))}
+
+                {preview.length === 0 && (
+                  <div className="rounded-xl border border-dashed border-border bg-subtle p-8 text-center">
+                    <p className="text-body-strong text-text-primary">This report has no sections</p>
+                    <p className="mt-1 text-body-sm text-text-secondary">
+                      Turn one on under “Sections to include” to give it something to say.
+                    </p>
+                  </div>
+                )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

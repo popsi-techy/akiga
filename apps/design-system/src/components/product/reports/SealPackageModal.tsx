@@ -5,7 +5,7 @@ import ContentCopyOutlined from '@mui/icons-material/ContentCopyOutlined';
 import { Button, InfoRow, InfoRowGroup, Modal, Tooltip, useToast } from '@ds/components';
 import { infoIcon } from '@/components/product/directory/infoIcons';
 import type { ComplianceFramework, ComplianceClause } from '@/data/reports';
-import { clauseCoverage, sealOutcome } from '@/data/reports';
+import { clauseCoverage, scopeOfEvidence, sealOutcome } from '@/data/reports';
 import { formatDate, formatDateTime } from '@/lib/datetime';
 import { ReportStateChip } from './ReportStateChip';
 
@@ -174,6 +174,16 @@ export function SealPackageModal({
               which is worth more than a missing artefact. Close them first if you would rather seal clean.
             </p>
           )}
+
+          {/*
+            What the sealed artefact is, and is not. Shown at the moment of sealing because
+            this is what sealing commits you to; the same statement frames the package on the
+            framework page. Sourced from `scopeOfEvidence` so the two never drift apart.
+          */}
+          <p className="rounded-lg border border-border bg-subtle px-4 py-3 text-caption leading-6 text-text-secondary">
+            <span className="font-emphasis text-text-primary">Scope of this evidence.</span>{' '}
+            {scopeOfEvidence(framework.name).full}
+          </p>
         </div>
       )}
     </Modal>

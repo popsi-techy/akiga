@@ -5,10 +5,22 @@ import { useRouter } from 'next/navigation';
 import LockOutlined from '@mui/icons-material/LockOutlined';
 import AddOutlined from '@mui/icons-material/AddOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
+import FilterListOutlined from '@mui/icons-material/FilterListOutlined';
+import ExpandMore from '@mui/icons-material/ExpandMore';
 import ReportProblemOutlined from '@mui/icons-material/ReportProblemOutlined';
 import DownloadOutlined from '@mui/icons-material/DownloadOutlined';
 import VerifiedUser from '@mui/icons-material/VerifiedUser';
-import { Avatar, Button, DataTable, Input, QuickFilter, StatusChip, Tooltip, type Column } from '@ds/components';
+import {
+  Avatar,
+  Button,
+  DataTable,
+  FilterDrawer,
+  Input,
+  StatusChip,
+  Tooltip,
+  type Column,
+  type FilterSelection,
+} from '@ds/components';
 import { DetailShell } from '@/components/product/directory';
 import {
   OPERATIONAL_REPORTS,
@@ -17,6 +29,7 @@ import {
   clausesForFramework,
   evidenceGaps,
   packagesForFramework,
+  scopeOfEvidence,
   sealOutcome,
   type ComplianceClause,
   type ComplianceFramework,
@@ -37,6 +50,9 @@ const PERIODS = [
   { value: 'last-quarter', label: 'Last quarter', from: '2026-04-01', to: '2026-06-30' },
   { value: 'ytd', label: 'Year to date', from: '2026-01-01', to: '2026-09-16' },
 ];
+
+// The three coverage states, in the order they read on the seal: proven, partial, missing.
+const COVERAGE_FILTERS: ComplianceClause['state'][] = ['evidenced', 'partial', 'notEvidenced'];
 
 /**
  * One framework: what it asks for, what we can show, and the artefact that proves it.
@@ -63,7 +79,11 @@ export function ComplianceFrameworkDetailView({ framework }: { framework: Compli
   const [tab, setTab] = React.useState<DetailTab>('coverage');
   const [period, setPeriod] = React.useState(PERIODS[2].value);
   const [query, setQuery] = React.useState('');
-  const [state, setState] = React.useState<ComplianceClause['state'] | null>(null);
+  // Coverage is multi-select — a reader can look at Partial and Not evidenced together —
+  // so it is a set of states, empty meaning "show every state".
+  const [coverageStates, setCoverageStates] = React.useState<ComplianceClause['state'][]>([]);
+  const [filterOpen, setFilterOpen] = React.useState(false);
+  const [scopeOpen, setScopeOpen] = React.useState(false);
   const [gapDrawer, setGapDrawer] = React.useState(false);
   const [attaching, setAttaching] = React.useState<ComplianceClause | null>(null);
   const [sealing, setSealing] = React.useState(false);
@@ -79,10 +99,11 @@ export function ComplianceFrameworkDetailView({ framework }: { framework: Compli
   const gaps = evidenceGaps(clauses);
   const outcome = sealOutcome(clauses);
   const window = PERIODS.find((p) => p.value === period) ?? PERIODS[2];
+  const scope = scopeOfEvidence(framework.name);
 
   const q = query.trim().toLowerCase();
   const shown = clauses.filter((c) => {
-    if (state && c.state !== state) return false;
+    if (coverageStates.length && !coverageStates.includes(c.state)) return false;
     if (!q) return true;
     return [c.clause, c.subClause, c.requirement, c.ref, c.evidencedBy]
       .filter(Boolean)
@@ -235,30 +256,38 @@ export function ComplianceFrameworkDetailView({ framework }: { framework: Compli
         onTab={(v) => setTab(v as DetailTab)}
       >
       {/*
-        The period is a filter, so it sits in the filter row rather than in a labelled band
-        of its own above the tabs. Its eyebrow said "Reporting period" over four options
-        that read as periods without being told; what does earn its place is the resolved
-        window beside them, because "Last quarter" is a rule and an assessor needs the two
-        dates it resolves to.
-
-        It stays outside the tab panels, though — it governs both. The matrix shows coverage
-        *for a window* and the history lists packages sealed *over* windows, so a control
-        that lived inside one tab would mean something different in the other.
+        The scope note, framed and collapsed, at the top of the page rather than as a
+        footnote below the clause table. It is the disclaimer that governs how everything
+        below it may be read — not a certification, identity-governance scope only — and it
+        belongs before the evidence, not after a list nobody scrolls to the end of. It sits
+        outside the tab panels because it frames both: the coverage matrix and the sealed
+        packages in history are the same evidence under the same limits. Collapsed by
+        default, because a reader meets it once; the summary line carries the two facts that
+        change how the evidence reads for anyone who never opens it. Reuses the register's
+        Evidence-header pattern.
       */}
-      <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
-        {/* Same chips as the register's period, and required for the same reason: a package
-            is always sealed over some window. */}
-        <QuickFilter
-          ariaLabel="Reporting period"
-          clearable={false}
-          value={period}
-          onChange={(v) => v && setPeriod(v)}
-          options={PERIODS.map((p) => ({ value: p.value, label: p.label }))}
-        />
-        <span className="text-body-sm text-text-secondary">
-          {formatDate(window.from)} – {formatDate(window.to)}
-        </span>
-      </div>
+      <section className="mb-4 shrink-0 overflow-hidden rounded-lg border border-border">
+        <button
+          type="button"
+          aria-expanded={scopeOpen}
+          onClick={() => setScopeOpen((v) => !v)}
+          className="flex w-full items-center justify-between gap-3 bg-subtle px-4 py-2.5 text-left hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+        >
+          <span className="min-w-0">
+            <span className="text-body-sm-strong text-text-primary">About this evidence</span>
+            <span className="ml-2 text-caption text-text-secondary">{scope.short}</span>
+          </span>
+          <ExpandMore
+            sx={{ fontSize: 20 }}
+            className={`shrink-0 text-icon transition-transform ${scopeOpen ? 'rotate-180' : ''}`}
+          />
+        </button>
+        {scopeOpen && (
+          <div className="border-t border-border-subtle bg-surface px-4 py-3">
+            <p className="text-caption leading-6 text-text-secondary">{scope.full}</p>
+          </div>
+        )}
+      </section>
 
       <div>
         {tab === 'coverage' ? (
@@ -291,36 +320,16 @@ export function ComplianceFrameworkDetailView({ framework }: { framework: Compli
               </div>
             )}
 
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              {/*
-                Coverage as a filter, not as four KPI tiles. The screenshots spent a full
-                card row on four numbers whose only use is to narrow the table underneath —
-                so the numbers *are* the narrowing control, and the row they used to occupy
-                goes to the clause list.
-              */}
-              <div className="flex flex-wrap items-center gap-2">
-                {(['evidenced', 'partial', 'notEvidenced'] as const).map((s) => {
-                  const count =
-                    s === 'evidenced' ? coverage.evidenced : s === 'partial' ? coverage.partial : coverage.notEvidenced;
-                  const on = state === s;
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      aria-pressed={on}
-                      onClick={() => setState(on ? null : s)}
-                      className={[
-                        'flex items-center gap-2 rounded-pill border px-3 py-1.5 transition-colors',
-                        on ? 'border-brand bg-surface' : 'border-border bg-surface hover:bg-surface-hover',
-                      ].join(' ')}
-                    >
-                      <ReportStateChip state={s} />
-                      <span className="tabular-nums text-body-sm-medium text-text-primary">{count}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
+            {/*
+              One filter row, directly above the table: search, then the reporting period,
+              then coverage. The period opens the product's FilterDrawer rather than sitting
+              inline as four chips — the trigger carries the current window so the applied
+              filter is legible without opening it, and the resolved dates ride beside it
+              because "Last quarter" is a rule and an assessor needs the two dates it
+              resolves to. Coverage stays inline: three toggles the reader flips against the
+              rows in front of them, not worth a round-trip through a drawer.
+            */}
+            <div className="flex flex-wrap items-center gap-3">
               <div className="w-full sm:w-[280px]">
                 <Input
                   size="sm"
@@ -331,24 +340,27 @@ export function ComplianceFrameworkDetailView({ framework }: { framework: Compli
                   startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
                 />
               </div>
+
+              {/* One entry point for both filters — period and coverage — through the
+                  product's filter drawer. The count is the coverage states in play; the
+                  period is always set, so it is not counted. The resolved window lives in
+                  the drawer's footer, so the toolbar stays to search and a single control. */}
+              <Button
+                variant="secondary"
+                size="sm"
+                startIcon={<FilterListOutlined />}
+                onClick={() => setFilterOpen(true)}
+              >
+                Filter{coverageStates.length > 0 ? ` (${coverageStates.length})` : ''}
+              </Button>
             </div>
 
             <DataTable
               columns={clauseColumns}
               rows={shown}
               emptyTitle="No clause matches"
-              emptyMessage="Clear the coverage filter or the search to see the full control index."
+              emptyMessage="Clear the filter or the search to see the full control index."
             />
-
-            <p className="rounded-lg border border-border bg-subtle px-4 py-3 text-caption leading-6 text-text-secondary">
-              <span className="font-emphasis text-text-primary">Scope of this evidence.</span> This package contains
-              identity and access governance evidence generated by this platform to support the organisation&apos;s own
-              assessment against applicable requirements of the {framework.name}. It is not a certification of
-              compliance, and no such certification scheme exists. The organisation remains responsible for assessing
-              control effectiveness, determining its maturity level, addressing findings and obtaining required
-              approvals. Evidence is limited to the identity governance scope described in this package and to the
-              systems onboarded to the platform.
-            </p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -369,6 +381,45 @@ export function ComplianceFrameworkDetailView({ framework }: { framework: Compli
         )}
       </div>
       </DetailShell>
+
+      {/*
+        Both filters through the product's one filter surface: the reporting period and the
+        coverage states. Period is a single required choice, so the drawer's multi-select is
+        coerced back to one on Apply — the last box ticked wins, and an empty selection keeps
+        the current window because a package is always read over some period. Coverage is a
+        true multi-select: leave it empty to see every clause, or tick the states you want.
+        The footer status resolves the staged period to its two dates and names how many
+        coverage states are in play — the facts an assessor actually needs.
+      */}
+      <FilterDrawer
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        title="Filter"
+        subtitle="Narrow the matrix by reporting period and coverage."
+        groups={[
+          {
+            id: 'period',
+            label: 'Period',
+            optionHeader: 'Reporting period',
+            options: PERIODS.map((p) => ({ id: p.value, label: p.label })),
+          },
+          {
+            id: 'coverage',
+            label: 'Coverage',
+            optionHeader: 'Evidence status',
+            options: COVERAGE_FILTERS.map((s) => ({ id: s, label: REPORT_STATE[s].label })),
+          },
+        ]}
+        value={{ period: [period], coverage: coverageStates }}
+        onApply={(next: FilterSelection) => {
+          const picked = next.period ?? [];
+          setPeriod(picked[picked.length - 1] ?? period);
+          setCoverageStates((next.coverage ?? []) as ComplianceClause['state'][]);
+        }}
+        // No footer status: the applied filters are legible from the rail counts and the
+        // table itself, so the resolved window and state count would only repeat them.
+        renderStatus={() => null}
+      />
 
       <EvidenceGapDrawer
         open={gapDrawer}

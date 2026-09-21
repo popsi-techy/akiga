@@ -52,8 +52,10 @@ const isSection = (v: string | null): v is HubSection => CATALOGUE.some((t) => t
  * and the reports are never competing for the same scan. A back control returns
  * to the types.
  *
- * Schedules stay out of that hierarchy. They live in the narrow column — next run
- * first — and the full table remains a page behind View all.
+ * Schedules stay out of that hierarchy. They live in the narrow column on the
+ * landing view only — next run first — and the full table remains a page behind
+ * View all. Once a type is open, that collection takes the full width and the
+ * rail steps aside.
  */
 export function ReportsHubMainScreen() {
   const router = useRouter();
@@ -95,49 +97,47 @@ export function ReportsHubMainScreen() {
         </p>
       </div>
 
-      <div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="flex min-h-0 min-w-0 flex-col">
-          {section && current ? (
-            <>
-              <div className="mb-4 shrink-0">
-                <Button
-                  variant="tertiary"
-                  size="sm"
-                  startIcon={<ArrowBack />}
-                  onClick={() => setSection(null)}
-                >
-                  Report types
-                </Button>
-                <h2 className="mt-3 text-h3 text-text-primary">{current.label}</h2>
-              </div>
-              <div className="flex min-h-0 flex-1 flex-col">
-                {section === 'operational' && <OperationalReportsTab />}
-                {section === 'compliance' && <CompliancePackagesTab />}
-                {section === 'custom' && <CustomAnalyticsTab reports={custom} />}
-              </div>
-            </>
-          ) : (
-            <div className="ds-scroll min-h-0 flex-1 overflow-y-auto">
-              <div className="grid max-w-2xl gap-4">
-                {CATALOGUE.map((item) => (
-                  <NavCard
-                    key={item.value}
-                    title={item.label}
-                    description={item.description}
-                    count={counts[item.value]}
-                    icon={item.icon}
-                    onClick={() => setSection(item.value)}
-                  />
-                ))}
-              </div>
+      {section && current ? (
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <div className="mb-4 shrink-0">
+            <Button
+              variant="tertiary"
+              size="sm"
+              startIcon={<ArrowBack />}
+              onClick={() => setSection(null)}
+            >
+              Report types
+            </Button>
+            <h2 className="mt-3 text-h3 text-text-primary">{current.label}</h2>
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col">
+            {section === 'operational' && <OperationalReportsTab />}
+            {section === 'compliance' && <CompliancePackagesTab />}
+            {section === 'custom' && <CustomAnalyticsTab reports={custom} />}
+          </div>
+        </div>
+      ) : (
+        <div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="ds-scroll min-h-0 flex-1 overflow-y-auto">
+            <div className="grid max-w-2xl gap-4">
+              {CATALOGUE.map((item) => (
+                <NavCard
+                  key={item.value}
+                  title={item.label}
+                  description={item.description}
+                  count={counts[item.value]}
+                  icon={item.icon}
+                  onClick={() => setSection(item.value)}
+                />
+              ))}
             </div>
-          )}
-        </div>
+          </div>
 
-        <div className="min-h-0 lg:h-full">
-          <ReportsSchedulesRail />
+          <div className="min-h-0 lg:h-full">
+            <ReportsSchedulesRail />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
