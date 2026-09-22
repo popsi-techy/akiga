@@ -1,3 +1,3 @@
 export { EmailTypesListPage } from './EmailTypesListPage';
-export { EmailTypeTemplateGallery } from './EmailTypeTemplateGallery';
+export { EmailTypeVariantsPage } from './EmailTypeVariantsPage';
 export { EmailTypeEditor } from './EmailTypeEditor';

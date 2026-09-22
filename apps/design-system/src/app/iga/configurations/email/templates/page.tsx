@@ -1,8 +1,9 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { EmailTypeTemplateGallery } from '@/components/product/settings/email';
-
-/** The catalog a new email type starts from. */
+/**
+ * The starter gallery is gone: emails are now a fixed catalogue configured in place, so
+ * there is no "start from a template" step. Anything still pointing here lands on the list.
+ */
 export default function EmailTemplateGalleryPage() {
-  return <EmailTypeTemplateGallery />;
+  redirect('/iga/configurations/email');
 }

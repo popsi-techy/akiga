@@ -171,7 +171,7 @@ export const SYSTEM_SETTINGS_SECTIONS: SystemSettingsSection[] = [
     description: 'Compose the notification emails this tenant sends, and control which ones are live.',
     actionLabel: 'Manage',
     pageDescription:
-      'The emails this tenant sends. Start from a template or write your own, then activate it when the wording is right.',
+      'Every email the product can send, grouped by area. Keep our default wording or write your own, then switch it on.',
     keywords: [
       'email',
       'notification',

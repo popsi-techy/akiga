@@ -283,8 +283,19 @@ export function ApprovalFlowCanvas({
   const approvalStartedAt = view.stages.find((st) => st.id === 'approval')?.startedAt;
 
   // The trailing note is an entry on the rail too, so the dash reaches it rather than
-  // stopping at the last card and leaving the explanation floating.
-  const showTail = levels.length === 0 || !complete;
+  // stopping at the last card and leaving the explanation floating. It only earns a node
+  // when it has something to say: an empty/not-started line, or a chain that ended on a
+  // rejection. A line that is simply still pending shows no tail — "more may come depending
+  // on the decision" is the default state of any open chain and does not need stating.
+  const tailMessage =
+    levels.length === 0
+      ? configured
+        ? `Approvals have not started. This line is still at ${STAGE_LABEL[view.currentStage]}.`
+        : 'No approval levels have run on this line.'
+      : levels[levels.length - 1].decision === 'rejected'
+        ? 'The chain ended here. Nothing after a rejection was asked of anyone.'
+        : null;
+  const showTail = (levels.length === 0 || !complete) && tailMessage !== null;
 
   return (
     <ol className="flex flex-col">
@@ -328,17 +339,9 @@ export function ApprovalFlowCanvas({
 
       {/* Why the ladder stops here, said in the open. An absence with no explanation reads
           as a page that failed to load the rest of itself. */}
-      {showTail && (
+      {showTail && tailMessage && (
         <TimelineItem icon={<HourglassEmptyOutlined sx={{ fontSize: 18 }} />} tone="neutral" ground="subtle" last>
-          <Note>
-            {levels.length === 0
-              ? configured
-                ? `Approvals have not started. This line is still at ${STAGE_LABEL[view.currentStage]}.`
-                : 'No approval levels have run on this line.'
-              : levels[levels.length - 1].decision === 'rejected'
-                ? 'The chain ended here. Nothing after a rejection was asked of anyone.'
-                : 'What comes after this level depends on how it decides, so nothing further is shown yet.'}
-          </Note>
+          <Note>{tailMessage}</Note>
         </TimelineItem>
       )}
     </ol>

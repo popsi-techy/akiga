@@ -1,28 +1,23 @@
 /**
- * Email types — the notification emails a tenant has composed for itself.
+ * Email versions — the tenant's own wordings for the emails the product sends.
  *
- * Distinct from `email-templates`, which is the read-only catalog miniOrange ships. A
- * template is the starting point; a type is the tenant's own copy of one, with its own
- * name, subject, body and lifecycle. Editing a type never touches the catalog, which is
- * why the two are separate stores rather than one list with an `isCustom` flag.
+ * `email-templates` is the read-only catalogue miniOrange ships: one **Default** per email,
+ * always available. A tenant never edits the catalogue. Instead they compose their own
+ * **versions** of an email here — as many as they like — and mark one as **in use**. When a
+ * type has no version in use, its shipped Default is what sends. There is no on/off: every
+ * email the product sends is always sent; the only choice is whose wording.
  */
 import { getEmailTemplate, type EmailTemplate } from './email-templates';
 
-export type EmailTypeStatus = 'draft' | 'active' | 'inactive';
-
-export const EMAIL_TYPE_STATUS_LABEL: Record<EmailTypeStatus, string> = {
-  draft: 'Draft',
-  active: 'Active',
-  inactive: 'Inactive',
-};
-
 export interface EmailType {
   id: string;
+  /** The version's own name, e.g. "Concise" — distinguishes it from other versions. */
   name: string;
   description: string;
-  status: EmailTypeStatus;
-  /** The catalog template it started from, or `null` when written from scratch. */
-  sourceTemplateId: string | null;
+  /** The catalogue email this version belongs to. */
+  sourceTemplateId: string;
+  /** Whether this version is the one currently sent for its type (at most one per type). */
+  inUse: boolean;
   subjectLine: string;
   /** The editable middle of the email, as HTML. The shell around it is the base layout. */
   bodyHtml: string;
@@ -30,39 +25,25 @@ export interface EmailType {
   updatedAt: string;
 }
 
-/**
- * The five catalog templates offered as starting points.
- *
- * Chosen to span the lifecycle rather than to be the five most common: one welcome, one
- * request, one review, one security and one break-glass. A tenant starting from any of
- * them lands somewhere different in the product, which is what makes the gallery worth
- * browsing instead of a dropdown.
- */
-export const STARTER_TEMPLATE_IDS = [
-  'welcome-organization',
-  'access-request-submitted',
-  'review-request-new',
-  'password-reset',
-  'emergency-access-assigned',
-] as const;
-
-export function listStarterTemplates(): EmailTemplate[] {
-  return STARTER_TEMPLATE_IDS.map((id) => getEmailTemplate(id)).filter(
-    (t): t is EmailTemplate => Boolean(t),
-  );
-}
-
 const STORE_KEY = 'iga.emailTypes.v1';
 
 const hasWindow = () => typeof window !== 'undefined';
 
+/**
+ * Rows written before this model carried `status`/`mode` and could be from-scratch (no
+ * template). Normalise them forward: a row's `inUse` comes from the old `active` status, and
+ * a row with no `sourceTemplateId` no longer has a home, so it is dropped.
+ */
 function readStore(): EmailType[] {
   if (!hasWindow()) return [];
   try {
     const raw = window.localStorage.getItem(STORE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed) ? (parsed as EmailType[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    return (parsed as (EmailType & { status?: string })[])
+      .filter((r) => Boolean(r.sourceTemplateId))
+      .map((r) => ({ ...r, inUse: r.inUse ?? r.status === 'active' }));
   } catch {
     return [];
   }
@@ -77,13 +58,31 @@ function makeId(): string {
   return `et-${Math.random().toString(36).slice(2, 8)}${Date.now().toString(36).slice(-3)}`;
 }
 
-/** Newest first — the one you just made is the one you are looking for. */
-export function listEmailTypes(): EmailType[] {
-  return readStore().sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
-}
-
 export function getEmailType(id: string): EmailType | null {
   return readStore().find((t) => t.id === id) ?? null;
+}
+
+/** Every version of one email, newest first. */
+export function listVariants(templateId: string): EmailType[] {
+  return readStore()
+    .filter((t) => t.sourceTemplateId === templateId)
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+}
+
+/** The version currently sent for a type, or `null` when the Default is in use. */
+export function getInUseVariant(templateId: string): EmailType | null {
+  return readStore().find((t) => t.sourceTemplateId === templateId && t.inUse) ?? null;
+}
+
+/** Every version, grouped by the email it belongs to — for the landing summary. */
+export function variantsByTemplate(): Map<string, EmailType[]> {
+  const map = new Map<string, EmailType[]>();
+  for (const row of readStore()) {
+    const list = map.get(row.sourceTemplateId) ?? [];
+    list.push(row);
+    map.set(row.sourceTemplateId, list);
+  }
+  return map;
 }
 
 /**
@@ -102,14 +101,13 @@ function escapeHtml(text: string): string {
 }
 
 /**
- * The starting body for a new type.
+ * The starting body for a new version.
  *
  * A template contributes its heading and whatever prose its body variant carries. The
  * structured variants (tables of requested items, OTP blocks) are deliberately not
  * reproduced as HTML: they are rendered by `EmailTemplateBodySlot` from typed data, and
  * flattening them into editable markup would quietly fork one into two. What the reader
- * gets instead is the heading and an invitation to write the body, which is the honest
- * version of "start from this template".
+ * gets instead is the heading and an invitation to write the body.
  */
 export function seedBodyHtml(template: EmailTemplate | null): string {
   if (!template) {
@@ -125,21 +123,19 @@ export function seedBodyHtml(template: EmailTemplate | null): string {
   return parts.join('');
 }
 
-export function createEmailType(input: {
-  name: string;
-  description: string;
-  sourceTemplateId: string | null;
-  status?: EmailTypeStatus;
-}): EmailType {
-  const template = input.sourceTemplateId ? getEmailTemplate(input.sourceTemplateId) ?? null : null;
+/**
+ * Add a version to a type, seeded from its shipped Default. Not in use until chosen — a new
+ * version is a draft you can shape before it ever sends.
+ */
+export function createVariant(templateId: string, name: string): EmailType {
+  const template = getEmailTemplate(templateId) ?? null;
   const now = new Date().toISOString();
   const row: EmailType = {
     id: makeId(),
-    name: input.name.trim(),
-    description: input.description.trim(),
-    // A new type is a draft: it exists, but nothing is sending it yet.
-    status: input.status ?? 'draft',
-    sourceTemplateId: input.sourceTemplateId,
+    name: name.trim() || 'Untitled version',
+    description: '',
+    sourceTemplateId: templateId,
+    inUse: false,
     subjectLine: template?.subjectLine ?? '',
     bodyHtml: seedBodyHtml(template),
     createdAt: now,
@@ -151,7 +147,7 @@ export function createEmailType(input: {
 
 export function updateEmailType(
   id: string,
-  patch: Partial<Pick<EmailType, 'name' | 'description' | 'status' | 'subjectLine' | 'bodyHtml'>>,
+  patch: Partial<Pick<EmailType, 'name' | 'description' | 'subjectLine' | 'bodyHtml'>>,
 ): EmailType | null {
   const rows = readStore();
   const i = rows.findIndex((t) => t.id === id);
@@ -160,6 +156,18 @@ export function updateEmailType(
   rows[i] = next;
   writeStore(rows);
   return next;
+}
+
+/**
+ * Choose which version sends for a type. Passing `null` puts the shipped Default back in
+ * use. At most one version of a type is ever in use, so the siblings are cleared here rather
+ * than trusted to be already false.
+ */
+export function setInUseVariant(templateId: string, variantId: string | null): void {
+  const rows = readStore().map((r) =>
+    r.sourceTemplateId === templateId ? { ...r, inUse: r.id === variantId } : r,
+  );
+  writeStore(rows);
 }
 
 export function deleteEmailType(id: string): void {
