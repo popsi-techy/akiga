@@ -2,13 +2,13 @@
 
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import ArrowBack from '@mui/icons-material/ArrowBack';
 import AssignmentOutlined from '@mui/icons-material/AssignmentOutlined';
 import QueryStatsOutlined from '@mui/icons-material/QueryStatsOutlined';
 import VerifiedUserOutlined from '@mui/icons-material/VerifiedUserOutlined';
-import { Button, NavCard } from '@ds/components';
+import { NavCard } from '@ds/components';
 import { COMPLIANCE_FRAMEWORKS, OPERATIONAL_REPORTS } from '@/data/reports';
 import { listReportsV2 } from '@/data/governance-analytics-v2';
+import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import { OperationalReportsTab } from './OperationalReportsTab';
 import { CompliancePackagesTab } from './CompliancePackagesTab';
 import { CustomAnalyticsTab } from './CustomAnalyticsTab';
@@ -49,8 +49,10 @@ const isSection = (v: string | null): v is HubSection => CATALOGUE.some((t) => t
  *
  * The left column is larger because it is the job: pick a report type, then open a
  * report. Clicking a type replaces the chooser with that collection, so the types
- * and the reports are never competing for the same scan. A back control returns
- * to the types.
+ * and the reports are never competing for the same scan. Opening a type is a step
+ * down: the page heading becomes that type's name and the breadcrumb grows a crumb
+ * (Reports › Registers), whose Reports link is the way back — no separate heading
+ * or back button competing with it.
  *
  * Schedules stay out of that hierarchy. They live in the narrow column on the
  * landing view only — next run first — and the full table remains a page behind
@@ -74,6 +76,12 @@ export function ReportsHubMainScreen() {
   const section: HubSection | null = isSection(fromUrl) ? fromUrl : null;
   const current = CATALOGUE.find((c) => c.value === section);
 
+  // Opening a type is a step down the trail: grow the breadcrumb rather than
+  // stack a second heading. On the landing, fall back to the default trail.
+  useSetBreadcrumbs(
+    current ? [{ label: 'Reports', href: '/iga/reports' }, { label: current.label }] : null,
+  );
+
   const setSection = (next: HubSection | null) => {
     const q = new URLSearchParams(Array.from(params.entries()));
     if (!next) q.delete('tab');
@@ -91,30 +99,19 @@ export function ReportsHubMainScreen() {
   return (
     <div className="flex h-full flex-col">
       <div className="mb-5 shrink-0">
-        <h1 className="text-h2 text-text-primary">Reports</h1>
+        <h1 className="text-h2 text-text-primary">{current ? current.label : 'Reports'}</h1>
         <p className="mt-1 max-w-2xl text-body text-text-secondary">
-          Open a register, seal an evidence package, or build a report the catalogue does not cover.
+          {current
+            ? current.description
+            : 'Open a register, seal an evidence package, or build a report the catalogue does not cover.'}
         </p>
       </div>
 
       {section && current ? (
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <div className="mb-4 shrink-0">
-            <Button
-              variant="tertiary"
-              size="sm"
-              startIcon={<ArrowBack />}
-              onClick={() => setSection(null)}
-            >
-              Report types
-            </Button>
-            <h2 className="mt-3 text-h3 text-text-primary">{current.label}</h2>
-          </div>
-          <div className="flex min-h-0 flex-1 flex-col">
-            {section === 'operational' && <OperationalReportsTab />}
-            {section === 'compliance' && <CompliancePackagesTab />}
-            {section === 'custom' && <CustomAnalyticsTab reports={custom} />}
-          </div>
+          {section === 'operational' && <OperationalReportsTab />}
+          {section === 'compliance' && <CompliancePackagesTab />}
+          {section === 'custom' && <CustomAnalyticsTab reports={custom} />}
         </div>
       ) : (
         <div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">

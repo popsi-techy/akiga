@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { EditorContent, BubbleMenu, useEditor, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -20,6 +21,9 @@ import ChecklistOutlined from '@mui/icons-material/ChecklistOutlined';
 import FormatQuoteOutlined from '@mui/icons-material/FormatQuoteOutlined';
 import HorizontalRuleOutlined from '@mui/icons-material/HorizontalRuleOutlined';
 import DataObjectOutlined from '@mui/icons-material/DataObjectOutlined';
+import UndoOutlined from '@mui/icons-material/UndoOutlined';
+import RedoOutlined from '@mui/icons-material/RedoOutlined';
+import LinkOutlined from '@mui/icons-material/LinkOutlined';
 
 /**
  * A block command offered by the slash menu.
@@ -121,6 +125,22 @@ function matchCommands(query: string): SlashCommand[] {
   );
 }
 
+/** A dynamic value the editor can insert as `{{…}}` — a merge field / placeholder. */
+export interface BlockEditorToken {
+  /** The literal inserted into the document, e.g. `{{fullName}}`. */
+  value: string;
+  /** What it resolves to, shown beside the token in the picker. */
+  label?: string;
+}
+
+/** Imperative handle for driving the editor from outside — e.g. a token/placeholder panel. */
+export interface BlockEditorApi {
+  /** Insert text (or an HTML fragment) at the current caret, focusing the editor first. */
+  insert: (content: string) => void;
+  /** Put the caret back in the document. */
+  focus: () => void;
+}
+
 export interface BlockEditorProps {
   /** HTML. Read once on mount — see the note on why this is uncontrolled. */
   value: string;
@@ -131,6 +151,30 @@ export interface BlockEditorProps {
   /** Names the editing region, since a bare contenteditable announces nothing. */
   ariaLabel: string;
   className?: string;
+  /**
+   * Imperative access for inserting content at the caret — the escape hatch for a
+   * side panel that drops dynamic values in. The editor is uncontrolled, so this is
+   * how outside UI writes into it without remounting and losing the selection.
+   */
+  apiRef?: React.Ref<BlockEditorApi>;
+  /**
+   * Show a persistent formatting toolbar above the document. The slash menu and
+   * selection bar are always available; this adds the always-visible controls a
+   * form-style editor is expected to have. @default false
+   */
+  toolbar?: boolean;
+  /**
+   * Render the toolbar into this element instead of inline above the content — for
+   * docking it at the top of an outer container (e.g. above a preview frame) rather
+   * than inside the scrolling document. Requires `toolbar`.
+   */
+  toolbarContainer?: React.RefObject<HTMLElement | null>;
+  /**
+   * Dynamic values the reader can drop into the document as `{{…}}`. When set, a
+   * searchable picker opens at the caret on typing `{{` (or from the toolbar), so
+   * insertion happens where the reader is looking rather than from a side panel.
+   */
+  tokens?: BlockEditorToken[];
 }
 
 /**
@@ -167,7 +211,22 @@ export function BlockEditor({
   editable = true,
   ariaLabel,
   className,
+  apiRef,
+  toolbar = false,
+  toolbarContainer,
+  tokens,
 }: BlockEditorProps) {
+  // Portaling the toolbar needs the container committed to the DOM; this flips true after
+  // the first paint, by which point the caller's ref is populated.
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+
+  // Token picker (merge fields) — opens at the caret on `{{`.
+  const [tokenMenu, setTokenMenu] = React.useState<{ query: string; top: number; left: number } | null>(
+    null,
+  );
+  const [tokenHighlight, setTokenHighlight] = React.useState(0);
+  const hasTokens = Boolean(tokens && tokens.length > 0);
   const [slash, setSlash] = React.useState<{ query: string; top: number; left: number } | null>(
     null,
   );
@@ -229,9 +288,13 @@ export function BlockEditor({
       if (html === lastEmitted.current) return;
       lastEmitted.current = html;
       onChange(html);
-      syncSlash(e);
+      if (syncToken(e)) setSlash(null);
+      else syncSlash(e);
     },
-    onSelectionUpdate: ({ editor: e }) => syncSlash(e),
+    onSelectionUpdate: ({ editor: e }) => {
+      if (syncToken(e)) setSlash(null);
+      else syncSlash(e);
+    },
   });
 
   /**
@@ -262,6 +325,50 @@ export function BlockEditor({
     setHighlight(0);
   };
 
+  /**
+   * Open the token picker while the caret sits just after an unclosed `{{query` run. The
+   * closing `}}` on an existing token means the caret is past it, so a finished token never
+   * re-triggers the menu. Returns whether the menu is showing, so the caller can suppress slash.
+   */
+  const syncToken = (e: Editor): boolean => {
+    if (!hasTokens) return false;
+    const { from, empty } = e.state.selection;
+    if (!empty) {
+      setTokenMenu(null);
+      return false;
+    }
+    const start = e.state.doc.resolve(from).start();
+    const before = e.state.doc.textBetween(start, from, '\n', '\n');
+    const match = /\{\{([A-Za-z0-9]*)$/.exec(before);
+    if (!match) {
+      setTokenMenu(null);
+      return false;
+    }
+    const coords = e.view.coordsAtPos(from);
+    const box = wrapper.current?.getBoundingClientRect();
+    setTokenMenu({
+      query: match[1],
+      top: coords.bottom - (box?.top ?? 0) + 6,
+      left: coords.left - (box?.left ?? 0),
+    });
+    setTokenHighlight(0);
+    return true;
+  };
+
+  const runToken = (token: BlockEditorToken, instance?: Editor) => {
+    const e = instance ?? editorRef.current;
+    if (!e) return;
+    const { from } = e.state.selection;
+    const start = e.state.doc.resolve(from).start();
+    const before = e.state.doc.textBetween(start, from, '\n', '\n');
+    const match = /\{\{([A-Za-z0-9]*)$/.exec(before);
+    // Replace the `{{query` the reader typed with the full token, so no stray braces remain.
+    const chain = e.chain().focus();
+    if (match) chain.deleteRange({ from: from - match[0].length, to: from });
+    chain.insertContent(token.value).run();
+    setTokenMenu(null);
+  };
+
   const runCommand = (command: SlashCommand, instance?: Editor) => {
     const e = instance ?? editorRef.current;
     if (!e) return;
@@ -280,11 +387,41 @@ export function BlockEditor({
 
   editorRef.current = editor;
 
+  React.useImperativeHandle(
+    apiRef,
+    () => ({
+      insert: (content: string) => {
+        editorRef.current?.chain().focus().insertContent(content).run();
+      },
+      focus: () => {
+        editorRef.current?.chain().focus().run();
+      },
+    }),
+    [editor],
+  );
+
   React.useEffect(() => {
     editor?.setEditable(editable);
   }, [editor, editable]);
 
-  const results = slash ? matchCommands(slash.query) : [];
+  // Placeholders are offered in the slash menu too, so `/` is a single entry point for both
+  // blocks and dynamic values.
+  const tokenCommands: SlashCommand[] = (tokens ?? []).map((t) => ({
+    id: `token:${t.value}`,
+    label: t.value,
+    hint: t.label ? `Placeholder · ${t.label}` : 'Placeholder',
+    keywords: ['placeholder', 'token', 'variable', t.value.replace(/[{}]/g, ''), ...(t.label ? [t.label] : [])],
+    icon: <DataObjectOutlined sx={ICON} />,
+    run: (e) => e.chain().focus().insertContent(t.value).run(),
+  }));
+  const matchTokens = (query: string) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return tokenCommands;
+    return tokenCommands.filter(
+      (c) => c.label.toLowerCase().includes(q) || c.keywords.some((k) => k.startsWith(q)),
+    );
+  };
+  const results = slash ? [...matchCommands(slash.query), ...matchTokens(slash.query)] : [];
 
   /**
    * Menu keys, bound to the editor's own DOM rather than through `editorProps`.
@@ -329,8 +466,69 @@ export function BlockEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor, slash, highlight, results.length]);
 
+  const tokenResults =
+    tokenMenu && tokens
+      ? tokens
+          .filter((t) => {
+            const q = tokenMenu.query.toLowerCase();
+            return !q || t.value.toLowerCase().includes(q) || (t.label ?? '').toLowerCase().includes(q);
+          })
+          .slice(0, 8)
+      : [];
+
+  // Same keyboard model as the slash menu, for the token picker.
+  React.useEffect(() => {
+    if (!editor || !tokenMenu) return;
+    const instance = editor;
+    const dom = instance.view.dom;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setTokenMenu(null);
+        return;
+      }
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        setTokenHighlight((h) => (tokenResults.length ? (h + 1) % tokenResults.length : 0));
+        return;
+      }
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        setTokenHighlight((h) =>
+          tokenResults.length ? (h - 1 + tokenResults.length) % tokenResults.length : 0,
+        );
+        return;
+      }
+      if (event.key === 'Enter' && tokenResults.length > 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        runToken(tokenResults[Math.min(tokenHighlight, tokenResults.length - 1)], instance);
+      }
+    };
+    dom.addEventListener('keydown', onKeyDown, true);
+    return () => dom.removeEventListener('keydown', onKeyDown, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor, tokenMenu, tokenHighlight, tokenResults.length]);
+
+  const toolbarNode =
+    editor && editable && toolbar ? (
+      <Toolbar
+        editor={editor}
+        onInsertPlaceholder={
+          hasTokens ? () => editorRef.current?.chain().focus().insertContent('{{').run() : undefined
+        }
+      />
+    ) : null;
+
   return (
     <div ref={wrapper} className={`relative ${className ?? ''}`}>
+      {toolbarNode &&
+        (toolbarContainer
+          ? mounted && toolbarContainer.current
+            ? createPortal(toolbarNode, toolbarContainer.current)
+            : null
+          : toolbarNode)}
+
       {editor && editable && (
         <BubbleMenu
           editor={editor}
@@ -419,6 +617,179 @@ export function BlockEditor({
             ))
           )}
         </div>
+      )}
+
+      {tokenMenu && editable && (
+        <div
+          role="listbox"
+          aria-label="Insert placeholder"
+          style={{ top: tokenMenu.top, left: tokenMenu.left }}
+          className="ds-scroll absolute z-10 max-h-64 w-72 overflow-y-auto rounded-lg border border-border bg-surface p-1 shadow-lg"
+        >
+          <p className="px-2 pb-1 pt-1.5 text-caption-strong uppercase tracking-wider text-text-tertiary">
+            Placeholders
+          </p>
+          {tokenResults.length === 0 ? (
+            <p className="px-2 py-3 text-caption text-text-secondary">
+              No placeholder matches “{tokenMenu.query}”.
+            </p>
+          ) : (
+            tokenResults.map((t, i) => (
+              <button
+                key={t.value}
+                type="button"
+                role="option"
+                aria-selected={i === tokenHighlight}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  runToken(t);
+                }}
+                onMouseEnter={() => setTokenHighlight(i)}
+                className={[
+                  'flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors',
+                  i === tokenHighlight ? 'bg-brand-subtle' : 'hover:bg-surface-hover',
+                ].join(' ')}
+              >
+                <span className="shrink-0 rounded border border-border bg-subtle px-1.5 py-0.5 font-mono text-caption text-text-secondary">
+                  {t.value}
+                </span>
+                {t.label && (
+                  <span className="min-w-0 flex-1 truncate text-caption text-text-secondary">
+                    {t.label}
+                  </span>
+                )}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const TOOLBAR_SEP = <span className="mx-0.5 h-5 w-px shrink-0 bg-border" role="separator" />;
+
+/**
+ * A persistent formatting bar. Mirrors the selection and slash controls as always-visible
+ * buttons, for a form-style editor. Re-renders with its parent on every transaction, so the
+ * active states and the block-type value track the caret.
+ */
+function Toolbar({
+  editor,
+  onInsertPlaceholder,
+}: {
+  editor: Editor;
+  onInsertPlaceholder?: () => void;
+}) {
+  const blockValue = editor.isActive('heading', { level: 1 })
+    ? 'h1'
+    : editor.isActive('heading', { level: 2 })
+      ? 'h2'
+      : editor.isActive('heading', { level: 3 })
+        ? 'h3'
+        : 'p';
+
+  const setBlock = (value: string) => {
+    const chain = editor.chain().focus();
+    if (value === 'p') chain.setParagraph().run();
+    else chain.setHeading({ level: Number(value.slice(1)) as 1 | 2 | 3 }).run();
+  };
+
+  const setLink = () => {
+    const prev = editor.getAttributes('link').href as string | undefined;
+    const url = window.prompt('Link URL', prev ?? 'https://');
+    if (url === null) return;
+    if (url === '') editor.chain().focus().unsetLink().run();
+    else editor.chain().focus().setLink({ href: url }).run();
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-0.5 bg-surface px-3 py-1.5">
+      <MarkButton
+        label="Undo"
+        active={false}
+        onClick={() => editor.chain().focus().undo().run()}
+        icon={<UndoOutlined sx={ICON} />}
+      />
+      <MarkButton
+        label="Redo"
+        active={false}
+        onClick={() => editor.chain().focus().redo().run()}
+        icon={<RedoOutlined sx={ICON} />}
+      />
+      {TOOLBAR_SEP}
+      <select
+        aria-label="Text style"
+        value={blockValue}
+        onChange={(e) => setBlock(e.target.value)}
+        className="h-7 rounded-md border border-border bg-surface px-2 text-caption text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+      >
+        <option value="p">Paragraph</option>
+        <option value="h1">Heading 1</option>
+        <option value="h2">Heading 2</option>
+        <option value="h3">Heading 3</option>
+      </select>
+      {TOOLBAR_SEP}
+      <MarkButton
+        label="Bold"
+        active={editor.isActive('bold')}
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        icon={<FormatBoldOutlined sx={ICON} />}
+      />
+      <MarkButton
+        label="Italic"
+        active={editor.isActive('italic')}
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        icon={<FormatItalicOutlined sx={ICON} />}
+      />
+      <MarkButton
+        label="Underline"
+        active={editor.isActive('underline')}
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        icon={<FormatUnderlinedOutlined sx={ICON} />}
+      />
+      {TOOLBAR_SEP}
+      <MarkButton
+        label="Bullet list"
+        active={editor.isActive('bulletList')}
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        icon={<FormatListBulletedOutlined sx={ICON} />}
+      />
+      <MarkButton
+        label="Numbered list"
+        active={editor.isActive('orderedList')}
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        icon={<FormatListNumberedOutlined sx={ICON} />}
+      />
+      <MarkButton
+        label="Quote"
+        active={editor.isActive('blockquote')}
+        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        icon={<FormatQuoteOutlined sx={ICON} />}
+      />
+      {TOOLBAR_SEP}
+      <MarkButton
+        label="Link"
+        active={editor.isActive('link')}
+        onClick={setLink}
+        icon={<LinkOutlined sx={ICON} />}
+      />
+      <MarkButton
+        label="Code block"
+        active={editor.isActive('codeBlock')}
+        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+        icon={<CodeOutlined sx={ICON} />}
+      />
+      {onInsertPlaceholder && (
+        <>
+          {TOOLBAR_SEP}
+          <MarkButton
+            label="Insert placeholder"
+            active={false}
+            onClick={onInsertPlaceholder}
+            icon={<DataObjectOutlined sx={ICON} />}
+          />
+        </>
       )}
     </div>
   );

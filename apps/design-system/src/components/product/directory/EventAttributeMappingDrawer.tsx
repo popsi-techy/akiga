@@ -2,12 +2,15 @@
 
 import * as React from 'react';
 import TuneOutlined from '@mui/icons-material/TuneOutlined';
-import { Button, Drawer, useToast } from '@ds/components';
+import RestartAltOutlined from '@mui/icons-material/RestartAltOutlined';
+import { Button, Drawer, Tooltip, useToast } from '@ds/components';
 import {
   ensureConnectionEventForKind,
+  getDefaultMapping,
   scimEventLabel,
   mappingComplete,
   saveConnectionEvent,
+  setDefaultMapping,
   type AttributeMapping,
   type ConnectionEvent,
   type EventKind,
@@ -85,6 +88,27 @@ export function EventAttributeMappingDrawer({
     onClose();
   };
 
+  /** Load the default mapping back into the editor (unsaved until Save mapping). */
+  const resetToDefaults = () => {
+    if (!displayKind) return;
+    const defaults = getDefaultMapping(applicationId, displayKind);
+    setRows(defaults.length > 0 ? defaults : [blankMappingRow(0)]);
+    setTouched(false);
+    toast.info('Loaded the default mapping. Save to apply it.');
+  };
+
+  /** Promote the current mapping to be this event's default going forward. */
+  const setAsDefault = () => {
+    setTouched(true);
+    if (incomplete.length > 0) {
+      toast.error('Finish the mapping before setting it as the default.');
+      return;
+    }
+    if (!displayKind) return;
+    setDefaultMapping(applicationId, displayKind, started);
+    toast.success('Saved as the default mapping for this event.');
+  };
+
   return (
     <Drawer
       open={open}
@@ -101,13 +125,36 @@ export function EventAttributeMappingDrawer({
           <Button onClick={save}>Save mapping</Button>
         </>
       }
+      disablePadding
     >
-      <AttributeMappingEditor
-        rows={rows}
-        onChange={setRows}
-        applicationName={applicationName}
-        touched={touched}
-      />
+      {/* The editor is its own card with a pinned header and footer, so the drawer body
+          does not scroll — it just gives the card room to breathe on every side. The
+          mapping-level actions sit directly above the card, no divider between. */}
+      <div className="flex min-h-0 flex-1 flex-col px-6 pb-5 pt-4">
+        <div className="mb-3 flex shrink-0 items-center justify-end gap-2">
+          <Tooltip title="Reset to defaults">
+            <Button
+              variant="tertiary"
+              size="sm"
+              iconOnly
+              aria-label="Reset to defaults"
+              onClick={resetToDefaults}
+            >
+              <RestartAltOutlined sx={{ fontSize: 18 }} />
+            </Button>
+          </Tooltip>
+          <Button variant="secondary" size="sm" onClick={setAsDefault}>
+            Save as default template
+          </Button>
+        </div>
+        <AttributeMappingEditor
+          rows={rows}
+          onChange={setRows}
+          applicationName={applicationName}
+          touched={touched}
+          fillHeight
+        />
+      </div>
     </Drawer>
   );
 }

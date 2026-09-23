@@ -392,6 +392,58 @@ export function saveConnectionEvent(
   return record;
 }
 
+/* ------------------------------------------------------ default mappings */
+
+/**
+ * The mapping a SCIM event is auto-filled with when the connection is made — the shipped
+ * connector default. A tenant can reset back to it, or promote their own edits to be the
+ * default from then on (kept per application + event in localStorage, overriding this).
+ */
+const SCIM_DEFAULT_MAPPINGS: Partial<Record<EventKind, Omit<AttributeMapping, 'id'>[]>> = {
+  'accounts-fetch': [
+    { source: 'user-profile', applicationField: 'userName', igaAttribute: 'email', expression: '' },
+    { source: 'user-profile', applicationField: 'givenName', igaAttribute: 'firstName', expression: '' },
+    { source: 'user-profile', applicationField: 'familyName', igaAttribute: 'lastName', expression: '' },
+    { source: 'user-profile', applicationField: 'displayName', igaAttribute: '', expression: '[firstName] + " " + [lastName]' },
+    { source: 'user-profile', applicationField: 'title', igaAttribute: 'jobTitle', expression: '' },
+    { source: 'system', applicationField: 'externalId', igaAttribute: 'externalId', expression: '' },
+  ],
+};
+
+const DEFAULTS_KEY = 'iga.scimDefaultMappings.v1';
+const defaultsKey = (applicationId: string, kind: EventKind) => `${applicationId}:${kind}`;
+
+function readDefaultOverrides(): Record<string, AttributeMapping[]> {
+  if (!hasWindow()) return {};
+  try {
+    const raw = window.localStorage.getItem(DEFAULTS_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, AttributeMapping[]>) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** The default mapping for an event — the tenant's promoted default, else the shipped one. */
+export function getDefaultMapping(applicationId: string, kind: EventKind): AttributeMapping[] {
+  const override = readDefaultOverrides()[defaultsKey(applicationId, kind)];
+  const base: (AttributeMapping | Omit<AttributeMapping, 'id'>)[] =
+    override ?? SCIM_DEFAULT_MAPPINGS[kind] ?? [];
+  // Fresh ids so editor rows stay independent of the stored default.
+  return base.map((m, i) => ({ ...m, id: `def-${i}-${Math.random().toString(36).slice(2, 7)}` }));
+}
+
+/** Promote a mapping to be this event's default from now on. */
+export function setDefaultMapping(
+  applicationId: string,
+  kind: EventKind,
+  attributes: AttributeMapping[],
+): void {
+  if (!hasWindow()) return;
+  const all = readDefaultOverrides();
+  all[defaultsKey(applicationId, kind)] = attributes.map((m) => ({ ...m }));
+  window.localStorage.setItem(DEFAULTS_KEY, JSON.stringify(all));
+}
+
 export function deleteConnectionEvent(id: string): void {
   const store = readStore();
   delete store.events[id];

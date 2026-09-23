@@ -3,72 +3,94 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
-import LockOutlined from '@mui/icons-material/LockOutlined';
-import AssignmentOutlined from '@mui/icons-material/AssignmentOutlined';
-import FactCheckOutlined from '@mui/icons-material/FactCheckOutlined';
-import SyncAltOutlined from '@mui/icons-material/SyncAltOutlined';
-import WavingHandOutlined from '@mui/icons-material/WavingHandOutlined';
-import SwapVertOutlined from '@mui/icons-material/SwapVertOutlined';
-import EmailOutlined from '@mui/icons-material/EmailOutlined';
-import { Input } from '@ds/components';
+import LayersOutlined from '@mui/icons-material/LayersOutlined';
+import {
+  Avatar,
+  BlockEditor,
+  Button,
+  Input,
+  Modal,
+  StatusChip,
+} from '@ds/components';
+import { BaseEmailTemplatePreview, BaseEmailTemplateShell } from '@/components/product/email-templates';
 import {
   listEmailTemplates,
+  getEmailTemplate,
   groupEmailTemplatesByCategory,
   EMAIL_TEMPLATE_CATEGORY_LABELS,
   type EmailTemplate,
-  type EmailTemplateCategory,
 } from '@/data/email-templates';
+import { getInUseVariant, listVariants } from '@/data/email-types';
 import { getSystemSettingsSection } from '@/data/system-settings-catalog';
 import { SettingsDenied, useAdminSettings, useSettingsCrumbs } from '../SettingsChrome';
 
 const SECTION = getSystemSettingsSection('email')!;
 
-/** A quiet leading glyph per category, so the eye can group the grid without reading it. */
-const CATEGORY_ICON: Partial<Record<EmailTemplateCategory, React.ReactNode>> = {
-  'account-security': <LockOutlined sx={{ fontSize: 20 }} />,
-  'access-requests': <AssignmentOutlined sx={{ fontSize: 20 }} />,
-  'reviews-certification': <FactCheckOutlined sx={{ fontSize: 20 }} />,
-  'provisioning-lifecycle': <SyncAltOutlined sx={{ fontSize: 20 }} />,
-  onboarding: <WavingHandOutlined sx={{ fontSize: 20 }} />,
-  'imports-exports': <SwapVertOutlined sx={{ fontSize: 20 }} />,
-};
+/** The greeting/sign-off/footer every email carries, from the `base` template. */
+const BASE_CONTENT = getEmailTemplate('base')!.content;
 
-/**
- * One card per email the product sends. Opening a card is where versions live — the shipped
- * Default plus any the tenant has written — so the card itself stays a two-line summary, not
- * a control or a status readout.
- */
-/** First nine words, with an ellipsis when there is more — a card is a glance, not the copy. */
-function briefly(text: string, words = 9): string {
-  const parts = text.trim().split(/\s+/);
-  return parts.length <= words ? text : `${parts.slice(0, words).join(' ')}…`;
-}
+/** Applied version name (null = Default) and version count for one email. */
+type Meta = { applied?: string; count: number };
 
-function EmailCard({ template, onOpen }: { template: EmailTemplate; onOpen: () => void }) {
+function EmailCard({
+  template,
+  meta,
+  onPreview,
+  onViewAll,
+}: {
+  template: EmailTemplate;
+  meta: Meta;
+  onPreview: () => void;
+  onViewAll: () => void;
+}) {
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="flex h-full items-start gap-3 rounded-xl border border-border bg-surface p-3 text-left transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-    >
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-subtle text-icon">
-        {CATEGORY_ICON[template.category] ?? <EmailOutlined sx={{ fontSize: 20 }} />}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-body-sm-strong text-text-primary">{template.name}</span>
-        <span className="mt-0.5 block truncate text-caption text-text-secondary">{briefly(template.description)}</span>
-      </span>
-    </button>
+    <article className="flex h-full flex-col rounded-xl border border-border bg-surface p-4 transition-all duration-200 hover:border-border-strong hover:shadow-sm">
+      <Avatar name={template.name} kind="entity" size="sm" />
+      <h3 className="mt-2 truncate text-body-strong text-text-primary">{template.name}</h3>
+      <p className="mt-0.5 line-clamp-2 text-body-sm text-text-secondary">{template.description}</p>
+
+      {/* Footer like the automation template cards: a meta item, then a text Preview and a
+          filled Add version. */}
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
+        <button
+          type="button"
+          onClick={onViewAll}
+          aria-label={`View all ${meta.count} versions of ${template.name}`}
+          className="flex min-w-0 items-center gap-1 rounded-sm text-caption text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+        >
+          <LayersOutlined sx={{ fontSize: 16 }} className="shrink-0 text-icon-subtle" aria-hidden />
+          <span>
+            {meta.count} {meta.count === 1 ? 'version' : 'versions'}
+          </span>
+        </button>
+        <div className="flex shrink-0 items-center gap-3">
+          <button
+            type="button"
+            onClick={onPreview}
+            className="whitespace-nowrap text-caption-medium text-text-secondary transition-colors hover:text-text-primary"
+          >
+            Preview active version
+          </button>
+          <button
+            type="button"
+            onClick={onViewAll}
+            className="rounded-sm bg-surface-inverse px-2.5 py-1 text-caption-medium text-text-inverse transition-colors hover:bg-sidebar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+          >
+            Manage versions
+          </button>
+        </div>
+      </div>
+    </article>
   );
 }
 
 /**
  * Email — every notification the product sends, as a catalogue of cards.
  *
- * The reader does not build a list here; the list is the product's own set of emails,
- * grouped by area. Each card says which wording that email currently uses — its shipped
- * Default, or one the tenant wrote. Choosing and composing happen a level in, on the card's
- * own page, so the landing stays a scan of "what gets sent, and in whose words".
+ * Grouped by area, each card a glance at one email: name, what it is for, the version applied
+ * right now, and how many versions exist. The card acts in place — preview the active version,
+ * jump to all versions, or add one — so the reader rarely has to leave the catalogue to see
+ * what an email says or to start a new wording.
  */
 export function EmailTypesListPage() {
   useSettingsCrumbs(SECTION.title);
@@ -76,25 +98,56 @@ export function EmailTypesListPage() {
   const router = useRouter();
 
   const [query, setQuery] = React.useState('');
+  const [previewId, setPreviewId] = React.useState<string | null>(null);
+
+  const base = React.useMemo(
+    () => listEmailTemplates().filter((t) => t.category !== 'foundation'),
+    [],
+  );
+
+  // Versions live in localStorage; read after mount and merge, so the server and first client
+  // render agree that everything is on its Default with one version (no hydration flash).
+  const [metaById, setMetaById] = React.useState<Record<string, Meta>>({});
+  const refreshMeta = React.useCallback(() => {
+    const next: Record<string, Meta> = {};
+    for (const t of base) {
+      const variants = listVariants(t.id);
+      next[t.id] = { applied: variants.find((v) => v.inUse)?.name, count: variants.length + 1 };
+    }
+    setMetaById(next);
+  }, [base]);
+  React.useEffect(() => refreshMeta(), [refreshMeta]);
 
   if (!allowed) return <SettingsDenied />;
 
   const q = query.trim().toLowerCase();
-  // Every catalogue email except the base envelope, which wraps the others rather than
-  // being a message anyone sends.
-  const emails = listEmailTemplates().filter((t) => t.category !== 'foundation');
   const filtered = q
-    ? emails.filter(
+    ? base.filter(
         (t) =>
           t.name.toLowerCase().includes(q) ||
           t.description.toLowerCase().includes(q) ||
           EMAIL_TEMPLATE_CATEGORY_LABELS[t.category].toLowerCase().includes(q),
       )
-    : emails;
+    : base;
   const grouped = groupEmailTemplatesByCategory(filtered);
+  const metaFor = (id: string): Meta => metaById[id] ?? { count: 1 };
+
+  const viewAll = (t: EmailTemplate) => router.push(`/iga/configurations/email/${t.id}`);
+
+  // Preview the active version of the previewed email.
+  const previewTemplate = previewId ? getEmailTemplate(previewId) : null;
+  const previewVariant = previewId ? getInUseVariant(previewId) : null;
 
   return (
     <div className="flex h-full flex-col">
+      <div className="mb-5 shrink-0">
+        <h1 className="text-h2 text-text-primary">{SECTION.title}</h1>
+        <p className="mt-1 text-body text-text-secondary">
+          Every email the product sends, and the version applied to each. Preview the active
+          version, browse all versions, or add a new one.
+        </p>
+      </div>
+
       <div className="w-full max-w-sm shrink-0">
         <Input
           size="sm"
@@ -129,7 +182,9 @@ export function EmailTypesListPage() {
                   <EmailCard
                     key={template.id}
                     template={template}
-                    onOpen={() => router.push(`/iga/configurations/email/${template.id}`)}
+                    meta={metaFor(template.id)}
+                    onPreview={() => setPreviewId(template.id)}
+                    onViewAll={() => viewAll(template)}
                   />
                 ))}
               </div>
@@ -137,6 +192,56 @@ export function EmailTypesListPage() {
           ))
         )}
       </div>
+
+      {/* Preview the active version — the actual email, at the real width. */}
+      <Modal
+        open={previewTemplate !== null}
+        onClose={() => setPreviewId(null)}
+        title={previewTemplate?.name ?? 'Email'}
+        subtitle={
+          previewTemplate ? (
+            <span className="inline-flex items-center gap-2">
+              Active version
+              <StatusChip
+                intent={previewVariant ? 'success' : 'neutral'}
+                dot={Boolean(previewVariant)}
+                label={previewVariant?.name ?? 'Default'}
+              />
+            </span>
+          ) : undefined
+        }
+        width={640}
+        footer={
+          previewTemplate && (
+            <Button variant="secondary" onClick={() => viewAll(previewTemplate)}>
+              View all versions
+            </Button>
+          )
+        }
+      >
+        {previewTemplate && (
+          <div className="overflow-hidden rounded-xl border border-border">
+            {previewVariant ? (
+              <BaseEmailTemplateShell
+                greetingName={BASE_CONTENT.greetingName}
+                greetingLine={BASE_CONTENT.greetingLine}
+                signOff={BASE_CONTENT.signOff}
+                teamName={BASE_CONTENT.teamName}
+                ariaLabel={`${previewVariant.name} preview`}
+              >
+                <BlockEditor
+                  value={previewVariant.bodyHtml}
+                  onChange={() => {}}
+                  editable={false}
+                  ariaLabel={`Body of ${previewVariant.name}`}
+                />
+              </BaseEmailTemplateShell>
+            ) : (
+              <BaseEmailTemplatePreview content={previewTemplate.content} />
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

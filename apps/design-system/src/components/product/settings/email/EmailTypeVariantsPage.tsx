@@ -3,15 +3,18 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import AddOutlined from '@mui/icons-material/AddOutlined';
-import VerifiedOutlined from '@mui/icons-material/VerifiedOutlined';
+import SearchOutlined from '@mui/icons-material/SearchOutlined';
+import PublicOutlined from '@mui/icons-material/PublicOutlined';
+import PersonOutlineOutlined from '@mui/icons-material/PersonOutlineOutlined';
 import DescriptionOutlined from '@mui/icons-material/DescriptionOutlined';
 import {
+  Avatar,
   BlockEditor,
   Button,
   Dialog,
   Input,
   Menu,
-  StatusChip,
+  Modal,
   useToast,
 } from '@ds/components';
 import { BaseEmailTemplatePreview, BaseEmailTemplateShell } from '@/components/product/email-templates';
@@ -20,11 +23,11 @@ import {
   deleteEmailType,
   listVariants,
   setInUseVariant,
+  updateEmailType,
   type EmailType,
 } from '@/data/email-types';
-import { getEmailTemplate, EMAIL_TEMPLATE_CATEGORY_LABELS } from '@/data/email-templates';
+import { getEmailTemplate } from '@/data/email-templates';
 import { getSystemSettingsSection } from '@/data/system-settings-catalog';
-import { formatDateTime } from '@/lib/datetime';
 import { useSetBreadcrumbs } from '@/lib/breadcrumb';
 import { SettingsDenied, useAdminSettings } from '../SettingsChrome';
 
@@ -33,65 +36,101 @@ const SECTION = getSystemSettingsSection('email')!;
 /** The greeting/sign-off/footer every email carries, from the `base` template. */
 const BASE_CONTENT = getEmailTemplate('base')!.content;
 
-/** 'default' selects the shipped wording; any other value is a custom version's id. */
 const DEFAULT_ID = 'default';
 
-/** One entry in the left rail — icon, name, note, a dot when it is the one that sends. */
-function RailRow({
-  icon,
-  title,
-  subtitle,
-  inUse,
-  selected,
-  onSelect,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
+/** A version as the cards render it — the shipped Default, or a tenant-written variant. */
+type Version = {
+  id: string;
+  name: string;
+  /** The subject line — shown on the card as the content differentiator. */
+  subject: string;
   inUse: boolean;
-  selected: boolean;
-  onSelect: () => void;
+  isDefault: boolean;
+  /** The custom row, for edit/delete/preview. Absent on the Default. */
+  variant?: EmailType;
+};
+
+/** One version card — name, note, and its actions. */
+function VersionCard({
+  version,
+  featured,
+  onPreview,
+  onEdit,
+  onUse,
+  onDelete,
+}: {
+  version: Version;
+  featured?: boolean;
+  onPreview: () => void;
+  onEdit?: () => void;
+  onUse?: () => void;
+  onDelete?: () => void;
 }) {
+  // Edit and Delete live in the overflow. On the Default there is nothing to delete and Edit
+  // forks a new version, so only Edit appears.
+  const menuItems = [
+    ...(onEdit ? [{ label: 'Edit', onClick: onEdit }] : []),
+    ...(onDelete ? [{ label: 'Delete', danger: true, onClick: onDelete }] : []),
+  ];
+  // Without a Use action (the in-use card) Preview is the card's primary button.
+  const previewIsPrimary = !onUse;
+  const primaryClass =
+    'rounded-sm bg-surface-inverse px-2.5 py-1 text-caption-medium text-text-inverse transition-colors hover:bg-sidebar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle';
+  const textClass =
+    'text-caption-medium text-text-secondary transition-colors hover:text-text-primary';
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-current={selected ? 'true' : undefined}
+    <article
       className={[
-        'flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors',
-        selected
-          ? 'border-brand bg-surface shadow-sm'
-          : 'border-border bg-surface hover:border-border-strong hover:bg-surface-hover',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle',
+        'flex h-full flex-col rounded-xl border bg-surface p-4 transition-all duration-200',
+        featured ? 'border-brand shadow-sm' : 'border-border hover:border-border-strong hover:shadow-sm',
       ].join(' ')}
     >
-      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-subtle text-icon [&>svg]:h-[18px] [&>svg]:w-[18px]">
-        {icon}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-body-sm-strong text-text-primary">{title}</span>
-        <span className="mt-0.5 block truncate text-caption text-text-secondary">{subtitle}</span>
-      </span>
-      {inUse && (
-        <span
-          className="mt-1 h-1.5 w-1.5 shrink-0 rounded-pill"
-          style={{ background: 'var(--ds-color-status-success-fg)' }}
-          aria-label="In use"
-          title="In use"
-        />
-      )}
-    </button>
+      <Avatar name={version.name} kind="entity" size="sm" />
+      <span className="mt-2 block truncate text-body-sm-strong text-text-primary">{version.name}</span>
+      <p className="mt-0.5 truncate text-caption text-text-secondary">
+        {version.subject || 'No subject'}
+      </p>
+
+      {/* Footer: a Global/Custom tag on the left (like the automation template cards), the
+          primary Use/Preview and the overflow grouped on the right. */}
+      <div className="mt-auto flex items-center justify-between gap-2 pt-4">
+        <span className="flex min-w-0 items-center gap-1 text-caption text-text-secondary">
+          {version.isDefault ? (
+            <PublicOutlined sx={{ fontSize: 16 }} className="shrink-0 text-icon-subtle" aria-hidden />
+          ) : (
+            <PersonOutlineOutlined sx={{ fontSize: 16 }} className="shrink-0 text-icon-subtle" aria-hidden />
+          )}
+          {version.isDefault ? 'Global' : 'Custom'}
+        </span>
+        <div className="flex shrink-0 items-center gap-3">
+          {!previewIsPrimary && (
+            <button type="button" onClick={onPreview} className={textClass}>
+              Preview
+            </button>
+          )}
+          {onUse ? (
+            <button type="button" onClick={onUse} className={primaryClass}>
+              {version.isDefault ? 'Use default' : 'Use this version'}
+            </button>
+          ) : (
+            <button type="button" onClick={onPreview} className={primaryClass}>
+              Preview
+            </button>
+          )}
+          {menuItems.length > 0 && <Menu items={menuItems} />}
+        </div>
+      </div>
+    </article>
   );
 }
 
 /**
- * One email, its versions on the left, the selected one previewed on the right.
+ * One email's versions, as cards — the one in use on top, the rest below.
  *
- * A master–detail rather than a flat list: the shipped **Default** and every version the
- * tenant has written stack in the rail, the one in use marked with a dot, and selecting any
- * of them renders it — the actual email, at the real width — beside the list. Choosing which
- * one sends, editing a custom, or writing another all happen from the preview's toolbar, so
- * the reader is always looking at what they are deciding about.
+ * The card grid answers "which wording is live, and what else could be" at a glance: the active
+ * version is featured at the top, every other version (the shipped Default plus any the tenant
+ * wrote) follows in the grid. Previewing opens over the grid; composing opens the full editor.
+ * The breadcrumb names the email, so the page needs no heading of its own.
  */
 export function EmailTypeVariantsPage({ id }: { id: string }) {
   const allowed = useAdminSettings();
@@ -102,19 +141,14 @@ export function EmailTypeVariantsPage({ id }: { id: string }) {
   const backHref = SECTION.href;
 
   const [variants, setVariants] = React.useState<EmailType[]>([]);
-  const [selectedId, setSelectedId] = React.useState<string>(DEFAULT_ID);
-  const [createOpen, setCreateOpen] = React.useState(false);
-  const [newName, setNewName] = React.useState('');
+  const [query, setQuery] = React.useState('');
   const [deleteTarget, setDeleteTarget] = React.useState<EmailType | null>(null);
+  const [previewId, setPreviewId] = React.useState<string | null>(null);
 
   const refresh = React.useCallback(() => setVariants(listVariants(id)), [id]);
-
-  // Read after mount (localStorage), and open on whichever version currently sends.
+  const editorHref = (variantId: string) => `/iga/configurations/email/${id}/${variantId}`;
   React.useEffect(() => {
-    const list = listVariants(id);
-    setVariants(list);
-    const inUse = list.find((v) => v.inUse);
-    setSelectedId(inUse ? inUse.id : DEFAULT_ID);
+    setVariants(listVariants(id));
   }, [id]);
 
   useSetBreadcrumbs([
@@ -143,180 +177,188 @@ export function EmailTypeVariantsPage({ id }: { id: string }) {
 
   const inUseCustom = variants.find((v) => v.inUse) ?? null;
   const defaultInUse = !inUseCustom;
-  const selected = selectedId === DEFAULT_ID ? null : variants.find((v) => v.id === selectedId) ?? null;
-  // A selection that pointed at a now-deleted version falls back to the default.
-  const showingDefault = selectedId === DEFAULT_ID || selected === null;
 
-  const useDefault = () => {
-    setInUseVariant(id, null);
-    refresh();
-    toast.success(`“${template.name}” now sends the default.`);
+  const defaultVersion: Version = {
+    id: DEFAULT_ID,
+    name: 'Default',
+    subject: template.subjectLine,
+    inUse: defaultInUse,
+    isDefault: true,
   };
-  const useVariant = (v: EmailType) => {
-    setInUseVariant(id, v.id);
+  const variantVersions: Version[] = variants.map((v) => ({
+    id: v.id,
+    name: v.name,
+    subject: v.subjectLine,
+    inUse: v.inUse,
+    isDefault: false,
+    variant: v,
+  }));
+  const allVersions = [defaultVersion, ...variantVersions];
+
+  const q = query.trim().toLowerCase();
+  const matches = (v: Version) => !q || v.name.toLowerCase().includes(q);
+  const active = allVersions.find((v) => v.inUse)!;
+  const others = allVersions.filter((v) => !v.inUse && matches(v));
+  const activeMatches = matches(active);
+  // When the empty state shows its own New version button, the toolbar one is redundant.
+  const emptyStateCreate = others.length === 0 && !q;
+
+  // ---- actions ---------------------------------------------------------
+  const useVersion = (v: Version) => {
+    setInUseVariant(id, v.isDefault ? null : v.id);
     refresh();
-    toast.success(`“${template.name}” now sends “${v.name}”.`);
+    toast.success(
+      v.isDefault
+        ? `“${template.name}” now sends the default.`
+        : `“${template.name}” now sends “${v.name}”.`,
+    );
   };
+
+  // Editing and creating open the full editor page — not a popup.
+  const openEdit = (row: EmailType) => router.push(editorHref(row.id));
   const create = () => {
-    const v = createVariant(id, newName);
-    setCreateOpen(false);
-    setNewName('');
-    router.push(`/iga/configurations/email/${id}/${v.id}`);
+    // A new version starts blank — a white canvas to write from scratch, not the Default's copy.
+    const v = createVariant(id, `Version ${variants.length + 1}`);
+    updateEmailType(v.id, { bodyHtml: '<p></p>' });
+    router.push(editorHref(v.id));
   };
+  // Editing the Default forks a new version seeded from its wording, so it can be tweaked.
+  const forkDefault = () => {
+    const v = createVariant(id, `Version ${variants.length + 1}`);
+    router.push(editorHref(v.id));
+  };
+
+  // The version being previewed, resolved from its id.
+  const previewVersion =
+    previewId === null ? null : allVersions.find((v) => v.id === previewId) ?? null;
+
+  const renderPreview = (v: Version) =>
+    v.isDefault || !v.variant ? (
+      <BaseEmailTemplatePreview content={template.content} />
+    ) : (
+      <BaseEmailTemplateShell
+        greetingName={BASE_CONTENT.greetingName}
+        greetingLine={BASE_CONTENT.greetingLine}
+        signOff={BASE_CONTENT.signOff}
+        teamName={BASE_CONTENT.teamName}
+        ariaLabel={`${v.name} preview`}
+      >
+        <BlockEditor value={v.variant.bodyHtml} onChange={() => {}} editable={false} ariaLabel={`Body of ${v.name}`} />
+      </BaseEmailTemplateShell>
+    );
 
   return (
-    <div className="-mx-8 -mt-6 -mb-6 flex h-[calc(100%+2*var(--ds-space-6))] min-h-0 flex-col">
-      {/* Identity + the one always-available action. */}
-      <header className="shrink-0 border-b border-border bg-canvas px-8 pt-3">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="truncate text-h4 text-text-primary">{template.name}</h1>
-              <StatusChip intent="neutral" label={EMAIL_TEMPLATE_CATEGORY_LABELS[template.category]} />
-            </div>
-            <p className="mt-px truncate text-body-sm text-text-secondary">{template.description}</p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Button variant="secondary" onClick={() => router.push(backHref)}>
-              Back
-            </Button>
-            <Button startIcon={<AddOutlined />} onClick={() => setCreateOpen(true)}>
-              Create new version
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="flex min-h-0 flex-1">
-        {/* Left rail — the versions, the one that sends marked with a dot. */}
-        <aside className="flex w-[300px] shrink-0 flex-col border-r border-border bg-surface" aria-label="Versions">
-          <div className="flex shrink-0 items-baseline justify-between border-b border-border px-4 py-3">
-            <span className="text-body-sm-strong text-text-primary">Versions</span>
-            <span className="tabular-nums text-caption text-text-tertiary">{variants.length + 1}</span>
-          </div>
-          <div className="ds-scroll min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
-            <RailRow
-              icon={<VerifiedOutlined />}
-              title="Default"
-              subtitle="Shipped wording"
-              inUse={defaultInUse}
-              selected={showingDefault}
-              onSelect={() => setSelectedId(DEFAULT_ID)}
-            />
-            {variants.map((v) => (
-              <RailRow
-                key={v.id}
-                icon={<DescriptionOutlined />}
-                title={v.name}
-                subtitle={`Edited ${formatDateTime(v.updatedAt)}`}
-                inUse={v.inUse}
-                selected={selected?.id === v.id}
-                onSelect={() => setSelectedId(v.id)}
-              />
-            ))}
-          </div>
-        </aside>
-
-        {/* Right pane — the selected version, previewed at the real width. */}
-        <div className="ds-scroll min-h-0 flex-1 overflow-y-auto bg-subtle">
-          <div className="mx-auto w-full max-w-2xl px-6 py-6">
-            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="truncate text-h5 text-text-primary">
-                    {showingDefault ? 'Default' : selected!.name}
-                  </h2>
-                  {(showingDefault ? defaultInUse : selected!.inUse) && (
-                    <StatusChip intent="success" label="In use" />
-                  )}
-                </div>
-                <p className="mt-0.5 text-caption text-text-secondary">
-                  {showingDefault
-                    ? 'Provided by miniOrange — the shipped wording'
-                    : `Edited ${formatDateTime(selected!.updatedAt)}`}
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                {showingDefault ? (
-                  !defaultInUse && (
-                    <Button size="sm" variant="secondary" onClick={useDefault}>
-                      Use default
-                    </Button>
-                  )
-                ) : (
-                  <>
-                    {!selected!.inUse && (
-                      <Button size="sm" variant="secondary" onClick={() => useVariant(selected!)}>
-                        Use this version
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      onClick={() => router.push(`/iga/configurations/email/${id}/${selected!.id}`)}
-                    >
-                      Edit
-                    </Button>
-                    <Menu
-                      items={[
-                        { label: 'Delete', danger: true, onClick: () => setDeleteTarget(selected!) },
-                      ]}
-                    />
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <p className="text-caption-strong uppercase tracking-wide text-text-tertiary">Subject</p>
-              <p className="mt-1 text-body-sm text-text-primary">
-                {showingDefault ? template.subjectLine : selected!.subjectLine || '—'}
-              </p>
-            </div>
-
-            <div className="overflow-hidden rounded-xl border border-border">
-              {showingDefault ? (
-                <BaseEmailTemplatePreview content={template.content} />
-              ) : (
-                <BaseEmailTemplateShell
-                  greetingName={BASE_CONTENT.greetingName}
-                  greetingLine={BASE_CONTENT.greetingLine}
-                  signOff={BASE_CONTENT.signOff}
-                  teamName={BASE_CONTENT.teamName}
-                  ariaLabel={`${selected!.name} preview`}
-                >
-                  <BlockEditor
-                    value={selected!.bodyHtml}
-                    onChange={() => {}}
-                    editable={false}
-                    ariaLabel={`Body of ${selected!.name}`}
-                  />
-                </BaseEmailTemplateShell>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <Dialog
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        title="New version"
-        confirmLabel="Create & edit"
-        onConfirm={create}
-      >
-        <div className="flex flex-col gap-3">
-          <p className="text-body-sm text-text-secondary">
-            Name this version so you can tell it apart from the others. It starts from the default wording.
-          </p>
+    <div className="flex h-full flex-col">
+      {/* Search + create. */}
+      <div className="mb-5 flex shrink-0 flex-wrap items-center gap-3">
+        <div className="w-full max-w-sm">
           <Input
-            label="Version name"
-            placeholder="e.g. Concise, Formal, Post-merger"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
+            size="sm"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search versions"
+            aria-label="Search versions"
+            startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
           />
         </div>
-      </Dialog>
+        {!emptyStateCreate && (
+          <Button variant="primary" size="sm" startIcon={<AddOutlined />} onClick={create} className="ml-auto">
+            New version
+          </Button>
+        )}
+      </div>
+
+      <div className="ds-scroll min-h-0 flex-1 overflow-y-auto pr-0.5">
+        {/* Active version, featured on top. */}
+        {activeMatches && (
+          <section aria-label="Active version">
+            <h2 className="mb-2 text-overline uppercase text-text-tertiary">Active version</h2>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <VersionCard
+                version={active}
+                featured
+                onPreview={() => setPreviewId(active.id)}
+                onEdit={active.variant ? () => openEdit(active.variant!) : () => forkDefault()}
+                onDelete={active.variant ? () => setDeleteTarget(active.variant!) : undefined}
+              />
+            </div>
+          </section>
+        )}
+
+        {/* Every other version. */}
+        <section aria-label="Other versions" className="mt-6">
+          <h2 className="mb-2 text-overline uppercase text-text-tertiary">Other versions</h2>
+          {others.length === 0 ? (
+            q ? (
+              <p className="rounded-xl border border-dashed border-border py-8 text-center text-body-sm text-text-secondary">
+                No other versions match “{query.trim()}”.
+              </p>
+            ) : (
+              <div className="flex flex-col items-center rounded-xl border border-dashed border-border px-6 py-10 text-center">
+                <span className="grid h-11 w-11 place-items-center rounded-full bg-subtle text-icon">
+                  <DescriptionOutlined sx={{ fontSize: 22 }} />
+                </span>
+                <p className="mt-3 text-body-sm-strong text-text-primary">No other versions yet</p>
+                <p className="mt-1 max-w-sm text-body-sm text-text-secondary">
+                  Create a version to offer alternative wording. The Default keeps sending until you
+                  switch to it.
+                </p>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  startIcon={<AddOutlined />}
+                  onClick={create}
+                  className="mt-4"
+                >
+                  New version
+                </Button>
+              </div>
+            )
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {others.map((v) => (
+                <VersionCard
+                  key={v.id}
+                  version={v}
+                  onUse={() => useVersion(v)}
+                  onPreview={() => setPreviewId(v.id)}
+                  onEdit={v.variant ? () => openEdit(v.variant!) : () => forkDefault()}
+                  onDelete={v.variant ? () => setDeleteTarget(v.variant!) : undefined}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+
+      {/* Preview — the version rendered at the real width. */}
+      <Modal
+        open={previewVersion !== null}
+        onClose={() => setPreviewId(null)}
+        title={previewVersion?.name ?? 'Preview'}
+        subtitle={
+          previewVersion ? (previewVersion.inUse ? 'In use — this is what sends' : 'Preview') : undefined
+        }
+        width={640}
+        footer={
+          previewVersion &&
+          !previewVersion.inUse && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                useVersion(previewVersion);
+                setPreviewId(null);
+              }}
+            >
+              {previewVersion.isDefault ? 'Use default' : 'Use this version'}
+            </Button>
+          )
+        }
+      >
+        {previewVersion && (
+          <div className="overflow-hidden rounded-xl border border-border">{renderPreview(previewVersion)}</div>
+        )}
+      </Modal>
 
       <Dialog
         open={deleteTarget !== null}
@@ -330,7 +372,6 @@ export function EmailTypeVariantsPage({ id }: { id: string }) {
           const wasInUse = deleteTarget.inUse;
           deleteEmailType(deleteTarget.id);
           setDeleteTarget(null);
-          setSelectedId(DEFAULT_ID);
           refresh();
           toast.success(
             wasInUse ? `“${name}” deleted — this email is back to the default.` : `“${name}” deleted.`,

@@ -12,7 +12,7 @@ import {
   Select,
   SettingsRow,
   SettingsStack,
-  StatusChip,
+  Tooltip,
   useToast,
 } from '@ds/components';
 import {
@@ -75,6 +75,12 @@ export function IdentityClassificationCardV2({
     rulesStarted.some((r) => r.value.trim() === '' || r.identityType === '');
   const typeMissing = touched && draft.defaultIdentityType === '';
 
+  // The additional types the rules resolve to, deduped — shown as chips beside the pencil.
+  const typeLabel = (v: string) => IDENTITY_TYPES.find((t) => t.value === v)?.label ?? v;
+  const typeChips = Array.from(
+    new Set(rulesStarted.map((r) => r.identityType).filter((v) => v !== '')),
+  ).map((v) => ({ id: v, name: typeLabel(v) }));
+
   const rulesHint =
     sourceField === ''
       ? 'Checked top to bottom — the first match decides the type.'
@@ -104,6 +110,13 @@ export function IdentityClassificationCardV2({
 
   const saveRules = () => {
     setRulesTouched(true);
+    // No rows left — clearing the additional types is a valid outcome.
+    if (draft.rules.length === 0) {
+      patch({ classifyBasedOn: '', rules: [] });
+      setRulesOpen(false);
+      toast.success('Rules cleared.');
+      return;
+    }
     if (rulesIncomplete) return;
     // Stage into the draft; the card's Save classification is what persists.
     patch({ classifyBasedOn: sourceField, rules: rulesStarted });
@@ -151,35 +164,43 @@ export function IdentityClassificationCardV2({
           title="Additional identity types"
           description="Classify some identities differently based on an application field."
         >
-          {/* Live status sits with the control, not in the fixed description. */}
-          {rulesStarted.length > 0 && (
-            <StatusChip
-              intent="success"
-              label={`${rulesStarted.length} ${rulesStarted.length === 1 ? 'rule' : 'rules'}`}
-            />
-          )}
+          {/* Once rules exist, the resolved types and the edit affordance read as one
+              control: a clickable capsule — Contractor (External) +n ✎ — that opens the
+              rules drawer, like the applications slot in access certification. */}
           {rulesStarted.length > 0 ? (
-            <Button
-              variant="secondary"
-              size="xs"
-              aria-label="Edit rules"
-              className="w-48"
-              sx={{ justifyContent: 'flex-start' }}
-              startIcon={<EditOutlined />}
-              onClick={openRules}
-            >
-              Edit rules
-            </Button>
+            <Tooltip title="Edit type rules">
+              <button
+                type="button"
+                onClick={openRules}
+                aria-label={`Additional types: ${typeChips.map((c) => c.name).join(', ')}. Edit rules.`}
+                className="group flex h-9 w-48 items-center justify-between gap-1.5 rounded-md border-[0.8px] border-border bg-surface pl-1.5 pr-2 text-left transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
+              >
+                <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                  <span className="inline-flex min-w-0 items-center rounded-sm bg-subtle px-2 py-1 text-caption-medium text-text-primary">
+                    <span className="truncate">{typeChips[0]?.name}</span>
+                  </span>
+                  {typeChips.length > 1 && (
+                    <span className="shrink-0 whitespace-nowrap text-caption-medium text-text-secondary">
+                      +{typeChips.length - 1}
+                    </span>
+                  )}
+                </span>
+                <EditOutlined
+                  className="shrink-0 text-icon transition-colors group-hover:text-text-primary"
+                  sx={{ fontSize: 15 }}
+                />
+              </button>
+            </Tooltip>
           ) : (
             <Button
               variant="secondary"
-              size="xs"
+              size="sm"
               className="w-48"
               sx={{ justifyContent: 'flex-start' }}
               startIcon={<AddOutlined />}
               onClick={openRules}
             >
-              Add type rule
+              Add Types
             </Button>
           )}
         </SettingsRow>
@@ -253,8 +274,7 @@ export function IdentityClassificationCardV2({
                     type="button"
                     onClick={() => removeRule(rule.id)}
                     aria-label={`Remove rule ${index + 1}`}
-                    disabled={draft.rules.length === 1}
-                    className="mt-1 shrink-0 rounded-md p-1.5 text-icon hover:bg-surface-hover hover:text-danger disabled:opacity-40"
+                    className="mt-1 shrink-0 rounded-md p-1.5 text-icon hover:bg-surface-hover hover:text-danger"
                   >
                     <DeleteOutline sx={{ fontSize: 18 }} />
                   </button>
