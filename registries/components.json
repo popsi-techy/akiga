@@ -982,7 +982,7 @@
         "next-prompt"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/setup-checklist-dock/page.tsx",
-      "notes": "Right-hand remaining-work column on a draft. Not a navigator — the tabs still are. Next appears only after someone finishes a step; seedDone (object exists) and passiveDone (factory defaults) do not count. A doneLabel of Modified is a decision and does. gateVerb is activate or connect. Promoted from Emergency Access; Applications onboarding consumes it. See object-detail-setup and ADR-0015."
+      "notes": "Right-hand remaining-work column on a draft. Not a navigator — the tabs still are. Next appears only after someone finishes a step; seedDone (object exists) and passiveDone (factory defaults) do not count. A doneLabel of Modified is a decision and does. Optional substeps are their own rows under a parent group label with no check (Configure’s rail), joined by a curved hairline; onGoTo(step, substep) opens that job. gateVerb is activate or connect. Promoted from Emergency Access; Applications onboarding consumes it. See object-detail-setup and ADR-0015."
     },
     {
       "name": "SetupProgress",

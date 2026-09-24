@@ -22,7 +22,7 @@ export { DetailShell, DetailNotFound, InfoRow, InfoRowGroup, RelationTable } fro
 export { infoIcon, type InfoIconName } from './infoIcons';
 export { entitlementColumns, applicationColumns, accountColumns, peopleColumns, roleColumns } from './relationColumns';
 export { AuthorizationDrawer } from './AuthorizationDrawer';
-export { ProvisioningSetupTab } from './ProvisioningSetupTab';
+export { ProvisioningSetupTab, type ProvisioningSection } from './ProvisioningSetupTab';
 export { AdvancedAttributeMappingPanel } from './AdvancedAttributeMappingPanel';
 export { IdentityClassificationCard } from './IdentityClassificationCard';
 export { ScimInboundPanel } from './ScimInboundPanel';

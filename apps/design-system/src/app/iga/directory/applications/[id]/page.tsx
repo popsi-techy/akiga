@@ -7,6 +7,7 @@ import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import SettingsOutlined from '@mui/icons-material/SettingsOutlined';
 import { Button, Dialog, Drawer, Menu, SetupChecklistDock, StatusChip, type TabItem, useToast } from '@ds/components';
 import {
+  applicationForBasics,
   applicationIsAuthorized,
   deleteApplication,
   getApplicationDetail,
@@ -32,6 +33,7 @@ import {
   EntityOwnersTab,
   ReconciliationTab,
   ProvisioningSetupTab,
+  type ProvisioningSection,
   BaselineAccessTab,
   ApplicationAccountsTab,
   ApplicationEntitlementsTab,
@@ -40,6 +42,17 @@ import { ApplicationApprovalPolicyTab } from '@/components/product/directory/App
 import { EmergencyAccessGuideButton } from '@/components/product/emergency/EmergencyAccessGuideModal';
 
 const LIST_HREF = '/iga/directory/applications';
+
+const PROVISIONING_SECTIONS: ProvisioningSection[] = [
+  'authorization',
+  'connection',
+  'manage',
+  'advanced',
+];
+
+function isProvisioningSection(id: string): id is ProvisioningSection {
+  return (PROVISIONING_SECTIONS as string[]).includes(id);
+}
 
 /**
  * The strip is the parts of an application you set up.
@@ -139,6 +152,7 @@ export default function ApplicationDetailPage() {
   const [tab, setTab] = React.useState('overview');
   const [basicsOpen, setBasicsOpen] = React.useState(false);
   const [checklistOpen, setChecklistOpen] = React.useState(false);
+  const [configureSection, setConfigureSection] = React.useState<ProvisioningSection>('authorization');
   const [inventory, setInventory] = React.useState<InventoryView | null>(null);
   const [pendingDelete, setPendingDelete] = React.useState(false);
   const [, bump] = React.useReducer((n: number) => n + 1, 0);
@@ -190,6 +204,7 @@ export default function ApplicationDetailPage() {
   }
 
   const { app, accounts, entitlements } = detail;
+  const basicsApp = applicationForBasics(app.id);
 
   // Catalogued apps use the seed profile; onboarded apps use the toggle the
   // admin set in the drawer. Off means IGA will not push access to the system.
@@ -285,7 +300,7 @@ export default function ApplicationDetailPage() {
             <Button
               variant="secondary"
               startIcon={<EditOutlined />}
-              onClick={() => (onboarded ? setBasicsOpen(true) : toast.info('Edit basic details'))}
+              onClick={() => setBasicsOpen(true)}
             >
               Basic Details
             </Button>
@@ -324,10 +339,17 @@ export default function ApplicationDetailPage() {
           checklistOpen ? (
             <SetupChecklistDock
               steps={steps}
-              currentTab={shownTab}
+              currentTab={shownTab === 'provisioning' ? configureSection : shownTab}
               gateVerb="setup"
               onClose={() => setChecklistOpen(false)}
-              onGoTo={(step) => setTab(step.tab)}
+              onGoTo={(step, sub) => {
+                setTab(step.tab);
+                if (step.tab === 'provisioning') {
+                  setConfigureSection(
+                    sub && isProvisioningSection(sub.id) ? sub.id : 'authorization',
+                  );
+                }
+              }}
             />
           ) : undefined
         }
@@ -350,7 +372,13 @@ export default function ApplicationDetailPage() {
             />
           )}
           {shownTab === 'provisioning' && (
-            <ProvisioningSetupTab applicationId={app.id} applicationName={app.name} onChanged={bump} />
+            <ProvisioningSetupTab
+              applicationId={app.id}
+              applicationName={app.name}
+              onChanged={bump}
+              section={configureSection}
+              onSection={setConfigureSection}
+            />
           )}
           {shownTab === 'baseline' && <BaselineAccessTab applicationId={app.id} entitlements={entitlements} />}
           {shownTab === 'approval' && <ApplicationApprovalPolicyTab applicationId={app.id} />}
@@ -406,10 +434,10 @@ export default function ApplicationDetailPage() {
         )}
       </Drawer>
 
-      {onboarded ? (
+      {basicsApp ? (
         <ApplicationBasicDetailsDrawer
           open={basicsOpen}
-          app={onboarded}
+          app={basicsApp}
           onClose={() => setBasicsOpen(false)}
           onSaved={() => {
             bump();

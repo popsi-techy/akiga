@@ -23,6 +23,11 @@ const INITIAL: SetupChecklistStep[] = [
     tab: 'assignments',
     required: true,
     done: false,
+    substeps: [
+      { id: 'apps', label: 'Applications', done: true },
+      { id: 'roles', label: 'Roles', done: false },
+      { id: 'entitlements', label: 'Entitlements', done: false },
+    ],
   },
   {
     id: 'eligibility',
@@ -110,7 +115,7 @@ export default function SetupChecklistDockDocs() {
               steps={steps}
               currentTab={tab}
               onClose={() => setOpen(false)}
-              onGoTo={(step) => setTab(step.tab)}
+              onGoTo={(step, sub) => setTab(sub?.id ?? step.tab)}
             />
           </div>
         </Example>
@@ -137,10 +142,10 @@ export default function SetupChecklistDockDocs() {
       <Section title="Props">
         <PropsTable
           rows={[
-            { name: 'steps', type: 'SetupChecklistStep[]', description: '{ id, label, hint, cta, tab, required, done, doneLabel?, doneLabelIntent?, passiveDone?, seedDone? }.' },
-            { name: 'currentTab', type: 'string', description: 'The open section. The matching row is current; it does not get a Next CTA.' },
+            { name: 'steps', type: 'SetupChecklistStep[]', description: '{ id, label, hint, cta, tab, required, done, doneLabel?, doneLabelIntent?, passiveDone?, seedDone?, substeps?: { id, label, done }[] }.' },
+            { name: 'currentTab', type: 'string', description: 'The open section. Matches a step.tab or a substep.id. That row is current and does not get a Next CTA.' },
             { name: 'onClose', type: '() => void', description: 'Hides the dock.' },
-            { name: 'onGoTo', type: '(step) => void', description: 'Opens the step’s tab or drawer.' },
+            { name: 'onGoTo', type: '(step, substep?) => void', description: 'Opens the step’s tab or drawer. A substep click passes that job as the second argument.' },
             { name: 'gateVerb', type: "'activate' | 'connect' | 'setup'", default: "'activate'", description: 'Copy for the header and group headings.' },
           ]}
         />

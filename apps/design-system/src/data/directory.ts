@@ -29,6 +29,7 @@ import {
 import {
   listOnboardedApplications,
   getOnboardedApplication,
+  getCatalogBasics,
   deleteOnboardedApplication,
   hideCatalogApplication,
   isCatalogHidden,
@@ -40,6 +41,7 @@ import {
   type ApplicationLifecycle,
   type OnboardedApplication,
 } from './applications-store';
+import { appTypes } from './app-types';
 import { DIRECTORY_LIST_ID_SET } from './application-directory-list';
 import { getOwners, type OwnedEntityType } from './entity-owners';
 import { getTeamCharter, setTeamCharter, type TeamCharterField } from './team-charter';
@@ -96,7 +98,11 @@ const flatEntitlements: FlatEntitlement[] = catalogApps.flatMap((app) =>
 );
 
 export function applicationNameFor(id: string): string {
-  return appById.get(id)?.name ?? getOnboardedApplication(id)?.name ?? id;
+  const onboarded = getOnboardedApplication(id);
+  if (onboarded) return onboarded.name;
+  const overlay = getCatalogBasics(id);
+  if (overlay?.name) return overlay.name;
+  return appById.get(id)?.name ?? id;
 }
 
 function allFlatEntitlements(): FlatEntitlement[] {
@@ -580,11 +586,22 @@ const onboardedRow = (a: OnboardedApplication): ApplicationRow => ({
  * merge the localStorage-backed half after mount, instead of rendering an empty
  * table (and its "no applications" message) for one frame.
  */
-function toCatalogRow(app: CatalogApp): ApplicationRow {
+function withCatalogBasics(app: CatalogApp): CatalogApp {
+  const overlay = getCatalogBasics(app.id);
+  if (!overlay) return app;
   return {
-    id: app.id,
-    name: app.name,
-    description: app.description,
+    ...app,
+    name: overlay.name || app.name,
+    description: overlay.description,
+  };
+}
+
+function toCatalogRow(app: CatalogApp): ApplicationRow {
+  const shown = withCatalogBasics(app);
+  return {
+    id: shown.id,
+    name: shown.name,
+    description: shown.description,
     ownerCount: app.ownerIds.length,
     accountCount: accountsForApplication(app.id).length,
     entitlementCount: entitlementsForApplication(app.id).length,
@@ -704,9 +721,46 @@ export function getApplicationDetail(id: string) {
   const app = appById.get(id);
   if (!app) return null;
   return {
-    app,
+    app: withCatalogBasics(app),
     accounts: accountsForApplication(id),
     entitlements: entitlementsForApplication(id),
+  };
+}
+
+/**
+ * The record the Basic Details drawer edits — onboarded apps as stored,
+ * catalog apps as a view of the seed plus any overlay.
+ *
+ * Catalog applications are not copied into the onboarded store: that would
+ * empty their inventory and treat them as drafts. The drawer still needs the
+ * same shape, so this builds it without moving the application.
+ */
+export function applicationForBasics(id: string): OnboardedApplication | null {
+  const onboarded = getOnboardedApplication(id);
+  if (onboarded) return onboarded;
+  if (isCatalogHidden(id)) return null;
+  const app = appById.get(id);
+  if (!app) return null;
+  const shown = withCatalogBasics(app);
+  const profile = appProfileFor(id);
+  const overlay = getCatalogBasics(id);
+  const type = appTypes.find((t) => t.name === profile.appType);
+  const lifecycle = applicationLifecycle(id);
+  return {
+    id: shown.id,
+    name: shown.name,
+    description: shown.description,
+    accessUrl: overlay?.accessUrl ?? '',
+    enableProvisioning: profile.externalProvisioning === 'enabled',
+    identitySource: overlay?.identitySource ?? false,
+    requestable: overlay?.requestable ?? false,
+    allEntitlementsRequestable: overlay?.allEntitlementsRequestable ?? false,
+    appTypeId: type?.id ?? '',
+    appType: profile.appType,
+    appTypeCategory: type?.category ?? 'application',
+    status: lifecycle === 'inactive' ? 'inactive' : 'active',
+    createdAt: '',
+    updatedAt: '',
   };
 }
 

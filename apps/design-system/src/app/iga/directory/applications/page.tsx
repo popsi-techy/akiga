@@ -9,13 +9,14 @@ import ScheduleOutlined from '@mui/icons-material/ScheduleOutlined';
 import { Avatar, Button, DirectoryListPage, Menu, OverflowChips, StatusChip, type Column, type FilterGroup, useToast } from '@ds/components';
 import {
   applicationAccountable,
+  applicationForBasics,
   listDirectoryCatalogApplications,
   listOnboardedApplicationRows,
   listVisibleDirectoryApplications,
   type AccountableParty,
   type ApplicationRow,
 } from '@/data/directory';
-import { getOnboardedApplication, type OnboardedApplication } from '@/data/applications-store';
+import { type OnboardedApplication } from '@/data/applications-store';
 import { ApplicationBasicDetailsDrawer, EntityAvatar } from '@/components/product/directory';
 import { lastSyncAt } from '@/data/reconciliation';
 import { formatDateTime } from '@/components/product/sod/labels';
@@ -234,12 +235,8 @@ export default function ApplicationsListPage() {
               label: 'Edit Basic Details',
               icon: <EditOutlined sx={{ fontSize: 18 }} />,
               onClick: () => {
-                const app = getOnboardedApplication(r.id);
-                if (app) {
-                  setEditing(app);
-                  return;
-                }
-                toast.info('Edit basic details');
+                const app = applicationForBasics(r.id);
+                if (app) setEditing(app);
               },
             },
           ]}

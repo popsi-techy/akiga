@@ -46,10 +46,29 @@ interface Store {
   hiddenCatalogIds: string[];
   /** Lifecycle overlay for seeded catalog apps (default active). */
   catalogLifecycle: Record<string, 'active' | 'inactive'>;
+  /**
+   * Basic-details overlay for seeded catalog apps. The seed is immutable;
+   * edits land here and merge at read time, the same way lifecycle does.
+   */
+  catalogBasics: Record<string, CatalogBasics>;
+}
+
+export interface CatalogBasics {
+  name: string;
+  description: string;
+  accessUrl: string;
+  identitySource: boolean;
+  requestable: boolean;
+  allEntitlementsRequestable: boolean;
 }
 
 const hasWindow = () => typeof window !== 'undefined';
-const emptyStore = (): Store => ({ applications: {}, hiddenCatalogIds: [], catalogLifecycle: {} });
+const emptyStore = (): Store => ({
+  applications: {},
+  hiddenCatalogIds: [],
+  catalogLifecycle: {},
+  catalogBasics: {},
+});
 
 function readStore(): Store {
   if (!hasWindow()) return emptyStore(); // SSR: nothing onboarded yet
@@ -65,6 +84,8 @@ function readStore(): Store {
         parsed.catalogLifecycle && typeof parsed.catalogLifecycle === 'object'
           ? parsed.catalogLifecycle
           : {},
+      catalogBasics:
+        parsed.catalogBasics && typeof parsed.catalogBasics === 'object' ? parsed.catalogBasics : {},
     };
   } catch {
     return emptyStore();
@@ -159,6 +180,10 @@ export function hideCatalogApplication(id: string): void {
   writeStore(store);
 }
 
+export function getCatalogBasics(id: string): CatalogBasics | null {
+  return readStore().catalogBasics[id] ?? null;
+}
+
 export function updateApplicationBasics(
   id: string,
   basics: {
@@ -172,21 +197,29 @@ export function updateApplicationBasics(
 ): OnboardedApplication | null {
   const store = readStore();
   const app = store.applications[id];
-  if (!app) return null;
-  const now = new Date().toISOString();
-  const next = normalizeOnboarded({
-    ...app,
-    name: basics.name.trim() || app.name,
+  const nextBasics = {
+    name: basics.name.trim(),
     description: basics.description.trim(),
     accessUrl: basics.accessUrl.trim(),
     identitySource: basics.identitySource,
     requestable: basics.requestable,
     allEntitlementsRequestable: basics.requestable && basics.allEntitlementsRequestable,
-    updatedAt: now,
-  });
-  store.applications[id] = next;
+  };
+  if (app) {
+    const now = new Date().toISOString();
+    const next = normalizeOnboarded({
+      ...app,
+      ...nextBasics,
+      name: nextBasics.name || app.name,
+      updatedAt: now,
+    });
+    store.applications[id] = next;
+    writeStore(store);
+    return next;
+  }
+  store.catalogBasics = { ...store.catalogBasics, [id]: { ...nextBasics, name: nextBasics.name } };
   writeStore(store);
-  return next;
+  return null;
 }
 
 export function connectApplication(id: string): OnboardedApplication | null {

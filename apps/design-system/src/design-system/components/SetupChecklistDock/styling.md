@@ -40,8 +40,10 @@ column starts under the app top bar and runs to the bottom of the viewport.
 
 Status copy:
 
-- All required steps done → `Required steps are complete.`
-- Otherwise → `Finish the required steps, then {activate\|connect}.`
+- Required still open → `Finish the required steps, then {activate|connect}.` (`Finish the required steps.` when `gateVerb` is `setup`)
+- Required done, activate/connect → `Required steps are complete.`
+- Required done, setup, additional still open → no subtitle (celebrating required work while the list continues reads as finished)
+- Required done, setup, everything done → `Setup is complete.`
 
 ### Close control
 
@@ -130,6 +132,23 @@ keeps `bg-surface`.
 | Idle / done | `text-body-sm text-text-primary` | **13px / 18px**, weight **400**, `#172B4D` |
 | Current or next-prompt | `text-body-sm-medium text-text-primary` | same size, weight **500** |
 | Overflow | `truncate` | single line, ellipsis |
+
+### Sub-steps
+
+Optional. A step that contains jobs (Configure’s own rail) passes `substeps`.
+Each job is its own button under the parent, indented, joined by a
+`border-border` hairline that turns through `rounded-bl-md`. The parent is a
+group label — no check. `onGoTo(step, substep)` opens that job. `currentTab`
+matching a `substep.id` selects only that row.
+
+| Property | Class / token | Resolved |
+| --- | --- | --- |
+| Stack | `mt-0.5` under the parent label | **2px** |
+| Row | `flex items-center gap-2 py-1 pl-7` | **8px / 4px**, **28px** inset |
+| Spine | `left-[15px] w-px bg-border` | under the parent label; omitted on the last job |
+| Elbow | `h-2.5 w-2.5 rounded-bl-md border-b border-l border-border` | **10×10px**, **6px** curve; last job is one L from the row top |
+| Child check | MUI `CheckCircle` **14px** | green / `#C4C9D2` as the parent |
+| Child label | `text-caption` | **12px / 16px**; primary when done, secondary when open |
 
 ---
 

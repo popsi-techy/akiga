@@ -1,9 +1,11 @@
 import {
   APP_SETUP_STEPS,
+  configureSubsteps,
   isAppSetupStepDone,
   isRequiredAppSetupStep,
   type AppSetupStepId,
   type AppSetupSubject,
+  type ConfigureSubstep,
 } from '@/data/application-setup';
 
 export interface ApplicationSetupStep {
@@ -14,6 +16,7 @@ export interface ApplicationSetupStep {
   tab: string;
   required: boolean;
   done: boolean;
+  substeps?: ConfigureSubstep[];
 }
 
 const COPY: Record<AppSetupStepId, { hint: string; cta: string; tab: string }> = {
@@ -61,6 +64,7 @@ export function applicationSetupSteps(app: AppSetupSubject): ApplicationSetupSte
         label: step.label,
         required: isRequiredAppSetupStep(step.id, app),
         done: isAppSetupStepDone(step.id, app),
+        substeps: step.id === 'provisioning' ? configureSubsteps(app) : undefined,
         ...copy,
       };
     },

@@ -39,7 +39,8 @@ import {
 import { EVENT_KINDS, SCIM_EVENT_KINDS, listConnectionEvents } from '@/data/connection-events';
 import { applicationHasScimInbound, applicationIsScimProvisioned } from '@/data/scim-inbound';
 
-type Section = 'authorization' | 'connection' | 'manage' | 'advanced';
+export type ProvisioningSection = 'authorization' | 'connection' | 'manage' | 'advanced';
+type Section = ProvisioningSection;
 
 /**
  * Provisioning — everything the connector needs before it can act on this
@@ -55,13 +56,22 @@ export function ProvisioningSetupTab({
   applicationId,
   applicationName,
   onChanged,
+  section: sectionProp,
+  onSection,
 }: {
   applicationId: string;
   applicationName: string;
   onChanged?: () => void;
+  section?: Section;
+  onSection?: (section: Section) => void;
 }) {
   const toast = useToast();
-  const [section, setSection] = React.useState<Section>('authorization');
+  const [uncontrolled, setUncontrolled] = React.useState<Section>('authorization');
+  const section = sectionProp ?? uncontrolled;
+  const setSection = (next: Section) => {
+    onSection?.(next);
+    if (sectionProp === undefined) setUncontrolled(next);
+  };
   const [rows, setRows] = React.useState<AppAuthorization[]>([]);
   const [search, setSearch] = React.useState('');
   const [editing, setEditing] = React.useState<AppAuthorization | null>(null);

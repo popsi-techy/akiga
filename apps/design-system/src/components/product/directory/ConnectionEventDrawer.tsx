@@ -7,7 +7,7 @@ import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import ContentCopyOutlined from '@mui/icons-material/ContentCopyOutlined';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
-import { Button, Dialog, Drawer, Input, Menu, NavList, Select, StatusChip, Switch, Tabs, Tooltip, useToast } from '@ds/components';
+import { Button, Card, Dialog, Drawer, InfoRow, InfoRowGroup, Input, Menu, NavList, Select, StatusChip, Switch, Tabs, Tooltip, useToast } from '@ds/components';
 import {
   BODY_TYPES,
   HTTP_METHODS,
@@ -826,7 +826,8 @@ function ResponsePreview({
   testing: boolean;
 }) {
   const payload = previewPayload(draft, test);
-  const records = getAtPath(payload, recordsKeyOf(draft));
+  const failed = test?.ok === false;
+  const records = failed ? undefined : getAtPath(payload, recordsKeyOf(draft));
   const recordCount = Array.isArray(records) ? records.length : 0;
   const firstId =
     Array.isArray(records) && records[0] && typeof records[0] === 'object'
@@ -834,16 +835,9 @@ function ResponsePreview({
       : '—';
   const message = getAtPath(payload, draft.successMessageKey.trim());
   const error = getAtPath(payload, draft.errorMessageKey.trim() || 'error.message');
-  const status = test?.ok === false ? '401' : draft.successStatusCode.trim() || '200';
+  const status = failed ? '401' : draft.successStatusCode.trim() || '200';
 
   const title = test ? 'Simulated reply' : 'Sample response';
-  const lead = testing
-    ? 'Trying the call as configured. Nothing is sent.'
-    : test?.ok
-      ? 'Nothing was sent. This is what IGA would read using the keys on the left.'
-      : test
-        ? 'Nothing was sent. IGA would quote the error from the key you named.'
-        : 'A typical payload. The keys on the left tell IGA where to look — change Records key and this sample follows.';
 
   return (
     <aside
@@ -851,61 +845,45 @@ function ResponsePreview({
       aria-live="polite"
       className="flex h-full w-[360px] shrink-0 flex-col border-l border-border bg-subtle"
     >
-      <header className="shrink-0 px-5 pt-5 pb-3">
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="text-body-sm-strong text-text-primary">{title}</h3>
-          {testing ? (
-            <StatusChip intent="neutral" label="Testing" />
-          ) : test?.ok ? (
-            <StatusChip intent="success" label={status} />
-          ) : test ? (
-            <StatusChip intent="danger" label={status} />
-          ) : (
-            <StatusChip intent="info" label="Sample" />
-          )}
-        </div>
-        <p className="mt-1.5 text-caption text-text-secondary">{lead}</p>
+      <header className="flex shrink-0 items-center justify-between gap-3 px-5 pt-5">
+        <h3 className="text-body-sm-strong text-text-primary">{title}</h3>
+        {testing ? (
+          <StatusChip intent="neutral" label="Testing" />
+        ) : test?.ok ? (
+          <StatusChip intent="success" label={status} />
+        ) : test ? (
+          <StatusChip intent="danger" label={status} />
+        ) : null}
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col px-5 pb-5">
-        {test && !testing && (
-          <dl className="mb-4 shrink-0 space-y-2">
-            <p className="text-caption-strong text-text-tertiary">What IGA would read</p>
-            <Readout label="Status" value={status} />
-            {test.ok ? (
+      <div className="flex min-h-0 flex-1 flex-col gap-3 px-5 pt-3 pb-5">
+        <Card padding="none">
+          <InfoRowGroup>
+            {failed ? (
+              <InfoRow label="Error" value={String(error ?? '—')} valueWrap />
+            ) : (
               <>
                 {draft.successMessageKey.trim() ? (
-                  <Readout label={draft.successMessageKey.trim()} value={String(message ?? '—')} />
+                  <InfoRow label="Message" value={String(message ?? '—')} />
                 ) : null}
-                <Readout
-                  label={recordsKeyOf(draft)}
-                  value={`${recordCount} record${recordCount === 1 ? '' : 's'}`}
+                <InfoRow
+                  label="Records"
+                  value={`${recordCount} ${recordCount === 1 ? 'record' : 'records'}`}
                 />
-                <Readout label={idKeyOf(draft)} value={firstId} />
+                <InfoRow label="Identifier" value={firstId} />
               </>
-            ) : (
-              <Readout
-                label={draft.errorMessageKey.trim() || 'error.message'}
-                value={String(error ?? '—')}
-              />
             )}
-          </dl>
-        )}
+          </InfoRowGroup>
+        </Card>
 
-        <pre className="ds-scroll min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-surface p-4 font-mono text-caption leading-6 text-text-primary">
-          {JSON.stringify(payload, null, 2)}
-        </pre>
+        <div className="flex min-h-0 flex-1 flex-col gap-1.5">
+          <p className="text-overline uppercase text-text-tertiary">Payload</p>
+          <pre className="ds-scroll min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-surface p-4 font-mono text-caption leading-6 text-text-primary">
+            {JSON.stringify(payload, null, 2)}
+          </pre>
+        </div>
       </div>
     </aside>
-  );
-}
-
-function Readout({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3 border-t border-border pt-2">
-      <dt className="min-w-0 truncate font-mono text-caption text-text-secondary">{label}</dt>
-      <dd className="shrink-0 text-caption text-text-primary">{value}</dd>
-    </div>
   );
 }
 

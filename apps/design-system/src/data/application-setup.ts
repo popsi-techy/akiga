@@ -21,11 +21,12 @@ export interface AppSetupSubject {
   enableProvisioning: boolean;
 }
 import { listAuthorizations } from './provisioning-auth';
-import { eventStatus, listConnectionEvents } from './connection-events';
+import { EVENT_KINDS, SCIM_EVENT_KINDS, eventStatus, listConnectionEvents } from './connection-events';
 import { getOwners } from './entity-owners';
 import { reconciliationSummary } from './reconciliation';
 import { listBaselines } from './baselines';
 import { getAppApprovalPolicy } from './app-approval-policy';
+import { applicationIsScimProvisioned } from './scim-inbound';
 
 function provisioningReady(app: AppSetupSubject) {
   const authorized = listAuthorizations(app.id).some((a) => a.authorized);
@@ -98,6 +99,47 @@ export function appBlockingSteps(app: AppSetupSubject): string[] {
  */
 export function applicationShowsConfigure(app: AppSetupSubject): boolean {
   return app.enableProvisioning;
+}
+
+function catalogEventsOf(app: AppSetupSubject) {
+  const scim = applicationIsScimProvisioned(app.id);
+  const kinds = new Set((scim ? SCIM_EVENT_KINDS : EVENT_KINDS).map((k) => k.value));
+  return { scim, events: listConnectionEvents(app.id).filter((e) => kinds.has(e.kind)) };
+}
+
+export interface ConfigureSubstep {
+  id: string;
+  label: string;
+  done: boolean;
+}
+
+/**
+ * Configure's own jobs — the same items the Configure rail lists. The parent
+ * step can be *done* for activation before every job here is.
+ */
+export function configureSubsteps(app: AppSetupSubject): ConfigureSubstep[] | undefined {
+  if (!app.enableProvisioning) return undefined;
+
+  const authorized = listAuthorizations(app.id).some((a) => a.authorized);
+  const { scim, events } = catalogEventsOf(app);
+  const connection = events.length > 0;
+  const manage = events.some((e) => e.enabled);
+  const mapping = events
+    .filter(
+      (e) =>
+        e.kind === 'accounts-fetch' || e.kind === 'entitlements-fetch' || e.kind === 'group-membership',
+    )
+    .some((e) => e.attributes.length > 0);
+
+  const items: ConfigureSubstep[] = [
+    { id: 'authorization', label: 'Authorization', done: authorized },
+    { id: 'connection', label: 'Connection', done: connection },
+  ];
+  if (!scim) {
+    items.push({ id: 'advanced', label: 'Attribute mapping', done: mapping });
+  }
+  items.push({ id: 'manage', label: 'Manage connections', done: manage });
+  return items;
 }
 
 export function isAppSetupStepDone(id: AppSetupStepId, app: AppSetupSubject): boolean {

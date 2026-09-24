@@ -60,8 +60,8 @@ export function ApplicationBasicDetailsDrawer({
       open={open}
       onClose={onClose}
       leading={<AppIcon app={app.appType} size={44} variant="subtle" />}
-      title={`Onboard ${onboardAppLabel(app.appType)} Application`}
-      subtitle="Name it and set how IGA manages access."
+      title="Basic details"
+      subtitle={`Name ${onboardAppLabel(app.appType)} and set how IGA manages access.`}
       width={520}
       footer={
         <>

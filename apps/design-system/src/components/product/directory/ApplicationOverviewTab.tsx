@@ -5,7 +5,7 @@ import AccountBalance from '@mui/icons-material/AccountBalance';
 import Inventory2 from '@mui/icons-material/Inventory2';
 import ReportProblem from '@mui/icons-material/ReportProblem';
 import Hub from '@mui/icons-material/Hub';
-import { Card, InfoRow, InfoRowGroup, StatusChip } from '@ds/components';
+import { AppIcon, Avatar, Card, InfoRow, InfoRowGroup, OverflowChips, StatusChip } from '@ds/components';
 import { formatDateTime } from '../sod/labels';
 import { infoIcon } from './infoIcons';
 import { RowLink, RowValue } from './RowLink';
@@ -14,8 +14,15 @@ import { listAuthorizations } from '@/data/provisioning-auth';
 import { eventStatus, listConnectionEvents } from '@/data/connection-events';
 import { reconciliationSummary } from '@/data/reconciliation';
 import { listBaselines } from '@/data/baselines';
-import { getGovEntity, explorerRow, displayName } from '@/data/governance';
-import { applicationAccountable, type AccountableParty, type AppAccountRow, type EntitlementRow } from '@/data/directory';
+import { getAppApprovalPolicy } from '@/data/app-approval-policy';
+import { getApprovalPolicy } from '@/data/approval-policies';
+import {
+  applicationAccountable,
+  applicationForBasics,
+  type AccountableParty,
+  type AppAccountRow,
+  type EntitlementRow,
+} from '@/data/directory';
 
 interface CatalogApp {
   id: string;
@@ -34,17 +41,16 @@ interface Gap {
 }
 
 /**
- * Application overview — is this application healthy and governed, and if not, what next.
+ * Application overview — can this application govern access, and if not, what next.
  *
- * Four cards of the same shape, in two rows: what this application holds and what still
- * needs doing, then how it connects and how it is governed.
+ * Two equal columns, two rows. A card matches its neighbour so the page does not
+ * lean; it does not then stretch to fill the frame, which is what turned a
+ * two-line fact into a hollow panel.
  *
- * The counts were a row of `StatTile`s above all of it — three 96px panels carrying one
- * number each, which is a dashboard's job, not a detail page's. They also linked to
- * `?tab=accounts`, a tab that no longer exists, so two of the three had been dead since
- * the inventory moved into Reconciliation. As rows in a card they sit at the same weight
- * as every other fact about the application, and the link goes where the list actually
- * lives.
+ * A fact earns a row only if it changes a decision on this page. Authorization
+ * does not — the identity band already carries Authorized, and a hole lands in
+ * Needs attention. The entitlement count on a baseline does not — the name is
+ * the decision; the size lives on Baseline Access.
  *
  * Risk stays off this tab — the identity band already carries the chip.
  */
@@ -58,8 +64,6 @@ export function ApplicationOverviewTab({
   entitlements: EntitlementRow[];
 }) {
   const profile = appProfileFor(app.id);
-  const gov = getGovEntity(app.id);
-  const row = gov ? explorerRow(gov) : null;
   const provisions = profile.externalProvisioning === 'enabled';
 
   /*
@@ -75,8 +79,10 @@ export function ApplicationOverviewTab({
     events: { total: number; needingSetup: number };
     lastSync: { at: string; ok: boolean } | null;
     applications: number | null;
-    baseline: { name: string; size: number } | null;
+    baseline: { name: string } | null;
     owners: AccountableParty[];
+    approvalPolicy: { name: string } | null;
+    useCases: { id: string; name: string }[];
   } | null>(null);
 
   React.useEffect(() => {
@@ -85,6 +91,14 @@ export function ApplicationOverviewTab({
     const summary = reconciliationSummary(app.id);
     const baselines = listBaselines(app.id);
     const primary = baselines.find((b) => b.isDefault) ?? baselines[0] ?? null;
+    const policyId = getAppApprovalPolicy(app.id);
+    const policy = policyId ? getApprovalPolicy(policyId) : null;
+    const basics = applicationForBasics(app.id);
+    const useCases = [
+      basics?.enableProvisioning && { id: 'provisioning', name: 'Lifecycle provisioning' },
+      basics?.identitySource && { id: 'identity', name: 'Identity source' },
+      basics?.requestable && { id: 'requests', name: 'Access requests' },
+    ].filter((c): c is { id: string; name: string } => Boolean(c));
     setLive({
       hasAuth: auths.length > 0,
       connected: auths.some((a) => a.authorized),
@@ -92,18 +106,17 @@ export function ApplicationOverviewTab({
       lastSync: summary.lastSync ? { at: summary.lastSync.at, ok: summary.lastSync.outcome === 'success' } : null,
       // Present only on an IAM or a vault — see `reconcilesApplications`.
       applications: summary.applications ? summary.applications.total : null,
-      baseline: primary ? { name: primary.name, size: primary.entitlementIds.length } : null,
+      baseline: primary ? { name: primary.name } : null,
       /*
         Individuals and Governance Teams together. Asking only for individuals said
         "Nobody owns this application" about one a team had just taken on.
       */
       owners: applicationAccountable(app.id),
+      approvalPolicy: policy ? { name: policy.policyName } : null,
+      useCases,
     });
   }, [app.id]);
 
-  const reviewers = row?.ownership.reviewers ?? [];
-  const controls = row?.controls;
-  const policyCount = controls ? controls.birthright + controls.approval + controls.sod : 0;
   const href = (tab: string) => `/iga/directory/applications/${app.id}?tab=${tab}`;
   /** Reconciliation, with one of its inventory drawers already open. */
   const view = (v: string) => `/iga/directory/applications/${app.id}?view=${v}`;
@@ -111,12 +124,9 @@ export function ApplicationOverviewTab({
   /*
     Only gaps the reader can actually close from here.
 
-    "No access review owner" is a real hole and it is reported below as a `danger` chip on
-    its own row — but it is not in this list, because nothing in the product assigns one
-    per application: `reviewed-by` comes from the governance graph, and review ownership is
-    configured per certification campaign. A list item whose link cannot finish the job is
-    worse than no item, because after the second dead end the reader stops trusting the
-    whole block.
+    Review ownership is not on this card: nothing here assigns a `reviewed-by`
+    person (that lives on a certification campaign), so a row or a gap that
+    cannot be closed would be a dead end.
 
     The rule for adding to this list: name the tab that closes it, and check something on
     that tab writes the value this gap reads.
@@ -163,199 +173,192 @@ export function ApplicationOverviewTab({
     if (!live.baseline) {
       out.push({ id: 'baseline', text: 'No default baseline is set', tone: 'warning', tab: 'baseline', cta: 'Set a baseline' });
     }
-    if (policyCount === 0) {
-      out.push({ id: 'policy', text: 'No policy governs access to this application', tone: 'warning', tab: 'approval', cta: 'Add a policy' });
+    if (!live.approvalPolicy) {
+      out.push({ id: 'policy', text: 'No approval policy is assigned', tone: 'warning', tab: 'approval', cta: 'Add a policy' });
     }
     return out;
-  }, [live, provisions, policyCount]);
+  }, [live, provisions]);
 
 
   return (
     <div className="ds-scroll flex h-full min-h-0 flex-col gap-5 overflow-y-auto">
-        <div className="grid shrink-0 items-stretch gap-5 lg:grid-cols-2">
-          <Card title="Inventory" icon={<Inventory2 />} padding="none" className="h-full min-h-0">
-            <InfoRowGroup>
-              {/* Straight to the list, not to the tab that holds it: `?view=` opens
-                  Reconciliation with the drawer already up, which is where these rows
-                  live now. */}
+      <div className="grid items-stretch gap-5 lg:grid-cols-2">
+        <Card
+          title="Needs attention"
+          icon={<ReportProblem />}
+          padding="none"
+          className="h-full"
+          action={
+            gaps.length > 0 ? (
+              <span className="tabular-nums text-caption text-text-tertiary">{gaps.length}</span>
+            ) : undefined
+          }
+        >
+          {live && (gaps.length > 0 ? <NeedsAttention gaps={gaps} appId={app.id} /> : <AllClear />)}
+        </Card>
+
+        <Card title="Inventory" icon={<Inventory2 />} padding="none" className="h-full">
+          <InfoRowGroup>
+            <InfoRow
+              icon={infoIcon.account}
+              label="Accounts"
+              valueWrap
+              value={
+                <RowValue>
+                  <span>{accounts.length}</span>
+                  <RowLink href={view('accounts')}>View all</RowLink>
+                </RowValue>
+              }
+            />
+            <InfoRow
+              icon={infoIcon.entitlement}
+              label="Entitlements"
+              valueWrap
+              value={
+                <RowValue>
+                  <span>{entitlements.length}</span>
+                  <RowLink href={view('entitlements')}>View all</RowLink>
+                </RowValue>
+              }
+            />
+            {live?.applications != null && (
               <InfoRow
-                icon={infoIcon.account}
-                label="Accounts"
+                icon={infoIcon.application}
+                label="Applications discovered"
                 valueWrap
                 value={
                   <RowValue>
-                    <span>{accounts.length}</span>
-                    <RowLink href={view('accounts')}>View all</RowLink>
+                    <span>{live.applications}</span>
+                    <RowLink href={href('reconciliation')}>View all</RowLink>
                   </RowValue>
                 }
               />
-              <InfoRow
-                icon={infoIcon.entitlement}
-                label="Entitlements"
-                valueWrap
-                value={
+            )}
+          </InfoRowGroup>
+        </Card>
+      </div>
+
+      <div className="grid items-stretch gap-5 lg:grid-cols-2">
+        <Card title="Governance" icon={<AccountBalance />} padding="none" className="h-full">
+          <InfoRowGroup>
+            <InfoRow
+              icon={infoIcon.owner}
+              label="Owners"
+              value={
+                !live ? (
+                  <Pending />
+                ) : live.owners.length ? (
+                  <OverflowChips
+                    items={live.owners}
+                    max={2}
+                    renderItem={(o) => <OwnerMark party={o} />}
+                  />
+                ) : (
+                  <StatusChip intent="warning" label="None" />
+                )
+              }
+              valueWrap
+            />
+            <InfoRow
+              icon={infoIcon.baseline}
+              label="Default baseline"
+              value={
+                !live ? (
+                  <Pending />
+                ) : live.baseline ? (
+                  <RowLink href={href('baseline')}>{live.baseline.name}</RowLink>
+                ) : (
+                  <StatusChip intent="warning" label="None" />
+                )
+              }
+              valueWrap
+            />
+            <InfoRow
+              icon={infoIcon.policy}
+              label="Approval policy"
+              value={
+                !live ? (
+                  <Pending />
+                ) : live.approvalPolicy ? (
+                  <RowLink href={href('approval')}>{live.approvalPolicy.name}</RowLink>
+                ) : (
+                  <StatusChip intent="warning" label="None" />
+                )
+              }
+              valueWrap
+            />
+          </InfoRowGroup>
+        </Card>
+
+        <Card title="Connection" icon={<Hub />} padding="none" className="h-full">
+          <InfoRowGroup>
+            <InfoRow
+              icon={infoIcon.type}
+              label="Application type"
+              valueWrap
+              value={
+                <span className="inline-flex items-center gap-2">
+                  <AppIcon app={profile.appType} size={20} />
+                  {profile.appType}
+                </span>
+              }
+            />
+            <InfoRow
+              icon={infoIcon.discovery}
+              label="Discovered via"
+              valueWrap
+              value={<StatusChip intent="info" label={profile.discoverySource} dot={false} />}
+            />
+            <InfoRow
+              icon={infoIcon.sync}
+              label="Use cases"
+              value={
+                !live ? (
+                  <Pending />
+                ) : live.useCases.length ? (
+                  <OverflowChips items={live.useCases} max={2} />
+                ) : (
+                  <StatusChip intent="warning" label="None" />
+                )
+              }
+              valueWrap
+            />
+            <InfoRow
+              icon={infoIcon.updated}
+              label="Last sync"
+              value={
+                !live ? (
+                  <Pending />
+                ) : !live.lastSync ? (
+                  <span className="text-text-tertiary">Never</span>
+                ) : (
                   <RowValue>
-                    <span>{entitlements.length}</span>
-                    <RowLink href={view('entitlements')}>View all</RowLink>
-                  </RowValue>
-                }
-              />
-              {live?.applications != null && (
-                <InfoRow
-                  icon={infoIcon.application}
-                  label="Applications discovered"
-                  valueWrap
-                  value={
-                    <RowValue>
-                      <span>{live.applications}</span>
-                      <RowLink href={href('reconciliation')}>View all</RowLink>
-                    </RowValue>
-                  }
-                />
-              )}
-            </InfoRowGroup>
-          </Card>
-
-          <Card
-            title="Needs attention"
-            icon={<ReportProblem />}
-            padding="none"
-            className="h-full min-h-0"
-            action={
-              gaps.length > 0 ? (
-                <span className="tabular-nums text-caption text-text-tertiary">{gaps.length}</span>
-              ) : undefined
-            }
-          >
-            {live && (gaps.length > 0 ? <NeedsAttention gaps={gaps} appId={app.id} /> : <AllClear />)}
-          </Card>
-        </div>
-
-        <div className="grid min-h-0 flex-1 items-stretch gap-5 lg:grid-cols-2">
-          <Card title="Connection" icon={<Hub />} padding="none" className="h-full min-h-0">
-            <InfoRowGroup>
-              <InfoRow icon={infoIcon.type} label="Application type" value={profile.appType} />
-              <InfoRow
-                icon={infoIcon.discovery}
-                label="Discovered via"
-                value={profile.discoverySource === 'IAM' ? 'An IAM integration' : 'Added directly'}
-              />
-              <InfoRow
-                icon={infoIcon.sync}
-                label="Provisioning"
-                value={
-                  provisions
-                    ? `On · ${profile.provisioningType === 'auto' ? 'Automatic' : 'Manual'}`
-                    : 'Off · read only'
-                }
-              />
-              {provisions && (
-                <InfoRow
-                  icon={infoIcon.authorization}
-                  label="Authorization"
-                  value={
-                    !live ? (
-                      <Pending />
-                    ) : !live.hasAuth ? (
-                      <StatusChip intent="warning" label="None" />
-                    ) : live.connected ? (
-                      <StatusChip intent="success" label="Connected" />
-                    ) : (
-                      <StatusChip intent="warning" label="Not connected" />
-                    )
-                  }
-                  valueWrap
-                />
-              )}
-              <InfoRow
-                icon={infoIcon.updated}
-                label="Last sync"
-                value={
-                  !live ? (
-                    <Pending />
-                  ) : !live.lastSync ? (
-                    <span className="text-text-tertiary">Never</span>
-                  ) : (
-                    <span className="inline-flex items-center gap-2">
-                      {formatDateTime(live.lastSync.at)}
+                    <span className="inline-flex min-w-0 items-center gap-2">
+                      <span className="truncate">{formatDateTime(live.lastSync.at)}</span>
                       {!live.lastSync.ok && <StatusChip intent="danger" label="Failed" />}
                     </span>
-                  )
-                }
-                valueWrap
-              />
-            </InfoRowGroup>
-          </Card>
-
-          <Card title="Governance" icon={<AccountBalance />} padding="none" className="h-full min-h-0">
-            <InfoRowGroup>
-              <InfoRow
-                icon={infoIcon.owner}
-                label="Owners"
-                value={
-                  !live ? (
-                    <Pending />
-                  ) : live.owners.length ? (
-                    live.owners.map((o) => (o.kind === 'team' ? `${o.name} (team)` : o.name)).join(', ')
-                  ) : (
-                    <StatusChip intent="warning" label="None" />
-                  )
-                }
-                valueWrap
-              />
-              <InfoRow
-                icon={infoIcon.reviewer}
-                label="Access review owner"
-                value={
-                  reviewers.length ? (
-                    reviewers.map((p) => p.name).join(', ')
-                  ) : (
-                    <StatusChip intent="danger" label="Unassigned" />
-                  )
-                }
-                valueWrap
-              />
-              <InfoRow
-                icon={infoIcon.baseline}
-                label="Default baseline"
-                value={
-                  !live ? (
-                    <Pending />
-                  ) : live.baseline ? (
-                    `${live.baseline.name} · ${live.baseline.size} entitlement${live.baseline.size === 1 ? '' : 's'}`
-                  ) : (
-                    <StatusChip intent="warning" label="None" />
-                  )
-                }
-                valueWrap
-              />
-              <InfoRow
-                icon={infoIcon.policy}
-                label="Governing policies"
-                value={
-                  controls && policyCount > 0 ? (
-                    [
-                      controls.birthright && `${controls.birthright} birthright`,
-                      controls.approval && `${controls.approval} approval`,
-                      controls.sod && `${controls.sod} SoD`,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')
-                  ) : (
-                    <StatusChip intent="warning" label="Ungoverned" />
-                  )
-                }
-                valueWrap
-              />
-              <InfoRow
-                icon={infoIcon.department}
-                label="Departments"
-                value={(gov?.departmentIds ?? []).map((id) => displayName(id)).join(', ') || '—'}
-              />
-            </InfoRowGroup>
-          </Card>
-        </div>
+                    <RowLink href={href('reconciliation')}>History</RowLink>
+                  </RowValue>
+                )
+              }
+              valueWrap
+            />
+          </InfoRowGroup>
+        </Card>
+      </div>
     </div>
+  );
+}
+
+/** The same mark the applications table uses — face, then name. */
+function OwnerMark({ party }: { party: AccountableParty }) {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-2">
+      <Avatar name={party.name} size="xs" kind={party.kind === 'team' ? 'entity' : 'person'} />
+      <span className="truncate text-body-sm text-text-primary" title={party.name}>
+        {party.name}
+      </span>
+    </span>
   );
 }
 
@@ -363,9 +366,9 @@ export function ApplicationOverviewTab({
  * Everything unresolved, and one link each to resolve it.
  *
  * It used to carry its own frame and heading, because it was the one framed thing on a
- * page of loose tiles and had to be the loudest. That is no longer true — the overview is
- * four cards now — so it sits in the same `Card` as everything else and keeps only the
- * list. A second frame inside a card is a box inside a box.
+ * page of loose tiles and had to be the loudest. It is now the first card — the
+ * protagonist — and keeps only the list. A second frame inside a card is a box inside
+ * a box.
  *
  * The dots take their status colour; the container stays white. A card about problems is
  * not an amber card.
@@ -373,8 +376,7 @@ export function ApplicationOverviewTab({
 function NeedsAttention({ gaps, appId }: { gaps: Gap[]; appId: string }) {
   return (
     /* No gutter of its own: `padding="none"` already keeps the Card's `px-4` so a flush
-       list's dividers do not kiss the panel border (ADR-0009). Adding another put this
-       card's rows 16px inside the Inventory card's beside it. */
+       list's dividers do not kiss the panel border (ADR-0009). */
     <ul className="divide-y divide-border-subtle">
         {gaps.map((gap) => (
           <li key={gap.id} className="flex items-center justify-between gap-4 py-3">

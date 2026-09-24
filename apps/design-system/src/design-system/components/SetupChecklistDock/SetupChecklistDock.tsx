@@ -6,6 +6,13 @@ import CloseOutlined from '@mui/icons-material/CloseOutlined';
 import { Button } from '../Button/Button';
 import { StatusChip, type StatusIntent } from '../StatusChip/StatusChip';
 
+/** A job inside a step — Configure's own rail, listed under the parent. */
+export interface SetupChecklistSubstep {
+  id: string;
+  label: string;
+  done: boolean;
+}
+
 /** One checklist row — presentation only. Order and required-ness come from the caller. */
 export interface SetupChecklistStep {
   id: string;
@@ -32,6 +39,12 @@ export interface SetupChecklistStep {
    * from “someone finished” / Next so a brand-new draft does not prompt.
    */
   seedDone?: boolean;
+  /**
+   * Jobs inside this step (Configure’s own rail). Listed under the parent with
+   * a hairline tree. The step can be `done` for the gate before every job is.
+   * Omit it when the step has no parts.
+   */
+  substeps?: SetupChecklistSubstep[];
 }
 
 /**
@@ -59,7 +72,7 @@ export interface SetupChecklistDockProps {
   steps: SetupChecklistStep[];
   currentTab: string;
   onClose: () => void;
-  onGoTo: (step: SetupChecklistStep) => void;
+  onGoTo: (step: SetupChecklistStep, substep?: SetupChecklistSubstep) => void;
   /** Header action this checklist unblocks — or `setup` when there is no header gate. */
   gateVerb?: 'activate' | 'connect' | 'setup';
 }
@@ -89,14 +102,24 @@ export function SetupChecklistDock({
   // Activate stays the one primary.
   const ctaVariant = required.some((s) => !s.done) ? 'primary' : 'secondary';
   const allRequiredDone = required.length > 0 && required.every((s) => s.done);
+  const additionalOpen = additional.some((s) => !s.done);
+  /*
+    Activate / connect: "required complete" is the beat — the header button is
+    now the one action. Setup has no such gate. Celebrating required work while
+    Additional is still open reads as "you are done" on a list that is not.
+  */
   const caption =
     required.length === 0
       ? undefined
-      : allRequiredDone
-        ? 'Required steps are complete.'
-        : gateVerb === 'setup'
+      : !allRequiredDone
+        ? gateVerb === 'setup'
           ? 'Finish the required steps.'
-          : `Finish the required steps, then ${gateVerb}.`;
+          : `Finish the required steps, then ${gateVerb}.`
+        : gateVerb === 'setup'
+          ? additionalOpen
+            ? undefined
+            : 'Setup is complete.'
+          : 'Required steps are complete.';
 
   return (
     <aside
@@ -141,6 +164,7 @@ export function SetupChecklistDock({
                 key={step.id}
                 step={step}
                 current={step.tab === currentTab}
+                currentTab={currentTab}
                 recommended={step.id === nextId}
                 ctaVariant={ctaVariant}
                 onGoTo={onGoTo}
@@ -166,6 +190,7 @@ export function SetupChecklistDock({
                 key={step.id}
                 step={step}
                 current={step.tab === currentTab}
+                currentTab={currentTab}
                 recommended={step.id === nextId}
                 ctaVariant={ctaVariant}
                 onGoTo={onGoTo}
@@ -206,41 +231,49 @@ function StepRow({
   recommended,
   ctaVariant,
   onGoTo,
+  currentTab,
 }: {
   step: SetupChecklistStep;
   current: boolean;
   recommended: boolean;
   ctaVariant: 'primary' | 'secondary';
-  onGoTo: (step: SetupChecklistStep) => void;
+  onGoTo: (step: SetupChecklistStep, substep?: SetupChecklistSubstep) => void;
+  currentTab: string;
 }) {
   // Prompt only when the next unfinished step is somewhere else. The row you
   // are already on does not need a CTA — the page is the place to do the work.
   // Finish it, stay put, and the hint + button appear on the following row.
-  const showNext = recommended && !step.done && !current;
+  const substeps = step.substeps ?? [];
+  const childCurrent = substeps.some((s) => s.id === currentTab);
+  const parentCurrent = current && !childCurrent;
+  const onThisStep = parentCurrent || childCurrent;
+  const showNext = recommended && !step.done && !onThisStep;
 
   return (
     <li>
       <button
         type="button"
         onClick={() => onGoTo(step)}
-        aria-current={current ? 'step' : undefined}
+        aria-current={parentCurrent ? 'step' : undefined}
         className={[
           'flex w-full items-start gap-2.5 rounded-md px-2 py-2 text-left transition-colors',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-subtle',
-          current ? 'border border-brand bg-surface' : 'border border-transparent hover:bg-subtle',
+          parentCurrent ? 'border border-brand bg-surface' : 'border border-transparent hover:bg-subtle',
         ].join(' ')}
       >
-        <span
-          className={`mt-px grid h-4 w-4 shrink-0 place-items-center ${
-            step.done ? 'text-success' : 'text-border-strong'
-          }`}
-        >
-          <CheckCircle sx={{ fontSize: 16, color: 'inherit' }} />
-        </span>
+        {substeps.length === 0 ? (
+          <span
+            className={`mt-px grid h-4 w-4 shrink-0 place-items-center ${
+              step.done ? 'text-success' : 'text-border-strong'
+            }`}
+          >
+            <CheckCircle sx={{ fontSize: 16, color: 'inherit' }} />
+          </span>
+        ) : null}
         <span className="min-w-0 flex-1">
           <span
             className={`block truncate ${
-              current || showNext ? 'text-body-sm-medium text-text-primary' : 'text-body-sm text-text-primary'
+              parentCurrent || showNext ? 'text-body-sm-medium text-text-primary' : 'text-body-sm text-text-primary'
             }`}
           >
             {step.label}
@@ -262,6 +295,66 @@ function StepRow({
           )}
         </span>
       </button>
+      {substeps.length > 0 ? (
+        <ul className="relative" aria-label={`${step.label} jobs`}>
+          {substeps.map((sub, i) => {
+            const last = i === substeps.length - 1;
+            const selected = sub.id === currentTab;
+            return (
+              <li key={sub.id}>
+                <button
+                  type="button"
+                  onClick={() => onGoTo(step, sub)}
+                  aria-current={selected ? 'step' : undefined}
+                  className={[
+                    'relative flex w-full items-center gap-2 rounded-md py-1.5 pl-7 pr-2 text-left transition-colors',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-subtle',
+                    selected ? 'border border-brand bg-surface' : 'border border-transparent hover:bg-subtle',
+                  ].join(' ')}
+                >
+                  {last ? (
+                    <span
+                      aria-hidden
+                      className={[
+                        'absolute left-[15px] w-2.5 rounded-bl-md border-b border-l border-border',
+                        i === 0 ? '-top-1 h-[calc(50%+4px)]' : 'top-0 h-1/2',
+                      ].join(' ')}
+                    />
+                  ) : (
+                    <>
+                      <span
+                        aria-hidden
+                        className={[
+                          'absolute left-[15px] w-px bg-border bottom-0',
+                          i === 0 ? '-top-1' : 'top-0',
+                        ].join(' ')}
+                      />
+                      <span
+                        aria-hidden
+                        className="absolute left-[15px] top-1/2 h-2.5 w-2.5 -translate-y-full rounded-bl-md border-b border-l border-border"
+                      />
+                    </>
+                  )}
+                  <span
+                    className={`grid h-3.5 w-3.5 shrink-0 place-items-center ${
+                      sub.done ? 'text-success' : 'text-border-strong'
+                    }`}
+                  >
+                    <CheckCircle sx={{ fontSize: 14, color: 'inherit' }} />
+                  </span>
+                  <span
+                    className={`min-w-0 truncate text-caption ${
+                      selected || sub.done ? 'text-text-primary' : 'text-text-secondary'
+                    } ${selected ? 'text-caption-medium' : ''}`}
+                  >
+                    {sub.label}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
     </li>
   );
 }

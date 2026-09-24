@@ -167,7 +167,7 @@ export type { StepperProps, StepperStep } from './Stepper/Stepper';
 export { SetupBar } from './SetupBar/SetupBar';
 export type { SetupBarProps } from './SetupBar/SetupBar';
 export { SetupChecklistDock } from './SetupChecklistDock/SetupChecklistDock';
-export type { SetupChecklistDockProps, SetupChecklistStep } from './SetupChecklistDock/SetupChecklistDock';
+export type { SetupChecklistDockProps, SetupChecklistStep, SetupChecklistSubstep } from './SetupChecklistDock/SetupChecklistDock';
 export { SetupProgress, SegmentedDonut } from './SetupProgress/SetupProgress';
 export type { SetupProgressProps, SegmentedDonutProps } from './SetupProgress/SetupProgress';
 
