@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { typography } from '../../tokens/tokens';
+import { controlHeight, spacing, typography } from '../../tokens/tokens';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
@@ -129,7 +129,17 @@ export function Select({
                 return options.find((o) => o.value === selected)?.label ?? String(selected);
               }
             : undefined,
-          MenuProps: { PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: typography.body.fontSize } } } },
+          MenuProps: {
+            // Eight sm-height rows, then scroll — a long catalog (IGA attributes)
+            // must not grow to the viewport and cover the field that opened it.
+            PaperProps: {
+              className: 'ds-scroll',
+              sx: {
+                maxHeight: `calc(8 * ${controlHeight.sm} + ${spacing[2]})`,
+                '& .MuiMenuItem-root': { fontSize: typography.body.fontSize },
+              },
+            },
+          },
         }}
         sx={{
           '& .MuiInputBase-root': { borderRadius: radius, fontSize: typography.body.fontSize, backgroundColor: 'var(--ds-color-surface-default)' },

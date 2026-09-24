@@ -1,12 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import Shield from '@mui/icons-material/Shield';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
-import { Button, DataTable, Drawer, Input, SelectionPanel, Switch, Tooltip, useToast, type Column } from '@ds/components';
-import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import { Button, DataTable, Drawer, Input, SelectionPanel, SettingsRow, Switch, useToast, type Column } from '@ds/components';
 import { RiskScoreChip } from './RiskScoreChip';
+import { EntityAvatar } from './EntityAvatar';
 import { saveBaseline, type AccessBaseline } from '@/data/baselines';
 import type { EntitlementRow } from '@/data/directory';
 
@@ -85,9 +84,7 @@ export function BaselineDrawer({
       value: (r) => r.name,
       render: (r) => (
         <div className="flex items-center gap-3">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand-subtle text-icon-brand">
-            <ShieldOutlined sx={{ fontSize: 18 }} />
-          </span>
+          <EntityAvatar kind="entitlement" name={r.name} />
           <div className="min-w-0">
             <div className="truncate text-body-sm-strong text-text-primary">{r.name}</div>
             <div className="truncate text-caption text-text-secondary">{r.description}</div>
@@ -109,7 +106,7 @@ export function BaselineDrawer({
     <Drawer
       open={open}
       onClose={onClose}
-      icon={<Shield sx={{ fontSize: 22 }} />}
+      icon={<ShieldOutlined sx={{ fontSize: 22 }} />}
       title={existing ? 'Edit baseline' : 'Create baseline'}
       subtitle="The access this application is expected to grant."
       width={980}
@@ -127,7 +124,6 @@ export function BaselineDrawer({
     >
       <div className="flex h-full min-h-0">
         <div className="flex min-w-0 flex-1 flex-col gap-4 px-6 py-5">
-          <div className="space-y-4 rounded-xl border border-border p-4">
             <Input
               label="Baseline name"
               required
@@ -137,27 +133,17 @@ export function BaselineDrawer({
               onChange={(e) => setName(e.target.value)}
               error={touched && !name.trim() ? 'Name the baseline.' : undefined}
             />
-            <div className="flex items-center gap-3">
+            <SettingsRow
+              surface="subtle"
+              title="Set as default"
+              description="The fallback for this application. Only one default at a time."
+            >
               <Switch
-                id="baseline-default"
                 checked={isDefault}
                 onChange={(e) => setIsDefault(e.target.checked)}
                 inputProps={{ 'aria-label': 'Set as default baseline' }}
               />
-              <label htmlFor="baseline-default" className="flex items-center gap-1.5 text-body-sm-strong text-text-primary">
-                Set as default
-                <Tooltip title="The baseline used when nothing else is specified. Only one per application — turning this on takes the flag off the current default.">
-                  <span
-                    tabIndex={0}
-                    aria-label="The baseline used when nothing else is specified. Only one per application."
-                    className="inline-flex shrink-0 text-icon-subtle"
-                  >
-                    <InfoOutlined sx={{ fontSize: 15 }} />
-                  </span>
-                </Tooltip>
-              </label>
-            </div>
-          </div>
+            </SettingsRow>
 
           <Input
             placeholder="Search entitlements"

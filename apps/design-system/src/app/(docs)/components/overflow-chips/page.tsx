@@ -85,6 +85,7 @@ export default function OverflowChipsDocs() {
             'Raise `max` until the row can wrap — a wrap is the thing this component exists to prevent.',
             'Give the +n the same outline as a named chip: it is a remainder, not an item.',
             'Use it where the full list is the point. A list of twenty users belongs in a table, not behind a +19.',
+            'Sit it next to a pencil on a SettingsRow. That add-then-edit control is ChipPicker.',
           ]}
         />
       </Section>

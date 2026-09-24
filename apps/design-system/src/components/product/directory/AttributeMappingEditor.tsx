@@ -6,13 +6,15 @@ import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import { Button, Input, Select, Tooltip } from '@ds/components';
 import {
-  ATTRIBUTE_SOURCES,
-  IGA_ATTRIBUTES,
+  ALL_IGA_ATTRIBUTES,
+  ATTRIBUTE_TYPES,
+  attributeTypeOf,
   formatDateSample,
   mappingComplete,
   needsDateFormat,
+  sourceForIgaAttribute,
   type AttributeMapping,
-  type AttributeSource,
+  type MappingAttributeType,
 } from '@/data/connection-events';
 
 /** Read once — column-level format gate: mismatch skips updating this field on sync. */
@@ -22,17 +24,18 @@ const SOURCE_DATE_PATTERN_HINT =
 export const blankMappingRow = (i: number): AttributeMapping => ({
   id: `m-${Date.now().toString(36)}-${i}`,
   source: 'user-profile',
+  attributeType: 'predefined',
   applicationField: '',
   igaAttribute: '',
   expression: '',
 });
 
-const COLS = 'grid grid-cols-[170px_minmax(0,1fr)_170px_minmax(0,1fr)_36px] gap-2.5';
+const COLS = 'grid grid-cols-[150px_170px_minmax(0,1fr)_minmax(0,1fr)_36px] gap-2.5';
 
 const HEADER_DEFS: { label: string; hint?: string }[] = [
-  { label: 'Application' },
-  { label: 'App attribute' },
+  { label: 'Attribute type' },
   { label: 'IGA attribute' },
+  { label: 'App attribute' },
   {
     label: 'Transformation',
     hint: 'Optional. Reference attributes in square brackets and quote literal text — for example [firstName] + " " + [lastName].',
@@ -95,40 +98,68 @@ export function AttributeMappingEditor({
 
   const rowCells = (row: AttributeMapping) => {
     const hasExpression = row.expression.trim() !== '';
+    const kind = attributeTypeOf(row);
     const bad = Boolean(touched && started.includes(row) && !mappingComplete(row));
     const dated = needsDateFormat(row);
     const sample = dated ? formatDateSample(row.dateFormat ?? '') : null;
     return (
       <>
         <Select
-          ariaLabel="Application"
-          options={ATTRIBUTE_SOURCES.map((s) => ({ value: s.value, label: s.label }))}
-          value={row.source}
-          onChange={(v) => update(row.id, { source: v as AttributeSource, igaAttribute: '' })}
-        />
-        <Input
-          aria-label={`${applicationName} attribute`}
-          placeholder="e.g. userName"
-          value={row.applicationField}
-          onChange={(e) => update(row.id, { applicationField: e.target.value })}
-          error={bad && !row.applicationField.trim() ? 'Name the field.' : undefined}
+          ariaLabel="Attribute type"
+          options={ATTRIBUTE_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+          value={kind}
+          onChange={(v) => {
+            const next = v as MappingAttributeType;
+            if (next === 'custom') {
+              update(row.id, { attributeType: 'custom', source: 'custom-user' });
+              return;
+            }
+            const known = ALL_IGA_ATTRIBUTES.some((a) => a.value === row.igaAttribute);
+            update(row.id, {
+              attributeType: 'predefined',
+              source: known ? sourceForIgaAttribute(row.igaAttribute) : 'user-profile',
+              igaAttribute: known ? row.igaAttribute : '',
+            });
+          }}
         />
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
-            <Select
-              ariaLabel="IGA attribute"
-              placeholder="Select"
-              options={IGA_ATTRIBUTES[row.source]}
-              value={hasExpression ? '' : row.igaAttribute}
-              onChange={(v) => update(row.id, { igaAttribute: v, dateFormat: undefined })}
-              disabled={hasExpression}
-              helperText={hasExpression ? 'Set by the expression' : undefined}
-              error={
-                bad && row.applicationField.trim() !== '' && !hasExpression && row.igaAttribute === ''
-                  ? 'Pick one or write an expression.'
-                  : undefined
-              }
-            />
+            {kind === 'custom' ? (
+              <Input
+                aria-label="IGA attribute"
+                placeholder="e.g. costCentre"
+                value={hasExpression ? '' : row.igaAttribute}
+                onChange={(e) => update(row.id, { igaAttribute: e.target.value, dateFormat: undefined })}
+                disabled={hasExpression}
+                helperText={hasExpression ? 'Set by the expression' : undefined}
+                error={
+                  bad && row.applicationField.trim() !== '' && !hasExpression && row.igaAttribute.trim() === ''
+                    ? 'Name the IGA attribute or write an expression.'
+                    : undefined
+                }
+              />
+            ) : (
+              <Select
+                ariaLabel="IGA attribute"
+                placeholder="Select"
+                options={ALL_IGA_ATTRIBUTES}
+                value={hasExpression ? '' : row.igaAttribute}
+                onChange={(v) =>
+                  update(row.id, {
+                    igaAttribute: v,
+                    source: sourceForIgaAttribute(v),
+                    dateFormat: undefined,
+                  })
+                }
+                disabled={hasExpression}
+                helperText={hasExpression ? 'Set by the expression' : undefined}
+                error={
+                  bad && row.applicationField.trim() !== '' && !hasExpression && row.igaAttribute === ''
+                    ? 'Pick one or write an expression.'
+                    : undefined
+                }
+              />
+            )}
           </div>
           {dated && (
             <div className="w-[104px] shrink-0">
@@ -154,6 +185,13 @@ export function AttributeMappingEditor({
             </div>
           )}
         </div>
+        <Input
+          aria-label={`${applicationName} attribute`}
+          placeholder="e.g. userName"
+          value={row.applicationField}
+          onChange={(e) => update(row.id, { applicationField: e.target.value })}
+          error={bad && !row.applicationField.trim() ? 'Name the field.' : undefined}
+        />
         <Input
           aria-label="Transformation"
           placeholder="Optional"

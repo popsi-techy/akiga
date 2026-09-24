@@ -50,6 +50,7 @@ export function AdvancedAttributeMappingPanel({
       >
         <StatusChip
           intent={configured ? 'success' : 'warning'}
+          dot={false}
           label={`${mapped} ${mapped === 1 ? 'attribute' : 'attributes'} mapped`}
         />
         <Button

@@ -3,8 +3,8 @@
 import * as React from 'react';
 import { PageHeader, Section, Example, PropsTable, DoDont } from '@/components/docs/primitives';
 import {
+  ChipPicker,
   Input,
-  OverflowChips,
   Select,
   SettingsInfoBanner,
   SettingsNested,
@@ -63,7 +63,12 @@ export default function SettingsDocs() {
                   title="Allowed methods"
                   description="Select which methods are available."
                 >
-                  <OverflowChips items={METHODS} max={1} tone="onSubtle" />
+                  <ChipPicker
+                    items={METHODS}
+                    addLabel="Add methods"
+                    editLabel={`Allowed methods: ${METHODS.map((m) => m.name).join(', ')}. Edit.`}
+                    onClick={() => undefined}
+                  />
                 </SettingsRow>
               </SettingsStack>
             </SettingsSection>
@@ -187,7 +192,7 @@ export default function SettingsDocs() {
             'Give each section its own Save. Dirty in one section must not enable Save in another.',
             'Put sibling grey wells in SettingsStack.',
             'Open SettingsNested inside the parent grey well when a control has a dependent field, or when the well is a heading and the fields live in the white panel.',
-            'Use OverflowChips tone="onSubtle" for a chosen set on a grey well.',
+            'Use ChipPicker on a grey well when the chosen set can be added and then edited.',
           ]}
           donts={[
             'Wrap a subtle SettingsRow in a Card — that is two frames for one setting.',

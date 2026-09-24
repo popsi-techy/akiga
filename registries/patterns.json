@@ -16,6 +16,7 @@
         "SettingsNestedRow",
         "SettingsStack",
         "SettingsInfoBanner",
+        "ChipPicker",
         "OverflowChips",
         "Switch",
         "Button"

@@ -3,16 +3,15 @@
 import * as React from 'react';
 import AddOutlined from '@mui/icons-material/AddOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
-import EditOutlined from '@mui/icons-material/EditOutlined';
 import TuneOutlined from '@mui/icons-material/TuneOutlined';
 import {
   Button,
+  ChipPicker,
   Drawer,
   Input,
   Select,
   SettingsRow,
   SettingsStack,
-  Tooltip,
   useToast,
 } from '@ds/components';
 import {
@@ -75,7 +74,7 @@ export function IdentityClassificationCardV2({
     rulesStarted.some((r) => r.value.trim() === '' || r.identityType === '');
   const typeMissing = touched && draft.defaultIdentityType === '';
 
-  // The additional types the rules resolve to, deduped — shown as chips beside the pencil.
+  // The additional types the rules resolve to, deduped — ChipPicker names them.
   const typeLabel = (v: string) => IDENTITY_TYPES.find((t) => t.value === v)?.label ?? v;
   const typeChips = Array.from(
     new Set(rulesStarted.map((r) => r.identityType).filter((v) => v !== '')),
@@ -164,45 +163,17 @@ export function IdentityClassificationCardV2({
           title="Additional identity types"
           description="Classify some identities differently based on an application field."
         >
-          {/* Once rules exist, the resolved types and the edit affordance read as one
-              control: a clickable capsule — Contractor (External) +n ✎ — that opens the
-              rules drawer, like the applications slot in access certification. */}
-          {rulesStarted.length > 0 ? (
-            <Tooltip title="Edit type rules">
-              <button
-                type="button"
-                onClick={openRules}
-                aria-label={`Additional types: ${typeChips.map((c) => c.name).join(', ')}. Edit rules.`}
-                className="group flex h-9 w-48 items-center justify-between gap-1.5 rounded-md border-[0.8px] border-border bg-surface pl-1.5 pr-2 text-left transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-              >
-                <span className="flex min-w-0 flex-1 items-center gap-1.5">
-                  <span className="inline-flex min-w-0 items-center rounded-sm bg-subtle px-2 py-1 text-caption-medium text-text-primary">
-                    <span className="truncate">{typeChips[0]?.name}</span>
-                  </span>
-                  {typeChips.length > 1 && (
-                    <span className="shrink-0 whitespace-nowrap text-caption-medium text-text-secondary">
-                      +{typeChips.length - 1}
-                    </span>
-                  )}
-                </span>
-                <EditOutlined
-                  className="shrink-0 text-icon transition-colors group-hover:text-text-primary"
-                  sx={{ fontSize: 15 }}
-                />
-              </button>
-            </Tooltip>
-          ) : (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="w-48"
-              sx={{ justifyContent: 'flex-start' }}
-              startIcon={<AddOutlined />}
-              onClick={openRules}
-            >
-              Add Types
-            </Button>
-          )}
+          <ChipPicker
+            items={typeChips}
+            addLabel="Add Types"
+            editLabel={
+              typeChips.length > 0
+                ? `Additional types: ${typeChips.map((c) => c.name).join(', ')}. Edit rules.`
+                : 'Add type rules'
+            }
+            tooltip="Edit type rules"
+            onClick={openRules}
+          />
         </SettingsRow>
       </SettingsStack>
 

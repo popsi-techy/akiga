@@ -5,7 +5,6 @@ import {
   type AppSetupStepId,
   type AppSetupSubject,
 } from '@/data/application-setup';
-import { reconciliationSummary } from '@/data/reconciliation';
 
 export interface ApplicationSetupStep {
   id: AppSetupStepId;
@@ -15,7 +14,6 @@ export interface ApplicationSetupStep {
   tab: string;
   required: boolean;
   done: boolean;
-  doneLabel?: string;
 }
 
 const COPY: Record<AppSetupStepId, { hint: string; cta: string; tab: string }> = {
@@ -54,20 +52,16 @@ const COPY: Record<AppSetupStepId, { hint: string; cta: string; tab: string }> =
  */
 export function applicationSetupSteps(app: AppSetupSubject): ApplicationSetupStep[] {
   return APP_SETUP_STEPS.filter(
-    (step) =>
-      (step.id !== 'provisioning' && step.id !== 'reconciliation') || app.enableProvisioning,
+    (step) => step.id !== 'provisioning' || app.enableProvisioning,
   ).map(
     (step) => {
       const copy = COPY[step.id];
-      const done = isAppSetupStepDone(step.id, app);
-      const emptyInventory = step.id === 'reconciliation' && !reconciliationSummary(app.id).lastSync;
       return {
         id: step.id,
         label: step.label,
         required: isRequiredAppSetupStep(step.id, app),
-        done,
+        done: isAppSetupStepDone(step.id, app),
         ...copy,
-        doneLabel: done && emptyInventory ? 'Nothing to pull' : undefined,
       };
     },
   );

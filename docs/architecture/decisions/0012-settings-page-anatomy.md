@@ -1,6 +1,6 @@
 # ADR-0012: Tenant settings page anatomy
 
-- **Status:** Accepted
+- **Status:** Accepted — editable chosen sets superseded by [ADR-0021](./0021-chip-picker-add-then-edit.md)
 - **Date:** 2026-08-26
 - **Deciders:** Product / Design System
 - **Tags:** design-system, settings, patterns

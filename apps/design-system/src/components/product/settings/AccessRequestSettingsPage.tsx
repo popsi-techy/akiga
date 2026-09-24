@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import AppsOutlined from '@mui/icons-material/AppsOutlined';
 import AutoAwesomeOutlined from '@mui/icons-material/AutoAwesomeOutlined';
 import BadgeOutlined from '@mui/icons-material/BadgeOutlined';
-import EditOutlined from '@mui/icons-material/EditOutlined';
 import EmailOutlined from '@mui/icons-material/EmailOutlined';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import TuneOutlined from '@mui/icons-material/TuneOutlined';
@@ -15,7 +14,7 @@ import {
   Card,
   Input,
   NavList,
-  OverflowChips,
+  ChipPicker,
   Select,
   SettingsInfoBanner,
   SettingsNested,
@@ -25,7 +24,6 @@ import {
   SettingsStack,
   Switch,
   Tabs,
-  Tooltip,
   useToast,
 } from '@ds/components';
 import {
@@ -282,21 +280,12 @@ function EntityPanel({
           title="Approval Workflow Policy"
           description={`Configure workflow approval policies for ${plural}.`}
         >
-          <OverflowChips
+          <ChipPicker
             items={[{ id: 'approval-policy', name: value.approvalPolicyName }]}
-            max={1}
-            tone="onSubtle"
+            addLabel="Add policy"
+            editLabel={`Approval policy: ${value.approvalPolicyName}. Edit.`}
+            onClick={() => router.push('/iga/automation/approval-policies')}
           />
-          <Tooltip title="Edit">
-            <button
-              type="button"
-              aria-label="Edit approval workflow policy"
-              onClick={() => router.push('/iga/automation/approval-policies')}
-              className="grid h-8 w-8 place-items-center rounded-md text-icon hover:bg-surface-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-            >
-              <EditOutlined sx={{ fontSize: 18 }} />
-            </button>
-          </Tooltip>
         </SettingsRow>
       </SettingsStack>
     );

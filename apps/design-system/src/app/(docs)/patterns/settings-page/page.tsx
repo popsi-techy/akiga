@@ -37,9 +37,12 @@ export default function SettingsPagePattern() {
             the section when a rule is always on.
           </li>
           <li>
-            A chosen set on a grey well uses{' '}
+            An editable chosen set on a grey well is{' '}
+            <span className="text-body-medium text-text-primary">ChipPicker</span>
+            — Add while empty, then one chip-plus-pencil capsule. A set that is
+            only named, not edited, may still use{' '}
             <span className="text-body-medium text-text-primary">OverflowChips tone=&quot;onSubtle&quot;</span>
-            , then a bare pencil if it is editable.
+            .
           </li>
           <li>
             When a control reveals a dependent field — or when a well is a heading
@@ -55,11 +58,11 @@ export default function SettingsPagePattern() {
           <Link href="/components/settings" className="text-text-brand hover:underline">
             Settings
           </Link>
-          . Decision:{' '}
-          <Link href="/components/settings" className="text-text-brand hover:underline">
-            ADR-0012
-          </Link>{' '}
-          in <code className="text-caption">docs/architecture/decisions/0012-settings-page-anatomy.md</code>.
+          . Decisions:{' '}
+          <code className="text-caption">docs/architecture/decisions/0012-settings-page-anatomy.md</code>
+          ,{' '}
+          <code className="text-caption">docs/architecture/decisions/0021-chip-picker-add-then-edit.md</code>
+          .
         </p>
       </Section>
 

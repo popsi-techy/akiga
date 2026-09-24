@@ -92,9 +92,9 @@ export function appBlockingSteps(app: AppSetupSubject): string[] {
 }
 
 /**
- * Connector surfaces exist only when this application will push access.
- * Off means no Configure tab and no Reconciliation tab — IGA is not going
- * to talk to the system.
+ * Configure exists only when this application will push access.
+ * Off hides Configure, not Reconciliation — pulling inventory is a
+ * different direction from pushing access.
  */
 export function applicationShowsConfigure(app: AppSetupSubject): boolean {
   return app.enableProvisioning;

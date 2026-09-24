@@ -30,13 +30,13 @@ import {
   ApplicationOverviewTab,
   ApplicationBasicDetailsDrawer,
   EntityOwnersTab,
-  ApplicationApprovalPolicyTab,
   ReconciliationTab,
   ProvisioningSetupTab,
   BaselineAccessTab,
   ApplicationAccountsTab,
   ApplicationEntitlementsTab,
 } from '@/components/product/directory';
+import { ApplicationApprovalPolicyTab } from '@/components/product/directory/ApplicationApprovalPolicyTab';
 import { EmergencyAccessGuideButton } from '@/components/product/emergency/EmergencyAccessGuideModal';
 
 const LIST_HREF = '/iga/directory/applications';
@@ -166,9 +166,15 @@ export default function ApplicationDetailPage() {
 
   React.useEffect(() => {
     if (!mounted) return;
+    // With provisioning off, Configure is gone and Reconciliation is the first
+    // tab. Empty inventory counts as a finished recon step, so first-unfinished
+    // would skip to Owners — the strip would start on Reconciliation and the
+    // selection would sit on Owners. Land on the first tab instead.
     const fallback =
       onboarded && appSetupIncomplete(onboarded)
-        ? firstUnfinishedAppTab(onboarded)
+        ? onboarded.enableProvisioning
+          ? firstUnfinishedAppTab(onboarded)
+          : 'reconciliation'
         : 'overview';
     if (requestedTab || requestedView) {
       setTab(tabFromQuery(requestedTab, requestedView, fallback));

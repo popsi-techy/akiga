@@ -97,7 +97,7 @@ export function ReconciliationTab({
   const columns: Column<SyncRun>[] = [
     {
       id: 'at',
-      header: 'Sync Time',
+      header: canSync ? 'Sync Time' : 'Upload time',
       sortable: true,
       width: 200,
       value: (r) => r.at,
@@ -105,22 +105,29 @@ export function ReconciliationTab({
     },
     {
       id: 'trigger',
-      header: 'Sync Type',
+      // Connector: how the run started. File: there is no schedule — every row is a CSV.
+      header: canSync ? 'Sync Type' : 'Source',
       sortable: true,
       width: 110,
-      value: (r) => r.trigger,
+      value: (r) => (canSync ? r.trigger : 'csv'),
       render: (r) => (
-        <span className="text-text-secondary">{r.trigger === 'manual' ? 'Manual' : 'Automatic'}</span>
+        <span className="text-text-secondary">
+          {canSync ? (r.trigger === 'manual' ? 'Manual' : 'Automatic') : 'CSV'}
+        </span>
       ),
     },
-    {
-      id: 'event',
-      header: 'Event Type',
-      sortable: true,
-      width: 170,
-      value: (r) => r.event,
-      render: (r) => <span className="text-text-secondary">{r.event}</span>,
-    },
+    ...(canSync
+      ? [
+          {
+            id: 'event',
+            header: 'Event Type',
+            sortable: true,
+            width: 170,
+            value: (r: SyncRun) => r.event,
+            render: (r: SyncRun) => <span className="text-text-secondary">{r.event}</span>,
+          } satisfies Column<SyncRun>,
+        ]
+      : []),
     {
       id: 'accounts',
       header: 'Accounts',
@@ -194,6 +201,7 @@ export function ReconciliationTab({
       <div className="space-y-5">
         <LastSyncBand
           summary={summary}
+          viaFile={!canSync}
           /*
             Two ways to reconcile, and an application only ever has one of them. With a
             connector the button asks it to run; without one there is nothing to ask, so
@@ -232,7 +240,7 @@ export function ReconciliationTab({
                 />
                 <InfoRow
                   icon={infoIcon.sync}
-                  label="Modifications in last sync"
+                  label={canSync ? 'Modifications in last sync' : 'Modifications in last upload'}
                   value={
                     <Delta
                       added={apps.added}
@@ -261,7 +269,7 @@ export function ReconciliationTab({
               />
               <InfoRow
                 icon={infoIcon.sync}
-                label="Modifications in last sync"
+                label={canSync ? 'Modifications in last sync' : 'Modifications in last upload'}
                 valueWrap
                 value={
                   <RowValue>
@@ -301,7 +309,7 @@ export function ReconciliationTab({
               />
               <InfoRow
                 icon={infoIcon.sync}
-                label="Modifications in last sync"
+                label={canSync ? 'Modifications in last sync' : 'Modifications in last upload'}
                 valueWrap
                 value={
                   <RowValue>
@@ -323,12 +331,14 @@ export function ReconciliationTab({
         </div>
 
         <div>
-          <h3 className="mb-3 text-h5 text-text-primary">Sync History</h3>
+          <h3 className="mb-3 text-h5 text-text-primary">
+            {canSync ? 'Sync history' : 'Upload history'}
+          </h3>
           <DataTable<SyncRun>
             layout="fixed"
             columns={columns}
             rows={runs}
-            emptyTitle="No syncs yet"
+            emptyTitle={canSync ? 'No syncs yet' : 'No uploads yet'}
             /* The empty state has to name the action this application actually has. With
                no connector "Run a sync" is advice for a button that is not on the page. */
             emptyMessage={
@@ -411,15 +421,25 @@ function CsvSyncActions() {
 function LastSyncBand({
   summary,
   action,
+  viaFile = false,
 }: {
   summary: ReconciliationSummary;
-  /** Sync Now, when the application has a connector to sync over. */
+  /** Sync Now, or Upload CSV when there is no connector. */
   action?: React.ReactNode;
+  /**
+   * The inventory comes from a file, not a connector run. The label and the
+   * empty reading have to say that — "Last sync · Never run" next to Upload
+   * CSV is a job this application cannot do.
+   */
+  viaFile?: boolean;
 }) {
   const lastSync = summary.lastSync;
+  const noun = viaFile ? 'upload' : 'sync';
   const ariaLabel = lastSync
-    ? `Last sync ${lastSync.outcome === 'success' ? 'succeeded' : 'failed'} on ${formatDateTime(lastSync.at)}`
-    : 'No sync has run yet';
+    ? `Last ${noun} ${lastSync.outcome === 'success' ? 'succeeded' : 'failed'} on ${formatDateTime(lastSync.at)}`
+    : viaFile
+      ? 'No inventory file has been uploaded yet'
+      : 'No sync has run yet';
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-xl border border-border bg-surface px-4 py-3">
@@ -430,7 +450,9 @@ function LastSyncBand({
       >
         <span className="flex shrink-0 items-center gap-2">
           <WatchLater sx={{ fontSize: 18 }} className="text-icon" aria-hidden />
-          <span className="text-caption-medium text-text-secondary">Last sync</span>
+          <span className="text-caption-medium text-text-secondary">
+            {viaFile ? 'Last upload' : 'Last sync'}
+          </span>
         </span>
 
         {lastSync ? (
@@ -449,7 +471,9 @@ function LastSyncBand({
         ) : (
           /* Not a chip: a status chip is a status object, and never having run is the
              absence of one. The label beside it already asks the question. */
-          <span className="text-body-sm text-text-secondary">Never run</span>
+          <span className="text-body-sm text-text-secondary">
+            {viaFile ? 'Never uploaded' : 'Never run'}
+          </span>
         )}
       </div>
 

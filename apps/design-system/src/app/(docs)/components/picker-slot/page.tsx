@@ -82,6 +82,7 @@ export default function PickerSlotDocs() {
             'Don’t put a second outlined Button in the filled state; `onEdit` renders a bare pencil precisely so it does not compete with the step’s own primary action.',
             'Don’t let the filled state grow into a list of what was picked. That is the shape change this exists to avoid — put the list in the Drawer.',
             'Don’t use it when the collection IS the page. A slot summarising the one thing a screen is about hides its own subject.',
+            'Don’t put it on the right of a SettingsRow. That compact add-then-edit control is ChipPicker.',
           ]}
         />
       </Section>

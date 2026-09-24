@@ -27,6 +27,7 @@ export { AdvancedAttributeMappingPanel } from './AdvancedAttributeMappingPanel';
 export { IdentityClassificationCard } from './IdentityClassificationCard';
 export { ScimInboundPanel } from './ScimInboundPanel';
 export { ConnectionConfiguration } from './ConnectionConfiguration';
+export { ManageConnections } from './ManageConnections';
 export { ConnectionEventDrawer } from './ConnectionEventDrawer';
 export { AttributeMappingDrawer } from './AttributeMappingDrawer';
 export { BaselineDrawer } from './BaselineDrawer';

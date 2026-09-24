@@ -181,6 +181,29 @@ export const IGA_ATTRIBUTES: Record<AttributeSource, { value: string; label: str
   ],
 };
 
+export const ATTRIBUTE_TYPES = [
+  { value: 'predefined', label: 'Predefined' },
+  { value: 'custom', label: 'Custom' },
+] as const;
+export type MappingAttributeType = (typeof ATTRIBUTE_TYPES)[number]['value'];
+
+/** Every catalogued IGA attribute, one list — Predefined rows pick from this. */
+export const ALL_IGA_ATTRIBUTES = Object.values(IGA_ATTRIBUTES).flat();
+const IGA_ATTRIBUTE_VALUES = new Set(ALL_IGA_ATTRIBUTES.map((a) => a.value));
+
+export function sourceForIgaAttribute(value: string): AttributeSource {
+  for (const source of ATTRIBUTE_SOURCES) {
+    if (IGA_ATTRIBUTES[source.value].some((a) => a.value === value)) return source.value;
+  }
+  return 'custom-user';
+}
+
+export function attributeTypeOf(m: Pick<AttributeMapping, 'attributeType' | 'igaAttribute'>): MappingAttributeType {
+  if (m.attributeType === 'predefined' || m.attributeType === 'custom') return m.attributeType;
+  if (m.igaAttribute !== '' && !IGA_ATTRIBUTE_VALUES.has(m.igaAttribute)) return 'custom';
+  return 'predefined';
+}
+
 /**
  * Attributes that are a date, and so cannot be read without knowing its shape.
  *
@@ -219,6 +242,11 @@ export function formatDateSample(pattern: string): string | null {
 export interface AttributeMapping {
   id: string;
   source: AttributeSource;
+  /**
+   * Predefined picks from the IGA catalog; Custom types a name. Older rows
+   * without this field are inferred from whether `igaAttribute` is catalogued.
+   */
+  attributeType?: MappingAttributeType;
   /** The field name the application expects. */
   applicationField: string;
   /** Which IGA attribute supplies it. Ignored when `expression` is set. */

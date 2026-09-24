@@ -132,6 +132,26 @@
       "notes": "The unchecked outline uses border.control, the token added for exactly this: WCAG 1.4.11 asks 3:1 on a control boundary and the hairline borders cannot reach it. Prefer the `label` prop over wrapping in a <label>, which would leave the text dead."
     },
     {
+      "name": "ChipPicker",
+      "status": "stable",
+      "source": "apps/design-system/src/design-system/components/ChipPicker/ChipPicker.tsx",
+      "extends": null,
+      "variants": [
+        "empty",
+        "filled"
+      ],
+      "states": [
+        "default",
+        "empty",
+        "filled",
+        "hover",
+        "focus-visible",
+        "disabled"
+      ],
+      "docs": "apps/design-system/src/app/(docs)/components/chip-picker/page.tsx",
+      "notes": "The settings-row control for a set chosen elsewhere. Empty is a secondary Add button that names what will appear. Filled is ONE clickable capsule — first name, +n, pencil — not OverflowChips beside a bare pencil. Both states are w-48 so Add and the capsule do not jump; that matches the Select beside them. onClick opens a Drawer; this control does not edit in place. OverflowChips remains display-only (table cells, InfoRow). PickerSlot is the same job as a full wizard row. See ADR-0021. Promoted from identity classification once Approval Policy, MFA methods and Access Request approval needed the same add-then-edit control."
+    },
+    {
       "name": "ClickToEditText",
       "status": "stable",
       "source": "apps/design-system/src/design-system/components/ClickToEditText/ClickToEditText.tsx",
@@ -524,7 +544,7 @@
         "focus-visible"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/overflow-chips/page.tsx",
-      "notes": "A few named things plus a +n that reveals the rest, for rows whose height must not change with their contents (table cells, label/value rows, a summary beside a button). With an overflow the set sits in ONE tinted pill — the named chip and the +n are halves of a single value, and loose chips read as two values; with nothing to collapse a lone chip is left ungrouped. The +n is plain text, never a second outlined chip: it is a remainder, not an item. `renderItem` is for items that carry their own mark; those stay ungrouped so two pills are not nested. People are named with the round avatar and the plain name through `renderItem`, never the default chip — the shape is how the product says \"person\". `tone=\"onSubtle\"` inverts the grouped chrome for a grey well: a white capsule, grey named pills. Promoted from product code once a second surface needed it."
+      "notes": "A few named things plus a +n that reveals the rest, for rows whose height must not change with their contents (table cells, label/value rows, a summary beside a button). With an overflow the set sits in ONE tinted pill — the named chip and the +n are halves of a single value, and loose chips read as two values; with nothing to collapse a lone chip is left ungrouped. The +n is plain text, never a second outlined chip: it is a remainder, not an item. `renderItem` is for items that carry their own mark; those stay ungrouped so two pills are not nested. People are named with the round avatar and the plain name through `renderItem`, never the default chip — the shape is how the product says \"person\". `tone=\"onSubtle\"` inverts the grouped chrome for a grey well: a white capsule, grey named pills. Display only — an editable chosen set on a SettingsRow is ChipPicker (ADR-0021), not these chips beside a pencil. Promoted from product code once a second surface needed it."
     },
     {
       "name": "PeekPanel",
@@ -769,7 +789,7 @@
         "disabled"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/select/page.tsx",
-      "notes": "Matched to Input so the two align in a form row. Pass ariaLabel when the visible label sits outside the component — otherwise the combobox announces only its value. hint is an info tooltip on the label, same as Input — use it for the sentence a user only needs once; helperText stays under the field."
+      "notes": "Matched to Input so the two align in a form row. Pass ariaLabel when the visible label sits outside the component — otherwise the combobox announces only its value. hint is an info tooltip on the label, same as Input — use it for the sentence a user only needs once; helperText stays under the field. The open list is capped at eight sm-height rows (`controlHeight.sm`) and scrolls (`.ds-scroll`) — a long catalog must not grow to the viewport."
     },
     {
       "name": "SelectableList",
@@ -930,7 +950,7 @@
         "empty-row"
       ],
       "docs": "apps/design-system/src/app/(docs)/components/settings/page.tsx",
-      "notes": "Tenant-admin settings chrome. SettingsPage is a 900px column that shrinks with the viewport. The page name is the breadcrumb — SettingsPage.title is visually hidden. SettingsSection is a heading plus optional Reset (icon) and xs Save — each section saves itself. SettingsRow surface=subtle is the grey well; wrap siblings in SettingsStack (4px gap, radius only on the outer corners, a middle row is square). SettingsNested is the white panel inside a grey well — pass it as SettingsRow.nested. SettingsNestedRow is one field inside that panel (one when a parent control is on, several when the well is a heading with no control). surface=plain is a divided row inside an existing Card. SettingsInfoBanner is the always-on note under a section. Do not wrap a subtle well in a Card. OverflowChips tone=onSubtle is the chosen-set capsule on a grey well. See ADR-0012 and the settings-page pattern."
+      "notes": "Tenant-admin settings chrome. SettingsPage is a 900px column that shrinks with the viewport. The page name is the breadcrumb — SettingsPage.title is visually hidden. SettingsSection is a heading plus optional Reset (icon) and xs Save — each section saves itself. SettingsRow surface=subtle is the grey well; wrap siblings in SettingsStack (4px gap, radius only on the outer corners, a middle row is square). SettingsNested is the white panel inside a grey well — pass it as SettingsRow.nested. SettingsNestedRow is one field inside that panel (one when a parent control is on, several when the well is a heading with no control). surface=plain is a divided row inside an existing Card. SettingsInfoBanner is the always-on note under a section. Do not wrap a subtle well in a Card. An editable chosen set on a grey well is ChipPicker (ADR-0021). OverflowChips tone=onSubtle is only for a set that is named, not edited. See ADR-0012 and the settings-page pattern."
     },
     {
       "name": "SetupBar",

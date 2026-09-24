@@ -50,6 +50,7 @@ const groups: { title: string; description: string; items: [string, string, stri
       ['Selection Panel', '/components/selection-panel', 'The “what you selected” side panel for multi-select drawers.'],
       ['Selection Dock', '/components/selection-dock', 'Bottom-aligned floating card for bulk work on a list.'],
       ['Picker Slot', '/components/picker-slot', 'One row standing in for a collection chosen in a drawer.'],
+      ['Chip Picker', '/components/chip-picker', 'Add, then one chip-plus-pencil capsule that edits the set.'],
       ['Segmented Control', '/components/segmented-control', 'Connected toggle where one segment is always on.'],
       ['Quick Filter', '/components/quick-filter', 'Standalone filter chips where cleared is a real state.'],
     ],

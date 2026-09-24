@@ -74,6 +74,7 @@ export const navigation: NavSection[] = [
       { label: 'Selection Panel', href: '/components/selection-panel', status: 'ready' },
       { label: 'Selection Dock', href: '/components/selection-dock', status: 'ready' },
       { label: 'Picker Slot', href: '/components/picker-slot', status: 'ready' },
+      { label: 'Chip Picker', href: '/components/chip-picker', status: 'ready' },
       { label: 'Segmented Control', href: '/components/segmented-control', status: 'ready' },
       { label: 'Quick Filter', href: '/components/quick-filter', status: 'ready' },
     ],

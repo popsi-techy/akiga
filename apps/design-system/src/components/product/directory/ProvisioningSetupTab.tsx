@@ -6,6 +6,7 @@ import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import ShieldOutlined from '@mui/icons-material/ShieldOutlined';
 import KeyOutlined from '@mui/icons-material/KeyOutlined';
 import LanOutlined from '@mui/icons-material/LanOutlined';
+import ToggleOnOutlined from '@mui/icons-material/ToggleOnOutlined';
 import TuneOutlined from '@mui/icons-material/TuneOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
@@ -25,6 +26,7 @@ import {
 import { AuthorizationDrawer } from './AuthorizationDrawer';
 import { AdvancedAttributeMappingPanel } from './AdvancedAttributeMappingPanel';
 import { ConnectionConfiguration } from './ConnectionConfiguration';
+import { ManageConnections } from './ManageConnections';
 import { ScimInboundPanel } from './ScimInboundPanel';
 import {
   GRANT_TYPES,
@@ -34,18 +36,17 @@ import {
   setAuthorized,
   type AppAuthorization,
 } from '@/data/provisioning-auth';
-import { listConnectionEvents } from '@/data/connection-events';
+import { EVENT_KINDS, SCIM_EVENT_KINDS, listConnectionEvents } from '@/data/connection-events';
 import { applicationHasScimInbound, applicationIsScimProvisioned } from '@/data/scim-inbound';
 
-type Section = 'authorization' | 'connection' | 'advanced';
+type Section = 'authorization' | 'connection' | 'manage' | 'advanced';
 
 /**
  * Provisioning — everything the connector needs before it can act on this
  * application. Authorization, then connection configuration: sign-in has to
- * exist before a call can be tested. REST types keep a third rail item for
- * identity typing and attribute mapping; SCIM/UMAPI types classify identities
- * on Connection configuration and map attributes on each event, so that hop
- * is omitted.
+ * exist before a call can be tested. REST types then map attributes on
+ * Advanced. Every type has Manage connections to run or pause its events —
+ * the REST inbound/outbound catalog, or the three SCIM/UMAPI/AD events.
  *
  * The jobs sit in a 240px NavList rail, same as Owners — a section
  * switcher beside the work, not a segmented control above it.
@@ -69,12 +70,16 @@ export function ProvisioningSetupTab({
 
   // Stored in localStorage, so it can only be read after mount.
   const [eventCount, setEventCount] = React.useState(0);
+  const [enabledCount, setEnabledCount] = React.useState(0);
   const [mappingCount, setMappingCount] = React.useState(0);
 
   const refresh = React.useCallback(() => {
     setRows(listAuthorizations(applicationId));
     const events = listConnectionEvents(applicationId);
-    setEventCount(events.length);
+    const catalog = applicationIsScimProvisioned(applicationId) ? SCIM_EVENT_KINDS : EVENT_KINDS;
+    const catalogKinds = new Set<string>(catalog.map((k) => k.value));
+    setEventCount(events.filter((e) => catalogKinds.has(e.kind)).length);
+    setEnabledCount(events.filter((e) => e.enabled && catalogKinds.has(e.kind)).length);
     setMappingCount(
       events
         .filter((e) => e.kind === 'accounts-fetch' || e.kind === 'entitlements-fetch' || e.kind === 'group-membership')
@@ -244,20 +249,24 @@ export function ProvisioningSetupTab({
               label: 'Connection configuration',
               count: eventCount,
             },
-            // Mapping-only types (SCIM, Adobe, Active Directory) classify
-            // identities on Connection configuration and map attributes on
-            // each event — a third rail item would hop to work that already
-            // lives there.
+            // REST types map fields on Advanced. Every type then runs or
+            // pauses events on Manage connections.
             ...(!scimProvisioned
               ? [
                   {
                     id: 'advanced' as const,
                     icon: <TuneOutlined sx={{ fontSize: 18 }} />,
-                    label: 'Advanced attribute mapping',
+                    label: 'Attribute mapping',
                     count: mappingCount,
                   },
                 ]
               : []),
+            {
+              id: 'manage',
+              icon: <ToggleOnOutlined sx={{ fontSize: 18 }} />,
+              label: 'Manage connections',
+              count: enabledCount,
+            },
           ]}
         />
       </Card>
@@ -322,6 +331,17 @@ export function ProvisioningSetupTab({
               applicationId={applicationId}
               applicationName={applicationName}
               authorizations={rows}
+              onChanged={() => {
+                refresh();
+                onChanged?.();
+              }}
+            />
+          </div>
+        )}
+        {section === 'manage' && (
+          <div className="min-h-0 flex-1">
+            <ManageConnections
+              applicationId={applicationId}
               onChanged={() => {
                 refresh();
                 onChanged?.();

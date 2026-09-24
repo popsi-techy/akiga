@@ -69,7 +69,7 @@ export default function SelectDocs() {
             'Use for a single choice from a known list.',
             'Provide a label and, when unset, a placeholder.',
             'Keep option labels short and scannable.',
-            'Use Input with search for very long lists later.',
+            'A long catalog is fine — the list scrolls after eight rows.',
           ]}
           donts={[
             'Don’t use a select for 2 mutually exclusive options (use a toggle/radio).',

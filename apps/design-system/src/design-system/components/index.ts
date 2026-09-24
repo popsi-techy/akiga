@@ -5,6 +5,8 @@ export { ProgressRing } from './ProgressRing/ProgressRing';
 export type { ProgressRingProps } from './ProgressRing/ProgressRing';
 export { OverflowChips } from './OverflowChips/OverflowChips';
 export type { OverflowChipsProps, OverflowChipItem } from './OverflowChips/OverflowChips';
+export { ChipPicker } from './ChipPicker/ChipPicker';
+export type { ChipPickerProps, ChipPickerItem } from './ChipPicker/ChipPicker';
 
 export { StatusChip } from './StatusChip/StatusChip';
 export type { StatusChipProps, StatusIntent } from './StatusChip/StatusChip';

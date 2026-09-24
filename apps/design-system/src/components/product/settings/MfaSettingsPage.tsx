@@ -1,16 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import EditOutlined from '@mui/icons-material/EditOutlined';
 import {
-  OverflowChips,
+  ChipPicker,
   SettingsInfoBanner,
   SettingsPage,
   SettingsRow,
   SettingsSection,
   SettingsStack,
   Switch,
-  Tooltip,
   useToast,
 } from '@ds/components';
 import {
@@ -124,23 +122,16 @@ export function MfaSettingsPage({
             title="Allowed MFA Methods"
             description="Select which authentication methods are available for users."
           >
-            <OverflowChips
+            <ChipPicker
               items={value.methods.map((id) => ({ id, name: MFA_METHOD_LABELS[id] }))}
-              max={1}
-              tone="onSubtle"
+              addLabel="Add methods"
+              editLabel={`Allowed MFA methods: ${value.methods
+                .map((id) => MFA_METHOD_LABELS[id])
+                .join(', ')}. Edit.`}
+              onClick={() =>
+                toast.info('Additional MFA methods are not available in this prototype')
+              }
             />
-            <Tooltip title="Edit">
-              <button
-                type="button"
-                aria-label="Edit allowed MFA methods"
-                onClick={() =>
-                  toast.info('Additional MFA methods are not available in this prototype')
-                }
-                className="grid h-8 w-8 place-items-center rounded-md text-icon hover:bg-surface-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
-              >
-                <EditOutlined sx={{ fontSize: 18 }} />
-              </button>
-            </Tooltip>
           </SettingsRow>
         </SettingsStack>
       </SettingsSection>
