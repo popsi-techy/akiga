@@ -1,86 +1,22 @@
 'use client';
 
 import * as React from 'react';
-import { Button, Card, Tabs, useToast, type TabItem } from '@ds/components';
+import { Button, SettingsRow, SettingsStack, StatusChip } from '@ds/components';
+import { EventAttributeMappingDrawer } from './EventAttributeMappingDrawer';
+import { IdentityClassificationCardV2 } from './IdentityClassificationCardV2';
 import {
-  ensureConnectionEventForKind,
-  getConnectionEventByKind,
-  mappingComplete,
-  saveConnectionEvent,
-  type AttributeMapping,
+  SCIM_EVENT_KINDS,
+  listConnectionEvents,
   type ConnectionEvent,
+  type EventKind,
 } from '@/data/connection-events';
-import { AttributeMappingEditor, blankMappingRow } from './AttributeMappingEditor';
-import { IdentityClassificationCard } from './IdentityClassificationCard';
 
-type FetchTab = 'accounts-fetch' | 'entitlements-fetch';
-
-const FETCH_TABS: TabItem[] = [
-  { value: 'accounts-fetch', label: 'Account fetch' },
-  { value: 'entitlements-fetch', label: 'Entitlement fetch' },
-];
-
-function FetchMappingSection({
-  applicationId,
-  applicationName,
-  kind,
-}: {
-  applicationId: string;
-  applicationName: string;
-  kind: FetchTab;
-}) {
-  const toast = useToast();
-  const [event, setEvent] = React.useState<ConnectionEvent | null>(null);
-  const [rows, setRows] = React.useState<AttributeMapping[]>([]);
-  const [touched, setTouched] = React.useState(false);
-
-  React.useEffect(() => {
-    const e = ensureConnectionEventForKind(applicationId, kind);
-    setEvent(e);
-    setRows(e.attributes.length > 0 ? e.attributes.map((a) => ({ ...a })) : [blankMappingRow(0)]);
-    setTouched(false);
-  }, [applicationId, kind]);
-
-  const started = rows.filter(
-    (r) => r.applicationField.trim() !== '' || r.igaAttribute !== '' || r.expression.trim() !== '',
-  );
-  const incomplete = started.filter((r) => !mappingComplete(r));
-
-  const save = () => {
-    setTouched(true);
-    if (incomplete.length > 0) return;
-    if (!event) return;
-    saveConnectionEvent({ ...event, attributes: started });
-    toast.success(
-      started.length === 0
-        ? 'Mapping cleared for this fetch.'
-        : `${started.length} ${started.length === 1 ? 'attribute' : 'attributes'} mapped.`,
-    );
-  };
-
-  const configuredElsewhere = Boolean(getConnectionEventByKind(applicationId, kind)?.url.trim());
-
-  return (
-    <>
-      {!configuredElsewhere && (
-        <p className="mb-4 text-body-sm text-text-secondary">
-          The API call for this fetch is set up under Connection configuration.
-        </p>
-      )}
-      <AttributeMappingEditor
-        rows={rows}
-        onChange={setRows}
-        applicationName={applicationName}
-        touched={touched}
-      />
-      <div className="mt-4 flex justify-end">
-        <Button onClick={save}>Save mapping</Button>
-      </div>
-    </>
-  );
-}
-
-/** Advanced attribute mapping — identity typing plus inbound fetch field maps. */
+/**
+ * Advanced attribute mapping — identity classification plus the same three
+ * mapping slots SCIM Connection configuration uses: User import, Group Import,
+ * and Group membership. HTTP calls stay on Connection configuration; this
+ * surface only maps fields.
+ */
 export function AdvancedAttributeMappingPanel({
   applicationId,
   applicationName,
@@ -90,39 +26,70 @@ export function AdvancedAttributeMappingPanel({
   applicationName: string;
   onChanged?: () => void;
 }) {
-  const [fetchTab, setFetchTab] = React.useState<FetchTab>('accounts-fetch');
+  const [rows, setRows] = React.useState<ConnectionEvent[]>([]);
+  const [mappingKind, setMappingKind] = React.useState<EventKind | null>(null);
+
+  const refresh = React.useCallback(
+    () => setRows(listConnectionEvents(applicationId)),
+    [applicationId],
+  );
+  React.useEffect(() => refresh(), [refresh]);
+
+  const eventsFor = (kind: EventKind) => rows.filter((r) => r.kind === kind);
+
+  const slotRow = (slot: { value: EventKind; label: string; description?: string }) => {
+    const events = eventsFor(slot.value);
+    const mapped = events.reduce((n, e) => n + e.attributes.length, 0);
+    const configured = mapped > 0;
+    return (
+      <SettingsRow
+        key={slot.value}
+        surface="subtle"
+        title={slot.label}
+        description={slot.description}
+      >
+        <StatusChip
+          intent={configured ? 'success' : 'warning'}
+          label={`${mapped} ${mapped === 1 ? 'attribute' : 'attributes'} mapped`}
+        />
+        <Button
+          variant="secondary"
+          size="xs"
+          aria-label={`${configured ? 'Edit' : 'Map'} attributes for ${slot.label}`}
+          onClick={() => setMappingKind(slot.value)}
+        >
+          {configured ? 'Edit attributes' : 'Map attributes'}
+        </Button>
+      </SettingsRow>
+    );
+  };
 
   return (
-    <div className="ds-scroll min-h-0 flex-1 overflow-y-auto pb-2">
-      <section>
-        <h2 className="text-h5 text-text-primary">Identity classification</h2>
-        <Card padding="md" className="mt-4">
-          <IdentityClassificationCard applicationId={applicationId} onSaved={onChanged} />
-        </Card>
-      </section>
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="ds-scroll min-h-0 flex-1 overflow-y-auto">
+        <section className="mb-8">
+          <h2 className="text-h5 text-text-primary">Identity classification</h2>
+          <div className="mt-4">
+            <IdentityClassificationCardV2 applicationId={applicationId} onSaved={onChanged} />
+          </div>
+        </section>
+        <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
+          <h2 className="text-h5 text-text-primary">Events</h2>
+        </div>
+        <SettingsStack>{SCIM_EVENT_KINDS.map(slotRow)}</SettingsStack>
+      </div>
 
-      <section className="mt-8">
-        <h2 className="text-h5 text-text-primary">Fetch attribute mapping</h2>
-        <p className="mt-1 max-w-2xl text-body-sm text-text-secondary">
-          Map application fields to IGA attributes for each inbound fetch.
-        </p>
-        <div className="mt-4">
-          <Tabs
-            aria-label="Fetch type"
-            items={FETCH_TABS}
-            value={fetchTab}
-            onChange={(v) => setFetchTab(v as FetchTab)}
-          />
-        </div>
-        <div className="mt-5">
-          <FetchMappingSection
-            key={fetchTab}
-            applicationId={applicationId}
-            applicationName={applicationName}
-            kind={fetchTab}
-          />
-        </div>
-      </section>
+      <EventAttributeMappingDrawer
+        open={mappingKind !== null}
+        kind={mappingKind}
+        applicationId={applicationId}
+        applicationName={applicationName}
+        onClose={() => setMappingKind(null)}
+        onChanged={() => {
+          refresh();
+          onChanged?.();
+        }}
+      />
     </div>
   );
 }

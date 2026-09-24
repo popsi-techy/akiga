@@ -3,7 +3,6 @@
 import * as React from 'react';
 import {
   Button,
-  Card,
   SettingsRow,
   SettingsStack,
   StatusChip,
@@ -12,9 +11,7 @@ import {
 } from '@ds/components';
 import { ConnectionEventDrawer } from './ConnectionEventDrawer';
 import { EventAttributeMappingDrawer } from './EventAttributeMappingDrawer';
-import { IdentityClassificationCard } from './IdentityClassificationCard';
 import { IdentityClassificationCardV2 } from './IdentityClassificationCardV2';
-import { IdentityClassificationCardV3 } from './IdentityClassificationCardV3';
 import {
   EVENT_KINDS,
   SCIM_EVENT_KINDS,
@@ -50,14 +47,11 @@ export function ConnectionConfiguration({
   applicationName,
   authorizations,
   onChanged,
-  classificationVersion = 'v1',
 }: {
   applicationId: string;
   applicationName: string;
   authorizations: AppAuthorization[];
   onChanged?: () => void;
-  /** Which identity-classification layout to render (SCIM/UMAPI only). */
-  classificationVersion?: 'v1' | 'v2' | 'v3';
 }) {
   const toast = useToast();
   const [rows, setRows] = React.useState<ConnectionEvent[]>([]);
@@ -130,13 +124,7 @@ export function ConnectionConfiguration({
         key={slot.value}
         surface="subtle"
         title={slot.label}
-        description={
-          scimProvisioned
-            ? slot.description
-            : events.length === 0
-              ? 'Not configured'
-              : `${events.length} ${events.length === 1 ? 'call' : 'calls'}`
-        }
+        description={slot.description}
       >
         {scimProvisioned ? (
           <>
@@ -155,6 +143,14 @@ export function ConnectionConfiguration({
           </>
         ) : (
           <>
+            <StatusChip
+              intent={events.length > 0 ? 'success' : 'warning'}
+              label={
+                events.length === 0
+                  ? 'Not configured'
+                  : `${events.length} ${events.length === 1 ? 'call' : 'calls'}`
+              }
+            />
             <Button
               variant="secondary"
               size="xs"
@@ -228,24 +224,10 @@ export function ConnectionConfiguration({
         <div className="ds-scroll min-h-0 flex-1 overflow-y-auto">
           <section className="mb-8">
             <h2 className="text-h5 text-text-primary">Identity classification</h2>
-            {classificationVersion === 'v2' ? (
-              // v2 owns its own grey rows, so it needs no bordered card around it.
-              <div className="mt-4">
-                <IdentityClassificationCardV2 applicationId={applicationId} onSaved={onChanged} />
-              </div>
-            ) : classificationVersion === 'v3' ? (
-              <div className="mt-4">
-                <IdentityClassificationCardV3
-                  applicationId={applicationId}
-                  applicationName={applicationName}
-                  onSaved={onChanged}
-                />
-              </div>
-            ) : (
-              <Card padding="md" className="mt-4">
-                <IdentityClassificationCard applicationId={applicationId} onSaved={onChanged} />
-              </Card>
-            )}
+            {/* v2 owns its own grey rows, so it needs no bordered card around it. */}
+            <div className="mt-4">
+              <IdentityClassificationCardV2 applicationId={applicationId} onSaved={onChanged} />
+            </div>
           </section>
           {eventsToolbar}
           {eventsStacks}

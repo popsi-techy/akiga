@@ -37,15 +37,15 @@ import {
 import { listConnectionEvents } from '@/data/connection-events';
 import { applicationHasScimInbound, applicationIsScimProvisioned } from '@/data/scim-inbound';
 
-type Section = 'authorization' | 'connection' | 'connection-v2' | 'connection-v3' | 'advanced';
+type Section = 'authorization' | 'connection' | 'advanced';
 
 /**
  * Provisioning — everything the connector needs before it can act on this
  * application. Authorization, then connection configuration: sign-in has to
  * exist before a call can be tested. REST types keep a third rail item for
- * fetch mapping and identity typing; SCIM/UMAPI types classify identities on
- * Connection configuration and map attributes on each event, so that hop is
- * omitted.
+ * identity typing and attribute mapping; SCIM/UMAPI types classify identities
+ * on Connection configuration and map attributes on each event, so that hop
+ * is omitted.
  *
  * The jobs sit in a 240px NavList rail, same as Owners — a section
  * switcher beside the work, not a segmented control above it.
@@ -77,15 +77,8 @@ export function ProvisioningSetupTab({
     setEventCount(events.length);
     setMappingCount(
       events
-        .filter((e) => e.kind === 'accounts-fetch' || e.kind === 'entitlements-fetch')
-        .reduce(
-          (n, e) =>
-            n +
-            e.attributes.filter(
-              (r) => r.applicationField.trim() !== '' && (r.igaAttribute !== '' || r.expression.trim() !== ''),
-            ).length,
-          0,
-        ),
+        .filter((e) => e.kind === 'accounts-fetch' || e.kind === 'entitlements-fetch' || e.kind === 'group-membership')
+        .reduce((n, e) => n + e.attributes.length, 0),
     );
   }, [applicationId]);
   React.useEffect(() => refresh(), [refresh]);
@@ -251,25 +244,10 @@ export function ProvisioningSetupTab({
               label: 'Connection configuration',
               count: eventCount,
             },
-            // Demo: a second connection surface that swaps in the v2 identity-classification
-            // layout. SCIM/UMAPI only, since that is where classification lives.
-            ...(scimProvisioned
-              ? [
-                  {
-                    id: 'connection-v2' as const,
-                    icon: <LanOutlined sx={{ fontSize: 18 }} />,
-                    label: 'Connection configuration v2',
-                  },
-                  {
-                    id: 'connection-v3' as const,
-                    icon: <LanOutlined sx={{ fontSize: 18 }} />,
-                    label: 'Connection configuration v3',
-                  },
-                ]
-              : []),
-            // SCIM/UMAPI types map attributes on each event and classify
-            // identities on this same section — a third rail item would be a
-            // hop to a page whose work already lives here.
+            // Mapping-only types (SCIM, Adobe, Active Directory) classify
+            // identities on Connection configuration and map attributes on
+            // each event — a third rail item would hop to work that already
+            // lives there.
             ...(!scimProvisioned
               ? [
                   {
@@ -344,34 +322,6 @@ export function ProvisioningSetupTab({
               applicationId={applicationId}
               applicationName={applicationName}
               authorizations={rows}
-              onChanged={() => {
-                refresh();
-                onChanged?.();
-              }}
-            />
-          </div>
-        )}
-        {section === 'connection-v2' && (
-          <div className="min-h-0 flex-1">
-            <ConnectionConfiguration
-              applicationId={applicationId}
-              applicationName={applicationName}
-              authorizations={rows}
-              classificationVersion="v2"
-              onChanged={() => {
-                refresh();
-                onChanged?.();
-              }}
-            />
-          </div>
-        )}
-        {section === 'connection-v3' && (
-          <div className="min-h-0 flex-1">
-            <ConnectionConfiguration
-              applicationId={applicationId}
-              applicationName={applicationName}
-              authorizations={rows}
-              classificationVersion="v3"
               onChanged={() => {
                 refresh();
                 onChanged?.();

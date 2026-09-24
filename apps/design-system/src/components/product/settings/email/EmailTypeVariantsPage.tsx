@@ -110,7 +110,7 @@ function VersionCard({
           )}
           {onUse ? (
             <button type="button" onClick={onUse} className={primaryClass}>
-              {version.isDefault ? 'Use default' : 'Use this version'}
+              {version.isDefault ? 'Use default' : 'Use this template'}
             </button>
           ) : (
             <button type="button" onClick={onPreview} className={primaryClass}>
@@ -200,7 +200,7 @@ export function EmailTypeVariantsPage({ id }: { id: string }) {
   const active = allVersions.find((v) => v.inUse)!;
   const others = allVersions.filter((v) => !v.inUse && matches(v));
   const activeMatches = matches(active);
-  // When the empty state shows its own New version button, the toolbar one is redundant.
+  // When the empty state shows its own New template button, the toolbar one is redundant.
   const emptyStateCreate = others.length === 0 && !q;
 
   // ---- actions ---------------------------------------------------------
@@ -218,13 +218,13 @@ export function EmailTypeVariantsPage({ id }: { id: string }) {
   const openEdit = (row: EmailType) => router.push(editorHref(row.id));
   const create = () => {
     // A new version starts blank — a white canvas to write from scratch, not the Default's copy.
-    const v = createVariant(id, `Version ${variants.length + 1}`);
+    const v = createVariant(id, `Template ${variants.length + 1}`);
     updateEmailType(v.id, { bodyHtml: '<p></p>' });
     router.push(editorHref(v.id));
   };
   // Editing the Default forks a new version seeded from its wording, so it can be tweaked.
   const forkDefault = () => {
-    const v = createVariant(id, `Version ${variants.length + 1}`);
+    const v = createVariant(id, `Template ${variants.length + 1}`);
     router.push(editorHref(v.id));
   };
 
@@ -256,14 +256,14 @@ export function EmailTypeVariantsPage({ id }: { id: string }) {
             size="sm"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search versions"
-            aria-label="Search versions"
+            placeholder="Search templates"
+            aria-label="Search templates"
             startAdornment={<SearchOutlined sx={{ fontSize: 18 }} />}
           />
         </div>
         {!emptyStateCreate && (
           <Button variant="primary" size="sm" startIcon={<AddOutlined />} onClick={create} className="ml-auto">
-            New version
+            New template
           </Button>
         )}
       </div>
@@ -271,8 +271,8 @@ export function EmailTypeVariantsPage({ id }: { id: string }) {
       <div className="ds-scroll min-h-0 flex-1 overflow-y-auto pr-0.5">
         {/* Active version, featured on top. */}
         {activeMatches && (
-          <section aria-label="Active version">
-            <h2 className="mb-2 text-overline uppercase text-text-tertiary">Active version</h2>
+          <section aria-label="Active template">
+            <h2 className="mb-2 text-overline uppercase text-text-tertiary">Active template</h2>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <VersionCard
                 version={active}
@@ -286,21 +286,21 @@ export function EmailTypeVariantsPage({ id }: { id: string }) {
         )}
 
         {/* Every other version. */}
-        <section aria-label="Other versions" className="mt-6">
-          <h2 className="mb-2 text-overline uppercase text-text-tertiary">Other versions</h2>
+        <section aria-label="Other templates" className="mt-6">
+          <h2 className="mb-2 text-overline uppercase text-text-tertiary">Other templates</h2>
           {others.length === 0 ? (
             q ? (
               <p className="rounded-xl border border-dashed border-border py-8 text-center text-body-sm text-text-secondary">
-                No other versions match “{query.trim()}”.
+                No other templates match “{query.trim()}”.
               </p>
             ) : (
               <div className="flex flex-col items-center rounded-xl border border-dashed border-border px-6 py-10 text-center">
                 <span className="grid h-11 w-11 place-items-center rounded-full bg-subtle text-icon">
                   <DescriptionOutlined sx={{ fontSize: 22 }} />
                 </span>
-                <p className="mt-3 text-body-sm-strong text-text-primary">No other versions yet</p>
+                <p className="mt-3 text-body-sm-strong text-text-primary">No other templates yet</p>
                 <p className="mt-1 max-w-sm text-body-sm text-text-secondary">
-                  Create a version to offer alternative wording. The Default keeps sending until you
+                  Create a template to offer alternative wording. The Default keeps sending until you
                   switch to it.
                 </p>
                 <Button
@@ -310,7 +310,7 @@ export function EmailTypeVariantsPage({ id }: { id: string }) {
                   onClick={create}
                   className="mt-4"
                 >
-                  New version
+                  New template
                 </Button>
               </div>
             )
@@ -350,7 +350,7 @@ export function EmailTypeVariantsPage({ id }: { id: string }) {
                 setPreviewId(null);
               }}
             >
-              {previewVersion.isDefault ? 'Use default' : 'Use this version'}
+              {previewVersion.isDefault ? 'Use default' : 'Use this template'}
             </Button>
           )
         }

@@ -29,7 +29,7 @@ const SECTION = getSystemSettingsSection('email')!;
  * the name (so you can tell versions apart), the subject line, and the body between the
  * heading and the sign-off.
  *
- * Saving is explicit. "Use this version" is separate: a version can be edited for a while
+ * Saving is explicit. "Use this template" is separate: a version can be edited for a while
  * before it is the one that sends, and marking it in use is a decision, not a side effect of
  * typing.
  */
@@ -79,7 +79,7 @@ export function EmailTypeEditor({ templateId, variantId }: { templateId: string;
     { label: 'System Settings', href: '/iga/configurations' },
     { label: SECTION.title, href: SECTION.href },
     { label: template?.name ?? 'Email', href: backHref },
-    { label: row?.name ?? 'Version' },
+    { label: row?.name ?? 'Template' },
   ]);
 
   if (!allowed) return <SettingsDenied />;
@@ -91,13 +91,13 @@ export function EmailTypeEditor({ templateId, variantId }: { templateId: string;
   if (missing) {
     return (
       <div className="mx-auto max-w-lg py-16 text-center">
-        <h1 className="text-h4 text-text-primary">Version not found</h1>
+        <h1 className="text-h4 text-text-primary">Template not found</h1>
         <p className="mt-2 text-body-sm text-text-secondary">
-          It may have been deleted. The other versions are still here.
+          It may have been deleted. The other templates are still here.
         </p>
         <div className="mt-4 flex justify-center">
           <Button variant="secondary" onClick={() => router.push(backHref)}>
-            Back to versions
+            Back to templates
           </Button>
         </div>
       </div>
@@ -110,7 +110,7 @@ export function EmailTypeEditor({ templateId, variantId }: { templateId: string;
   const save = () => {
     if (!row) return;
     const next = updateEmailType(row.id, {
-      name: name.trim() || 'Untitled version',
+      name: name.trim() || 'Untitled template',
       subjectLine: subject,
       bodyHtml: body,
     });
@@ -126,6 +126,22 @@ export function EmailTypeEditor({ templateId, variantId }: { templateId: string;
     setInUseVariant(templateId, row.id);
     setRow({ ...row, inUse: true });
     toast.success(`“${template.name}” now sends “${row.name}”.`);
+  };
+
+  // Save the edits and make this version the one that sends, in one step.
+  const saveAndUse = () => {
+    if (!row) return;
+    const next = updateEmailType(row.id, {
+      name: name.trim() || 'Untitled template',
+      subjectLine: subject,
+      bodyHtml: body,
+    });
+    if (!next) return;
+    setInUseVariant(templateId, next.id);
+    setRow({ ...next, inUse: true });
+    setName(next.name);
+    setDirty(false);
+    toast.success(`Saved — “${template.name}” now sends “${next.name}”.`);
   };
 
   // Empty the body. Bump the key so the uncontrolled rich editor reloads the blank content.
@@ -154,12 +170,12 @@ export function EmailTypeEditor({ templateId, variantId }: { templateId: string;
       <header className="shrink-0 -mx-8 -mt-6 border-b border-border bg-canvas px-8 pt-3">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
-            <Tooltip title="Back to versions">
+            <Tooltip title="Back to templates">
               <Button
                 variant="tertiary"
                 size="sm"
                 iconOnly
-                aria-label="Back to versions"
+                aria-label="Back to templates"
                 onClick={() => router.push(backHref)}
               >
                 <ArrowBack sx={{ fontSize: 20 }} />
@@ -174,11 +190,14 @@ export function EmailTypeEditor({ templateId, variantId }: { templateId: string;
           <div className="flex shrink-0 items-center gap-2">
             {row && !row.inUse && (
               <Button variant="secondary" onClick={useThis}>
-                Use this version
+                Use this template
               </Button>
             )}
-            <Button disabled={!dirty || !row} onClick={save}>
+            <Button variant="secondary" disabled={!dirty || !row} onClick={save}>
               Save
+            </Button>
+            <Button disabled={!row || (!dirty && !!row?.inUse)} onClick={saveAndUse}>
+              Save &amp; Use
             </Button>
           </div>
         </div>
@@ -203,7 +222,7 @@ export function EmailTypeEditor({ templateId, variantId }: { templateId: string;
               <div className="shrink-0">
                 <div className="mb-4 space-y-4">
                   <Input
-                    label="Version name"
+                    label="Template name"
                     hint="Optional — helps tell your own drafts apart."
                     placeholder="e.g. Concise, Formal"
                     value={name}

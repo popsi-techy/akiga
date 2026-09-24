@@ -55,12 +55,12 @@ function EmailCard({
         <button
           type="button"
           onClick={onViewAll}
-          aria-label={`View all ${meta.count} versions of ${template.name}`}
+          aria-label={`View all ${meta.count} templates of ${template.name}`}
           className="flex min-w-0 items-center gap-1 rounded-sm text-caption text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
         >
           <LayersOutlined sx={{ fontSize: 16 }} className="shrink-0 text-icon-subtle" aria-hidden />
           <span>
-            {meta.count} {meta.count === 1 ? 'version' : 'versions'}
+            {meta.count} {meta.count === 1 ? 'template' : 'templates'}
           </span>
         </button>
         <div className="flex shrink-0 items-center gap-3">
@@ -69,14 +69,14 @@ function EmailCard({
             onClick={onPreview}
             className="whitespace-nowrap text-caption-medium text-text-secondary transition-colors hover:text-text-primary"
           >
-            Preview active version
+            Preview active template
           </button>
           <button
             type="button"
             onClick={onViewAll}
             className="rounded-sm bg-surface-inverse px-2.5 py-1 text-caption-medium text-text-inverse transition-colors hover:bg-sidebar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
           >
-            Manage versions
+            Manage templates
           </button>
         </div>
       </div>
@@ -143,8 +143,8 @@ export function EmailTypesListPage() {
       <div className="mb-5 shrink-0">
         <h1 className="text-h2 text-text-primary">{SECTION.title}</h1>
         <p className="mt-1 text-body text-text-secondary">
-          Every email the product sends, and the version applied to each. Preview the active
-          version, browse all versions, or add a new one.
+          Every email the product sends, and the template applied to each. Preview the active
+          template, browse all templates, or add a new one.
         </p>
       </div>
 
@@ -201,7 +201,7 @@ export function EmailTypesListPage() {
         subtitle={
           previewTemplate ? (
             <span className="inline-flex items-center gap-2">
-              Active version
+              Active template
               <StatusChip
                 intent={previewVariant ? 'success' : 'neutral'}
                 dot={Boolean(previewVariant)}
@@ -214,7 +214,7 @@ export function EmailTypesListPage() {
         footer={
           previewTemplate && (
             <Button variant="secondary" onClick={() => viewAll(previewTemplate)}>
-              View all versions
+              View all templates
             </Button>
           )
         }

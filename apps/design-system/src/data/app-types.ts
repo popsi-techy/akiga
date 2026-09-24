@@ -5,13 +5,13 @@
  * here, then names the instance it creates, so two Salesforce tenants share one
  * type and differ only by name (see `appProfiles` in the seed).
  *
- * Three categories, because they onboard at different granularity: a direct
- * type brings in one application, an IAM brings in every application it already
- * federates, and a PAM brings in privileged accounts rather than business
- * access.
+ * Four categories: a direct type brings in one application, an IAM brings in
+ * every application it already federates, a PAM brings in privileged accounts
+ * rather than business access, and Custom is the blank type when nothing listed
+ * matches.
  */
 
-export type AppTypeCategory = 'application' | 'iam' | 'pam';
+export type AppTypeCategory = 'application' | 'iam' | 'pam' | 'custom';
 export type AppTypeStatus = 'available' | 'coming-soon';
 
 export interface AppTypeOption {
@@ -28,12 +28,11 @@ export interface AppTypeOption {
    */
   inboundScim?: boolean;
   /**
-   * IGA provisions this type over SCIM (or Adobe's UMAPI), so there are no
-   * per-event HTTP calls to configure — a connection event carries only its
-   * attribute mapping. Connection configuration shows "Attribute mapping"
-   * where a REST type shows "Configure". Listing SCIM as a protocol is not
-   * enough: Salesforce and Google also speak SCIM but are still REST-driven
-   * here, so this is set only on the types that provision purely over it.
+   * Connection events are set up by attribute mapping rather than per-event
+   * HTTP calls. Adobe (UMAPI) and Active Directory share this surface with
+   * SCIM types: Connection configuration shows mapping, and there is no
+   * Advanced rail item. Listing SCIM as a protocol is not enough — Salesforce
+   * and Google also speak SCIM but stay REST-driven here.
    */
   scimProvisioned?: boolean;
   /** What IGA can do once this type is connected. Shown in Preview. */
@@ -48,18 +47,19 @@ export const appTypeCategories: { id: AppTypeCategory; label: string; descriptio
   { id: 'application', label: 'Applications', description: 'Business applications you can onboard directly' },
   { id: 'iam', label: 'IAM Integrations', description: 'Connect an IAM to discover and onboard many apps at once' },
   { id: 'pam', label: 'PAM Integrations', description: 'Connect a vault to govern privileged and break-glass access' },
+  { id: 'custom', label: 'Custom', description: 'A blank type when the catalog does not list the system' },
 ];
 
 /** Available before coming-soon inside each category, so the actionable tiles lead. */
 export const appTypes: AppTypeOption[] = [
   {
     id: 'at-custom',
-    name: 'Custom Application',
-    summary: 'Connect any custom system so IGA governs accounts and access.',
+    name: 'Custom app',
+    summary: 'Connect any system that is not in the catalog yet.',
     protocols: ['REST API'],
     capabilities: ['REST account import', 'Manual provisioning', 'Custom entitlement schema', 'Webhook fulfilment'],
     prerequisites: ['REST endpoint URL', 'API key or OAuth client'],
-    category: 'application',
+    category: 'custom',
     status: 'available',
   },
   {
@@ -102,6 +102,7 @@ export const appTypes: AppTypeOption[] = [
     name: 'Active Directory',
     summary: 'Connect on-prem directory so IGA governs domain users and groups.',
     protocols: ['LDAP', 'On-prem'],
+    scimProvisioned: true,
     capabilities: [
       'Account Schema Aggregation',
       'Group import',
@@ -297,7 +298,6 @@ export function appTypeMatches(t: AppTypeOption, query: string): boolean {
 export function listAppTypeProtocols(): string[] {
   const seen = new Set<string>();
   for (const t of appTypes) {
-    if (t.id === 'at-custom') continue;
     for (const p of t.protocols) seen.add(p);
   }
   return [...seen].sort((a, b) => a.localeCompare(b));

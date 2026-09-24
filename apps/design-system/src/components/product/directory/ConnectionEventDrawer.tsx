@@ -15,7 +15,6 @@ import {
   emptyEvent,
   eventKindMeta,
   eventStatus,
-  mappingComplete,
   saveConnectionEvent,
   type ConnectionEvent,
   type EventKind,
@@ -23,11 +22,10 @@ import {
   type HttpMethod,
 } from '@/data/connection-events';
 import { METHOD_LABEL, type AppAuthorization } from '@/data/provisioning-auth';
-import { AttributeMappingEditor, blankMappingRow } from './AttributeMappingEditor';
 
 type Draft = Omit<ConnectionEvent, 'updatedAt'> & { id: string };
 
-type Section = 'request' | 'response' | 'advanced' | 'mapping';
+type Section = 'request' | 'response' | 'advanced';
 
 const isDraftId = (id: string) => id.startsWith('__new__');
 const makeDraftId = () => `__new__-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -54,9 +52,8 @@ interface TestOutcome {
  * One event type — every call of that kind, then the one you are describing.
  *
  * The left rail stores the API calls. The right side describes the selected one:
- * the request, how to read the answer, how it behaves across a sync, and
- * which attributes it writes. Mapping sits with Advanced because it is the
- * last thing you set on a call, not a separate trip back to the catalog.
+ * the request, how to read the answer, and how it behaves across a sync.
+ * Field mapping lives on Advanced attribute mapping, not on this call.
  */
 export function ConnectionEventDrawer({
   open,
@@ -137,11 +134,6 @@ export function ConnectionEventDrawer({
   const requestDone = draft.name.trim() !== '' && draft.authorizationId !== null && draft.url.trim() !== '';
   const callReady = draft.url.trim() !== '';
   const responseDone = draft.successStatusCode.trim() !== '' && draft.successMessageKey.trim() !== '';
-  const mappingRows = draft.attributes.length > 0 ? draft.attributes : [];
-  const mappingStarted = mappingRows.filter(
-    (r) => r.applicationField.trim() !== '' || r.igaAttribute !== '' || r.expression.trim() !== '',
-  );
-  const mappingDone = mappingStarted.length > 0 && mappingStarted.every(mappingComplete);
 
   const save = () => {
     if (!hasDraft || !kind) return;
@@ -152,12 +144,6 @@ export function ConnectionEventDrawer({
       toast.error('Some required fields are still empty.');
       return;
     }
-    const incomplete = mappingStarted.filter((r) => !mappingComplete(r));
-    if (incomplete.length > 0) {
-      setSection('mapping');
-      toast.error('Some attribute mappings are still incomplete.');
-      return;
-    }
     const wasDraft = isDraftId(draft.id);
     const record = saveConnectionEvent({
       ...draft,
@@ -165,7 +151,6 @@ export function ConnectionEventDrawer({
       kind,
       name: draft.name.trim(),
       url: draft.url.trim(),
-      attributes: mappingStarted,
     });
     setRows((rs) => rs.map((r) => (r.id === selectedId ? { ...record } : r)));
     setSelectedId(record.id);
@@ -445,11 +430,6 @@ export function ConnectionEventDrawer({
                   { value: 'request', label: 'Request', status: requestDone ? 'complete' : 'pending' },
                   { value: 'response', label: 'Response', status: responseDone ? 'complete' : 'pending' },
                   { value: 'advanced', label: 'Advanced' },
-                  {
-                    value: 'mapping',
-                    label: 'Attribute mapping',
-                    status: mappingDone ? 'complete' : 'pending',
-                  },
                 ]}
               />
             </div>
@@ -710,17 +690,6 @@ export function ConnectionEventDrawer({
             />
           </div>
         </div>
-        </div>
-      )}
-
-      {hasDraft && section === 'mapping' && (
-        <div className="ds-scroll min-h-0 flex-1 overflow-y-auto px-6 py-5">
-          <AttributeMappingEditor
-            rows={mappingRows.length > 0 ? mappingRows : [blankMappingRow(0)]}
-            onChange={(rows) => set('attributes', rows)}
-            applicationName={applicationName ?? 'Application'}
-            touched={touched}
-          />
         </div>
       )}
 

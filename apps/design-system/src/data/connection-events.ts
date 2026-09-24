@@ -14,17 +14,72 @@
 import { catalogApps, appProfileFor } from './seed';
 
 export const EVENT_KINDS = [
-  { value: 'accounts-fetch', label: 'Accounts Fetch', direction: 'inbound' },
-  { value: 'entitlements-fetch', label: 'Entitlements Fetch', direction: 'inbound' },
-  { value: 'accounts-entitlements-fetch', label: 'Accounts and Entitlements Fetch', direction: 'inbound' },
-  { value: 'account-create', label: 'Account Create', direction: 'outbound' },
-  { value: 'account-update', label: 'Account Update', direction: 'outbound' },
-  { value: 'account-delete', label: 'Account Delete', direction: 'outbound' },
-  { value: 'group-create', label: 'Group Create', direction: 'outbound' },
-  { value: 'group-update', label: 'Group Update', direction: 'outbound' },
-  { value: 'group-delete', label: 'Group Delete', direction: 'outbound' },
-  { value: 'account-entitlement-assignment', label: 'Account Entitlement Assignment', direction: 'outbound' },
-  { value: 'account-entitlement-revocation', label: 'Account Entitlement Revocation', direction: 'outbound' },
+  {
+    value: 'accounts-fetch',
+    label: 'Accounts Fetch',
+    direction: 'inbound',
+    description: 'Import users from this application into IGA.',
+  },
+  {
+    value: 'entitlements-fetch',
+    label: 'Entitlements Fetch',
+    direction: 'inbound',
+    description: 'Import groups and entitlements from this application.',
+  },
+  {
+    value: 'accounts-entitlements-fetch',
+    label: 'Accounts and Entitlements Fetch',
+    direction: 'inbound',
+    description: 'Import users and their entitlements in one call.',
+  },
+  {
+    value: 'account-create',
+    label: 'Account Create',
+    direction: 'outbound',
+    description: 'Create an account when IGA grants access.',
+  },
+  {
+    value: 'account-update',
+    label: 'Account Update',
+    direction: 'outbound',
+    description: 'Update an account when its profile or access changes.',
+  },
+  {
+    value: 'account-delete',
+    label: 'Account Delete',
+    direction: 'outbound',
+    description: 'Disable or delete an account when IGA revokes access.',
+  },
+  {
+    value: 'group-create',
+    label: 'Group Create',
+    direction: 'outbound',
+    description: 'Create a group in this application.',
+  },
+  {
+    value: 'group-update',
+    label: 'Group Update',
+    direction: 'outbound',
+    description: 'Update a group in this application.',
+  },
+  {
+    value: 'group-delete',
+    label: 'Group Delete',
+    direction: 'outbound',
+    description: 'Remove a group from this application.',
+  },
+  {
+    value: 'account-entitlement-assignment',
+    label: 'Account Entitlement Assignment',
+    direction: 'outbound',
+    description: 'Grant an entitlement to an account.',
+  },
+  {
+    value: 'account-entitlement-revocation',
+    label: 'Account Entitlement Revocation',
+    direction: 'outbound',
+    description: 'Remove an entitlement from an account.',
+  },
 ] as const;
 /**
  * SCIM/UMAPI does not expose HTTP calls. The three resources a SCIM client

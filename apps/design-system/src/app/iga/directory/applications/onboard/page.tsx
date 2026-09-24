@@ -25,7 +25,6 @@ import {
   appTypeCategories,
   appTypeMatches,
   appTypeMatchesFilters,
-  getCustomAppType,
   listAppTypeProtocols,
   listAppTypes,
   type AppTypeOption,
@@ -37,7 +36,8 @@ import {
  *
  * Same frame as the workflow template catalog: atmospheric search banner,
  * category rail that jumps, then a grid of type tiles. Clicking a tile opens
- * the onboard drawer; custom lives under the search as the blank-canvas exit.
+ * the onboard drawer. Custom is a category of its own, with one Custom app
+ * card — not a link under the search.
  */
 export default function OnboardApplicationPage() {
   useSetBreadcrumbs([
@@ -57,7 +57,6 @@ export default function OnboardApplicationPage() {
   const sections = React.useRef(new Map<AppTypeCategory, HTMLElement>());
 
   const all = listAppTypes();
-  const custom = getCustomAppType();
   const filterGroups = React.useMemo<FilterGroup[]>(
     () => [
       {
@@ -78,8 +77,7 @@ export default function OnboardApplicationPage() {
     [],
   );
   const activeFilters = Object.values(filters).reduce((n, ids) => n + ids.length, 0);
-  const matched = all.filter((t) => appTypeMatches(t, query) && appTypeMatchesFilters(t, filters));
-  const catalog = matched.filter((t) => t.id !== 'at-custom');
+  const catalog = all.filter((t) => appTypeMatches(t, query) && appTypeMatchesFilters(t, filters));
   const byCategory = (id: AppTypeCategory) => catalog.filter((t) => t.category === id);
   const visibleCategories = appTypeCategories.filter((cat) => byCategory(cat.id).length > 0);
   const firstVisible = visibleCategories[0]?.id;
@@ -131,9 +129,7 @@ export default function OnboardApplicationPage() {
       <header className="relative shrink-0 overflow-hidden border-b border-border px-6 py-7">
         <AtmosphericBackground />
         <div className="relative mx-auto flex w-full max-w-2xl flex-col items-center text-center">
-          <h1 className="text-balance text-h3 text-text-primary">
-            Start onboarding faster with ready-to-use application types
-          </h1>
+          <h1 className="text-balance text-h3 text-text-primary">Choose an application type</h1>
           <div className="mt-3 w-full max-w-xl">
             <Input
               placeholder="Search by name or protocol…"
@@ -167,16 +163,6 @@ export default function OnboardApplicationPage() {
               }
             />
           </div>
-          <p className="mt-2.5 text-body-sm text-text-secondary">
-            Have an application we don&apos;t list?{' '}
-            <button
-              type="button"
-              className="text-body-sm-medium text-text-link hover:underline"
-              onClick={() => pick(custom)}
-            >
-              Start with a custom application
-            </button>
-          </p>
         </div>
       </header>
 
@@ -203,8 +189,8 @@ export default function OnboardApplicationPage() {
           {catalog.length === 0 && (q || activeFilters > 0) ? (
             <p className="text-body-sm text-text-secondary">
               {q
-                ? `“${q}” isn’t in the catalog yet. It will be present shortly — until then, use a custom application.`
-                : 'No types match those filters. Clear them to see the full catalog, or start with a custom application.'}
+                ? `“${q}” isn’t in the catalog. Clear the search, or open Custom for a blank type.`
+                : 'No types match those filters. Clear them to see the full catalog.'}
             </p>
           ) : (
             <div className="flex flex-col gap-8">
@@ -243,12 +229,7 @@ export default function OnboardApplicationPage() {
         title="Filter application types"
         subtitle="Narrow the catalog by category or protocol."
         renderStatus={(staged) => {
-          const n = all.filter(
-            (t) =>
-              t.id !== 'at-custom' &&
-              appTypeMatches(t, query) &&
-              appTypeMatchesFilters(t, staged),
-          ).length;
+          const n = all.filter((t) => appTypeMatches(t, query) && appTypeMatchesFilters(t, staged)).length;
           return `${n} type${n === 1 ? '' : 's'} available`;
         }}
       />

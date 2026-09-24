@@ -22,7 +22,7 @@ const KNOWN = [
   'Jira',
   'Snowflake',
 ];
-const UNKNOWN = ['Custom Application', 'SCIM Application'];
+const UNKNOWN = ['Custom app', 'SCIM Application'];
 
 export default function AppIconDocs() {
   return (
