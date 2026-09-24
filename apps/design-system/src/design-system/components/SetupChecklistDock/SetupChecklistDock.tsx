@@ -41,8 +41,8 @@ export interface SetupChecklistStep {
   seedDone?: boolean;
   /**
    * Jobs inside this step (Configure’s own rail). Listed under the parent with
-   * a hairline tree. The step can be `done` for the gate before every job is.
-   * Omit it when the step has no parts.
+   * a hairline tree. The parent still carries a check — `done` is the gate, and
+   * every job can be open after that. Omit it when the step has no parts.
    */
   substeps?: SetupChecklistSubstep[];
 }
@@ -261,15 +261,13 @@ function StepRow({
           parentCurrent ? 'border border-brand bg-surface' : 'border border-transparent hover:bg-subtle',
         ].join(' ')}
       >
-        {substeps.length === 0 ? (
-          <span
-            className={`mt-px grid h-4 w-4 shrink-0 place-items-center ${
-              step.done ? 'text-success' : 'text-border-strong'
-            }`}
-          >
-            <CheckCircle sx={{ fontSize: 16, color: 'inherit' }} />
-          </span>
-        ) : null}
+        <span
+          className={`mt-px grid h-4 w-4 shrink-0 place-items-center ${
+            step.done ? 'text-success' : 'text-border-strong'
+          }`}
+        >
+          <CheckCircle sx={{ fontSize: 16, color: 'inherit' }} />
+        </span>
         <span className="min-w-0 flex-1">
           <span
             className={`block truncate ${

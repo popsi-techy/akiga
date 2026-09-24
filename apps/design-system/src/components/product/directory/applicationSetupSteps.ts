@@ -16,10 +16,17 @@ export interface ApplicationSetupStep {
   tab: string;
   required: boolean;
   done: boolean;
+  /** Done because the application exists — excluded from the dock's Next prompt. */
+  seedDone?: boolean;
   substeps?: ConfigureSubstep[];
 }
 
 const COPY: Record<AppSetupStepId, { hint: string; cta: string; tab: string }> = {
+  basic: {
+    hint: 'The name and description shown wherever this application is listed.',
+    cta: 'Edit details',
+    tab: 'basic',
+  },
   provisioning: {
     hint: 'How IGA reaches this application — authorize it and pick the events to listen for.',
     cta: 'Configure',
@@ -64,6 +71,7 @@ export function applicationSetupSteps(app: AppSetupSubject): ApplicationSetupSte
         label: step.label,
         required: isRequiredAppSetupStep(step.id, app),
         done: isAppSetupStepDone(step.id, app),
+        seedDone: step.id === 'basic',
         substeps: step.id === 'provisioning' ? configureSubsteps(app) : undefined,
         ...copy,
       };

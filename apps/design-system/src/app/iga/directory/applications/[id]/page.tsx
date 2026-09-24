@@ -326,10 +326,16 @@ export default function ApplicationDetailPage() {
           checklistOpen ? (
             <SetupChecklistDock
               steps={steps}
-              currentTab={shownTab === 'provisioning' ? configureSection : shownTab}
+              currentTab={
+                basicsOpen ? 'basic' : shownTab === 'provisioning' ? configureSection : shownTab
+              }
               gateVerb="setup"
               onClose={() => setChecklistOpen(false)}
               onGoTo={(step, sub) => {
+                if (step.tab === 'basic') {
+                  setBasicsOpen(true);
+                  return;
+                }
                 setTab(step.tab);
                 if (step.tab === 'provisioning') {
                   setConfigureSection(

@@ -45,6 +45,7 @@ function reconciliationReady(app: AppSetupSubject) {
 }
 
 export type AppSetupStepId =
+  | 'basic'
   | 'provisioning'
   | 'reconciliation'
   | 'owners'
@@ -52,6 +53,7 @@ export type AppSetupStepId =
   | 'approval';
 
 export const APP_SETUP_STEPS: { id: AppSetupStepId; label: string }[] = [
+  { id: 'basic', label: 'Basic details' },
   { id: 'provisioning', label: 'Configure' },
   { id: 'reconciliation', label: 'Reconciliation' },
   { id: 'owners', label: 'Owners' },
@@ -65,6 +67,14 @@ const APP_REQUIRED_CHECKS: {
   applies: (app: AppSetupSubject) => boolean;
   satisfied: (app: AppSetupSubject) => boolean;
 }[] = [
+  {
+    id: 'basic',
+    label: 'basic details',
+    // The onboard / create drawer already collected the name. The step is on
+    // the checklist so finished work is visible, not so it can block.
+    applies: () => true,
+    satisfied: () => true,
+  },
   {
     id: 'provisioning',
     label: 'configure',
@@ -144,6 +154,8 @@ export function configureSubsteps(app: AppSetupSubject): ConfigureSubstep[] | un
 
 export function isAppSetupStepDone(id: AppSetupStepId, app: AppSetupSubject): boolean {
   switch (id) {
+    case 'basic':
+      return true;
     case 'provisioning':
       return provisioningReady(app);
     case 'reconciliation':

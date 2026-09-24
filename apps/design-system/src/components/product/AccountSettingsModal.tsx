@@ -6,10 +6,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import PersonOutline from '@mui/icons-material/PersonOutline';
 import PaletteOutlined from '@mui/icons-material/PaletteOutlined';
 import RestartAltOutlined from '@mui/icons-material/RestartAltOutlined';
-import LightModeOutlined from '@mui/icons-material/LightModeOutlined';
-import DarkModeOutlined from '@mui/icons-material/DarkModeOutlined';
-import SettingsBrightnessOutlined from '@mui/icons-material/SettingsBrightnessOutlined';
-import { Avatar, Button, Input, RadioCardGroup, NavList } from '@ds/components';
+import { Avatar, Button, Input, NavList } from '@ds/components';
 
 /** The signed-in user's editable profile. */
 export interface AccountUser {
@@ -184,26 +181,80 @@ function ProfileSection({
   );
 }
 
-function AppearanceSection({ theme, onTheme }: { theme: 'light' | 'dark' | 'system'; onTheme: (t: 'light' | 'dark' | 'system') => void }) {
+type ThemeChoice = 'light' | 'dark' | 'system';
+
+const THEMES: { id: ThemeChoice; label: string; hint: string }[] = [
+  { id: 'light', label: 'Light', hint: 'Bright canvas' },
+  { id: 'dark', label: 'Dark', hint: 'Dim, low light' },
+  { id: 'system', label: 'System', hint: 'Follow this device' },
+];
+
+function AppearanceSection({ theme, onTheme }: { theme: ThemeChoice; onTheme: (t: ThemeChoice) => void }) {
   return (
     <>
       <h2 className="mb-1 text-h5 text-text-primary">Appearance</h2>
-      <p className="mb-2 text-body-sm text-text-secondary">Personalize how the console looks on this device.</p>
+      <p className="mb-6 text-body-sm text-text-secondary">
+        How the console looks on this device.
+      </p>
 
-      <SettingsGroup title="Theme" description="Choose a light or dark interface, or match your device setting." divider={false}>
-        <RadioCardGroup
-          ariaLabel="Theme"
-          columns={3}
-          value={theme}
-          onChange={(v) => onTheme(v as 'light' | 'dark' | 'system')}
-          options={[
-            { value: 'light', label: 'Light', description: 'Bright interface', icon: <LightModeOutlined sx={{ fontSize: 18 }} /> },
-            { value: 'dark', label: 'Dark', description: 'Dim, low-light', icon: <DarkModeOutlined sx={{ fontSize: 18 }} /> },
-            { value: 'system', label: 'System', description: 'Match device', icon: <SettingsBrightnessOutlined sx={{ fontSize: 18 }} /> },
-          ]}
-        />
-      </SettingsGroup>
+      <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-3">
+        {THEMES.map((opt) => {
+          const selected = theme === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onTheme(opt.id)}
+              className={[
+                'flex flex-col gap-2.5 rounded-xl border p-2 text-left transition-colors',
+                'outline-none focus-visible:ring-2 focus-visible:ring-brand/30',
+                selected
+                  ? 'border-brand bg-surface'
+                  : 'border-border bg-surface hover:border-border-strong hover:bg-subtle',
+              ].join(' ')}
+            >
+              <ThemeSwatch id={opt.id} />
+              <span className="px-1 pb-0.5">
+                <span className="block text-body-sm-medium text-text-primary">{opt.label}</span>
+                <span className="mt-0.5 block text-caption text-text-secondary">{opt.hint}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </>
+  );
+}
+
+/** A postage-stamp of the console — one rail, then the page — so the choice is seen, not read. */
+function ThemeSwatch({ id }: { id: ThemeChoice }) {
+  return (
+    <div className="pointer-events-none flex h-[88px] overflow-hidden rounded-lg border border-border-subtle" aria-hidden>
+      <div className="flex w-4 shrink-0 flex-col items-center bg-sidebar pt-2">
+        <span className="h-1.5 w-1.5 rounded-pill bg-brand" />
+      </div>
+      {id === 'system' ? (
+        <>
+          <ConsolePage tone="light" />
+          <ConsolePage tone="dark" />
+        </>
+      ) : (
+        <ConsolePage tone={id} />
+      )}
+    </div>
+  );
+}
+
+function ConsolePage({ tone }: { tone: 'light' | 'dark' }) {
+  const dark = tone === 'dark';
+  return (
+    <div className={['flex min-w-0 flex-1 flex-col justify-center gap-1.5 px-2', dark ? 'bg-surface-inverse' : 'bg-canvas'].join(' ')}>
+      <span className={['h-1.5 w-7 rounded-pill', dark ? 'bg-text-inverse/50' : 'bg-border-strong'].join(' ')} />
+      <span className={['h-2.5 rounded-sm', dark ? 'bg-text-inverse/30' : 'bg-sunken'].join(' ')} />
+      <span className={['h-2.5 w-3/5 rounded-sm', dark ? 'bg-text-inverse/20' : 'bg-border-strong'].join(' ')} />
+    </div>
   );
 }
 

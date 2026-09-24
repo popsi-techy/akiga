@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AddOutlined from '@mui/icons-material/AddOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
+import HowToRegOutlined from '@mui/icons-material/HowToRegOutlined';
 import ScheduleOutlined from '@mui/icons-material/ScheduleOutlined';
-import { Avatar, Button, DirectoryListPage, Menu, OverflowChips, StatusChip, type Column, type FilterGroup, useToast } from '@ds/components';
+import { Avatar, Button, DirectoryListPage, Menu, OverflowChips, StatusChip, Tooltip, type Column, type FilterGroup, useToast } from '@ds/components';
 import {
   applicationAccountable,
   applicationForBasics,
+  applicationIsIdentitySource,
   listDirectoryCatalogApplications,
   listOnboardedApplicationRows,
   listVisibleDirectoryApplications,
@@ -141,7 +143,19 @@ export default function ApplicationsListPage() {
         <div className="flex min-w-0 items-center gap-2.5">
           <EntityAvatar kind="application" name={r.name} appType={r.appType} />
           <div className="min-w-0">
-            <div className="truncate text-body-sm-strong text-text-primary">{r.name}</div>
+            <div className="flex min-w-0 items-center gap-1.5">
+              <div className="truncate text-body-sm-strong text-text-primary">{r.name}</div>
+              {applicationIsIdentitySource(r.id) ? (
+                <Tooltip title="Authoritative identity source">
+                  <span
+                    className="inline-flex shrink-0 text-success"
+                    aria-label="Authoritative identity source"
+                  >
+                    <HowToRegOutlined sx={{ fontSize: 16 }} aria-hidden />
+                  </span>
+                </Tooltip>
+              ) : null}
+            </div>
             <div className="truncate text-caption text-text-secondary" title={r.appType}>
               {r.appType}
             </div>

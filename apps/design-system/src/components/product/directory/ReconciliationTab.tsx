@@ -389,7 +389,7 @@ function CsvSyncActions() {
         }}
       />
       <Button
-        variant="secondary"
+        variant="primary"
         onClick={() => inputRef.current?.click()}
         startIcon={<UploadFile sx={{ fontSize: 18 }} />}
       >

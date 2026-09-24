@@ -137,9 +137,9 @@ keeps `bg-surface`.
 
 Optional. A step that contains jobs (Configure’s own rail) passes `substeps`.
 Each job is its own button under the parent, indented, joined by a
-`border-border` hairline that turns through `rounded-bl-md`. The parent is a
-group label — no check. `onGoTo(step, substep)` opens that job. `currentTab`
-matching a `substep.id` selects only that row.
+`border-border` hairline that turns through `rounded-bl-md`. The parent keeps
+the same check as every other step (`done` is the gate). `onGoTo(step, substep)`
+opens that job. `currentTab` matching a `substep.id` selects only that row.
 
 | Property | Class / token | Resolved |
 | --- | --- | --- |

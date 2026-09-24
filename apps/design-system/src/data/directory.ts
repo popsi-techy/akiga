@@ -752,7 +752,7 @@ export function applicationForBasics(id: string): OnboardedApplication | null {
     description: shown.description,
     accessUrl: overlay?.accessUrl ?? '',
     enableProvisioning: profile.externalProvisioning === 'enabled',
-    identitySource: overlay?.identitySource ?? false,
+    identitySource: overlay?.identitySource ?? id === 'app-active-directory',
     requestable: overlay?.requestable ?? false,
     allEntitlementsRequestable: overlay?.allEntitlementsRequestable ?? false,
     appTypeId: type?.id ?? '',
@@ -793,6 +793,19 @@ export { applicationLifecycle };
  * and treating the two the same is what had SAP reporting four accounts it had never
  * synced.
  */
+/**
+ * Whether this application is the tenant’s authoritative identity source.
+ *
+ * Seeded on Active Directory — the on-prem directory identities are born from.
+ * An overlay or an onboarded toggle can still turn it off, or mark another app.
+ */
+export function applicationIsIdentitySource(id: string): boolean {
+  const onboarded = getOnboardedApplication(id);
+  if (onboarded) return onboarded.identitySource;
+  if (isCatalogHidden(id) || !appById.has(id)) return false;
+  return getCatalogBasics(id)?.identitySource ?? id === 'app-active-directory';
+}
+
 export function applicationIsAuthorized(id: string): boolean {
   const onboarded = getOnboardedApplication(id);
   if (onboarded) {
