@@ -11,6 +11,10 @@ export interface SetupChecklistSubstep {
   id: string;
   label: string;
   done: boolean;
+  /** Why this job exists — used on the Next prompt. Falls back to the parent. */
+  hint?: string;
+  /** The imperative on the Next control. Falls back to the parent. */
+  cta?: string;
 }
 
 /** One checklist row — presentation only. Order and required-ness come from the caller. */
@@ -57,9 +61,10 @@ export interface SetupChecklistStep {
  * waits for.
  *
  * The CTA is a prompt that appears only after someone actually finishes a
- * step — any step. Switching tabs is not finishing. A `seedDone` step (name
- * already saved) and a `passiveDone` qualifier (factory defaults) do not
- * count. A “Modified” chip is a decision and does.
+ * listed step or a job inside one. Switching tabs is not finishing. A
+ * `seedDone` step (name already saved) and a `passiveDone` qualifier (factory
+ * defaults) do not count. A “Modified” chip is a decision and does. When a
+ * job is finished, Next lands on the next unfinished sibling — not the parent.
  *
  * It also does not restate the tab you are on. Follow the prompt and it
  * drops: you are there, and the page owns the work again.
@@ -85,6 +90,24 @@ function countsAsFinished(step: SetupChecklistStep): boolean {
   return true;
 }
 
+function hasFinishedJob(step: SetupChecklistStep): boolean {
+  return (step.substeps ?? []).some((s) => s.done);
+}
+
+/** First unfinished job, else the first unfinished parent. */
+function findNext(
+  listed: SetupChecklistStep[],
+  someoneFinished: boolean,
+): { stepId: string; substepId?: string } | undefined {
+  if (!someoneFinished) return undefined;
+  for (const step of listed) {
+    const nextSub = (step.substeps ?? []).find((s) => !s.done);
+    if (nextSub) return { stepId: step.id, substepId: nextSub.id };
+    if (!step.done) return { stepId: step.id };
+  }
+  return undefined;
+}
+
 export function SetupChecklistDock({
   steps,
   currentTab,
@@ -95,8 +118,10 @@ export function SetupChecklistDock({
   const required = steps.filter((s) => s.required);
   const additional = steps.filter((s) => !s.required);
   const listed = [...required.filter((s) => !s.seedDone), ...additional];
-  const someoneFinished = listed.some(countsAsFinished);
-  const nextId = someoneFinished ? listed.find((s) => !s.done)?.id : undefined;
+  const someoneFinished = listed.some(countsAsFinished) || listed.some(hasFinishedJob);
+  const next = findNext(listed, someoneFinished);
+  const nextId = next && !next.substepId ? next.stepId : undefined;
+  const nextSubId = next?.substepId;
   // Primary while Activate is still blocked — this is then the only filled
   // action in the dock. Secondary once required work is done, so the header
   // Activate stays the one primary.
@@ -166,6 +191,7 @@ export function SetupChecklistDock({
                 current={step.tab === currentTab}
                 currentTab={currentTab}
                 recommended={step.id === nextId}
+                recommendedSubId={step.id === next?.stepId ? nextSubId : undefined}
                 ctaVariant={ctaVariant}
                 onGoTo={onGoTo}
               />
@@ -192,6 +218,7 @@ export function SetupChecklistDock({
                 current={step.tab === currentTab}
                 currentTab={currentTab}
                 recommended={step.id === nextId}
+                recommendedSubId={step.id === next?.stepId ? nextSubId : undefined}
                 ctaVariant={ctaVariant}
                 onGoTo={onGoTo}
               />
@@ -229,6 +256,7 @@ function StepRow({
   step,
   current,
   recommended,
+  recommendedSubId,
   ctaVariant,
   onGoTo,
   currentTab,
@@ -236,13 +264,14 @@ function StepRow({
   step: SetupChecklistStep;
   current: boolean;
   recommended: boolean;
+  recommendedSubId?: string;
   ctaVariant: 'primary' | 'secondary';
   onGoTo: (step: SetupChecklistStep, substep?: SetupChecklistSubstep) => void;
   currentTab: string;
 }) {
-  // Prompt only when the next unfinished step is somewhere else. The row you
-  // are already on does not need a CTA — the page is the place to do the work.
-  // Finish it, stay put, and the hint + button appear on the following row.
+  // Prompt only when the next unfinished step or job is somewhere else. The
+  // row you are already on does not need a CTA — the page is the place to do
+  // the work. Finish it, stay put, and the hint + button appear on the next row.
   const substeps = step.substeps ?? [];
   const childCurrent = substeps.some((s) => s.id === currentTab);
   const parentCurrent = current && !childCurrent;
@@ -286,7 +315,7 @@ function StepRow({
           )}
           {showNext && (
             <span className="mt-2 block">
-              <Button component="span" size="xs" variant={ctaVariant} tabIndex={-1}>
+              <Button component="span" size="xs" variant={ctaVariant} tabIndex={-1} className="pointer-events-none">
                 Next: {step.cta}
               </Button>
             </span>
@@ -298,6 +327,9 @@ function StepRow({
           {substeps.map((sub, i) => {
             const last = i === substeps.length - 1;
             const selected = sub.id === currentTab;
+            const showSubNext = recommendedSubId === sub.id && !sub.done && !selected;
+            const hint = sub.hint ?? step.hint;
+            const cta = sub.cta ?? step.cta;
             return (
               <li key={sub.id}>
                 <button
@@ -305,7 +337,8 @@ function StepRow({
                   onClick={() => onGoTo(step, sub)}
                   aria-current={selected ? 'step' : undefined}
                   className={[
-                    'relative flex w-full items-center gap-2 rounded-md py-1.5 pl-7 pr-2 text-left transition-colors',
+                    'relative flex w-full gap-2 rounded-md py-1.5 pl-7 pr-2 text-left transition-colors',
+                    showSubNext ? 'items-start' : 'items-center',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-subtle',
                     selected ? 'border border-brand bg-surface' : 'border border-transparent hover:bg-subtle',
                   ].join(' ')}
@@ -334,18 +367,30 @@ function StepRow({
                     </>
                   )}
                   <span
-                    className={`grid h-3.5 w-3.5 shrink-0 place-items-center ${
+                    className={`${showSubNext ? 'mt-px ' : ''}grid h-3.5 w-3.5 shrink-0 place-items-center ${
                       sub.done ? 'text-success' : 'text-border-strong'
                     }`}
                   >
                     <CheckCircle sx={{ fontSize: 14, color: 'inherit' }} />
                   </span>
-                  <span
-                    className={`min-w-0 truncate text-caption ${
-                      selected || sub.done ? 'text-text-primary' : 'text-text-secondary'
-                    } ${selected ? 'text-caption-medium' : ''}`}
-                  >
-                    {sub.label}
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className={`block truncate text-caption ${
+                        selected || showSubNext || sub.done ? 'text-text-primary' : 'text-text-secondary'
+                      } ${selected || showSubNext ? 'text-caption-medium' : ''}`}
+                    >
+                      {sub.label}
+                    </span>
+                    {showSubNext && (
+                      <span className="mt-1 block text-caption text-text-secondary">{hint}</span>
+                    )}
+                    {showSubNext && (
+                      <span className="mt-2 block">
+                        <Button component="span" size="xs" variant={ctaVariant} tabIndex={-1} className="pointer-events-none">
+                          Next: {cta}
+                        </Button>
+                      </span>
+                    )}
                   </span>
                 </button>
               </li>

@@ -25,8 +25,20 @@ const INITIAL: SetupChecklistStep[] = [
     done: false,
     substeps: [
       { id: 'apps', label: 'Applications', done: true },
-      { id: 'roles', label: 'Roles', done: false },
-      { id: 'entitlements', label: 'Entitlements', done: false },
+      {
+        id: 'roles',
+        label: 'Roles',
+        done: false,
+        hint: 'What a session may assume.',
+        cta: 'Add roles',
+      },
+      {
+        id: 'entitlements',
+        label: 'Entitlements',
+        done: false,
+        hint: 'What a session may use.',
+        cta: 'Add entitlements',
+      },
     ],
   },
   {
@@ -66,7 +78,13 @@ export default function SetupChecklistDockDocs() {
   const [open, setOpen] = React.useState(true);
 
   const finishAssignments = () => {
-    setSteps((prev) => prev.map((s) => (s.id === 'assignments' ? { ...s, done: true } : s)));
+    setSteps((prev) =>
+      prev.map((s) =>
+        s.id === 'assignments'
+          ? { ...s, done: true, substeps: s.substeps?.map((sub) => ({ ...sub, done: true })) }
+          : s,
+      ),
+    );
     setTab('assignments');
   };
 
@@ -92,12 +110,12 @@ export default function SetupChecklistDockDocs() {
       <PageHeader
         eyebrow="Components"
         title="Setup Checklist Dock"
-        description="Remaining work, docked to the right of a draft. The Next prompt appears only after someone actually finishes a step — a seedDone name or a passiveDone factory chip does not count. A “Modified” chip does."
+        description="Remaining work, docked to the right of a draft. The Next prompt appears only after someone actually finishes a step or a job inside one — a seedDone name or a passiveDone factory chip does not count. A “Modified” chip does."
       />
 
       <Section
         title="Finish one step and the next prompt appears"
-        description="Basic is seedDone (the object exists). Limits show “Default applied”. Mark Assignments done and Eligibility gets the Next CTA — unless you are already on that tab."
+        description="Basic is seedDone (the object exists). Applications is already done, so Roles gets the Next CTA. Finish every Assignments job and Eligibility gets it — unless you are already on that tab."
       >
         <Example label="interactive">
           <div className="flex h-[520px] overflow-hidden rounded-lg border border-border">
@@ -142,7 +160,7 @@ export default function SetupChecklistDockDocs() {
       <Section title="Props">
         <PropsTable
           rows={[
-            { name: 'steps', type: 'SetupChecklistStep[]', description: '{ id, label, hint, cta, tab, required, done, doneLabel?, doneLabelIntent?, passiveDone?, seedDone?, substeps?: { id, label, done }[] }.' },
+            { name: 'steps', type: 'SetupChecklistStep[]', description: '{ id, label, hint, cta, tab, required, done, doneLabel?, doneLabelIntent?, passiveDone?, seedDone?, substeps?: { id, label, done, hint?, cta? }[] }.' },
             { name: 'currentTab', type: 'string', description: 'The open section. Matches a step.tab or a substep.id. That row is current and does not get a Next CTA.' },
             { name: 'onClose', type: '() => void', description: 'Hides the dock.' },
             { name: 'onGoTo', type: '(step, substep?) => void', description: 'Opens the step’s tab or drawer. A substep click passes that job as the second argument.' },

@@ -30,7 +30,7 @@ export interface AppTypeOption {
   /**
    * Connection events are set up by attribute mapping rather than per-event
    * HTTP calls. Adobe (UMAPI) and Active Directory share this surface with
-   * SCIM types: Connection configuration shows mapping, and there is no
+   * SCIM types: the rail item is Attribute mapping, and there is no
    * Advanced rail item. Listing SCIM as a protocol is not enough — Salesforce
    * and Google also speak SCIM but stay REST-driven here.
    */

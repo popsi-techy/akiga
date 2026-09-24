@@ -140,6 +140,8 @@ Each job is its own button under the parent, indented, joined by a
 `border-border` hairline that turns through `rounded-bl-md`. The parent keeps
 the same check as every other step (`done` is the gate). `onGoTo(step, substep)`
 opens that job. `currentTab` matching a `substep.id` selects only that row.
+A finished job unlocks Next on the next unfinished sibling — same hint + CTA
+as a parent step, using the job’s `hint`/`cta` or the parent’s if omitted.
 
 | Property | Class / token | Resolved |
 | --- | --- | --- |
@@ -156,9 +158,10 @@ opens that job. `currentTab` matching a `substep.id` selects only that row.
 
 Shown only when **all** of these are true:
 
-1. Someone has actually finished a listed step (`seedDone` and `passiveDone` do
-   not count; a **Modified** chip does).
-2. This row is the first unfinished step after that.
+1. Someone has actually finished a listed step **or a job inside one**
+   (`seedDone` and `passiveDone` do not count; a **Modified** chip does).
+2. This row is the first unfinished job, or the first unfinished parent if
+   every job in that step is done.
 3. This row is **not** the current tab.
 
 | Element | Class / token | Resolved |

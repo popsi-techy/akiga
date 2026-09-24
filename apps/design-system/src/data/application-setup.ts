@@ -121,6 +121,8 @@ export interface ConfigureSubstep {
   id: string;
   label: string;
   done: boolean;
+  hint?: string;
+  cta?: string;
 }
 
 /**
@@ -142,13 +144,39 @@ export function configureSubsteps(app: AppSetupSubject): ConfigureSubstep[] | un
     .some((e) => e.attributes.length > 0);
 
   const items: ConfigureSubstep[] = [
-    { id: 'authorization', label: 'Authorization', done: authorized },
-    { id: 'connection', label: 'Connection', done: connection },
+    {
+      id: 'authorization',
+      label: 'Authorization',
+      done: authorized,
+      hint: 'IGA cannot reach this application until it knows how to sign in.',
+      cta: 'Add authorization',
+    },
+    {
+      id: 'connection',
+      label: scim ? 'Attribute mapping' : 'Connection',
+      done: connection,
+      hint: scim
+        ? "Map IGA attributes to this application's fields."
+        : 'Pick the events IGA should listen for once it can sign in.',
+      cta: scim ? 'Map attributes' : 'Add events',
+    },
   ];
   if (!scim) {
-    items.push({ id: 'advanced', label: 'Attribute mapping', done: mapping });
+    items.push({
+      id: 'advanced',
+      label: 'Attribute mapping',
+      done: mapping,
+      hint: "Map IGA attributes to this application's fields.",
+      cta: 'Map attributes',
+    });
   }
-  items.push({ id: 'manage', label: 'Manage connections', done: manage });
+  items.push({
+    id: 'manage',
+    label: 'Manage connections',
+    done: manage,
+    hint: 'Turn on the events this application should run.',
+    cta: 'Enable events',
+  });
   return items;
 }
 

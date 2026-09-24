@@ -255,8 +255,8 @@ export function ProvisioningSetupTab({
             },
             {
               id: 'connection',
-              icon: <LanOutlined sx={{ fontSize: 18 }} />,
-              label: 'Connection configuration',
+              icon: scimProvisioned ? <TuneOutlined sx={{ fontSize: 18 }} /> : <LanOutlined sx={{ fontSize: 18 }} />,
+              label: scimProvisioned ? 'Attribute mapping' : 'Connection configuration',
               count: eventCount,
             },
             // REST types map fields on Advanced. Every type then runs or
