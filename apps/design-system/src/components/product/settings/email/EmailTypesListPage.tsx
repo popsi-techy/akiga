@@ -67,16 +67,18 @@ function EmailCard({
           <button
             type="button"
             onClick={onPreview}
+            aria-label={`Preview active template for ${template.name}`}
             className="whitespace-nowrap text-caption-medium text-text-secondary transition-colors hover:text-text-primary"
           >
-            Preview active template
+            Preview active
           </button>
           <button
             type="button"
             onClick={onViewAll}
+            aria-label={`Manage templates for ${template.name}`}
             className="rounded-sm bg-surface-inverse px-2.5 py-1 text-caption-medium text-text-inverse transition-colors hover:bg-sidebar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-subtle"
           >
-            Manage templates
+            Manage
           </button>
         </div>
       </div>
