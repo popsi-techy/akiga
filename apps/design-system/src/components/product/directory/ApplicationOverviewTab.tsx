@@ -9,7 +9,6 @@ import { AppIcon, Avatar, Card, InfoRow, InfoRowGroup, OverflowChips, StatusChip
 import { formatDateTime } from '../sod/labels';
 import { infoIcon } from './infoIcons';
 import { RowLink, RowValue } from './RowLink';
-import { appProfileFor } from '@/data/seed';
 import { listAuthorizations } from '@/data/provisioning-auth';
 import { eventStatus, listConnectionEvents } from '@/data/connection-events';
 import { reconciliationSummary } from '@/data/reconciliation';
@@ -19,6 +18,7 @@ import { getApprovalPolicy } from '@/data/approval-policies';
 import {
   applicationAccountable,
   applicationForBasics,
+  applicationRowById,
   type AccountableParty,
   type AppAccountRow,
   type EntitlementRow,
@@ -63,8 +63,16 @@ export function ApplicationOverviewTab({
   accounts: AppAccountRow[];
   entitlements: EntitlementRow[];
 }) {
-  const profile = appProfileFor(app.id);
-  const provisions = profile.externalProvisioning === 'enabled';
+  /*
+    The seed profile only knows catalogued ids. An onboarded application is not
+    in that map, so `appProfileFor` answered Unknown / Direct / no connector —
+    the "U Unknown" tile. The Directory row already carries the type the
+    instance was onboarded from, same source as the list and the header avatar.
+  */
+  const row = applicationRowById(app.id);
+  const appType = row?.appType ?? 'Unknown';
+  const discoverySource = row?.discoverySource ?? 'Direct';
+  const provisions = row?.externalProvisioning === 'enabled';
 
   /*
     Authorization, events, sync and baselines are all localStorage-backed, so they can
@@ -298,8 +306,8 @@ export function ApplicationOverviewTab({
               valueWrap
               value={
                 <span className="inline-flex items-center gap-2">
-                  <AppIcon app={profile.appType} size={20} />
-                  {profile.appType}
+                  <AppIcon app={appType} size={20} />
+                  {appType}
                 </span>
               }
             />
@@ -307,7 +315,7 @@ export function ApplicationOverviewTab({
               icon={infoIcon.discovery}
               label="Discovered via"
               valueWrap
-              value={<StatusChip intent="info" label={profile.discoverySource} dot={false} />}
+              value={<StatusChip intent="info" label={discoverySource} dot={false} />}
             />
             <InfoRow
               icon={infoIcon.sync}

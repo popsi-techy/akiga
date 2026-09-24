@@ -76,12 +76,6 @@ const BASE_TABS: TabItem[] = [
 type InventoryView = 'accounts' | 'entitlements';
 
 /**
- * Inventory tabs — nothing to show until the connector exists, so they stay off
- * the strip until Configure is finished.
- */
-const PRE_CONFIGURE_TABS = new Set(['overview', 'accounts', 'entitlements']);
-
-/**
  * `?view=` from the brief clubbed inventory.
  *
  * All three of its values land on Reconciliation now — it is the section that owns the
@@ -229,11 +223,6 @@ export default function ApplicationDetailPage() {
   const steps = applicationSetupSteps(setupSubject);
   const requiredTotal = requiredAppSetupCount(setupSubject);
 
-  const provisioningDone = isAppSetupStepDone('provisioning', setupSubject);
-  const setupIncomplete = appSetupIncomplete(setupSubject);
-  const hideInventoryTabs =
-    setupIncomplete && (!showsConfigure || !provisioningDone);
-
   const allSections = BASE_TABS.filter((s) => {
     /*
       Only Configure follows the provisioning toggle.
@@ -243,15 +232,13 @@ export default function ApplicationDetailPage() {
       inventory in. An application can be read without being written to — that is the
       normal shape for a system IGA governs but does not administer — and hiding the
       inventory left no way to see what it holds.
+
+      Overview stays on the strip for the whole life of the application. Hiding it
+      until Configure finished inserted it as the first tab mid-flow and slid every
+      other label under the reader. Accounts and entitlements are not tabs — they
+      open from Reconciliation.
     */
     if (s.value === 'provisioning') return showsConfigure;
-    /*
-      Overview and inventory tabs need something to summarize. While setup is open they
-      only show zeros and a long Needs-attention list — before Configure when
-      provisioning is on, and throughout setup when it is off and the checklist still
-      has governance steps to finish.
-    */
-    if (hideInventoryTabs && PRE_CONFIGURE_TABS.has(s.value)) return false;
     return true;
   });
 
