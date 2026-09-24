@@ -64,8 +64,8 @@ export function ApplicationUseCasesFields({
         </SettingsRow>
         <SettingsRow
           surface="subtle"
-          title="Self-Service Access Requests"
-          hint="Users can request access to this app themselves. Every request goes through approval before it is granted."
+          title="Requestable by users"
+          hint="Every request goes through approval before it is granted."
           nested={
             requestable ? (
               <SettingsNested>
@@ -86,7 +86,7 @@ export function ApplicationUseCasesFields({
           <Switch
             checked={requestable}
             onChange={(e) => onRequestable(e.target.checked)}
-            inputProps={{ 'aria-label': 'Self-Service Access Requests' }}
+            inputProps={{ 'aria-label': 'Requestable by users' }}
           />
         </SettingsRow>
       </SettingsStack>
